@@ -143,3 +143,6 @@ ENV/
 
 # CLION
 .idea/
+
+.DS_Store
+test
