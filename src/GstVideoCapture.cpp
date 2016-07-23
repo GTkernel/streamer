@@ -5,7 +5,7 @@
 #include "GstVideoCapture.h"
 
 /**
- * \brief Initialize the capture with a uri. Only supports rstp protocol.
+ * \brief Initialize the capture with a uri. Only supports rtsp protocol.
  */
 GstVideoCapture::GstVideoCapture():
   appsink_(NULL),
@@ -60,17 +60,17 @@ cv::Size GstVideoCapture::GetFrameSize() {
 
 /**
  * \brief Create GStreamer pipeline.
- * \param rstp_uri The uri to rstp endpoints.
+ * \param rtsp_uri The uri to rtsp endpoints.
  * \return True if the pipeline is sucessfully built.
  */
-bool GstVideoCapture::CreatePipeline(std::string rstp_uri) {
-  CHECK(rstp_uri.substr(7) == "rstp://") << "Streaming protocol other than rstp is not supported";
+bool GstVideoCapture::CreatePipeline(std::string rtsp_uri) {
+  CHECK(rtsp_uri.substr(0, 7) == "rtsp://") << "Streaming protocol other than rtsp is not supported";
 
   gchar *descr = g_strdup_printf(
-    "rtspsrc location=\"rtsp://%s@camera1/cam/realmonitor?channel=1&subtype=1\" "
+    "rtspsrc location=\"%s\" "
     "! rtph264depay ! h264parse ! omxh264dec ! videoconvert ! capsfilter caps=video/x-raw,format=(string)BGR "
     "! appsink name=sink sync=true",
-    rstp_uri.c_str()
+    rtsp_uri.c_str()
   );
 
   GError *error = NULL;

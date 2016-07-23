@@ -10,6 +10,9 @@ main (int argc, char *argv[])
 
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
+  FLAGS_alsologtostderr = 1;
+  FLAGS_colorlogtostderr = 1;
+  FLAGS_minloglevel = 0;
 
   GstVideoCapture cap;
   if (!cap.CreatePipeline(argv[1])) {
