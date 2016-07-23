@@ -11,4 +11,4 @@ To compile:
 * `make`
 
 Run:
-* `./tx1dnn`
+* `./tx1_run_alexnet`
