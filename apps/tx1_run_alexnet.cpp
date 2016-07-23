@@ -1,5 +1,3 @@
-#define CPU_ONLY
-
 #include "GstVideoCapture.h"
 #include "CaffeClassifier.h"
 

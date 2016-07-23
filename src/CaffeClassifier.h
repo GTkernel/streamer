@@ -5,7 +5,6 @@
 #ifndef TX1DNN_CAFFECLASSIFIER_H
 #define TX1DNN_CAFFECLASSIFIER_H
 
-// Uncomment below for development
 #include <caffe/caffe.hpp>
 #include "common.h"
 
