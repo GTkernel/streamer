@@ -1,5 +1,6 @@
-#include "GstVideoCapture.h"
+#define CPU_ONLY
 
+#include "GstVideoCapture.h"
 int
 main (int argc, char *argv[])
 {

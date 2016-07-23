@@ -1,4 +1,7 @@
-set(TX1DNN_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h NeuralNet.cpp NeuralNet.h)
+include_directories(${Caffe_INCLUDE_DIRS}
+        /usr/local/include)
+
+set(TX1DNN_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h CaffeClassifier.cpp CaffeClassifier.h)
 
 add_library(tx1dnn ${TX1DNN_SOURCE_FILES})
 

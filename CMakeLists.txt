@@ -10,6 +10,12 @@ find_package(Glog REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(GLIB REQUIRED gobject)
 find_package(Caffe REQUIRED)
+find_package(CBLAS)
+
+
+if(APPLE)
+    find_package(vecLib)
+endif()
 
 include_directories(
     src
@@ -17,6 +23,10 @@ include_directories(
     ${GSTREAMER_INCLUDE_DIRS}
     ${GSTREAMER_APP_INCLUDE_DIRS}
     ${Caffe_INCLUDE_DIRS})
+
+if(APPLE)
+    include_directories(${vecLib_INCLUDE_DIR})
+endif()
 
 set(MAIN_SOURCES apps/tx1_run_alexnet.cpp)
 
