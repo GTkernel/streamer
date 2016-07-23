@@ -22,7 +22,7 @@ public:
   ~GstVideoCapture();
   cv::Mat GetFrame();
   cv::Size GetFrameSize();
-  bool CreatePipeline(std::string rstp_uri);
+  bool CreatePipeline(std::string rtsp_uri);
   void DestroyPipeline();
 private:
   cv::Size size_;
