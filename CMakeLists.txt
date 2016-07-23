@@ -9,12 +9,14 @@ find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(GLIB REQUIRED gobject)
+find_package(Caffe REQUIRED)
 
 include_directories(
     src
     ${GLOG_INCLUDE_DIRS}
     ${GSTREAMER_INCLUDE_DIRS}
-    ${GSTREAMER_APP_INCLUDE_DIRS})
+    ${GSTREAMER_APP_INCLUDE_DIRS}
+    ${Caffe_INCLUDE_DIRS})
 
 set(MAIN_SOURCES apps/tx1_run_alexnet.cpp)
 
