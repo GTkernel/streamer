@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
+#include <gst/gstmemory.h>
 
 /**
  * Video capture for reading frames from GStreamer. Return frames in OpenCV BGR Mat. Internally the video capture is
@@ -17,15 +18,13 @@
  */
 class GstVideoCapture {
 public:
-  GstVideoCapture() = delete;
-  GstVideoCapture(std::string rstp_uri);
+  GstVideoCapture();
   ~GstVideoCapture();
   cv::Mat GetFrame();
   cv::Size GetFrameSize();
-private:
-  void DestroyPipeline();
-
   bool CreatePipeline(std::string rstp_uri);
+  void DestroyPipeline();
+private:
   cv::Size size_;
   std::string caps_string_;
   GstPipeline *pipeline_;

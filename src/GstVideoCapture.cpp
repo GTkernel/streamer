@@ -2,17 +2,14 @@
 // Created by Ran Xian on 7/22/16.
 //
 
-#include <gst/gstmemory.h>
 #include "GstVideoCapture.h"
 
 /**
  * \brief Initialize the capture with a uri. Only supports rstp protocol.
  */
-GstVideoCapture::GstVideoCapture(std::string rstp_uri):
+GstVideoCapture::GstVideoCapture():
   appsink_(NULL),
   pipeline_(NULL) {
-  CHECK(rstp_uri.substr(7) == "rstp://") << "Streaming protocol other than rstp is not supported";
-  CreatePipeline(rstp_uri);
 }
 
 GstVideoCapture::~GstVideoCapture() {
@@ -67,6 +64,8 @@ cv::Size GstVideoCapture::GetFrameSize() {
  * \return True if the pipeline is sucessfully built.
  */
 bool GstVideoCapture::CreatePipeline(std::string rstp_uri) {
+  CHECK(rstp_uri.substr(7) == "rstp://") << "Streaming protocol other than rstp is not supported";
+
   gchar *descr = g_strdup_printf(
     "rtspsrc location=\"rtsp://%s@camera1/cam/realmonitor?channel=1&subtype=1\" "
     "! rtph264depay ! h264parse ! omxh264dec ! videoconvert ! capsfilter caps=video/x-raw,format=(string)BGR "
@@ -104,7 +103,7 @@ bool GstVideoCapture::CreatePipeline(std::string rstp_uri) {
   GstSample *sample = gst_app_sink_pull_sample((GstAppSink *)sink);
   if (sample == NULL) {
     LOG(INFO) << "The video stream encounters EOS";
-    gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+    gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(GST_OBJECT(pipeline));
     return false;
   }
