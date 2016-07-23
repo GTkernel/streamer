@@ -7,6 +7,8 @@
 
 #include <opencv2/opencv.hpp>
 #include <string>
-#include <glob.h>
+#include <glog/logging.h>
+
+using std::string;
 
 #endif //TX1_DNN_COMMON_H

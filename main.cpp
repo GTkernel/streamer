@@ -1,5 +1,4 @@
-#include <gst/gst.h>
-#include <gst/app/gstappsink.h>
+
 #include <stdlib.h>
 #include <thread>
 #include <mutex>
