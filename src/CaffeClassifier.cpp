@@ -3,16 +3,41 @@
 //
 
 #include "CaffeClassifier.h"
+#include "Timer.h"
+
+static void get_gpus(std::vector<int>* gpus) {
+  int count = 0;
+#ifndef CPU_ONLY
+  CUDA_CHECK(cudaGetDeviceCount(&count));
+#else
+  NO_GPU;
+#endif
+  for (int i = 0; i < count; ++i) {
+    gpus->push_back(i);
+  }
+}
 
 CaffeClassifier::CaffeClassifier(const string& model_file,
                        const string& trained_file,
                        const string& mean_file,
                        const string& label_file) {
-// #ifdef CPU_ONLY
-//   caffe::Caffe::set_mode(caffe::Caffe::CPU);
-// #else
-  caffe::Caffe::set_mode(caffe::Caffe::GPU);
-// #endif
+#ifdef CPU_ONLY
+ caffe::Caffe::set_mode(caffe::Caffe::CPU);
+#else
+  std::vector<int> gpus;
+  get_gpus(&gpus);
+
+  if (gpus.size() != 0) {
+    LOG(INFO) << "Use GPU with device ID " << gpus[0];
+    caffe::Caffe::SetDevice(gpus[0]);
+    caffe::Caffe::set_mode(caffe::Caffe::GPU);
+  } else {
+    LOG(INFO) << "Use CPU.";
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  }
+
+  CHECK(gpus.size() != 0);
+#endif
 
   /* Load the network. */
   net_.reset(new caffe::Net<float,float>(model_file, caffe::TEST));
@@ -107,6 +132,7 @@ void CaffeClassifier::SetMean(const string& mean_file) {
 }
 
 std::vector<float> CaffeClassifier::Predict(const cv::Mat& img) {
+  auto begin_time = Timer::GetCurrentTime();
   caffe::Blob<float,float>* input_layer = net_->input_blobs()[0];
   input_layer->Reshape(1, num_channels_,
                        input_geometry_.height, input_geometry_.width);
@@ -118,12 +144,15 @@ std::vector<float> CaffeClassifier::Predict(const cv::Mat& img) {
 
   Preprocess(img, &input_channels);
 
+  auto begin_time2 = Timer::GetCurrentTime();
   net_->ForwardPrefilled();
+  LOG(INFO) << "Forward done in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
 
   /* Copy the output layer to a std::vector */
   caffe::Blob<float,float>* output_layer = net_->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
+  LOG(INFO) << "Predict done in " << Timer::GetTimeDiffMicroSeconds(begin_time, Timer::GetCurrentTime()) / 1000 << "ms";
   return std::vector<float>(begin, end);
 }
 

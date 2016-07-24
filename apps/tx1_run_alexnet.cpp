@@ -30,7 +30,7 @@ main (int argc, char *argv[])
     exit(1);
   }
 
-  cv::namedWindow("camera");
+//  cv::namedWindow("camera");
   while(1) {
     cv::Mat frame = cap.GetFrame();
 
@@ -39,8 +39,8 @@ main (int argc, char *argv[])
       CaffeClassifier::Prediction p = predictions[0];
       LOG(INFO) << std::fixed << std::setprecision(4) << p.second << " - \""
                 << p.first << "\"" << std::endl;
-      cv::imshow("camera", frame);
-      cv::waitKey(30);
+//      cv::imshow("camera", frame);
+//      cv::waitKey(30);
     } else {
       LOG(INFO) << "Got empty frame";
       break;
