@@ -39,7 +39,7 @@ CaffeClassifier::CaffeClassifier(const string& model_file,
   CHECK(gpus.size() != 0);
 #endif
 
-  /* Load the network. */
+  // Load the network.
   net_.reset(new caffe::Net<float,float>(model_file, caffe::TEST));
   net_->CopyTrainedLayersFrom(trained_file);
 
@@ -52,10 +52,10 @@ CaffeClassifier::CaffeClassifier(const string& model_file,
   << "Input layer should have 1 or 3 channels.";
   input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
 
-  /* Load the binaryproto mean file. */
+  // Load the binaryproto mean file.
   SetMean(mean_file);
 
-  /* Load labels. */
+  // Load labels.
   std::ifstream labels(label_file.c_str());
   CHECK(labels) << "Unable to open labels file " << label_file;
   string line;
@@ -65,6 +65,12 @@ CaffeClassifier::CaffeClassifier(const string& model_file,
   caffe::Blob<float,float>* output_layer = net_->output_blobs()[0];
   CHECK_EQ(labels_.size(), output_layer->channels())
     << "Number of labels is different from the output layer dimension.";
+
+  // Adjust input dimensions
+  input_layer->Reshape(1, num_channels_,
+                       input_geometry_.height, input_geometry_.width);
+  // Forward dimension change to all layers.
+  net_->Reshape();
 }
 
 static bool PairCompare(const std::pair<float, int>& lhs,
@@ -133,26 +139,28 @@ void CaffeClassifier::SetMean(const string& mean_file) {
 
 std::vector<float> CaffeClassifier::Predict(const cv::Mat& img) {
   auto begin_time = Timer::GetCurrentTime();
-  caffe::Blob<float,float>* input_layer = net_->input_blobs()[0];
-  input_layer->Reshape(1, num_channels_,
-                       input_geometry_.height, input_geometry_.width);
-  /* Forward dimension change to all layers. */
-  net_->Reshape();
 
   std::vector<cv::Mat> input_channels;
-  WrapInputLayer(&input_channels);
-
-  Preprocess(img, &input_channels);
 
   auto begin_time2 = Timer::GetCurrentTime();
+  WrapInputLayer(&input_channels);
+  LOG(INFO) << "WrapInputLayer done in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
+
+  begin_time2 = Timer::GetCurrentTime();
+  Preprocess(img, &input_channels);
+  LOG(INFO) << "Preprocessing done in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
+
+  begin_time2 = Timer::GetCurrentTime();
   net_->ForwardPrefilled();
   LOG(INFO) << "Forward done in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
 
   /* Copy the output layer to a std::vector */
+  begin_time2 = Timer::GetCurrentTime();
   caffe::Blob<float,float>* output_layer = net_->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
-  LOG(INFO) << "Predict done in " << Timer::GetTimeDiffMicroSeconds(begin_time, Timer::GetCurrentTime()) / 1000 << "ms";
+  LOG(INFO) << "Copied output layer in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
+  LOG(INFO) << "Whole predict done in " << Timer::GetTimeDiffMicroSeconds(begin_time, Timer::GetCurrentTime()) / 1000 << "ms";
   return std::vector<float>(begin, end);
 }
 

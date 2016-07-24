@@ -34,6 +34,7 @@ void GstVideoCapture::DestroyPipeline() {
  * \brief Get next frame from the pipeline.
  */
 cv::Mat GstVideoCapture::GetFrame() {
+  auto begin_time = Timer::GetCurrentTime();
   CHECK(appsink_ != NULL) << "GStreamer pipeline is not set up";
   GstSample *sample = gst_app_sink_pull_sample(appsink_);
   if (sample == NULL) {
@@ -50,6 +51,8 @@ cv::Mat GstVideoCapture::GetFrame() {
   gst_buffer_unmap(buffer, &map);
   gst_sample_unref(sample);
 
+  auto end_time = Timer::GetCurrentTime();
+  LOG(INFO) << "Get frame from gstreamer: " << Timer::GetTimeDiffMicroSeconds(begin_time, end_time) / 1000 << "ms";
   return frame;
 }
 

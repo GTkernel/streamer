@@ -8,6 +8,7 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <glog/logging.h>
+#include "Timer.h"
 
 using std::string;
 
