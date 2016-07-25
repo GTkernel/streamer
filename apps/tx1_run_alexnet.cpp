@@ -1,5 +1,6 @@
 #include "GstVideoCapture.h"
 #include "CaffeClassifier.h"
+#include "CaffeFp16Classifier.h"
 
 int
 main (int argc, char *argv[])
@@ -32,7 +33,7 @@ main (int argc, char *argv[])
     display = true;
   }
 
-  CaffeClassifier classifier(model_file, trained_file, mean_file, label_file);
+  CaffeFp16Classifier classifier(model_file, trained_file, mean_file, label_file);
   GstVideoCapture cap;
   if (!cap.CreatePipeline(argv[5])) {
     LOG(FATAL) << "Can't create pipeline, check camera and pipeline uri";
