@@ -11,4 +11,4 @@ To compile:
 * `make`
 
 Run:
-* `apps/tx1_run_alexnet ~/Code/caffe/models/bvlc_alexnet/deploy.prototxt ~/Code/caffe/models/bvlc_alexnet/bvlc_alexnet.caffemodel ~/Code/caffe/data/ilsvrc12/imagenet_mean.binaryproto ~/Code/caffe/data/ilsvrc12/synset_words.txt 'rtsp://***REMOVED***@camera1/cam/realmonitor?channel=1&subtype=1'`
+* `apps/tx1_run_alexnet ~/Code/caffe/models/bvlc_alexnet/deploy.prototxt ~/Code/caffe/models/bvlc_alexnet/bvlc_alexnet.caffemodel ~/Code/caffe/data/ilsvrc12/imagenet_mean.binaryproto ~/Code/caffe/data/ilsvrc12/synset_words.txt 'rtsp://user:passwd@camera1/cam/realmonitor?channel=1&subtype=1'`
