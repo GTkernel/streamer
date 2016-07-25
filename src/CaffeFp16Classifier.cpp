@@ -3,11 +3,10 @@
 //
 
 #include "CaffeFp16Classifier.h"
-#include "Timer.h"
 
 static void get_gpus(std::vector<int>* gpus) {
   int count = 0;
-#ifndef CPU_ONLY
+#ifdef ON_TEGRA
   CUDA_CHECK(cudaGetDeviceCount(&count));
 #else
   NO_GPU;
@@ -21,8 +20,8 @@ CaffeFp16Classifier::CaffeFp16Classifier(const string& model_file,
                        const string& trained_file,
                        const string& mean_file,
                        const string& label_file) {
-#ifdef CPU_ONLY
-  CHECK(false) << "Fp16 classifier can't be used in CPU mode"
+#ifndef ON_TEGRA
+  CHECK(false) << "Fp16 classifier can't be used in non-Tegra device";
   return;
 #else
   std::vector<int> gpus;
@@ -238,7 +237,7 @@ void CaffeFp16Classifier::Preprocess(const cv::Mat& img,
   /* This operation will write the separate BGR planes directly to the
    * input layer of the network because it is wrapped by the cv::Mat
    * objects in input_channels. */
-  cv::vector<cv::Mat> split_channels;
+  std::vector<cv::Mat> split_channels;
   split_channels.resize(num_channels_);
   cv::split(sample_normalized, split_channels);
 

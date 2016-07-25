@@ -13,14 +13,22 @@ target_link_libraries(tx1dnn
         ${GSTREAMER_LIBRARIES}
         ${GSTREAMER_APP_LIBRARIES}
 		${Caffe_LIBRARIES}
-		${Cnmem_LIBRARIES}
 		)
+
+if (Cnmem_FOUND)
+	target_link_libraries(tx1dnn ${Cnmem_LIBRARIES})
+endif()
 
 target_include_directories(tx1dnn PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Set Caffe compile flags
 function(add_caffe_cflags TARGET)
-	SET(CAFFE_CFLAGS "-MMD -MP -pthread -fPIC -DNDEBUG -O2 -DUSE_CUDNN -DUSE_CNMEM -DUSE_OPENCV")
+	SET(CAFFE_CFLAGS "-MMD -MP -pthread -fPIC -O2 -DUSE_OPENCV")
+
+	if (ON_TEGRA)
+		SET(CAFFE_CFLAGS "${CAFFE_CFLAGS} -DUSE_CNMEN -DUSE_CUDNN")
+	endif()
+
 	get_target_property(TEMP ${TARGET} COMPILE_FLAGS)
 	if(TEMP STREQUAL "TEMP-NOTFOUND")
 		SET(TEMP "") # set to empty string
