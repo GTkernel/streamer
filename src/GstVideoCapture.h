@@ -25,6 +25,7 @@ public:
   cv::Size GetFrameSize();
   bool CreatePipeline(std::string rtsp_uri);
   void DestroyPipeline();
+  bool IsConnected();
 
 private:
   static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);

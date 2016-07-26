@@ -57,8 +57,10 @@ main (int argc, char *argv[])
       cv::waitKey(30);
       }
     } else {
-//      LOG(INFO) << "Got empty frame";
-//      break;
+      if (!cap.IsConnected()) {
+        LOG(INFO) << "Video capture lost connection";
+        break;
+      }
     }
   }
 

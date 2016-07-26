@@ -3,7 +3,6 @@
 //
 
 #include "CaffeClassifier.h"
-#include "Timer.h"
 
 static void get_gpus(std::vector<int>* gpus) {
   int count = 0;
@@ -138,29 +137,36 @@ void CaffeClassifier::SetMean(const string& mean_file) {
 }
 
 std::vector<float> CaffeClassifier::Predict(const cv::Mat& img) {
-  auto begin_time = Timer::GetCurrentTime();
+  Timer timerTotal;
+  timerTotal.Start();
 
+  Timer timer;
   std::vector<cv::Mat> input_channels;
 
-  auto begin_time2 = Timer::GetCurrentTime();
+  timer.Start();
   WrapInputLayer(&input_channels);
-  LOG(INFO) << "WrapInputLayer done in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
+  timer.Stop();
+  LOG(INFO) << "WrapInputLayer done in " << timer.ElaspedMsec() << "ms";
 
-  begin_time2 = Timer::GetCurrentTime();
+  timer.Start();
   Preprocess(img, &input_channels);
-  LOG(INFO) << "Preprocessing done in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
+  timer.Stop();
+  LOG(INFO) << "Preprocessing done in " << timer.ElaspedMsec() << "ms";
 
-  begin_time2 = Timer::GetCurrentTime();
+  timer.Start();
   net_->ForwardPrefilled();
-  LOG(INFO) << "Forward done in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
+  timer.Stop();
+  LOG(INFO) << "Forward done in " << timer.ElaspedMsec() << "ms";
 
   /* Copy the output layer to a std::vector */
-  begin_time2 = Timer::GetCurrentTime();
+  timer.Start();
   caffe::Blob<float,float>* output_layer = net_->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
-  LOG(INFO) << "Copied output layer in " << Timer::GetTimeDiffMicroSeconds(begin_time2, Timer::GetCurrentTime()) / 1000 << "ms";
-  LOG(INFO) << "Whole predict done in " << Timer::GetTimeDiffMicroSeconds(begin_time, Timer::GetCurrentTime()) / 1000 << "ms";
+  timer.Stop();
+  timerTotal.Stop();
+  LOG(INFO) << "Copied output layer in " << timer.ElaspedMsec() << "ms";
+  LOG(INFO) << "Whole predict done in " << timerTotal.ElaspedMsec() << "ms";
   return std::vector<float>(begin, end);
 }
 

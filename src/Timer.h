@@ -13,27 +13,39 @@
 class Timer {
 public:
   typedef std::chrono::time_point<std::chrono::system_clock> TimerTimePoint;
-  /**
-   * \brief Get current system time point.
-   * @return
-   */
-  static inline TimerTimePoint GetCurrentTime() {
-    std::chrono::system_clock::now();
-    return std::chrono::system_clock::now();
-  }
-  /**
-   * \brief Get difference between two time points in mircoseconds.
-   * @param end_time
-   * @param start_time
-   * @return
-   */
-  static inline double GetTimeDiffMicroSeconds(
-    const TimerTimePoint &begin_time,
-    const TimerTimePoint &end_time) {
 
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end_time - begin_time);
-    return elapsed.count();
+public:
+  Timer() {}
+
+  /**
+   * \brief Start the timer.
+   */
+  void Start() {
+    start_time_ = std::chrono::system_clock::now();
   }
+
+  /**
+   * \brief Stop the timer.
+   */
+  void Stop() {
+    stop_time_ = std::chrono::system_clock::now();
+  }
+
+  double ElaspedMsec() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(stop_time_ - start_time_).count();
+  }
+
+  double ElaspedSec() {
+    return std::chrono::duration_cast<std::chrono::seconds>(stop_time_ - start_time_).count();
+  }
+
+  double ElapsedMicroSec() {
+    return std::chrono::duration_cast<std::chrono::microseconds>(stop_time_ - start_time_).count();
+  }
+
+private:
+  TimerTimePoint start_time_;
+  TimerTimePoint stop_time_;
 };
 
 #endif //TX1DNN_TIMER_H

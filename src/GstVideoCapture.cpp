@@ -96,14 +96,16 @@ void GstVideoCapture::DestroyPipeline() {
  * \brief Get next frame from the pipeline.
  */
 cv::Mat GstVideoCapture::GetFrame() {
-  auto begin_time = Timer::GetCurrentTime();
+  Timer timer;
+  timer.Start();
   if (!connected_ || frames_.size() == 0) {
     return cv::Mat();
   } else {
     std::lock_guard<std::mutex> guard(capture_lock_);
     cv::Mat frame = frames_.front();
     frames_.pop_front();
-    LOG(INFO) << "Get frame in " << Timer::GetTimeDiffMicroSeconds(begin_time, Timer::GetCurrentTime()) / 1000 << " ms";
+    timer.Stop();
+    LOG(INFO) << "Get frame in " << timer.ElaspedMsec() << " ms";
     return frame;
   }
 }
@@ -229,4 +231,8 @@ void GstVideoCapture::CheckBus() {
     }
     gst_message_unref(msg);
   }
+}
+
+bool GstVideoCapture::IsConnected() {
+  return connected_;
 }
