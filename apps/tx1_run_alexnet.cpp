@@ -57,8 +57,8 @@ main (int argc, char *argv[])
       cv::waitKey(30);
       }
     } else {
-      LOG(INFO) << "Got empty frame";
-      break;
+//      LOG(INFO) << "Got empty frame";
+//      break;
     }
   }
 

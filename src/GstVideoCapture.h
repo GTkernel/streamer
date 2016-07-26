@@ -10,6 +10,7 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 #include <gst/gstmemory.h>
+#include <mutex>
 
 /**
  * Video capture for reading frames from GStreamer. Return frames in OpenCV BGR Mat. Internally the video capture is
@@ -24,11 +25,23 @@ public:
   cv::Size GetFrameSize();
   bool CreatePipeline(std::string rtsp_uri);
   void DestroyPipeline();
+
+private:
+  static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);
+
+private:
+  void CheckBuffer();
+  void CheckBus();
+
 private:
   cv::Size size_;
   std::string caps_string_;
   GstPipeline *pipeline_;
   GstAppSink *appsink_;
+  GstBus *bus_;
+  std::mutex capture_lock_;
+  std::deque<cv::Mat> frames_;
+  bool connected_;
 };
 
 
