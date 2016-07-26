@@ -35,6 +35,7 @@ main (int argc, char *argv[])
 
   CaffeFp16Classifier classifier(model_file, trained_file, mean_file, label_file);
   GstVideoCapture cap;
+  cap.SetTargetFrameSize(classifier.GetInputGeometry());
   if (!cap.CreatePipeline(argv[5])) {
     LOG(FATAL) << "Can't create pipeline, check camera and pipeline uri";
     exit(1);
@@ -45,7 +46,7 @@ main (int argc, char *argv[])
   }
 
   while(1) {
-    cv::Mat frame = cap.GetFrame();
+    cv::Mat frame = cap.TryGetFrame();
 
     if (!frame.empty()) {
       std::vector<CaffeClassifier::Prediction> predictions = classifier.Classify(frame, 1);
@@ -56,11 +57,10 @@ main (int argc, char *argv[])
       cv::imshow("camera", frame);
       cv::waitKey(30);
       }
-    } else {
-      if (!cap.IsConnected()) {
-        LOG(INFO) << "Video capture lost connection";
-        break;
-      }
+    }
+    if (!cap.IsConnected()) {
+      LOG(INFO) << "Video capture lost connection";
+      break;
     }
   }
 

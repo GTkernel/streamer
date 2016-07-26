@@ -21,8 +21,11 @@ class GstVideoCapture {
 public:
   GstVideoCapture();
   ~GstVideoCapture();
+  cv::Mat TryGetFrame();
   cv::Mat GetFrame();
-  cv::Size GetFrameSize();
+  cv::Size GetOriginalFrameSize();
+  cv::Size GetTargetFrameSize();
+  void SetTargetFrameSize(const cv::Size &target_size);
   bool CreatePipeline(std::string rtsp_uri);
   void DestroyPipeline();
   bool IsConnected();
@@ -35,7 +38,8 @@ private:
   void CheckBus();
 
 private:
-  cv::Size size_;
+  cv::Size original_size_;
+  cv::Size target_size_;
   std::string caps_string_;
   GstPipeline *pipeline_;
   GstAppSink *appsink_;

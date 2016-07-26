@@ -8,6 +8,13 @@
 /************************
 * GStreamer callbacks ***
 ************************/
+/**
+ * \brief Callback when there is new sample on the pipleline. First check the buffer for new samples, then check the
+ * bus for new message.
+ * \param appsink App sink that has has available sample.
+ * \param data User defined data pointer.
+ * \return Always return OK as we want to continuously listen for new samples.
+ */
 GstFlowReturn GstVideoCapture::NewSampleCB(GstAppSink *appsink, gpointer data) {
   CHECK(data != NULL) << "Callback is not passed in a capture";
   GstVideoCapture *capture = (GstVideoCapture *)data;
@@ -17,6 +24,9 @@ GstFlowReturn GstVideoCapture::NewSampleCB(GstAppSink *appsink, gpointer data) {
   return GST_FLOW_OK;
 }
 
+/**
+ * \brief Pull the buffer to get frames.
+ */
 void GstVideoCapture::CheckBuffer() {
   if (!connected_) {
     LOG(INFO) << "Not connected";
@@ -47,21 +57,46 @@ void GstVideoCapture::CheckBuffer() {
     return;
   }
 
-  CHECK_NE(size_.area(), 0) << "Capture should have got frame size information but not";
-  cv::Mat frame(size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
+  CHECK_NE(original_size_.area(), 0) << "Capture should have got frame size information but not";
+  cv::Mat frame(original_size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
+  cv::Mat resized_frame;
+  // Resize the frame if target_size_ is set. The benefit of doing this is because frame processing is not in the main
+  // thread, so offload some of the simple processing to the capture will help reduce latency. Ultimately Might also
+  // consider if we can make the pipeline directly emit frames that we want.
+  if (target_size_.area() != 0)
+    cv::resize(frame, resized_frame, target_size_);
+  else
+    resized_frame = frame;
 
   // Push the frame
   {
     std::lock_guard<std::mutex> guard(capture_lock_);
     frames_.clear();
-    frames_.push_back(frame);
+    frames_.push_back(resized_frame);
   }
 
   gst_buffer_unmap(buffer, &map);
   gst_sample_unref(sample);
 }
+
 /**
- * \brief Initialize the capture with a uri. Only supports rtsp protocol.
+ * \brief Check the buffer to get new messages.
+ */
+void GstVideoCapture::CheckBus() {
+  while (true) {
+    GstMessage *msg = gst_bus_pop(bus_);
+    if (msg == NULL) {
+      break;
+    }
+    gst_message_unref(msg);
+  }
+}
+
+/**********************
+ * GstVideoCapture code
+ **********************/
+/**
+ * \brief Initialize the capture with a uri. Only supports rtsp protocol now.
  */
 GstVideoCapture::GstVideoCapture():
   appsink_(NULL),
@@ -76,9 +111,19 @@ GstVideoCapture::~GstVideoCapture() {
 }
 
 /**
+ * \brief Check if the video capture is connected to the pipeline. If the video capture is not connected, app should not
+ * pull from the capture anymore.
+ * \return True if connected. False otherwise.
+ */
+bool GstVideoCapture::IsConnected() {
+  return connected_;
+}
+
+/**
  * \brief Destroy the pipeline, free any resources allocated.
  */
 void GstVideoCapture::DestroyPipeline() {
+  std::lock_guard<std::mutex> guard(this->capture_lock_);
   if (!connected_)
     return;
 
@@ -93,9 +138,33 @@ void GstVideoCapture::DestroyPipeline() {
 }
 
 /**
- * \brief Get next frame from the pipeline.
+ * \brief Get next frame from the pipeline, busy wait (which should be improved) until frame available.
  */
 cv::Mat GstVideoCapture::GetFrame() {
+  Timer timer;
+  timer.Start();
+  if (!connected_)
+    return cv::Mat();
+
+  while (connected_ && frames_.size() == 0)
+    ;
+
+  if (!connected_)
+    return cv::Mat();
+
+  std::lock_guard<std::mutex> guard(capture_lock_);
+  cv::Mat frame = frames_.front();
+  frames_.pop_front();
+  timer.Stop();
+  LOG(INFO) << "Get frame in " << timer.ElaspedMsec() << " ms";
+  return frame;
+}
+
+/**
+ * \brief Try to get next frame from the pipeline and does not block.
+ * \return The frame currently in the frames queue. An empty Mat if no frame immediately available.
+ */
+cv::Mat GstVideoCapture::TryGetFrame() {
   Timer timer;
   timer.Start();
   if (!connected_ || frames_.size() == 0) {
@@ -110,9 +179,26 @@ cv::Mat GstVideoCapture::GetFrame() {
   }
 }
 
+/**
+ * \brief Get the size of original frame.
+ */
+cv::Size GstVideoCapture::GetOriginalFrameSize() {
+  return original_size_;
+}
 
-cv::Size GstVideoCapture::GetFrameSize() {
-  return size_;
+/**
+ * \brief Get the size of target frame. This is set by user.
+ */
+cv::Size GstVideoCapture::GetTargetFrameSize() {
+  return target_size_;
+}
+
+/**
+ * \brief Set the size of target frame.
+ */
+void GstVideoCapture::SetTargetFrameSize(const cv::Size &target_size) {
+  CHECK(connected_ == false) << "The target frame size should be set before the pipeline is connected";
+  target_size_ = target_size;
 }
 
 /**
@@ -188,7 +274,7 @@ bool GstVideoCapture::CreatePipeline(std::string rtsp_uri) {
     return false;
   }
 
-  this->size_ = cv::Size(width, height);
+  this->original_size_ = cv::Size(width, height);
   this->caps_string_ = std::string(caps_str);
   this->pipeline_ = (GstPipeline *)pipeline;
   this->appsink_ = sink;
@@ -221,18 +307,4 @@ bool GstVideoCapture::CreatePipeline(std::string rtsp_uri) {
   LOG(INFO) << "Video caps: " << caps_string_;
 
   return true;
-}
-
-void GstVideoCapture::CheckBus() {
-  while (true) {
-    GstMessage *msg = gst_bus_pop(bus_);
-    if (msg == NULL) {
-      break;
-    }
-    gst_message_unref(msg);
-  }
-}
-
-bool GstVideoCapture::IsConnected() {
-  return connected_;
 }

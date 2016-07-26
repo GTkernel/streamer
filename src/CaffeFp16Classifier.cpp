@@ -51,6 +51,7 @@ CaffeFp16Classifier::CaffeFp16Classifier(const string& model_file,
   CHECK(num_channels_ == 3 || num_channels_ == 1)
     << "Input layer should have 1 or 3 channels.";
   input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
+  LOG(INFO) << "Caffe net input geometry is: " << input_geometry_;
 
   // Load the binaryproto mean file.
   SetMean(mean_file);
@@ -256,4 +257,8 @@ void CaffeFp16Classifier::Preprocess(const cv::Mat& img,
   CHECK(reinterpret_cast<float16*>(input_channels->at(0))
         == net_->input_blobs()[0]->cpu_data())
   << "Input channels are not wrapping the input layer of the network.";
+}
+
+cv::Size CaffeFp16Classifier::GetInputGeometry() {
+  return input_geometry_;
 }

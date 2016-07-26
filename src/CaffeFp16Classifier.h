@@ -24,6 +24,7 @@ public:
              const string& mean_file,
              const string& label_file);
   std::vector<Prediction> Classify(const cv::Mat& img, int N = 5);
+  cv::Size GetInputGeometry();
 
 private:
   void SetMean(const string& mean_file);
