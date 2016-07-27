@@ -52,6 +52,8 @@ CaffeFp16Classifier::CaffeFp16Classifier(const string& model_file,
     << "Input layer should have 1 or 3 channels.";
   input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
   LOG(INFO) << "Caffe net input geometry is: " << input_geometry_;
+  LOG(INFO) << "Caffe net input blob shape: " << input_layer->shape_string();
+  input_layer->shape_string();
 
   // Load the binaryproto mean file.
   SetMean(mean_file);

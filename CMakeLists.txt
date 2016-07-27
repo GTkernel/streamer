@@ -10,6 +10,7 @@ find_package(Glog REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(GLIB REQUIRED gobject)
 find_package(Caffe REQUIRED)
+find_package(GIE)
 
 # Determine platform
 if (EXISTS /var/libopencv4tegra-repo)
@@ -37,6 +38,7 @@ include_directories(
     ${GSTREAMER_INCLUDE_DIRS}
     ${GSTREAMER_APP_INCLUDE_DIRS}
     ${Caffe_INCLUDE_DIRS}
+    ${GIE_INCLUDE_DIRS} # Include GIE for development convenience
 )
 
 if (CUDA_FOUND)

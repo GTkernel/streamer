@@ -1,22 +1,25 @@
 include_directories(${Caffe_INCLUDE_DIRS}
         /usr/local/include)
 
-set(TX1DNN_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h CaffeClassifier.cpp CaffeClassifier.h Timer.h CaffeFp16Classifier.cpp CaffeFp16Classifier.h)
+set(TX1DNN_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h CaffeClassifier.cpp CaffeClassifier.h Timer.h CaffeFp16Classifier.cpp CaffeFp16Classifier.h GIEInferer.cpp GIEInferer.h Type.h)
 
 add_library(tx1dnn ${TX1DNN_SOURCE_FILES})
 
 target_link_libraries(tx1dnn
-        ${GLIB_LIBRARIES}
-        ${GLIB_GOBJECT_LIBRARIES}
-        ${OpenCV_LIBRARIES}
-        ${GLOG_LIBRARIES}
-        ${GSTREAMER_LIBRARIES}
-        ${GSTREAMER_APP_LIBRARIES}
-		${Caffe_LIBRARIES}
-		)
+		${GLIB_LIBRARIES}
+		${GLIB_GOBJECT_LIBRARIES}
+		${OpenCV_LIBRARIES}
+		${GLOG_LIBRARIES}
+		${GSTREAMER_LIBRARIES}
+		${GSTREAMER_APP_LIBRARIES}
+		${Caffe_LIBRARIES})
 
 if (Cnmem_FOUND)
 	target_link_libraries(tx1dnn ${Cnmem_LIBRARIES})
+endif()
+
+if (ON_TEGRA)
+	target_link_libraries(tx1dnn ${GIE_LIBRARIES})
 endif()
 
 target_include_directories(tx1dnn PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
