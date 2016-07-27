@@ -168,13 +168,13 @@ std::vector<float> CaffeFp16Classifier::Predict(const cv::Mat& img) {
   const float16* end = begin + output_layer->channels();
   timer.Stop();
   timerTotal.Stop();
-  LOG(INFO) << "Copied output layer in " << timer.ElaspedMsec() << "ms";
-  LOG(INFO) << "Whole predict done in " << timerTotal.ElaspedMsec() << "ms";
 
   std::vector<float> scores;
   for (const float16* ptr = begin; ptr != end; ptr++) {
     scores.push_back(caffe::Get<float>(*ptr));
   }
+  LOG(INFO) << "Copied output layer in " << timer.ElaspedMsec() << "ms";
+  LOG(INFO) << "Whole predict done in " << timerTotal.ElaspedMsec() << "ms";
   return scores;
 }
 
