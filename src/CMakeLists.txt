@@ -1,7 +1,7 @@
 include_directories(${Caffe_INCLUDE_DIRS}
         /usr/local/include)
 
-set(TX1DNN_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h CaffeClassifier.cpp CaffeClassifier.h Timer.h CaffeFp16Classifier.cpp CaffeFp16Classifier.h GIEInferer.cpp GIEInferer.h Type.h)
+set(TX1DNN_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h Timer.h GIEInferer.cpp GIEInferer.h Type.h GIEClassifier.cpp GIEClassifier.h)
 
 add_library(tx1dnn ${TX1DNN_SOURCE_FILES})
 
@@ -12,7 +12,7 @@ target_link_libraries(tx1dnn
 		${GLOG_LIBRARIES}
 		${GSTREAMER_LIBRARIES}
 		${GSTREAMER_APP_LIBRARIES}
-		${Caffe_LIBRARIES})
+		)
 
 if (Cnmem_FOUND)
 	target_link_libraries(tx1dnn ${Cnmem_LIBRARIES})

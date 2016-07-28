@@ -15,12 +15,10 @@ using namespace nvcaffeparser1;
 /**
  * \brief Class for GIE (GPU Inference Engine)
  */
-template<typename InputType, typename OutputType>
+template<typename DType>
 class GIEInferer {
  public:
   typedef std::stringstream GIEModelStreamType;
-  typedef InputType input_type;
-  typedef OutputType output_type;
 
   class Logger : public ILogger {
    public:
@@ -37,7 +35,7 @@ class GIEInferer {
              const string &output_blob_name_);
   void CreateEngine();
   void DestroyEngine();
-  void DoInference(input_type *input, output_type *output);
+  void DoInference(DType *input, DType *output);
   Shape GetInputShape();
   Shape GetOutputShape();
 
@@ -60,8 +58,8 @@ class GIEInferer {
   IRuntime *infer_runtime_;
   ICudaEngine *engine_;
   GIEModelStreamType gie_model_stream_;
-  void *d_input_buffer;
-  void *d_output_buffer;
+  DType *d_input_buffer;
+  DType *d_output_buffer;
 };
 
 

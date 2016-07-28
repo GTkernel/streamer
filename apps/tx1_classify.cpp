@@ -1,3 +1,7 @@
+//
+// Created by Ran Xian on 7/28/16.
+//
+
 #include "GstVideoCapture.h"
 //#include "CaffeClassifier.h"
 #include "GIEClassifier.h"
@@ -9,16 +13,15 @@ main (int argc, char *argv[])
   if (argc != 6 && argc != 7) {
     std::cout << "Usage: " << argv[0]
               << " deploy.prototxt network.caffemodel"
-              << " mean.binaryproto labels.txt RTSPURI"
+              << " mean.binaryproto labels.txt IMAGE"
               << " display" << std::endl;
     std::cout << "";
-    std::cout << "  RTSPURI: uri to the camera. e.g rtsp://xxx" << std::endl;
+    std::cout << "  IMAGE: image to be classified" << std::endl;
     std::cout << "  display: enable display or not, must have a X window" << std::endl;
     exit(1);
   }
 
   // Set up
-  gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
@@ -29,6 +32,7 @@ main (int argc, char *argv[])
   string trained_file = argv[2];
   string mean_file    = argv[3];
   string label_file   = argv[4];
+  string image_file   = argv[5];
   bool display = false;
   if (argc == 7) {
     display = true;
@@ -36,37 +40,27 @@ main (int argc, char *argv[])
 
 //  CaffeFp16Classifier classifier(model_file, trained_file, mean_file, label_file);
   GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
-  GstVideoCapture cap;
 //  cap.SetTargetFrameSize(classifier.GetInputGeometry());
-  if (!cap.CreatePipeline(argv[5])) {
-    LOG(FATAL) << "Can't create pipeline, check camera and pipeline uri";
-    exit(1);
+
+  cv::Mat image = cv::imread(image_file, CV_LOAD_IMAGE_COLOR);
+
+  if (!image.data) {
+    LOG(ERROR) << "Can't read image";
+    return 1;
   }
 
   if (display) {
-    cv::namedWindow("camera");
+    cv::namedWindow("image");
+    cv::imshow("image", image);
   }
 
-  while(1) {
-    cv::Mat frame = cap.TryGetFrame();
-
-    if (!frame.empty()) {
-      std::vector<GIEClassifier::Prediction> predictions = classifier.Classify(frame, 1);
-      GIEClassifier::Prediction p = predictions[0];
-      LOG(INFO) << std::fixed << std::setprecision(4) << p.second << " - \""
-                << p.first << "\"" << std::endl;
-      if (display) {
-      cv::imshow("camera", frame);
-      cv::waitKey(30);
-      }
-    }
-    if (!cap.IsConnected()) {
-      LOG(INFO) << "Video capture lost connection";
-      break;
-    }
+  std::vector<GIEClassifier::Prediction> predictions = classifier.Classify(image, 5);
+  for (int i = 0; i < 5; i++) {
+    GIEClassifier::Prediction p = predictions[i];
+    LOG(INFO) << "Rank " << i << ": " << p.second << " - \""  << p.first << "\"";
   }
 
-  cap.DestroyPipeline();
+  cv::destroyAllWindows();
 
   return 0;
 }

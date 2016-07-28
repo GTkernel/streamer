@@ -5,8 +5,8 @@
 #include "GIEInferer.h"
 #include <cuda_runtime_api.h>
 
-template<typename InputType, typename OutputType>
-GIEInferer<InputType, OutputType>::GIEInferer(const string &deploy_file, const string &model_file, const string &input_blob_name, const string &output_blob_name):
+template<typename DType>
+GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_file, const string &input_blob_name, const string &output_blob_name):
     deploy_file_(deploy_file),
     model_file_(model_file),
     input_blob_name_(input_blob_name),
@@ -15,7 +15,7 @@ GIEInferer<InputType, OutputType>::GIEInferer(const string &deploy_file, const s
     engine_(nullptr),
     d_input_buffer(nullptr),
     d_output_buffer(nullptr) {
-  if (sizeof(input_type) == 16 || sizeof(output_type) == 16) {
+  if (sizeof(DType) == 16 || sizeof(DType) == 16) {
     IBuilder *builder = createInferBuilder(logger_);
     bool supportFp16 = builder->plaformHasFastFp16();
     builder->destroy();
@@ -28,8 +28,8 @@ GIEInferer<InputType, OutputType>::GIEInferer(const string &deploy_file, const s
  * \param severity
  * \param msg
  */
-template<typename InputType, typename OutputType>
-void GIEInferer<InputType, OutputType>::Logger::log(ILogger::Severity severity,
+template<typename DType>
+void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
                                                     const char *msg) {
   switch (severity) {
     case Severity::kERROR:
@@ -55,8 +55,8 @@ void GIEInferer<InputType, OutputType>::Logger::log(ILogger::Severity severity,
  * \param max_batch_size Maximum batch size.
  * \param gie_model_stream The stream to GIE model.
  */
-template<typename InputType, typename OutputType>
-void GIEInferer<InputType, OutputType>::CaffeToGIEModel(const string &deploy_file,
+template<typename DType>
+void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
                                  const string &model_file,
                                  const std::vector<string> &outputs,
                                  unsigned int max_batch_size,
@@ -70,7 +70,7 @@ void GIEInferer<InputType, OutputType>::CaffeToGIEModel(const string &deploy_fil
 
   // Determine data type
   bool useFp16 = builder->plaformHasFastFp16();
-  LOG(INFO) << "GIE use FP16: " << useFp16 ? "YES" : "NO";
+  LOG(INFO) << "GIE use FP16: " << (useFp16 ? "YES" : "NO");
 
   // Get blob:tensor name mappings
   DataType model_data_type = useFp16 ? DataType::kHALF : DataType::kFLOAT;
@@ -105,11 +105,13 @@ void GIEInferer<InputType, OutputType>::CaffeToGIEModel(const string &deploy_fil
   builder->destroy();
 }
 
-template<typename InputType, typename OutputType>
-void GIEInferer<InputType, OutputType>::CreateEngine() {
+template<typename DType>
+void GIEInferer<DType>::CreateEngine() {
   gie_model_stream_.seekg(0, gie_model_stream_.beg);
 
   CaffeToGIEModel(deploy_file_, model_file_, {output_blob_name_}, BATCH_SIZE, gie_model_stream_);
+
+  LOG(INFO) << "Success: Caffe model tranformed to GIE model";
 
   // Create an engine
   infer_runtime_ = createInferRuntime(logger_);
@@ -125,15 +127,18 @@ void GIEInferer<InputType, OutputType>::CreateEngine() {
   input_shape_ = Shape(input_dims.c, input_dims.w, input_dims.h);
   output_shape_ = Shape(output_dims.c, output_dims.w, output_dims.h);
 
-  input_size_ = BATCH_SIZE * input_shape_.Volumn() * sizeof(InputType);
-  output_size_ = BATCH_SIZE * output_shape_.Volumn() * sizeof(OutputType);
+  LOG(INFO) << "Input dimension is " << input_shape_.width << "x" << input_shape_.height << "x" << input_shape_.channel;
+  LOG(INFO) << "Output dimension is " << output_shape_.width << "x" << output_shape_.height << "x" << output_shape_.channel;
 
-  CHECK(cudaMalloc(d_input_buffer, input_size_)) << "Can't malloc device input buffer";
-  CHECK(cudaMalloc(d_output_buffer, output_size_)) << "Can't malloc device output buffer";
+  input_size_ = BATCH_SIZE * input_shape_.Volumn() * sizeof(DType);
+  output_size_ = BATCH_SIZE * output_shape_.Volumn() * sizeof(DType);
+
+  CHECK_EQ(cudaMalloc((void **)(&d_input_buffer), input_size_), cudaSuccess) << "Can't malloc device input buffer";
+  CHECK_EQ(cudaMalloc((void **)(&d_output_buffer), output_size_), cudaSuccess) << "Can't malloc device output buffer";
 }
 
-template<typename InputType, typename OutputType>
-void GIEInferer<InputType, OutputType>::DoInference(input_type *input, output_type *output) {
+template<typename DType>
+void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   IExecutionContext *context = engine_->createExecutionContext();
   CHECK(context != nullptr) << "GIE error, can't create context";
   CHECK(input != nullptr) << "Input is invalid: nullptr";
@@ -143,33 +148,36 @@ void GIEInferer<InputType, OutputType>::DoInference(input_type *input, output_ty
   CHECK(engine_->getNbBindings() == 2);
 
   cudaStream_t stream;
-  CHECK(cudaStreamCreate(&stream)) << "CUDA error, can't create cuda stream";
+  CHECK_EQ(cudaStreamCreate(&stream), cudaSuccess) << "CUDA error, can't create cuda stream";
 
   // DMA the input to the GPU, execute the batch asynchronously, and DMA it back
-  CHECK(cudaMemcpyAsync(d_input_buffer, input, input_size_, cudaMemcpyHostToDevice, stream)) << "CUDA error, can't async memcpy input to device";
-  CHECK(cudaMemcpyAsync(output, d_output_buffer, output_size_, cudaMemcpyDeviceToHost, stream)) << "CUDA error, can't async memcpy to output from device";
+  CHECK_EQ(cudaMemcpyAsync(d_input_buffer, input, input_size_, cudaMemcpyHostToDevice, stream), cudaSuccess) << "CUDA error, can't async memcpy input to device";
+  CHECK_EQ(cudaMemcpyAsync(output, d_output_buffer, output_size_, cudaMemcpyDeviceToHost, stream), cudaSuccess) << "CUDA error, can't async memcpy to output from device";
   cudaStreamSynchronize(stream);
 
   cudaStreamDestroy(stream);
   context->destroy();
 }
 
-template<typename InputType, typename OutputType>
-void GIEInferer<InputType, OutputType>::DestroyEngine() {
+template<typename DType>
+void GIEInferer<DType>::DestroyEngine() {
   engine_->destroy();
   engine_ = nullptr;
   infer_runtime_->destroy();
   infer_runtime_ = nullptr;
-  CHECK(cudaFree(d_input_buffer)) << "Can't free device input buffer";
-  CHECK(cudaFree(d_output_buffer)) << "Can't free device output buffer";
+  CHECK_EQ(cudaFree(d_input_buffer), cudaSuccess) << "Can't free device input buffer";
+  CHECK_EQ(cudaFree(d_output_buffer), cudaSuccess) << "Can't free device output buffer";
 }
 
-template<typename InputType, typename OutputType>
-Shape GIEInferer<InputType, OutputType>::GetInputShape() {
+template<typename DType>
+Shape GIEInferer<DType>::GetInputShape() {
   return input_shape_;
 }
 
-template<typename InputType, typename OutputType>
-Shape GIEInferer<InputType, OutputType>::GetOutputShape() {
+template<typename DType>
+Shape GIEInferer<DType>::GetOutputShape() {
   return output_shape_;
 }
+
+template class GIEInferer<float>;
+template class GIEInferer<float16>;
