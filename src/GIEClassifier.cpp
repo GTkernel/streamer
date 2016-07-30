@@ -3,95 +3,7 @@
 //
 
 #include "GIEClassifier.h"
-#include <cuda_fp16.h>
-#include "fp16_emu.h"
-#include <fstream>
-
-half cpu_float2half_rn(float f)
-{
-  half ret;
-
-  unsigned x = *((int*)(void*)(&f));
-  unsigned u = (x & 0x7fffffff), remainder, shift, lsb, lsb_s1, lsb_m1;
-  unsigned sign, exponent, mantissa;
-
-  // Get rid of +NaN/-NaN case first.
-  if (u > 0x7f800000) {
-    ret.x = 0x7fffU;
-    return ret;
-  }
-
-  sign = ((x >> 16) & 0x8000);
-
-  // Get rid of +Inf/-Inf, +0/-0.
-  if (u > 0x477fefff) {
-    ret.x = sign | 0x7c00U;
-    return ret;
-  }
-  if (u < 0x33000001) {
-    ret.x = (sign | 0x0000);
-    return ret;
-  }
-
-  exponent = ((u >> 23) & 0xff);
-  mantissa = (u & 0x7fffff);
-
-  if (exponent > 0x70) {
-    shift = 13;
-    exponent -= 0x70;
-  } else {
-    shift = 0x7e - exponent;
-    exponent = 0;
-    mantissa |= 0x800000;
-  }
-  lsb = (1 << shift);
-  lsb_s1 = (lsb >> 1);
-  lsb_m1 = (lsb - 1);
-
-  // Round to nearest even.
-  remainder = (mantissa & lsb_m1);
-  mantissa >>= shift;
-  if (remainder > lsb_s1 || (remainder == lsb_s1 && (mantissa & 0x1))) {
-    ++mantissa;
-    if (!(mantissa & 0x3ff)) {
-      ++exponent;
-      mantissa = 0;
-    }
-  }
-
-  ret.x = (sign | (exponent << 10) | mantissa);
-
-  return ret;
-}
-
-float cpu_half2float(half h)
-{
-  unsigned sign = ((h.x >> 15) & 1);
-  unsigned exponent = ((h.x >> 10) & 0x1f);
-  unsigned mantissa = ((h.x & 0x3ff) << 13);
-
-  if (exponent == 0x1f) {  /* NaN or Inf */
-    mantissa = (mantissa ? (sign = 0, 0x7fffff) : 0);
-    exponent = 0xff;
-  } else if (!exponent) {  /* Denorm or Zero */
-    if (mantissa) {
-      unsigned int msb;
-      exponent = 0x71;
-      do {
-        msb = (mantissa & 0x400000);
-        mantissa <<= 1;  /* normalize */
-        --exponent;
-      } while (!msb);
-      mantissa &= 0x7fffff;  /* 1.mantissa is implicit */
-    }
-  } else {
-    exponent += 0x70;
-  }
-
-  int temp = ((sign << 31) | (exponent << 23) | mantissa);
-
-  return *((float*)((void*)&temp));
-}
+#include <caffe/caffe.hpp>
 
 GIEClassifier::GIEClassifier(const string &deploy_file,
                              const string &model_file,
@@ -113,8 +25,8 @@ GIEClassifier::GIEClassifier(const string &deploy_file,
     labels_.push_back(string(line));
 
   // Allocate input data and output data
-  input_data_ = new float16[inferer_.GetInputShape().Volumn()];
-  output_data_ = new float16[inferer_.GetOutputShape().Volumn()];
+  input_data_ = new float[inferer_.GetInputShape().Volumn()];
+  output_data_ = new float[inferer_.GetOutputShape().Volumn()];
 }
 
 GIEClassifier::~GIEClassifier() {
@@ -126,18 +38,6 @@ GIEClassifier::~GIEClassifier() {
 static bool PairCompare(const std::pair<float, int>& lhs,
                         const std::pair<float, int>& rhs) {
   return lhs.first > rhs.first;
-}
-
-/**
- * Convert float data to half precision float
- * @param src The host source of float data to be converted.
- * @param dst The host destination to store the converted half precision float.
- */
-static void float2half(float *src, float16 *dst, int n) {
-  LOG(INFO) << "Copy from float:" << std::hex << src << "to float16:" << std::hex << dst << " of " << n << " elements";
-  for (int i = 0; i < n; i++) {
-    dst[i] = cpu_float2half_rn(src[i]);
-  }
 }
 
 static std::vector<int> Argmax(const std::vector<float>& v, int N) {
@@ -171,20 +71,18 @@ std::vector<GIEClassifier::Prediction> GIEClassifier::Classify(const cv::Mat &im
  */
 void GIEClassifier::SetMean(const string &mean_file) {
   IBinaryProtoBlob *meanBlob = CaffeParser::parseBinaryProto(mean_file.c_str());
+  Dims4 mean_blob_dim = meanBlob->getDimensions();
   const float *data = reinterpret_cast<const float *>(meanBlob->getData());
-  float *mutable_data = new float[input_geometry_.height * input_geometry_.width * num_channels_];
-  memcpy(mutable_data, data, input_geometry_.height * input_geometry_.width * num_channels_);
+  float *mutable_data = new float[mean_blob_dim.w * mean_blob_dim.h * mean_blob_dim.c];
+  memcpy(mutable_data, data, (size_t)mean_blob_dim.w * mean_blob_dim.h * mean_blob_dim.c);
   float *mutable_data_ptr = mutable_data;
   std::vector<cv::Mat> channels;
-  LOG(INFO) << input_geometry_;
   for (int i = 0; i < num_channels_; ++i) {
     /* Extract an individual channel. */
-    cv::Mat channel(input_geometry_.height, input_geometry_.width, CV_32FC1, mutable_data_ptr);
+    cv::Mat channel(mean_blob_dim.h, mean_blob_dim.w, CV_32FC1, mutable_data_ptr);
     channels.push_back(channel);
-    mutable_data_ptr += input_geometry_.height * input_geometry_.width;
+    mutable_data_ptr += mean_blob_dim.h * mean_blob_dim.w;
   }
-  meanBlob->destroy();
-  delete[] mutable_data;
 
   /* Merge the separate channels into a single image. */
   cv::Mat mean;
@@ -194,6 +92,9 @@ void GIEClassifier::SetMean(const string &mean_file) {
    * filled with this value. */
   cv::Scalar channel_mean = cv::mean(mean);
   mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
+
+  meanBlob->destroy();
+  delete[] mutable_data;
 }
 
 std::vector<float> GIEClassifier::Predict(const cv::Mat &img) {
@@ -211,9 +112,8 @@ std::vector<float> GIEClassifier::Predict(const cv::Mat &img) {
   int output_channels = inferer_.GetOutputShape().channel;
   std::vector<float> scores;
   micro_timer.Start();
-  LOG(INFO) << "Output channel is " << output_channels;
   for (int i = 0; i < output_channels; i++) {
-    scores.push_back(cpu_half2float(output_data_[i]));
+    scores.push_back(output_data_[i]);
   }
   micro_timer.Stop();
   LOG(INFO) << "Copy output took " << micro_timer.ElaspedMsec() << " ms";
@@ -247,9 +147,10 @@ void GIEClassifier::CreateInput(const cv::Mat &img) {
 
   CHECK(split_channels.size() == num_channels_);
 
-  float16 *input_pointer = input_data_;
+  float *input_pointer = input_data_;
   for (int i = 0; i < num_channels_; i++) {
-    float2half((float *)split_channels[i].data, input_pointer, width * height);
+    memcpy(input_pointer, split_channels[i].data, (size_t)width * height * sizeof(float));
     input_pointer += width * height;
   }
+  CHECK(input_data_[0] == ((float *)split_channels[0].data)[0]);
 }

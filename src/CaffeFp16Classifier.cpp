@@ -3,6 +3,8 @@
 //
 
 #include "CaffeFp16Classifier.h"
+#include <caffe/caffe.hpp>
+
 
 static void get_gpus(std::vector<int>* gpus) {
   int count = 0;

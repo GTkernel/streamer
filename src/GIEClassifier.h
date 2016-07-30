@@ -27,13 +27,13 @@ class GIEClassifier {
   void CreateInput(const cv::Mat &img);
 
  private:
-  GIEInferer<float16> inferer_;
+  GIEInferer<float> inferer_;
   cv::Size input_geometry_;
   size_t num_channels_;
   cv::Mat mean_;
   std::vector<string> labels_;
-  float16 *input_data_;
-  float16 *output_data_;
+  float *input_data_;
+  float *output_data_;
 };
 
 #endif //TX1DNN_GIECLASSIFIER_H

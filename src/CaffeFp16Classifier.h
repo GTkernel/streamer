@@ -6,7 +6,15 @@
 #define TX1DNN_CAFFEFP16CLASSIFIER_H
 
 #undef CPU_ONLY
+#include <caffe/caffe.hpp>
 #include "common.h"
+
+#ifdef ON_MAC
+#define float16 float
+#define CAFFE_FP16_MTYPE float
+#else
+using caffe::float16;
+#endif
 
 class CaffeFp16Classifier {
 public:

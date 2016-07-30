@@ -3,7 +3,6 @@
 //
 
 #include "GstVideoCapture.h"
-//#include "CaffeClassifier.h"
 #include "GIEClassifier.h"
 #include <iomanip>
 
@@ -38,9 +37,7 @@ main (int argc, char *argv[])
     display = true;
   }
 
-//  CaffeFp16Classifier classifier(model_file, trained_file, mean_file, label_file);
   GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
-//  cap.SetTargetFrameSize(classifier.GetInputGeometry());
 
   cv::Mat image = cv::imread(image_file, CV_LOAD_IMAGE_COLOR);
 

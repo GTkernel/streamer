@@ -15,7 +15,7 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_fil
     engine_(nullptr),
     d_input_buffer(nullptr),
     d_output_buffer(nullptr) {
-  if (sizeof(DType) == 16 || sizeof(DType) == 16) {
+  if (sizeof(DType) == 16) {
     IBuilder *builder = createInferBuilder(logger_);
     bool supportFp16 = builder->plaformHasFastFp16();
     builder->destroy();
@@ -69,7 +69,7 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
   std::shared_ptr<CaffeParser> parser(new CaffeParser);
 
   // Determine data type
-  bool useFp16 = builder->plaformHasFastFp16();
+  bool useFp16 = builder->plaformHasFastFp16() && (sizeof(DType) == 16);
   LOG(INFO) << "GIE use FP16: " << (useFp16 ? "YES" : "NO");
 
   // Get blob:tensor name mappings
@@ -111,9 +111,8 @@ void GIEInferer<DType>::CreateEngine() {
 
   CaffeToGIEModel(deploy_file_, model_file_, {output_blob_name_}, BATCH_SIZE, gie_model_stream_);
 
-  LOG(INFO) << "Success: Caffe model tranformed to GIE model";
-
   // Create an engine
+  gie_model_stream_.seekg(0, gie_model_stream_.beg);
   infer_runtime_ = createInferRuntime(logger_);
   engine_ = infer_runtime_->deserializeCudaEngine(gie_model_stream_);
 
@@ -126,9 +125,6 @@ void GIEInferer<DType>::CreateEngine() {
 
   input_shape_ = Shape(input_dims.c, input_dims.w, input_dims.h);
   output_shape_ = Shape(output_dims.c, output_dims.w, output_dims.h);
-
-  LOG(INFO) << "Input dimension is " << input_shape_.width << "x" << input_shape_.height << "x" << input_shape_.channel;
-  LOG(INFO) << "Output dimension is " << output_shape_.width << "x" << output_shape_.height << "x" << output_shape_.channel;
 
   input_size_ = BATCH_SIZE * input_shape_.Volumn() * sizeof(DType);
   output_size_ = BATCH_SIZE * output_shape_.Volumn() * sizeof(DType);
@@ -147,15 +143,28 @@ void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   CHECK(d_output_buffer != nullptr) << "Device output buffer is not allocated";
   CHECK(engine_->getNbBindings() == 2);
 
+  void *buffers[2];
+
+  int inputIndex = engine_->getBindingIndex(input_blob_name_.c_str()),
+      outputIndex = engine_->getBindingIndex(output_blob_name_.c_str());
+
+  LOG(INFO) << "input index is " << inputIndex << "; output index is " << outputIndex;
+
+  CHECK_EQ(cudaMalloc(&buffers[inputIndex], input_size_), cudaSuccess);
+  CHECK_EQ(cudaMalloc(&buffers[outputIndex], output_size_), cudaSuccess);
+
   cudaStream_t stream;
   CHECK_EQ(cudaStreamCreate(&stream), cudaSuccess) << "CUDA error, can't create cuda stream";
 
   // DMA the input to the GPU, execute the batch asynchronously, and DMA it back
-  CHECK_EQ(cudaMemcpyAsync(d_input_buffer, input, input_size_, cudaMemcpyHostToDevice, stream), cudaSuccess) << "CUDA error, can't async memcpy input to device";
-  CHECK_EQ(cudaMemcpyAsync(output, d_output_buffer, output_size_, cudaMemcpyDeviceToHost, stream), cudaSuccess) << "CUDA error, can't async memcpy to output from device";
+  CHECK_EQ(cudaMemcpyAsync(buffers[inputIndex], input, input_size_, cudaMemcpyHostToDevice, stream), cudaSuccess) << "CUDA error, can't async memcpy input to device";
+  context->enqueue(BATCH_SIZE, buffers, stream, nullptr);
+  CHECK_EQ(cudaMemcpyAsync(output, buffers[outputIndex], output_size_, cudaMemcpyDeviceToHost, stream), cudaSuccess) << "CUDA error, can't async memcpy to output from device";
   cudaStreamSynchronize(stream);
 
   cudaStreamDestroy(stream);
+  CHECK_EQ(cudaFree(buffers[inputIndex]), cudaSuccess);
+  CHECK_EQ(cudaFree(buffers[outputIndex]), cudaSuccess);
   context->destroy();
 }
 
@@ -180,4 +189,3 @@ Shape GIEInferer<DType>::GetOutputShape() {
 }
 
 template class GIEInferer<float>;
-template class GIEInferer<float16>;

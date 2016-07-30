@@ -1,7 +1,7 @@
 include_directories(${Caffe_INCLUDE_DIRS}
         /usr/local/include)
 
-set(TX1DNN_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h Timer.h GIEInferer.cpp GIEInferer.h Type.h GIEClassifier.cpp GIEClassifier.h)
+file(GLOB TX1DNN_SOURCE_FILES "*.h" "*.cpp")
 
 add_library(tx1dnn ${TX1DNN_SOURCE_FILES})
 
