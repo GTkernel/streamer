@@ -147,3 +147,4 @@ ENV/
 .DS_Store
 test
 .ycm_extra_conf.py
+sftp-config.json
