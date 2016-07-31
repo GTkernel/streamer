@@ -24,4 +24,13 @@ struct Shape {
   int height;
 };
 
+#ifdef ON_TEGRA
+#include <driver_types.h>
+#include <cuda_fp16.h>
+typedef half float16;
+#else
+typedef float float16;
+#endif
+
+
 #endif //TX1DNN_TYPE_H

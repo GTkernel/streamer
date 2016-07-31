@@ -3,7 +3,8 @@
 //
 
 #include "GIEClassifier.h"
-#include <caffe/caffe.hpp>
+#include <iostream>
+#include <fstream>
 
 GIEClassifier::GIEClassifier(const string &deploy_file,
                              const string &model_file,
@@ -25,8 +26,8 @@ GIEClassifier::GIEClassifier(const string &deploy_file,
     labels_.push_back(string(line));
 
   // Allocate input data and output data
-  input_data_ = new float[inferer_.GetInputShape().Volumn()];
-  output_data_ = new float[inferer_.GetOutputShape().Volumn()];
+  input_data_ = new DType[inferer_.GetInputShape().Volumn()];
+  output_data_ = new DType[inferer_.GetOutputShape().Volumn()];
 }
 
 GIEClassifier::~GIEClassifier() {
@@ -113,7 +114,8 @@ std::vector<float> GIEClassifier::Predict(const cv::Mat &img) {
   std::vector<float> scores;
   micro_timer.Start();
   for (int i = 0; i < output_channels; i++) {
-    scores.push_back(output_data_[i]);
+    scores.push_back(cpu_half2float(output_data_[i]));
+    // scores.push_back(output_data_[i]);
   }
   micro_timer.Stop();
   LOG(INFO) << "Copy output took " << micro_timer.ElaspedMsec() << " ms";
@@ -147,10 +149,13 @@ void GIEClassifier::CreateInput(const cv::Mat &img) {
 
   CHECK(split_channels.size() == num_channels_);
 
-  float *input_pointer = input_data_;
+  DType *input_pointer = input_data_;
   for (int i = 0; i < num_channels_; i++) {
-    memcpy(input_pointer, split_channels[i].data, (size_t)width * height * sizeof(float));
+    for (int j = 0; j < width * height; j++) {
+      float input_pixel = ((float *)split_channels[i].data)[j];
+      input_pointer[j] = cpu_float2half(input_pixel);
+      // input_pointer[j] = input_pixel;
+    }
     input_pointer += width * height;
   }
-  CHECK(input_data_[0] == ((float *)split_channels[0].data)[0]);
 }

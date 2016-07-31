@@ -10,6 +10,8 @@
 #include <glog/logging.h>
 #include <thread>
 #include <memory>
+#include <driver_types.h>
+#include <cuda_fp16.h>
 #include "Timer.h"
 #include "Type.h"
 
