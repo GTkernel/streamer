@@ -9,16 +9,15 @@
 GIEClassifier::GIEClassifier(const string &deploy_file,
                              const string &model_file,
                              const string &mean_file,
-                             const string &label_file): inferer_(deploy_file, model_file, "data", "prob")
-{
-  inferer_.CreateEngine();
+                             const string &label_file): inferer_(deploy_file, model_file, "data", "prob") {
+  inferer_.CreateEngine()
   // Set dimensions
   input_geometry_ = cv::Size(inferer_.GetInputShape().width, inferer_.GetInputShape().height);
   num_channels_ = inferer_.GetInputShape().channel;
   // Load the binaryproto mean file.
   SetMean(mean_file);
 
-  // Load labels.
+  // Load labels
   std::ifstream labels(label_file.c_str());
   CHECK(labels) << "Unable to open labels file " << label_file;
   string line;

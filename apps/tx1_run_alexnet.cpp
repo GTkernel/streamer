@@ -40,7 +40,8 @@ main (int argc, char *argv[])
 #ifdef USE_GIE
   GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
 #else
-  CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
+  CaffeClassifier<float16, CAFFE_FP16_MTYPE> classifier(model_file, trained_file, mean_file, label_file);
+  // CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
 #endif
 
   GstVideoCapture cap;

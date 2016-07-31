@@ -69,7 +69,7 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
   std::shared_ptr<CaffeParser> parser(new CaffeParser);
 
   // Determine data type
-  bool useFp16 = builder->plaformHasFastFp16() && (sizeof(DType) == 2);
+  bool useFp16 = builder->plaformHasFastFp16();
   LOG(INFO) << "GIE use FP16: " << (useFp16 ? "YES" : "NO");
 
   // Get blob:tensor name mappings
