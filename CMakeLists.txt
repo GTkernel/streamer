@@ -33,6 +33,11 @@ if (APPLE)
     add_definitions("-D CPU_ONLY")
 endif()
 
+if (USE_GIE)
+    message("Build using GIE")
+    add_definitions("-D USE_GIE")
+endif()
+
 include_directories(
     src
     ${GLOG_INCLUDE_DIRS}

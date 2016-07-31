@@ -25,6 +25,9 @@ struct Shape {
   int height;
 };
 
+
 typedef std::pair<std::string, float> Prediction;
+
+
 
 #endif //TX1DNN_TYPE_H

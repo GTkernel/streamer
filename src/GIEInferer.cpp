@@ -69,7 +69,7 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
   std::shared_ptr<CaffeParser> parser(new CaffeParser);
 
   // Determine data type
-  bool useFp16 = builder->plaformHasFastFp16() && (sizeof(DType) == 16);
+  bool useFp16 = builder->plaformHasFastFp16() && (sizeof(DType) == 2);
   LOG(INFO) << "GIE use FP16: " << (useFp16 ? "YES" : "NO");
 
   // Get blob:tensor name mappings
@@ -148,18 +148,16 @@ void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   int inputIndex = engine_->getBindingIndex(input_blob_name_.c_str()),
       outputIndex = engine_->getBindingIndex(output_blob_name_.c_str());
 
-  LOG(INFO) << "input index is " << inputIndex << "; output index is " << outputIndex;
-
-  CHECK_EQ(cudaMalloc(&buffers[inputIndex], input_size_), cudaSuccess);
-  CHECK_EQ(cudaMalloc(&buffers[outputIndex], output_size_), cudaSuccess);
+  CHECK_EQ(cudaMalloc(&buffers[inputIndex], BATCH_SIZE * input_size_), cudaSuccess);
+  CHECK_EQ(cudaMalloc(&buffers[outputIndex], BATCH_SIZE * output_size_), cudaSuccess);
 
   cudaStream_t stream;
   CHECK_EQ(cudaStreamCreate(&stream), cudaSuccess) << "CUDA error, can't create cuda stream";
 
   // DMA the input to the GPU, execute the batch asynchronously, and DMA it back
-  CHECK_EQ(cudaMemcpyAsync(buffers[inputIndex], input, input_size_, cudaMemcpyHostToDevice, stream), cudaSuccess) << "CUDA error, can't async memcpy input to device";
+  CHECK_EQ(cudaMemcpyAsync(buffers[inputIndex], input, input_size_ * BATCH_SIZE, cudaMemcpyHostToDevice, stream), cudaSuccess) << "CUDA error, can't async memcpy input to device";
   context->enqueue(BATCH_SIZE, buffers, stream, nullptr);
-  CHECK_EQ(cudaMemcpyAsync(output, buffers[outputIndex], output_size_, cudaMemcpyDeviceToHost, stream), cudaSuccess) << "CUDA error, can't async memcpy to output from device";
+  CHECK_EQ(cudaMemcpyAsync(output, buffers[outputIndex], output_size_ * BATCH_SIZE, cudaMemcpyDeviceToHost, stream), cudaSuccess) << "CUDA error, can't async memcpy to output from device";
   cudaStreamSynchronize(stream);
 
   cudaStreamDestroy(stream);
@@ -189,3 +187,6 @@ Shape GIEInferer<DType>::GetOutputShape() {
 }
 
 template class GIEInferer<float>;
+#ifdef ON_TEGRA
+template class GIEInferer<float16>;
+#endif

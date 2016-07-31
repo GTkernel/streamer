@@ -6,6 +6,7 @@
 #define TX1DNN_GIEINFERER_H
 
 #include "common.h"
+#include "float16.h"
 #include <Infer.h>
 #include <caffeParser.h>
 #include <opencv2/opencv.hpp>

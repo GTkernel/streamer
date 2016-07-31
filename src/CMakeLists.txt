@@ -1,31 +1,34 @@
-include_directories(${Caffe_INCLUDE_DIRS}
-        /usr/local/include)
+set(COMMON_LIBRARIES
+	${GLIB_LIBRARIES}
+	${GLIB_GOBJECT_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	${GLOG_LIBRARIES}
+	${GSTREAMER_LIBRARIES}
+	${GSTREAMER_APP_LIBRARIES})
 
-file(GLOB TX1DNN_SOURCE_FILES "*.h" "*.cpp")
+set(COMMON_SOURCE_FILES GstVideoCapture.cpp GstVideoCapture.h Utils.cpp Utils.cpp)
 
-add_library(tx1dnn ${TX1DNN_SOURCE_FILES})
+set(TX1DNN_CAFFE_SOURCE_FILES CaffeClassifier.cpp CaffeClassifier.h ${COMMON_SOURCE_FILES})
 
-message(${TX1DNN_SOURCE_FILES})
+add_library(tx1dnn-caffe ${TX1DNN_CAFFE_SOURCE_FILES})
 
-target_link_libraries(tx1dnn
-		${GLIB_LIBRARIES}
-		${GLIB_GOBJECT_LIBRARIES}
-		${OpenCV_LIBRARIES}
-		${GLOG_LIBRARIES}
-		${GSTREAMER_LIBRARIES}
-		${GSTREAMER_APP_LIBRARIES}
+target_link_libraries(tx1dnn-caffe
+		${COMMON_LIBRARIES}
 		${Caffe_LIBRARIES}
-		)
+		${PROTOBUF_LIBRARIES})
 
 if (Cnmem_FOUND)
-	target_link_libraries(tx1dnn ${Cnmem_LIBRARIES})
+	target_link_libraries(tx1dnn-caffe ${Cnmem_LIBRARIES})
 endif()
 
-if (ON_TEGRA)
-	target_link_libraries(tx1dnn ${GIE_LIBRARIES})
-endif()
+set(TX1DNN_GIE_SOURCE_FILES GIEClassifier.cpp GIEClassifier.h GIEInferer.cpp GIEInferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES})
+add_library(tx1dnn-gie ${TX1DNN_GIE_SOURCE_FILES})
+target_link_libraries(tx1dnn-gie
+	${COMMON_LIBRARIES}
+	${GIE_LIBRARIES})
 
-target_include_directories(tx1dnn PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(tx1dnn-caffe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(tx1dnn-gie PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Set Caffe compile flags
 function(add_caffe_cflags TARGET)
@@ -44,4 +47,4 @@ function(add_caffe_cflags TARGET)
 	set_target_properties(${TARGET} PROPERTIES COMPILE_FLAGS ${TEMP} )
 endfunction()
 
-add_caffe_cflags(tx1dnn)
+add_caffe_cflags(tx1dnn-caffe)

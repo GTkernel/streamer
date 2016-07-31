@@ -1,6 +1,9 @@
 #include "GstVideoCapture.h"
-#include "CaffeClassifier.h"
-#include "GIEClassifier.h"
+#ifdef USE_GIE
+  #include "GIEClassifier.h"
+#else
+  #include "CaffeClassifier.h"
+#endif
 #include <iomanip>
 
 int
@@ -34,10 +37,13 @@ main (int argc, char *argv[])
     display = true;
   }
 
+#ifdef USE_GIE
+  GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
+#else
   CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
-//  GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
+#endif
+
   GstVideoCapture cap;
-//  cap.SetTargetFrameSize(classifier.GetInputGeometry());
   if (!cap.CreatePipeline(argv[5])) {
     LOG(FATAL) << "Can't create pipeline, check camera and pipeline uri";
     exit(1);

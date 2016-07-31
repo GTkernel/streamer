@@ -3,7 +3,11 @@
 //
 
 #include "GstVideoCapture.h"
+#ifdef USE_GIE
 #include "GIEClassifier.h"
+#else
+#include "CaffeClassifier.h"
+#endif
 #include <iomanip>
 
 int
@@ -37,7 +41,11 @@ main (int argc, char *argv[])
     display = true;
   }
 
+#ifdef USE_GIE
   GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
+#else
+  CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
+#endif
 
   cv::Mat image = cv::imread(image_file, CV_LOAD_IMAGE_COLOR);
 
@@ -51,9 +59,9 @@ main (int argc, char *argv[])
     cv::imshow("image", image);
   }
 
-  std::vector<GIEClassifier::Prediction> predictions = classifier.Classify(image, 5);
+  std::vector<Prediction> predictions = classifier.Classify(image, 5);
   for (int i = 0; i < 5; i++) {
-    GIEClassifier::Prediction p = predictions[i];
+    Prediction p = predictions[i];
     LOG(INFO) << "Rank " << i << ": " << p.second << " - \""  << p.first << "\"";
   }
 
