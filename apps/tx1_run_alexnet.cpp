@@ -1,5 +1,5 @@
 #include "GstVideoCapture.h"
-//#include "CaffeClassifier.h"
+#include "CaffeClassifier.h"
 #include "GIEClassifier.h"
 #include <iomanip>
 
@@ -34,8 +34,8 @@ main (int argc, char *argv[])
     display = true;
   }
 
-//  CaffeFp16Classifier classifier(model_file, trained_file, mean_file, label_file);
-  GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
+  CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
+//  GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
   GstVideoCapture cap;
 //  cap.SetTargetFrameSize(classifier.GetInputGeometry());
   if (!cap.CreatePipeline(argv[5])) {
@@ -51,8 +51,8 @@ main (int argc, char *argv[])
     cv::Mat frame = cap.TryGetFrame();
 
     if (!frame.empty()) {
-      std::vector<GIEClassifier::Prediction> predictions = classifier.Classify(frame, 1);
-      GIEClassifier::Prediction p = predictions[0];
+      std::vector<Prediction> predictions = classifier.Classify(frame, 1);
+      Prediction p = predictions[0];
       LOG(INFO) << std::fixed << std::setprecision(4) << p.second << " - \""
                 << p.first << "\"" << std::endl;
       if (display) {

@@ -11,6 +11,7 @@ find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(GLIB REQUIRED gobject)
 find_package(Caffe REQUIRED)
 find_package(GIE)
+find_package(Protobuf 3.0)
 
 # Determine platform
 if (EXISTS /var/libopencv4tegra-repo)

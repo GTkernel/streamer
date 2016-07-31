@@ -5,6 +5,8 @@ file(GLOB TX1DNN_SOURCE_FILES "*.h" "*.cpp")
 
 add_library(tx1dnn ${TX1DNN_SOURCE_FILES})
 
+message(${TX1DNN_SOURCE_FILES})
+
 target_link_libraries(tx1dnn
 		${GLIB_LIBRARIES}
 		${GLIB_GOBJECT_LIBRARIES}
@@ -12,6 +14,7 @@ target_link_libraries(tx1dnn
 		${GLOG_LIBRARIES}
 		${GSTREAMER_LIBRARIES}
 		${GSTREAMER_APP_LIBRARIES}
+		${Caffe_LIBRARIES}
 		)
 
 if (Cnmem_FOUND)

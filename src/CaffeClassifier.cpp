@@ -3,28 +3,18 @@
 //
 
 #include "CaffeClassifier.h"
+#include "Utils.h"
 
-static void get_gpus(std::vector<int>* gpus) {
-  int count = 0;
-#ifndef CPU_ONLY
-  CUDA_CHECK(cudaGetDeviceCount(&count));
-#else
-  NO_GPU;
-#endif
-  for (int i = 0; i < count; ++i) {
-    gpus->push_back(i);
-  }
-}
-
-CaffeClassifier::CaffeClassifier(const string& model_file,
+template <typename DType, typename MType>
+CaffeClassifier<DType, MType>::CaffeClassifier(const string& model_file,
                        const string& trained_file,
                        const string& mean_file,
                        const string& label_file) {
 #ifdef CPU_ONLY
- caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  caffe::Caffe::set_mode(caffe::Caffe::CPU);
 #else
   std::vector<int> gpus;
-  get_gpus(&gpus);
+  get_gpus(gpus);
 
   if (gpus.size() != 0) {
     LOG(INFO) << "Use GPU with device ID " << gpus[0];
@@ -39,13 +29,13 @@ CaffeClassifier::CaffeClassifier(const string& model_file,
 #endif
 
   // Load the network.
-  net_.reset(new caffe::Net<float,float>(model_file, caffe::TEST));
+  net_.reset(new caffe::Net<DType, MType>(model_file, caffe::TEST));
   net_->CopyTrainedLayersFrom(trained_file);
 
   CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";
   CHECK_EQ(net_->num_outputs(), 1) << "Network should have exactly one output.";
 
-  caffe::Blob<float, float>* input_layer = net_->input_blobs()[0];
+  caffe::Blob<DType, MType>* input_layer = net_->input_blobs()[0];
   num_channels_ = input_layer->channels();
   CHECK(num_channels_ == 3 || num_channels_ == 1)
   << "Input layer should have 1 or 3 channels.";
@@ -61,7 +51,7 @@ CaffeClassifier::CaffeClassifier(const string& model_file,
   while (std::getline(labels, line))
     labels_.push_back(string(line));
 
-  caffe::Blob<float,float>* output_layer = net_->output_blobs()[0];
+  caffe::Blob<DType, MType>* output_layer = net_->output_blobs()[0];
   CHECK_EQ(labels_.size(), output_layer->channels())
     << "Number of labels is different from the output layer dimension.";
 
@@ -72,31 +62,14 @@ CaffeClassifier::CaffeClassifier(const string& model_file,
   net_->Reshape();
 }
 
-static bool PairCompare(const std::pair<float, int>& lhs,
-                        const std::pair<float, int>& rhs) {
-  return lhs.first > rhs.first;
-}
-
-/* Return the indices of the top N values of vector v. */
-static std::vector<int> Argmax(const std::vector<float>& v, int N) {
-  std::vector<std::pair<float, int> > pairs;
-  for (size_t i = 0; i < v.size(); ++i)
-    pairs.push_back(std::make_pair(v[i], i));
-  std::partial_sort(pairs.begin(), pairs.begin() + N, pairs.end(), PairCompare);
-
-  std::vector<int> result;
-  for (int i = 0; i < N; ++i)
-    result.push_back(pairs[i].second);
-  return result;
-}
-
 /* Return the top N predictions. */
-std::vector<CaffeClassifier::Prediction> CaffeClassifier::Classify(const cv::Mat& img, int N) {
+template <typename DType, typename MType>
+std::vector<Prediction> CaffeClassifier<DType, MType>::Classify(const cv::Mat& img, int N) {
   std::vector<float> output = Predict(img);
 
   N = std::min<int>(labels_.size(), N);
   std::vector<int> maxN = Argmax(output, N);
-  std::vector<CaffeClassifier::Prediction> predictions;
+  std::vector<Prediction> predictions;
   for (int i = 0; i < N; ++i) {
     int idx = maxN[i];
     predictions.push_back(std::make_pair(labels_[idx], output[idx]));
@@ -106,7 +79,8 @@ std::vector<CaffeClassifier::Prediction> CaffeClassifier::Classify(const cv::Mat
 }
 
 /* Load the mean file in binaryproto format. */
-void CaffeClassifier::SetMean(const string& mean_file) {
+template <typename DType, typename MType>
+void CaffeClassifier<DType, MType>::SetMean(const string& mean_file) {
   caffe::BlobProto blob_proto;
   caffe::ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
 
@@ -136,20 +110,21 @@ void CaffeClassifier::SetMean(const string& mean_file) {
   mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
 }
 
-std::vector<float> CaffeClassifier::Predict(const cv::Mat& img) {
+template <typename DType, typename MType>
+std::vector<float> CaffeClassifier<DType, MType>::Predict(const cv::Mat& img) {
   Timer timerTotal;
   timerTotal.Start();
 
   Timer timer;
-  std::vector<cv::Mat> input_channels;
+  std::vector<DType *> input_channels;
 
   timer.Start();
-  WrapInputLayer(&input_channels);
+  WrapInputLayer(input_channels);
   timer.Stop();
   LOG(INFO) << "WrapInputLayer done in " << timer.ElaspedMsec() << "ms";
 
   timer.Start();
-  Preprocess(img, &input_channels);
+  Preprocess(img, input_channels);
   timer.Stop();
   LOG(INFO) << "Preprocessing done in " << timer.ElaspedMsec() << "ms";
 
@@ -160,14 +135,19 @@ std::vector<float> CaffeClassifier::Predict(const cv::Mat& img) {
 
   /* Copy the output layer to a std::vector */
   timer.Start();
-  caffe::Blob<float,float>* output_layer = net_->output_blobs()[0];
-  const float* begin = output_layer->cpu_data();
-  const float* end = begin + output_layer->channels();
+  std::vector<float> scores;
+  caffe::Blob<DType, MType>* output_layer = net_->output_blobs()[0];
+  const DType* begin = output_layer->cpu_data();
+  const DType* end = begin + output_layer->channels();
+  for (const DType *ptr = begin; ptr != end; ptr++) {
+    caffe::Get<float> (*ptr);
+    scores.push_back(caffe::Get<float>(*ptr));
+  }
   timer.Stop();
   timerTotal.Stop();
   LOG(INFO) << "Copied output layer in " << timer.ElaspedMsec() << "ms";
   LOG(INFO) << "Whole predict done in " << timerTotal.ElaspedMsec() << "ms";
-  return std::vector<float>(begin, end);
+  return scores;
 }
 
 /* Wrap the input layer of the network in separate cv::Mat objects
@@ -175,21 +155,22 @@ std::vector<float> CaffeClassifier::Predict(const cv::Mat& img) {
  * don't need to rely on cudaMemcpy2D. The last preprocessing
  * operation will write the separate channels directly to the input
  * layer. */
-void CaffeClassifier::WrapInputLayer(std::vector<cv::Mat>* input_channels) {
-  caffe::Blob<float,float>* input_layer = net_->input_blobs()[0];
+template <typename DType, typename MType>
+void CaffeClassifier<DType, MType>::WrapInputLayer(std::vector<DType *> &input_channels) {
+  caffe::Blob<DType, MType>* input_layer = net_->input_blobs()[0];
 
   int width = input_layer->width();
   int height = input_layer->height();
-  float* input_data = input_layer->mutable_cpu_data();
+  DType* input_data = input_layer->mutable_cpu_data();
   for (int i = 0; i < input_layer->channels(); ++i) {
-    cv::Mat channel(height, width, CV_32FC1, input_data);
-    input_channels->push_back(channel);
+    input_channels.push_back(input_data);
     input_data += width * height;
   }
 }
 
-void CaffeClassifier::Preprocess(const cv::Mat& img,
-                            std::vector<cv::Mat>* input_channels) {
+template <typename DType, typename MType>
+void CaffeClassifier<DType, MType>::Preprocess(const cv::Mat& img,
+                            const std::vector<DType *> &input_channels) {
   /* Convert the input image to the input image format of the network. */
   cv::Mat sample;
   if (img.channels() == 3 && num_channels_ == 1)
@@ -221,9 +202,23 @@ void CaffeClassifier::Preprocess(const cv::Mat& img,
   /* This operation will write the separate BGR planes directly to the
    * input layer of the network because it is wrapped by the cv::Mat
    * objects in input_channels. */
-  cv::split(sample_normalized, *input_channels);
+  std::vector<cv::Mat> split_channels;
+  split_channels.resize(num_channels_);
+  cv::split(sample_normalized, split_channels);
 
-  CHECK(reinterpret_cast<float*>(input_channels->at(0).data)
+  // Convert fp32 to fp16, and fill in input channels one by one
+  for (int i = 0; i < num_channels_; i++) {
+    for (int j = 0; j < input_geometry_.area(); j++) {
+      input_channels[i][j] = caffe::Get<DType>(((float *)split_channels[i].data)[j]);
+    }
+  }
+
+  CHECK(reinterpret_cast<DType *>(input_channels[0])
         == net_->input_blobs()[0]->cpu_data())
   << "Input channels are not wrapping the input layer of the network.";
 }
+
+template class CaffeClassifier<float, float>;
+#ifdef ON_TEGRA
+template class CaffeClassifier<float16, CAFFE_FP16_MTYPE>;
+#endif

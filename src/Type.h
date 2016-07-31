@@ -6,6 +6,7 @@
 #define TX1DNN_TYPE_H
 
 #include <cstdlib>
+#include <string>
 
 struct Shape {
   Shape(): channel(0), width(0), height(0){};
@@ -23,5 +24,7 @@ struct Shape {
   // Height
   int height;
 };
+
+typedef std::pair<std::string, float> Prediction;
 
 #endif //TX1DNN_TYPE_H
