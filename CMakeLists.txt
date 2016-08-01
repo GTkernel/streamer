@@ -10,8 +10,8 @@ find_package(Glog REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(GLIB REQUIRED gobject)
 find_package(Caffe REQUIRED)
-find_package(GIE)
-find_package(Protobuf 3.0)
+find_package(GIE REQUIRED)
+find_package(Protobuf 3.0 REQUIRED)
 
 # Determine platform
 if (EXISTS /var/libopencv4tegra-repo)
@@ -25,6 +25,7 @@ if (ON_TEGRA)
     find_package(CUDA)
 endif()
 
+# Only used for development convienience, this project is not supposed to build or run on platform other than TX1
 if (APPLE)
     message("Build on Mac")
     find_package(vecLib)
@@ -44,7 +45,7 @@ include_directories(
     ${GSTREAMER_INCLUDE_DIRS}
     ${GSTREAMER_APP_INCLUDE_DIRS}
     ${Caffe_INCLUDE_DIRS}
-    ${GIE_INCLUDE_DIRS} # Include GIE for development convenience
+    ${GIE_INCLUDE_DIRS}
 )
 
 if (CUDA_FOUND)
@@ -54,8 +55,6 @@ endif()
 if (ON_MAC)
     include_directories(${vecLib_INCLUDE_DIR})
 endif()
-
-set(MAIN_SOURCES apps/tx1_run_alexnet.cpp)
 
 add_subdirectory(src)
 add_subdirectory(3rdparty)

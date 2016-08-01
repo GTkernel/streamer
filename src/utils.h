@@ -2,9 +2,15 @@
 // Created by Ran Xian on 7/29/16.
 //
 
-#include "Utils.h"
+#ifndef TX1DNN_UTILS_H
+#define TX1DNN_UTILS_H
 
-void get_gpus(std::vector<int> &gpus) {
+#include "common.h"
+
+/**
+ * \brief Get a list of GPUs in machine.
+ */
+inline void GetGpus(std::vector<int> &gpus) {
   int count = 0;
 #ifndef CPU_ONLY
   CUDA_CHECK(cudaGetDeviceCount(&count));
@@ -16,12 +22,13 @@ void get_gpus(std::vector<int> &gpus) {
   }
 }
 
-bool PairCompare(const std::pair<float, int>& lhs,
+
+inline bool PairCompare(const std::pair<float, int>& lhs,
                         const std::pair<float, int>& rhs) {
   return lhs.first > rhs.first;
 }
 
-/* Return the indices of the top N values of vector v. */
+
 std::vector<int> Argmax(const std::vector<float>& v, int N) {
   std::vector<std::pair<float, int> > pairs;
   for (size_t i = 0; i < v.size(); ++i)
@@ -33,3 +40,5 @@ std::vector<int> Argmax(const std::vector<float>& v, int N) {
     result.push_back(pairs[i].second);
   return result;
 }
+
+#endif //TX1DNN_UTILS_H

@@ -1,4 +1,4 @@
-#include "GstVideoCapture.h"
+#include "gst_video_capture.h"
 #ifdef USE_GIE
   #include "GIEClassifier.h"
 #else

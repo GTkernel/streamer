@@ -2,15 +2,17 @@
 // Created by Ran Xian on 7/27/16.
 //
 
-#include "GIEClassifier.h"
 #include <iostream>
 #include <fstream>
+
+#include "gie_classifier.h"
+#include "utils.h"
 
 GIEClassifier::GIEClassifier(const string &deploy_file,
                              const string &model_file,
                              const string &mean_file,
                              const string &label_file): inferer_(deploy_file, model_file, "data", "prob") {
-  inferer_.CreateEngine()
+  inferer_.CreateEngine();
   // Set dimensions
   input_geometry_ = cv::Size(inferer_.GetInputShape().width, inferer_.GetInputShape().height);
   num_channels_ = inferer_.GetInputShape().channel;
@@ -25,31 +27,14 @@ GIEClassifier::GIEClassifier(const string &deploy_file,
     labels_.push_back(string(line));
 
   // Allocate input data and output data
-  input_data_ = new DType[inferer_.GetInputShape().Volumn()];
-  output_data_ = new DType[inferer_.GetOutputShape().Volumn()];
+  input_data_ = new DType[inferer_.GetInputShape().GetVolume()];
+  output_data_ = new DType[inferer_.GetOutputShape().GetVolume()];
 }
 
 GIEClassifier::~GIEClassifier() {
   delete[] input_data_;
   delete[] output_data_;
   inferer_.DestroyEngine();
-}
-
-static bool PairCompare(const std::pair<float, int>& lhs,
-                        const std::pair<float, int>& rhs) {
-  return lhs.first > rhs.first;
-}
-
-static std::vector<int> Argmax(const std::vector<float>& v, int N) {
-  std::vector<std::pair<float, int> > pairs;
-  for (size_t i = 0; i < v.size(); ++i)
-    pairs.push_back(std::make_pair(v[i], i));
-  std::partial_sort(pairs.begin(), pairs.begin() + N, pairs.end(), PairCompare);
-
-  std::vector<int> result;
-  for (int i = 0; i < N; ++i)
-    result.push_back(pairs[i].second);
-  return result;
 }
 
 std::vector<GIEClassifier::Prediction> GIEClassifier::Classify(const cv::Mat &img, int N) {
@@ -98,27 +83,22 @@ void GIEClassifier::SetMean(const string &mean_file) {
 }
 
 std::vector<float> GIEClassifier::Predict(const cv::Mat &img) {
-  Timer micro_timer;
-  Timer macro_timer;
+  Timer micro_timer, macro_timer;
   macro_timer.Start();
   micro_timer.Start();
   CreateInput(img);
-  micro_timer.Stop();
-  LOG(INFO) << "CreateInput took " << micro_timer.ElaspedMsec() << " ms";
+  LOG(INFO) << "CreateInput took " << micro_timer.ElapsedMSec() << " ms";
   micro_timer.Start();
   inferer_.DoInference(input_data_, output_data_);
-  micro_timer.Stop();
-  LOG(INFO) << "DoInference took " << micro_timer.ElaspedMsec() << " ms";
+  LOG(INFO) << "DoInference took " << micro_timer.ElapsedMSec() << " ms";
   int output_channels = inferer_.GetOutputShape().channel;
   std::vector<float> scores;
   micro_timer.Start();
   for (int i = 0; i < output_channels; i++) {
     scores.push_back(float(output_data_[i]));
   }
-  micro_timer.Stop();
-  LOG(INFO) << "Copy output took " << micro_timer.ElaspedMsec() << " ms";
-  macro_timer.Stop();
-  LOG(INFO) << "Whole prediction done in " << macro_timer.ElaspedMsec() << " ms";
+  LOG(INFO) << "Copy output took " << micro_timer.ElapsedMSec() << " ms";
+  LOG(INFO) << "Whole prediction done in " << macro_timer.ElapsedMSec() << " ms";
   return scores;
 }
 

@@ -17,7 +17,7 @@ using namespace nvcaffeparser1;
  * \brief Class for GIE (GPU Inference Engine)
  */
 template<typename DType>
-class GIEInferer {
+class gie_inferer {
  public:
   typedef std::stringstream GIEModelStreamType;
 
@@ -30,7 +30,7 @@ class GIEInferer {
   static const size_t BATCH_SIZE = 1;
 
  public:
-  GIEInferer(const string &deploy_file,
+  gie_inferer(const string &deploy_file,
              const string &model_file,
              const string &input_blob_name_,
              const string &output_blob_name_);

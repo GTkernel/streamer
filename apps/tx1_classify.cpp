@@ -2,7 +2,7 @@
 // Created by Ran Xian on 7/28/16.
 //
 
-#include "GstVideoCapture.h"
+#include "gst_video_capture.h"
 #ifdef USE_GIE
 #include "GIEClassifier.h"
 #else

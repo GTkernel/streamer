@@ -4,7 +4,7 @@
 
 #include <gst/app/gstappsink.h>
 #include <thread>
-#include "GstVideoCapture.h"
+#include "gst_video_capture.h"
 /************************
 * GStreamer callbacks ***
 ************************/
@@ -155,8 +155,7 @@ cv::Mat GstVideoCapture::GetFrame() {
   std::lock_guard<std::mutex> guard(capture_lock_);
   cv::Mat frame = frames_.front();
   frames_.pop_front();
-  timer.Stop();
-  LOG(INFO) << "Get frame in " << timer.ElaspedMsec() << " ms";
+  LOG(INFO) << "Get frame in " << timer.ElapsedMSec() << " ms";
   return frame;
 }
 
@@ -173,8 +172,7 @@ cv::Mat GstVideoCapture::TryGetFrame() {
     std::lock_guard<std::mutex> guard(capture_lock_);
     cv::Mat frame = frames_.front();
     frames_.pop_front();
-    timer.Stop();
-    LOG(INFO) << "Get frame in " << timer.ElaspedMsec() << " ms";
+    LOG(INFO) << "Get frame in " << timer.ElapsedMSec() << " ms";
     return frame;
   }
 }

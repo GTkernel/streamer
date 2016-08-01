@@ -2,11 +2,11 @@
 // Created by Ran Xian on 7/26/16.
 //
 
-#include "GIEInferer.h"
+#include "gie_inferer.h"
 #include <cuda_runtime_api.h>
 
 template<typename DType>
-GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_file, const string &input_blob_name, const string &output_blob_name):
+gie_inferer<DType>::gie_inferer(const string &deploy_file, const string &model_file, const string &input_blob_name, const string &output_blob_name):
     deploy_file_(deploy_file),
     model_file_(model_file),
     input_blob_name_(input_blob_name),
@@ -19,7 +19,7 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_fil
     IBuilder *builder = createInferBuilder(logger_);
     bool supportFp16 = builder->plaformHasFastFp16();
     builder->destroy();
-    CHECK(supportFp16) << "Platform does not support fp16 but GIEInferer is initialized with fp16";
+    CHECK(supportFp16) << "Platform does not support fp16 but gie_inferer is initialized with fp16";
   }
 }
 
@@ -29,7 +29,7 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_fil
  * \param msg
  */
 template<typename DType>
-void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
+void gie_inferer<DType>::Logger::log(ILogger::Severity severity,
                                                     const char *msg) {
   switch (severity) {
     case Severity::kERROR:
@@ -56,7 +56,7 @@ void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
  * \param gie_model_stream The stream to GIE model.
  */
 template<typename DType>
-void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
+void gie_inferer<DType>::CaffeToGIEModel(const string &deploy_file,
                                  const string &model_file,
                                  const std::vector<string> &outputs,
                                  unsigned int max_batch_size,
@@ -106,7 +106,7 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
 }
 
 template<typename DType>
-void GIEInferer<DType>::CreateEngine() {
+void gie_inferer<DType>::CreateEngine() {
   gie_model_stream_.seekg(0, gie_model_stream_.beg);
 
   CaffeToGIEModel(deploy_file_, model_file_, {output_blob_name_}, BATCH_SIZE, gie_model_stream_);
@@ -126,15 +126,15 @@ void GIEInferer<DType>::CreateEngine() {
   input_shape_ = Shape(input_dims.c, input_dims.w, input_dims.h);
   output_shape_ = Shape(output_dims.c, output_dims.w, output_dims.h);
 
-  input_size_ = BATCH_SIZE * input_shape_.Volumn() * sizeof(DType);
-  output_size_ = BATCH_SIZE * output_shape_.Volumn() * sizeof(DType);
+  input_size_ = BATCH_SIZE * input_shape_.GetVolume() * sizeof(DType);
+  output_size_ = BATCH_SIZE * output_shape_.GetVolume() * sizeof(DType);
 
   CHECK_EQ(cudaMalloc((void **)(&d_input_buffer), input_size_), cudaSuccess) << "Can't malloc device input buffer";
   CHECK_EQ(cudaMalloc((void **)(&d_output_buffer), output_size_), cudaSuccess) << "Can't malloc device output buffer";
 }
 
 template<typename DType>
-void GIEInferer<DType>::DoInference(DType *input, DType *output) {
+void gie_inferer<DType>::DoInference(DType *input, DType *output) {
   IExecutionContext *context = engine_->createExecutionContext();
   CHECK(context != nullptr) << "GIE error, can't create context";
   CHECK(input != nullptr) << "Input is invalid: nullptr";
@@ -167,7 +167,7 @@ void GIEInferer<DType>::DoInference(DType *input, DType *output) {
 }
 
 template<typename DType>
-void GIEInferer<DType>::DestroyEngine() {
+void gie_inferer<DType>::DestroyEngine() {
   engine_->destroy();
   engine_ = nullptr;
   infer_runtime_->destroy();
@@ -177,16 +177,16 @@ void GIEInferer<DType>::DestroyEngine() {
 }
 
 template<typename DType>
-Shape GIEInferer<DType>::GetInputShape() {
+Shape gie_inferer<DType>::GetInputShape() {
   return input_shape_;
 }
 
 template<typename DType>
-Shape GIEInferer<DType>::GetOutputShape() {
+Shape gie_inferer<DType>::GetOutputShape() {
   return output_shape_;
 }
 
-template class GIEInferer<float>;
+template class gie_inferer<float>;
 #ifdef ON_TEGRA
 template class GIEInferer<float16>;
 #endif

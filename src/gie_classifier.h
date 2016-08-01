@@ -6,8 +6,8 @@
 #define TX1DNN_GIECLASSIFIER_H
 
 #include "common.h"
-#include "GIEClassifier.h"
-#include "GIEInferer.h"
+#include "gie_classifier.h"
+#include "gie_inferer.h"
 #include "float16.h"
 
 class GIEClassifier {
@@ -29,7 +29,7 @@ class GIEClassifier {
   void CreateInput(const cv::Mat &img);
 
  private:
-  GIEInferer<DType> inferer_;
+  gie_inferer<DType> inferer_;
   cv::Size input_geometry_;
   size_t num_channels_;
   cv::Mat mean_;

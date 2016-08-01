@@ -25,27 +25,28 @@ public:
   }
 
   /**
-   * \brief Stop the timer.
+   * \brief Get elapsed time in milliseconds.
    */
-  void Stop() {
-    stop_time_ = std::chrono::system_clock::now();
+  double ElapsedMSec() {
+    return ElapsedMicroSec() / 1000.0;
   }
 
-  double ElaspedMsec() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(stop_time_ - start_time_).count();
+  /**
+   * \brief Get elapsed time in seconds.
+   */
+  double ElapsedSec() {
+    return ElapsedMicroSec() / 1000000.0;
   }
 
-  double ElaspedSec() {
-    return std::chrono::duration_cast<std::chrono::seconds>(stop_time_ - start_time_).count();
-  }
-
+  /**
+   * \brief Get elapsed time in micro seconds.
+   */
   double ElapsedMicroSec() {
-    return std::chrono::duration_cast<std::chrono::microseconds>(stop_time_ - start_time_).count();
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::system_clock::now() - start_time_).count();
   }
-
 private:
   TimerTimePoint start_time_;
-  TimerTimePoint stop_time_;
 };
 
 #endif //TX1DNN_TIMER_H
