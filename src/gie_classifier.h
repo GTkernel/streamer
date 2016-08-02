@@ -11,7 +11,7 @@
 #include "float16.h"
 
 class GIEClassifier {
-  typedef float DType;
+  typedef float16 DType;
  public:
   typedef std::pair<string, float> Prediction;
   GIEClassifier(const string &model_file,
@@ -29,7 +29,7 @@ class GIEClassifier {
   void CreateInput(const cv::Mat &img);
 
  private:
-  gie_inferer<DType> inferer_;
+  GIEInferer<DType> inferer_;
   cv::Size input_geometry_;
   size_t num_channels_;
   cv::Mat mean_;

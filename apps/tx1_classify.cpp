@@ -4,9 +4,9 @@
 
 #include "gst_video_capture.h"
 #ifdef USE_GIE
-#include "GIEClassifier.h"
+#include "gie_classifier.h"
 #else
-#include "CaffeClassifier.h"
+#include "CaffeV1Classifier.h"
 #endif
 #include <iomanip>
 
@@ -44,7 +44,7 @@ main (int argc, char *argv[])
 #ifdef USE_GIE
   GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
 #else
-  CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
+  CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
 #endif
 
   cv::Mat image = cv::imread(image_file, CV_LOAD_IMAGE_COLOR);

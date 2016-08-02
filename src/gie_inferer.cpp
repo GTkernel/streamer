@@ -6,7 +6,7 @@
 #include <cuda_runtime_api.h>
 
 template<typename DType>
-gie_inferer<DType>::gie_inferer(const string &deploy_file, const string &model_file, const string &input_blob_name, const string &output_blob_name):
+GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_file, const string &input_blob_name, const string &output_blob_name):
     deploy_file_(deploy_file),
     model_file_(model_file),
     input_blob_name_(input_blob_name),
@@ -19,7 +19,7 @@ gie_inferer<DType>::gie_inferer(const string &deploy_file, const string &model_f
     IBuilder *builder = createInferBuilder(logger_);
     bool supportFp16 = builder->plaformHasFastFp16();
     builder->destroy();
-    CHECK(supportFp16) << "Platform does not support fp16 but gie_inferer is initialized with fp16";
+    CHECK(supportFp16) << "Platform does not support fp16 but GIEInferer is initialized with fp16";
   }
 }
 
@@ -29,7 +29,7 @@ gie_inferer<DType>::gie_inferer(const string &deploy_file, const string &model_f
  * \param msg
  */
 template<typename DType>
-void gie_inferer<DType>::Logger::log(ILogger::Severity severity,
+void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
                                                     const char *msg) {
   switch (severity) {
     case Severity::kERROR:
@@ -56,7 +56,7 @@ void gie_inferer<DType>::Logger::log(ILogger::Severity severity,
  * \param gie_model_stream The stream to GIE model.
  */
 template<typename DType>
-void gie_inferer<DType>::CaffeToGIEModel(const string &deploy_file,
+void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
                                  const string &model_file,
                                  const std::vector<string> &outputs,
                                  unsigned int max_batch_size,
@@ -69,7 +69,7 @@ void gie_inferer<DType>::CaffeToGIEModel(const string &deploy_file,
   std::shared_ptr<CaffeParser> parser(new CaffeParser);
 
   // Determine data type
-  bool useFp16 = builder->plaformHasFastFp16();
+  bool useFp16 = (builder->plaformHasFastFp16() && sizeof(DType) == 4);
   LOG(INFO) << "GIE use FP16: " << (useFp16 ? "YES" : "NO");
 
   // Get blob:tensor name mappings
@@ -106,7 +106,7 @@ void gie_inferer<DType>::CaffeToGIEModel(const string &deploy_file,
 }
 
 template<typename DType>
-void gie_inferer<DType>::CreateEngine() {
+void GIEInferer<DType>::CreateEngine() {
   gie_model_stream_.seekg(0, gie_model_stream_.beg);
 
   CaffeToGIEModel(deploy_file_, model_file_, {output_blob_name_}, BATCH_SIZE, gie_model_stream_);
@@ -134,7 +134,7 @@ void gie_inferer<DType>::CreateEngine() {
 }
 
 template<typename DType>
-void gie_inferer<DType>::DoInference(DType *input, DType *output) {
+void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   IExecutionContext *context = engine_->createExecutionContext();
   CHECK(context != nullptr) << "GIE error, can't create context";
   CHECK(input != nullptr) << "Input is invalid: nullptr";
@@ -167,7 +167,7 @@ void gie_inferer<DType>::DoInference(DType *input, DType *output) {
 }
 
 template<typename DType>
-void gie_inferer<DType>::DestroyEngine() {
+void GIEInferer<DType>::DestroyEngine() {
   engine_->destroy();
   engine_ = nullptr;
   infer_runtime_->destroy();
@@ -177,16 +177,16 @@ void gie_inferer<DType>::DestroyEngine() {
 }
 
 template<typename DType>
-Shape gie_inferer<DType>::GetInputShape() {
+Shape GIEInferer<DType>::GetInputShape() {
   return input_shape_;
 }
 
 template<typename DType>
-Shape gie_inferer<DType>::GetOutputShape() {
+Shape GIEInferer<DType>::GetOutputShape() {
   return output_shape_;
 }
 
-template class gie_inferer<float>;
+template class GIEInferer<float>;
 #ifdef ON_TEGRA
 template class GIEInferer<float16>;
 #endif

@@ -107,7 +107,7 @@ void CaffeClassifier<DType, MType>::SetMean(const string& mean_file) {
   /* Compute the global mean pixel value and create a mean image
    * filled with this value. */
   cv::Scalar channel_mean = cv::mean(mean);
-  mean_ = as
+  mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
 }
 
 template <typename DType, typename MType>
@@ -120,17 +120,14 @@ std::vector<float> CaffeClassifier<DType, MType>::Predict(const cv::Mat& img) {
 
   timer.Start();
   WrapInputLayer(input_channels);
-  timer.Stop();
   LOG(INFO) << "WrapInputLayer done in " << timer.ElapsedMSec() << "ms";
 
   timer.Start();
   Preprocess(img, input_channels);
-  timer.Stop();
   LOG(INFO) << "Preprocessing done in " << timer.ElapsedMSec() << "ms";
 
   timer.Start();
   net_->ForwardPrefilled();
-  timer.Stop();
   LOG(INFO) << "Forward done in " << timer.ElapsedMSec() << "ms";
 
   /* Copy the output layer to a std::vector */
@@ -143,8 +140,6 @@ std::vector<float> CaffeClassifier<DType, MType>::Predict(const cv::Mat& img) {
     caffe::Get<float> (*ptr);
     scores.push_back(caffe::Get<float>(*ptr));
   }
-  timer.Stop();
-  timerTotal.Stop();
   LOG(INFO) << "Copied output layer in " << timer.ElapsedMSec() << "ms";
   LOG(INFO) << "Whole predict done in " << timerTotal.ElapsedMSec() << "ms";
   return scores;

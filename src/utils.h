@@ -6,6 +6,7 @@
 #define TX1DNN_UTILS_H
 
 #include "common.h"
+#include <caffe/caffe.hpp>
 
 /**
  * \brief Get a list of GPUs in machine.
@@ -29,7 +30,7 @@ inline bool PairCompare(const std::pair<float, int>& lhs,
 }
 
 
-std::vector<int> Argmax(const std::vector<float>& v, int N) {
+inline std::vector<int> Argmax(const std::vector<float>& v, int N) {
   std::vector<std::pair<float, int> > pairs;
   for (size_t i = 0; i < v.size(); ++i)
     pairs.push_back(std::make_pair(v[i], i));

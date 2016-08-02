@@ -37,7 +37,7 @@ GIEClassifier::~GIEClassifier() {
   inferer_.DestroyEngine();
 }
 
-std::vector<GIEClassifier::Prediction> GIEClassifier::Classify(const cv::Mat &img, int N) {
+std::vector<Prediction> GIEClassifier::Classify(const cv::Mat &img, int N) {
   std::vector<float> output = Predict(img);
 
   N = std::min<int>(labels_.size(), N);

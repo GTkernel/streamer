@@ -1,9 +1,11 @@
 #include "gst_video_capture.h"
 #ifdef USE_GIE
-  #include "GIEClassifier.h"
+  #include "gie_classifier.h"
 #else
-  #include "CaffeClassifier.h"
+  #include "CaffeV1Classifier.h"
+// #include <caffe/util/gpu_memory.hpp>
 #endif
+#include "utils.h"
 #include <iomanip>
 
 int
@@ -40,7 +42,10 @@ main (int argc, char *argv[])
 #ifdef USE_GIE
   GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
 #else
-  CaffeClassifier<float16, CAFFE_FP16_MTYPE> classifier(model_file, trained_file, mean_file, label_file);
+  // std::vector<int> gpus;
+  // GetGpus(gpus);
+  // caffe::GPUMemory::Scope gpu_memory_scope(gpus);
+  CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
   // CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
 #endif
 
