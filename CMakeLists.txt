@@ -13,6 +13,7 @@ find_package(Caffe REQUIRED)
 find_package(GIE REQUIRED)
 find_package(Protobuf 3.0 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(MXNet)
 
 # Determine platform
 if (EXISTS /var/libopencv4tegra-repo)

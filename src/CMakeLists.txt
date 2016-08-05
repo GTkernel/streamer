@@ -9,7 +9,7 @@ set(COMMON_LIBRARIES
 
 set(COMMON_SOURCE_FILES gst_video_capture.cpp gst_video_capture.h utils.cpp utils.cpp)
 
-set(TX1DNN_CAFFE_SOURCE_FILES CaffeV1Classifier.cpp CaffeV1Classifier.h ${COMMON_SOURCE_FILES})
+set(TX1DNN_CAFFE_SOURCE_FILES caffe_v1_classifier.cpp caffe_v1_classifier.h ${COMMON_SOURCE_FILES})
 
 add_library(tx1dnn-caffe ${TX1DNN_CAFFE_SOURCE_FILES})
 

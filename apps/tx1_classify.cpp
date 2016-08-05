@@ -6,7 +6,7 @@
 #ifdef USE_GIE
 #include "gie_classifier.h"
 #else
-#include "CaffeV1Classifier.h"
+#include "caffe_v1_classifier.h"
 #endif
 #include <iomanip>
 
