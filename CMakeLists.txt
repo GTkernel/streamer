@@ -48,6 +48,7 @@ include_directories(
     ${GSTREAMER_APP_INCLUDE_DIRS}
     ${Caffe_INCLUDE_DIRS}
     ${GIE_INCLUDE_DIRS}
+    ${MXNet_INCLUDE_DIRS}
 )
 
 if (CUDA_FOUND)

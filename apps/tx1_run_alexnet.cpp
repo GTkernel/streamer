@@ -2,7 +2,8 @@
 #ifdef USE_GIE
   #include "gie_classifier.h"
 #else
-  #include "caffe_v1_classifier.h"
+#include "caffe_v1_classifier.h"
+#include "mxnet_classifier.h"
   // #include "caffe_classifier.h"
 #endif
 #include "utils.h"
@@ -44,7 +45,8 @@ main (int argc, char *argv[])
 #else
   // CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
   // CaffeClassifier<float16, CAFFE_FP16_MTYPE> classifier(model_file, trained_file, mean_file, label_file);
-  CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
+  //  CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
+  MXNetClassifier classifier(model_file, trained_file, mean_file, label_file, 224, 224);
 #endif
 
   GstVideoCapture cap;

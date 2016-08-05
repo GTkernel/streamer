@@ -22,14 +22,22 @@ if (Cnmem_FOUND)
 	target_link_libraries(tx1dnn-caffe ${Cnmem_LIBRARIES})
 endif()
 
-set(TX1DNN_GIE_SOURCE_FILES gie_classifier.cpp gie_classifier.h gie_inferer.cpp gie_inferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES})
+set(TX1DNN_GIE_SOURCE_FILES gie_classifier.cpp gie_classifier.h gie_inferer.cpp gie_inferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES} mxnet_classifier.cpp mxnet_classifier.h)
 add_library(tx1dnn-gie ${TX1DNN_GIE_SOURCE_FILES})
 target_link_libraries(tx1dnn-gie
 	${GIE_LIBRARIES}
 	${COMMON_LIBRARIES})
 
+set(MXNET_SOURCE_FILES mxnet_classifier.cpp mxnet_classifier.h)
+add_library(tx1dnn-mxnet ${MXNET_SOURCE_FILES})
+target_link_libraries(tx1dnn-mxnet
+	${MXNet_LIBRARIES}
+	${COMMON_LIBRARIES}
+)
+
 target_include_directories(tx1dnn-caffe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tx1dnn-gie PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(tx1dnn-mxnet PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Set Caffe compile flags
 function(add_caffe_cflags TARGET)
