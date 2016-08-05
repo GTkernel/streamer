@@ -45,8 +45,8 @@ main (int argc, char *argv[])
 #else
   // CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
   // CaffeClassifier<float16, CAFFE_FP16_MTYPE> classifier(model_file, trained_file, mean_file, label_file);
-  //  CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
-  MXNetClassifier classifier(model_file, trained_file, mean_file, label_file, 224, 224);
+    CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
+//  MXNetClassifier classifier(model_file, trained_file, mean_file, label_file, 224, 224);
 #endif
 
   GstVideoCapture cap;

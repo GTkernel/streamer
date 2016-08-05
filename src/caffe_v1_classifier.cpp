@@ -9,7 +9,7 @@ template <typename DType>
 CaffeV1Classifier<DType>::CaffeV1Classifier(const string& model_file,
                        const string& trained_file,
                        const string& mean_file,
-                       const string& label_file) {
+                       const string& label_file): Classifier(label_file) {
 #ifdef CPU_ONLY
   caffe::Caffe::set_mode(caffe::Caffe::CPU);
 #else
@@ -44,12 +44,6 @@ CaffeV1Classifier<DType>::CaffeV1Classifier(const string& model_file,
   // Load the binaryproto mean file.
   SetMean(mean_file);
 
-  // Load labels.
-  std::ifstream labels(label_file.c_str());
-  CHECK(labels) << "Unable to open labels file " << label_file;
-  string line;
-  while (std::getline(labels, line))
-    labels_.push_back(string(line));
 
   caffe::Blob<DType>* output_layer = net_->output_blobs()[0];
   CHECK_EQ(labels_.size(), output_layer->channels())
@@ -60,22 +54,6 @@ CaffeV1Classifier<DType>::CaffeV1Classifier(const string& model_file,
                        input_geometry_.height, input_geometry_.width);
   // Forward dimension change to all layers.
   net_->Reshape();
-}
-
-/* Return the top N predictions. */
-template <typename DType>
-std::vector<Prediction> CaffeV1Classifier<DType>::Classify(const cv::Mat& img, int N) {
-  std::vector<float> output = Predict(img);
-
-  N = std::min<int>(labels_.size(), N);
-  std::vector<int> maxN = Argmax(output, N);
-  std::vector<Prediction> predictions;
-  for (int i = 0; i < N; ++i) {
-    int idx = maxN[i];
-    predictions.push_back(std::make_pair(labels_[idx], output[idx]));
-  }
-
-  return predictions;
 }
 
 /* Load the mean file in binaryproto format. */
@@ -114,16 +92,10 @@ template <typename DType>
 std::vector<float> CaffeV1Classifier<DType>::Predict(const cv::Mat& img) {
   Timer timerTotal;
   timerTotal.Start();
-
   Timer timer;
-  std::vector<DType *> input_channels;
-
   timer.Start();
-  WrapInputLayer(input_channels);
-  LOG(INFO) << "WrapInputLayer done in " << timer.ElapsedMSec() << "ms";
 
-  timer.Start();
-  Preprocess(img, input_channels);
+  Preprocess(img);
   LOG(INFO) << "Preprocessing done in " << timer.ElapsedMSec() << "ms";
 
   timer.Start();
@@ -145,54 +117,19 @@ std::vector<float> CaffeV1Classifier<DType>::Predict(const cv::Mat& img) {
   return scores;
 }
 
-/* Wrap the input layer of the network in separate cv::Mat objects
- * (one per channel). This way we save one memcpy operation and we
- * don't need to rely on cudaMemcpy2D. The last preprocessing
- * operation will write the separate channels directly to the input
- * layer. */
+/**
+ * @brief This function will transform the input data to proper forms to be fed into the model. It will directly write
+ * the input data to input layers.
+ * @param img The input image.
+ * @param input_channels
+ */
 template <typename DType>
-void CaffeV1Classifier<DType>::WrapInputLayer(std::vector<DType *> &input_channels) {
-  caffe::Blob<DType>* input_layer = net_->input_blobs()[0];
-
-  int width = input_layer->width();
-  int height = input_layer->height();
-  DType* input_data = input_layer->mutable_cpu_data();
-  for (int i = 0; i < input_layer->channels(); ++i) {
-    input_channels.push_back(input_data);
-    input_data += width * height;
-  }
-}
-
-template <typename DType>
-void CaffeV1Classifier<DType>::Preprocess(const cv::Mat& img,
-                            const std::vector<DType *> &input_channels) {
+void CaffeV1Classifier<DType>::Preprocess(const cv::Mat& img) {
   /* Convert the input image to the input image format of the network. */
-  cv::Mat sample;
-  if (img.channels() == 3 && num_channels_ == 1)
-    cv::cvtColor(img, sample, cv::COLOR_BGR2GRAY);
-  else if (img.channels() == 4 && num_channels_ == 1)
-    cv::cvtColor(img, sample, cv::COLOR_BGRA2GRAY);
-  else if (img.channels() == 4 && num_channels_ == 3)
-    cv::cvtColor(img, sample, cv::COLOR_BGRA2BGR);
-  else if (img.channels() == 1 && num_channels_ == 3)
-    cv::cvtColor(img, sample, cv::COLOR_GRAY2BGR);
-  else
-    sample = img;
-
-  cv::Mat sample_resized;
-  if (sample.size() != input_geometry_)
-    cv::resize(sample, sample_resized, input_geometry_);
-  else
-    sample_resized = sample;
-
-  cv::Mat sample_float;
-  if (num_channels_ == 3)
-    sample_resized.convertTo(sample_float, CV_32FC3);
-  else
-    sample_resized.convertTo(sample_float, CV_32FC1);
+  cv::Mat sample_transformed = TransformImage(img, num_channels_, input_geometry_.width, input_geometry_.height);
 
   cv::Mat sample_normalized;
-  cv::subtract(sample_float, mean_, sample_normalized);
+  cv::subtract(sample_transformed , mean_, sample_normalized);
 
   /* This operation will write the separate BGR planes directly to the
    * input layer of the network because it is wrapped by the cv::Mat
@@ -201,14 +138,19 @@ void CaffeV1Classifier<DType>::Preprocess(const cv::Mat& img,
   split_channels.resize(num_channels_);
   cv::split(sample_normalized, split_channels);
 
+  // Get the input channel
+  caffe::Blob<DType>* input_layer = net_->input_blobs()[0];
+
+  int width = input_layer->width();
+  int height = input_layer->height();
+  DType *input_data = input_layer->mutable_cpu_data();
+  DType *input_data_ptr = input_data;
+
   // Convert fp32 to fp16, and fill in input channels one by one
   for (int i = 0; i < num_channels_; i++) {
-    memcpy(input_channels[i], split_channels[i].data, input_geometry_.area() * sizeof(DType));
+    memcpy(input_data_ptr, split_channels[i].data, input_geometry_.area() * sizeof(DType));
+    input_data_ptr += input_geometry_.area();
   }
-
-  CHECK(reinterpret_cast<DType *>(input_channels[0])
-    == net_->input_blobs()[0]->cpu_data())
-      << "Input channels are not wrapping the input layer of the network.";
 }
 
 template class CaffeV1Classifier<float>;

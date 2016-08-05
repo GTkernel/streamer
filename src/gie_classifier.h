@@ -24,9 +24,9 @@ class GIEClassifier {
  private:
   void SetMean(const string &mean_file);
 
-  std::vector<float> Predict(const cv::Mat &img);
-
   void CreateInput(const cv::Mat &img);
+
+  std::vector<float> Predict(const cv::Mat &img);
 
  private:
   GIEInferer<DType> inferer_;

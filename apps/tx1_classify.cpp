@@ -45,8 +45,8 @@ main (int argc, char *argv[])
 #ifdef USE_GIE
   GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
 #else
-  // CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
-  MXNetClassifier classifier(model_file, trained_file, mean_file, label_file, 224, 224);
+   CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
+//  MXNetClassifier classifier(model_file, trained_file, mean_file, label_file, 224, 224);
 #endif
 
   cv::Mat image = cv::imread(image_file, CV_LOAD_IMAGE_COLOR);

@@ -7,7 +7,7 @@ set(COMMON_LIBRARIES
 	${GSTREAMER_APP_LIBRARIES}
 	${Boost_SYSTEM_LIBRARY})
 
-set(COMMON_SOURCE_FILES gst_video_capture.cpp gst_video_capture.h utils.cpp utils.cpp)
+set(COMMON_SOURCE_FILES gst_video_capture.cpp gst_video_capture.h utils.cpp utils.cpp classifier.cpp classifier.h)
 
 set(TX1DNN_CAFFE_SOURCE_FILES caffe_v1_classifier.cpp caffe_v1_classifier.h ${COMMON_SOURCE_FILES})
 
@@ -22,7 +22,7 @@ if (Cnmem_FOUND)
 	target_link_libraries(tx1dnn-caffe ${Cnmem_LIBRARIES})
 endif()
 
-set(TX1DNN_GIE_SOURCE_FILES gie_classifier.cpp gie_classifier.h gie_inferer.cpp gie_inferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES} mxnet_classifier.cpp mxnet_classifier.h)
+set(TX1DNN_GIE_SOURCE_FILES gie_classifier.cpp gie_classifier.h gie_inferer.cpp gie_inferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES})
 add_library(tx1dnn-gie ${TX1DNN_GIE_SOURCE_FILES})
 target_link_libraries(tx1dnn-gie
 	${GIE_LIBRARIES}

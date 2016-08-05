@@ -44,12 +44,7 @@ CaffeClassifier<DType, MType>::CaffeClassifier(const string& model_file,
   // Load the binaryproto mean file.
   SetMean(mean_file);
 
-  // Load labels.
-  std::ifstream labels(label_file.c_str());
-  CHECK(labels) << "Unable to open labels file " << label_file;
-  string line;
-  while (std::getline(labels, line))
-    labels_.push_back(string(line));
+
 
   caffe::Blob<DType, MType>* output_layer = net_->output_blobs()[0];
   CHECK_EQ(labels_.size(), output_layer->channels())
