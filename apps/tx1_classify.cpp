@@ -9,7 +9,6 @@
 #include "caffe_v1_classifier.h"
 #endif
 #include "mxnet_classifier.h"
-#include <iomanip>
 
 int
 main (int argc, char *argv[])

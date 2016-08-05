@@ -1,25 +1,26 @@
 #include "gst_video_capture.h"
+
 #ifdef USE_GIE
   #include "gie_classifier.h"
 #else
-#include "caffe_v1_classifier.h"
-#include "mxnet_classifier.h"
-  // #include "caffe_classifier.h"
+  #include "caffe_v1_classifier.h"
+// Comment this if using fp16
+//  #include "caffe_classifier.h"
+  #include "mxnet_classifier.h"
 #endif
-#include "utils.h"
-#include <iomanip>
 
 int
 main (int argc, char *argv[])
 {
-  if (argc != 6 && argc != 7) {
+  if (argc != 8) {
     std::cout << "Usage: " << argv[0]
               << " deploy.prototxt network.caffemodel"
               << " mean.binaryproto labels.txt RTSPURI"
-              << " display" << std::endl;
+              << " DISPLAY MODEL_TYPE" << std::endl;
     std::cout << "";
     std::cout << "  RTSPURI: uri to the camera. e.g rtsp://xxx" << std::endl;
-    std::cout << "  display: enable display or not, must have a X window" << std::endl;
+    std::cout << "  DISPLAY: true or false: enable display or not, must have a X window" << std::endl;
+    std::cout << "  MODEL_TYPE: caffe, mxnet, gie";
     exit(1);
   }
 
@@ -35,26 +36,36 @@ main (int argc, char *argv[])
   string trained_file = argv[2];
   string mean_file    = argv[3];
   string label_file   = argv[4];
-  bool display = false;
-  if (argc == 7) {
-    display = true;
+  string video_uri    = argv[5];
+  string display_on   = argv[6];
+  string model_type   = argv[7];
+
+  // Check options
+  CHECK(model_type == "caffe" || model_type == "gie" || model_type == "mxnet") << "MODEL_TYPE can only be one of caffe, mxnet or gie";
+
+  std::unique_ptr<Classifier> classifier;
+#ifdef USE_GIE
+  CHECK(model_type != "caffe") << "Binary is compiled with GIE, can't run Caffe, recompile with -DGIE=false";
+  classifier.reset(new GIEClassifier(model_file, trained_file, mean_file, label_file));
+#else
+  CHECK(model_type != "gie") << "Binary is not compiled with GIE enabled, recompile with -DGIE=true";
+
+  if (model_type == "caffe") {
+    classifier.reset(new CaffeV1Classifier<float>(model_file, trained_file, mean_file, label_file));
+//    CaffeClassifier<float16, CAFFE_FP16_MTYPE> classifier(model_file, trained_file, mean_file, label_file);
+  }
+#endif
+  if (model_type == "mxnet") {
+//    classifier.reset(new MXNetClassifier(model_file, trained_file, mean_file, label_file, 224, 224));
   }
 
-#ifdef USE_GIE
-  GIEClassifier classifier(model_file, trained_file, mean_file, label_file);
-#else
-  // CaffeClassifier<float, float> classifier(model_file, trained_file, mean_file, label_file);
-  // CaffeClassifier<float16, CAFFE_FP16_MTYPE> classifier(model_file, trained_file, mean_file, label_file);
-    CaffeV1Classifier<float> classifier(model_file, trained_file, mean_file, label_file);
-//  MXNetClassifier classifier(model_file, trained_file, mean_file, label_file, 224, 224);
-#endif
-
   GstVideoCapture cap;
-  if (!cap.CreatePipeline(argv[5])) {
+  if (!cap.CreatePipeline(video_uri)) {
     LOG(FATAL) << "Can't create pipeline, check camera and pipeline uri";
     exit(1);
   }
 
+  bool display = display_on == "true";
   if (display) {
     cv::namedWindow("camera");
   }
@@ -63,9 +74,9 @@ main (int argc, char *argv[])
     cv::Mat frame = cap.TryGetFrame();
 
     if (!frame.empty()) {
-      std::vector<Prediction> predictions = classifier.Classify(frame, 1);
+      std::vector<Prediction> predictions = classifier->Classify(frame, 1);
       Prediction p = predictions[0];
-      LOG(INFO) << std::fixed << std::setprecision(4) << p.second << " - \""
+      LOG(INFO) << p.second << " - \""
                 << p.first << "\"" << std::endl;
       if (display) {
       cv::imshow("camera", frame);

@@ -6,12 +6,12 @@
 #define TX1DNN_GIECLASSIFIER_H
 
 #include "common.h"
-#include "gie_classifier.h"
+#include "classifier.h"
 #include "gie_inferer.h"
 #include "float16.h"
 
-class GIEClassifier {
-  typedef float16 DType;
+class GIEClassifier : public Classifier {
+  typedef float DType;
  public:
   typedef std::pair<string, float> Prediction;
   GIEClassifier(const string &model_file,
@@ -19,21 +19,19 @@ class GIEClassifier {
                 const string &mean_file,
                 const string &label_file);
   ~GIEClassifier();
-  std::vector<Prediction> Classify(const cv::Mat &img, int N = 5);
 
  private:
   void SetMean(const string &mean_file);
 
-  void CreateInput(const cv::Mat &img);
+  void Preprocess(const cv::Mat &img);
 
-  std::vector<float> Predict(const cv::Mat &img);
+  virtual std::vector<float> Predict(const cv::Mat &img);
 
  private:
   GIEInferer<DType> inferer_;
   cv::Size input_geometry_;
   size_t num_channels_;
   cv::Mat mean_;
-  std::vector<string> labels_;
   DType *input_data_;
   DType *output_data_;
 };

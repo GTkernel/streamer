@@ -1,8 +1,8 @@
 # Find GIE headers and libraries
 unset(GIE_FOUND)
 
-set(include_hints_path ${GIE_HOME}/include /usr/local/include /usr/include)
-set(lib_hints_path ${GIE_HOME}/lib /usr/local/lib /usr/lib)
+set(include_hints_path ${GIE_HOME}/include)
+set(lib_hints_path ${GIE_HOME}/lib)
 
 find_path(GIE_INCLUDE_DIRS NAMES Infer.h caffeParser.h
     HINTS
