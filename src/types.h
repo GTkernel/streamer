@@ -18,7 +18,7 @@ struct Shape {
   /**
    * \brief Return volumn (size) of the shape object
    */
-  size_t GetVolume() { return (size_t)channel * width * height; }
+  size_t GetVolume() const { return (size_t)channel * width * height; }
   // Number of channels
   int channel;
   // Width

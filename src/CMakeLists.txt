@@ -22,7 +22,7 @@ if (Cnmem_FOUND)
 	target_link_libraries(tx1dnn-caffe ${Cnmem_LIBRARIES})
 endif()
 
-set(TX1DNN_GIE_SOURCE_FILES gie_classifier.cpp gie_classifier.h gie_inferer.cpp gie_inferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES})
+set(TX1DNN_GIE_SOURCE_FILES gie_classifier.cpp gie_classifier.h gie_inferer.cpp gie_inferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES} data_buffer.h)
 add_library(tx1dnn-gie ${TX1DNN_GIE_SOURCE_FILES})
 target_link_libraries(tx1dnn-gie
 	${GIE_LIBRARIES}

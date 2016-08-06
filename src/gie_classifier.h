@@ -22,18 +22,13 @@ class GIEClassifier : public Classifier {
 
  private:
   void SetMean(const string &mean_file);
-
-  void Preprocess(const cv::Mat &img);
-
-  virtual std::vector<float> Predict(const cv::Mat &img);
+  virtual std::vector<float> Predict();
+  virtual DataBuffer GetInputBuffer();
 
  private:
   GIEInferer<DType> inferer_;
-  cv::Size input_geometry_;
-  size_t num_channels_;
-  cv::Mat mean_;
-  DType *input_data_;
-  DType *output_data_;
+  DataBuffer input_buffer_;
+  DataBuffer output_buffer_;
 };
 
 #endif //TX1DNN_GIECLASSIFIER_H

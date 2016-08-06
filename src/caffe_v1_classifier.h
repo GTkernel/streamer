@@ -16,23 +16,18 @@
 template <typename DType>
 class CaffeV1Classifier : public Classifier {
 public:
-    CaffeV1Classifier(const string& model_file,
-                      const string& trained_file,
-                      const string& mean_file,
-                      const string& label_file);
+  CaffeV1Classifier(const string& model_file,
+                    const string& trained_file,
+                    const string& mean_file,
+                    const string& label_file);
 
 private:
-    void SetMean(const string& mean_file);
-
-    virtual std::vector<float> Predict(const cv::Mat& img);
-
-    void Preprocess(const cv::Mat& img);
+  void SetMean(const string& mean_file);
+  virtual std::vector<float> Predict();
+  virtual DataBuffer GetInputBuffer();
 
 private:
   std::shared_ptr<caffe::Net<DType> > net_;
-  cv::Size input_geometry_;
-  int num_channels_;
-  cv::Mat mean_;
 };
 
 #endif //TX1DNN_CAFFEV1CLASSIFIER_H

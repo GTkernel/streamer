@@ -4,53 +4,8 @@
 
 #include "mxnet_classifier.h"
 #include "utils.h"
-#include <fstream>
 
-/**
- * @brief A buffer representation of a file. The buffer is automatically deallocated when the
- * buffer file object is outout of scope.
- * 
- * @param file_path The path to the file to be buffered.
- */
-class BufferFile {
- public :
-  /**
-   * @brief Initialize from a file.
-   */
-  explicit BufferFile(std::string file_path)
-      :file_path_(file_path) {
-    std::ifstream ifs(file_path.c_str(), std::ios::in | std::ios::binary);
-    CHECK(ifs) << "Can't open the file. Please check " << file_path;
-
-    ifs.seekg(0, std::ios::end);
-    length_ = ifs.tellg();
-    ifs.seekg(0, std::ios::beg);
-    LOG(INFO) << file_path.c_str() << " ... "<< length_ << " bytes";
-
-    buffer_ = new char[sizeof(char) * length_];
-    ifs.read(buffer_, length_);
-    ifs.close();
-  }
-
-  BufferFile() = delete;
-  BufferFile(const BufferFile &other) = delete;
-
-  ssize_t GetLength() {
-    return length_;
-  }
-  char* GetBuffer() {
-    return buffer_;
-  }
-
-  ~BufferFile() {
-    delete[] buffer_;
-    buffer_ = NULL;
-  }
-private:
-  string file_path_;
-  ssize_t length_;
-  char* buffer_;
-};
+#define MEAN_VALUE 117.0
 
 /**
  * @brief Constructor for MXNet classifier
@@ -68,14 +23,15 @@ MXNetClassifier::MXNetClassifier(const string &model_desc,
                                  const string &label_file,
                                  const int input_width,
                                  const int input_height)
-    : Classifier(label_file),
-      input_geometry_(input_width, input_height),
-      num_channels_(3),
+    : Classifier(model_desc, model_params, mean_file, label_file),
       predictor_(nullptr) {
 
+  input_width_ = input_width;
+  input_height_ = input_height;
+  input_channels_ = 3;
   // Load the model desc and weights
-  BufferFile json_data(model_desc.c_str());
-  BufferFile param_data(model_params.c_str());
+  DataBuffer json_data(model_desc);
+  DataBuffer param_data(model_params);
 
   int dev_type = 2; // GPU
   int dev_id = 0;
@@ -91,7 +47,7 @@ MXNetClassifier::MXNetClassifier(const string &model_desc,
 
   MXPredCreate((const char*)json_data.GetBuffer(),
                (const char*)param_data.GetBuffer(),
-               static_cast<size_t>(param_data.GetLength()),
+               static_cast<size_t>(param_data.GetSize()),
                dev_type,
                dev_id,
                num_input_nodes,
@@ -99,6 +55,10 @@ MXNetClassifier::MXNetClassifier(const string &model_desc,
                input_shape_indptr,
                input_shape_data,
                &predictor_);
+
+  mean_image_ = cv::Mat(GetInputGeometry(), CV_32FC3, MEAN_VALUE);
+
+  input_buffer_ = DataBuffer(GetInputSize<mx_float>());
 }
 
 MXNetClassifier::~MXNetClassifier() {
@@ -109,46 +69,14 @@ MXNetClassifier::~MXNetClassifier() {
   }
 }
 
-/**
- * @brief Preprocess the input image and fill in the buffer to feed into the network. Preprocess: 
- *  resize, convert to float, normalize
- * 
- * @param image The input image, with any size.
- * @param input_data The pointer to store the processed input, it must have enough capacity.
- */
-void MXNetClassifier::Preprocess(const cv::Mat &image, mx_float *input_data) {
-  #define MEAN_VALUE 117.0
-
-  cv::Mat sample_transformed = TransformImage(image, num_channels_, input_geometry_.width, input_geometry_.height);
-
-  cv::Mat sample_normalized;
-  cv::subtract(sample_transformed, MEAN_VALUE, sample_normalized);
-
-  std::vector<cv::Mat> split_channels;
-  split_channels.resize(num_channels_);
-  cv::split(sample_normalized, split_channels);
-
-  mx_float *data = input_data;
-
-  for (int i = 0; i < num_channels_; i++) {
-    memcpy(data, split_channels[i].data, input_geometry_.area() * sizeof(float));
-    data += input_geometry_.area();
-  }
-}
-
-std::vector<float> MXNetClassifier::Predict(const cv::Mat& img) {
-  int image_size = input_geometry_.area() * num_channels_;
-  std::vector<mx_float> input_data(image_size);
-  Timer timer, total_timer;
-  timer.Start();
-  total_timer.Start();
-  Preprocess(img, input_data.data());
-  LOG(INFO) << "Preprocessed in " << timer.ElapsedMSec() << " ms";
+std::vector<float> MXNetClassifier::Predict() {
+  size_t image_size = GetInputShape().GetVolume();
+  Timer timer; timer.Start();
 
   timer.Start();
-  MXPredSetInput(predictor_, "data", input_data.data(), image_size);
+  MXPredSetInput(predictor_, "data", (mx_float *)input_buffer_.GetBuffer(), image_size);
   MXPredForward(predictor_);
-  LOG(INFO) << "Forward in " << timer.ElapsedMSec() << " ms";
+  LOG(INFO) << "Forward done in " << timer.ElapsedMSec() << " ms";
 
   mx_uint output_index = 0;
   mx_uint *output_shape = 0;
@@ -167,4 +95,8 @@ std::vector<float> MXNetClassifier::Predict(const cv::Mat& img) {
   MXPredGetOutput(predictor_, output_index, output.data(), output_size);
 
   return output;
+}
+
+DataBuffer MXNetClassifier::GetInputBuffer() {
+  return input_buffer_;
 }

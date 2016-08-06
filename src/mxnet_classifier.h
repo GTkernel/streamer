@@ -24,14 +24,12 @@ class MXNetClassifier : public Classifier {
   ~MXNetClassifier();
 
  private:
-  virtual std::vector<float> Predict(const cv::Mat& img);
-
-  void Preprocess(const cv::Mat &image, mx_float *input_data);
+  virtual std::vector<float> Predict();
+  virtual DataBuffer GetInputBuffer();
 
  private:
-  cv::Size input_geometry_;
-  int num_channels_;
   PredictorHandle predictor_;
+  DataBuffer input_buffer_;
 };
 
 #endif //TX1DNN_MXNET_CLASSIFIER_H
