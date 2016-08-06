@@ -88,10 +88,13 @@ void CaffeV1Classifier<DType>::SetMean(const string& mean_file) {
 
 template <typename DType>
 std::vector<float> CaffeV1Classifier<DType>::Predict() {
+  Timer timer;
+  timer.Start();
   net_->Forward();
   // Copy the output layer to a std::vector
   caffe::Blob<DType>* output_layer = net_->output_blobs()[0];
   const DType* begin = output_layer->cpu_data();
+  LOG(INFO) << "Forward done in " << timer.ElapsedMSec() << " ms";
 
   std::vector<float> scores;
   const DType* end = begin + output_layer->channels();

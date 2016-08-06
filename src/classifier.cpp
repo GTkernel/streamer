@@ -113,7 +113,6 @@ cv::Mat Classifier::TransformImage(const cv::Mat &img, const Shape &shape, const
   cv::subtract(sample_float, mean_img, sample_normalized);
 
   if (buffer != nullptr) {
-    LOG(INFO) << "Copy transformed input image to input buffer";
     CHECK(shape.GetVolume() * sizeof(float) == buffer->GetSize()) << "Buffer size " << buffer->GetSize()
       << " does not match input size " << shape.GetVolume() * sizeof(float);
     // Wrap buffer to channels to save memory copy.

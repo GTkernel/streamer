@@ -103,15 +103,13 @@ void CaffeFp16Classifier::Preprocess(const cv::Mat &img, DataBuffer &buffer) {
 }
 
 std::vector<float> CaffeFp16Classifier::Predict() {
-  net_->ForwardPrefilled();
-
-  // Copy the output layer to a vector
-  std::vector<float> scores;
   Timer timer;
   timer.Start();
+  net_->ForwardPrefilled();
   caffe::Blob<DType, MType>* output_layer = net_->output_blobs()[0];
   const DType* begin = output_layer->cpu_data();
   LOG(INFO) << "FP16 forward done in " << timer.ElapsedMSec() << " ms";
+  std::vector<float> scores;
   timer.Start();
   const DType* end = begin + output_layer->channels();
   for (const DType *ptr = begin; ptr != end; ptr++) {
