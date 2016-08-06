@@ -64,10 +64,7 @@ void GIEClassifier::SetMean(const string &mean_file) {
 }
 
 std::vector<float> GIEClassifier::Predict() {
-  Timer timer;
-  timer.Start();
   inferer_.DoInference((DType *)input_buffer_.GetBuffer(), (DType *)output_buffer_.GetBuffer());
-  LOG(INFO) << "DoInference took " << timer.ElapsedMSec() << " ms";
   int output_channels = inferer_.GetOutputShape().channel;
   std::vector<float> scores;
   for (int i = 0; i < output_channels; i++) {

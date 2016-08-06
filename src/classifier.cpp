@@ -15,11 +15,10 @@ Classifier::Classifier(const string &model_desc, const string &model_params, con
 }
 
 std::vector<Prediction> Classifier::Classify(const cv::Mat &img, int N) {
-  Timer total_timer; total_timer.Start();
+  Timer total_timer;
   Timer timer;
 
   total_timer.Start();
-
   timer.Start();
   auto input_buffer = GetInputBuffer();
   Preprocess(img, input_buffer);

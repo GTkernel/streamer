@@ -32,7 +32,7 @@ class DataBuffer {
    * @param data The pointer to data.
    * @param size Size of the buffer
    */
-  DataBuffer(void *data, size_t size): size_(size), buffer_ptr_(data) { LOG(INFO) << "CALLED"; };
+  DataBuffer(void *data, size_t size): size_(size), buffer_ptr_(data) {};
 
   DataBuffer(const std::string &filename) {
     std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);

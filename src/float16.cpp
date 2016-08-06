@@ -1,6 +1,6 @@
 #include "float16.h"
 
-half cpu_float2half(float f)
+half Cpu_Float2Half(float f)
 {
     half ret;
 
@@ -57,7 +57,7 @@ half cpu_float2half(float f)
     return ret;
 }
 
-float cpu_half2float(half h)
+float Cpu_Half2Float(half h)
 {
     unsigned sign = ((h.x >> 15) & 1);
     unsigned exponent = ((h.x >> 10) & 0x1f);

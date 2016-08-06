@@ -1,12 +1,12 @@
 //
-// Created by Ran Xian on 8/1/16.
+// Created by Ran Xian on 7/23/16.
 //
 
-#include "caffe_v1_classifier.h"
+#include "caffe_fp16_classifier.h"
 #include "utils.h"
+#include "float16.h"
 
-template <typename DType>
-CaffeV1Classifier<DType>::CaffeV1Classifier(const string& model_file,
+CaffeFp16Classifier::CaffeFp16Classifier(const string& model_file,
                        const string& trained_file,
                        const string& mean_file,
                        const string& label_file): Classifier(model_file, trained_file, mean_file, label_file) {
@@ -29,39 +29,39 @@ CaffeV1Classifier<DType>::CaffeV1Classifier(const string& model_file,
 #endif
 
   // Load the network.
-  net_.reset(new caffe::Net<DType>(model_file, caffe::TEST));
+  net_.reset(new caffe::Net<DType, MType>(model_file, caffe::TEST));
   net_->CopyTrainedLayersFrom(trained_file);
 
   CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";
   CHECK_EQ(net_->num_outputs(), 1) << "Network should have exactly one output.";
 
-  caffe::Blob<DType>* input_layer = net_->input_blobs()[0];
+  caffe::Blob<DType, MType>* input_layer = net_->input_blobs()[0];
   input_channels_ = input_layer->channels();
-  CHECK(input_channels_ == 3 || input_channels_ == 1)
-  << "Input layer should have 1 or 3 channels.";
+  CHECK(input_channels_ == 3 || input_channels_ == 1) << "Input layer should have 1 or 3 channels.";
   input_width_ = input_layer->width();
   input_height_ = input_layer->height();
 
-  // Load the binaryproto mean file.
-  SetMean(mean_file);
-
-
-  caffe::Blob<DType>* output_layer = net_->output_blobs()[0];
+  caffe::Blob<DType, MType>* output_layer = net_->output_blobs()[0];
+  CHECK_EQ(labels_.size(), output_layer->channels())
+    << "Number of labels is different from the output layer dimension.";
 
   // Adjust input dimensions
   input_layer->Reshape(1, input_channels_, input_height_, input_width_);
+
   // Forward dimension change to all layers.
   net_->Reshape();
+
+  // Load the binaryproto mean file.
+  SetMean(mean_file);
 }
 
 /* Load the mean file in binaryproto format. */
-template <typename DType>
-void CaffeV1Classifier<DType>::SetMean(const string& mean_file) {
+void CaffeFp16Classifier::SetMean(const string& mean_file) {
   caffe::BlobProto blob_proto;
   caffe::ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
 
   /* Convert from BlobProto to Blob<float> */
-  caffe::Blob<float> mean_blob;
+  caffe::Blob<float,float> mean_blob;
   mean_blob.FromProto(blob_proto);
   CHECK_EQ(mean_blob.channels(), input_channels_)
     << "Number of channels of mean file doesn't match input layer.";
@@ -86,29 +86,46 @@ void CaffeV1Classifier<DType>::SetMean(const string& mean_file) {
   mean_image_ = cv::Mat(GetInputGeometry(), mean.type(), channel_mean);
 }
 
-template <typename DType>
-std::vector<float> CaffeV1Classifier<DType>::Predict() {
-  net_->Forward();
-  // Copy the output layer to a std::vector
-  caffe::Blob<DType>* output_layer = net_->output_blobs()[0];
-  const DType* begin = output_layer->cpu_data();
+/**
+ * @brief Transform to fp16.
+ */
+void CaffeFp16Classifier::Preprocess(const cv::Mat &img, DataBuffer &buffer) {
+  DataBuffer temp_buffer(GetInputSize<float>());
+  cv::Mat transformed = TransformImage(img, GetInputShape(), mean_image_, &temp_buffer);
 
+  float *fp32data = (float *)temp_buffer.GetBuffer();
+  DType *fp16data = (DType *)buffer.GetBuffer();
+
+  size_t image_size = GetInputShape().GetVolume();
+  for (size_t i = 0; i < image_size; i++) {
+    fp16data[i] = caffe::Get<caffe::float16>(fp32data[i]);
+  }
+}
+
+std::vector<float> CaffeFp16Classifier::Predict() {
+  net_->ForwardPrefilled();
+
+  // Copy the output layer to a vector
   std::vector<float> scores;
+  Timer timer;
+  timer.Start();
+  caffe::Blob<DType, MType>* output_layer = net_->output_blobs()[0];
+  const DType* begin = output_layer->cpu_data();
+  LOG(INFO) << "FP16 forward done in " << timer.ElapsedMSec() << " ms";
+  timer.Start();
   const DType* end = begin + output_layer->channels();
   for (const DType *ptr = begin; ptr != end; ptr++) {
-    scores.push_back(*ptr);
+    scores.push_back(caffe::Get<float>(*ptr));
   }
+  LOG(INFO) << "FP16 copied output in " << timer.ElapsedMSec() << " ms";
   return scores;
 }
 
-template <typename DType>
-DataBuffer CaffeV1Classifier<DType>::GetInputBuffer() {
-  caffe::Blob<DType>* input_layer = net_->input_blobs()[0];
+DataBuffer CaffeFp16Classifier::GetInputBuffer() {
+  caffe::Blob<DType, MType> *input_layer = net_->input_blobs()[0];
   DType* input_data = input_layer->mutable_cpu_data();
 
   DataBuffer buffer(input_data, GetInputSize<DType>());
 
   return buffer;
 }
-
-template class CaffeV1Classifier<float>;

@@ -71,19 +71,14 @@ MXNetClassifier::~MXNetClassifier() {
 
 std::vector<float> MXNetClassifier::Predict() {
   size_t image_size = GetInputShape().GetVolume();
-  Timer timer; timer.Start();
-
-  timer.Start();
   MXPredSetInput(predictor_, "data", (mx_float *)input_buffer_.GetBuffer(), image_size);
   MXPredForward(predictor_);
-  LOG(INFO) << "Forward done in " << timer.ElapsedMSec() << " ms";
 
   mx_uint output_index = 0;
   mx_uint *output_shape = 0;
   mx_uint output_shape_len;
 
   // Get Output Result
-  timer.Start();
   MXPredGetOutputShape(predictor_, output_index, &output_shape, &output_shape_len);
 
   size_t output_size = 1;

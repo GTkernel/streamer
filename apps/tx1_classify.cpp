@@ -1,20 +1,30 @@
 #include "gst_video_capture.h"
 
+// Hacking on building with different engines.
 #ifdef USE_GIE
   #include "gie_classifier.h"
 #else
-  #include "caffe_v1_classifier.h"
-// Comment this if using fp16
-//  #include "caffe_classifier.h"
-  #include "mxnet_classifier.h"
+  #ifdef ENABLE_FP16
+    #include "caffe_fp16_classifier.h"
+  #else
+    #include "caffe_v1_classifier.h"
+  #endif
 #endif
 
 #include "mxnet_classifier.h"
 
-inline bool ends_with(std::string const & value, std::string const & ending)
+/**
+ * @brief Determine if a string ends with certain prefix.
+ * 
+ * @param str The string to check.
+ * @param ending The prefix.
+ * 
+ * @return True if the string ends with ending.
+ */
+inline bool ends_with(const string &str, const string &ending)
 {
-  if (ending.size() > value.size()) return false;
-  return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+  if (ending.size() > str.size()) return false;
+  return std::equal(ending.rbegin(), ending.rend(), str.rbegin());
 }
 
 int
@@ -61,8 +71,11 @@ main (int argc, char *argv[])
   CHECK(model_type != "gie") << "Binary is not compiled with GIE enabled, recompile with -DGIE=true";
 
   if (model_type == "caffe") {
-    classifier.reset(new CaffeV1Classifier<float>(model_file, trained_file, mean_file, label_file));
-//    CaffeClassifier<float16, CAFFE_FP16_MTYPE> classifier(model_file, trained_file, mean_file, label_file);
+    #ifdef ENABLE_FP16
+      classifier.reset(new CaffeFp16Classifier(model_file, trained_file, mean_file, label_file));
+    #else
+      classifier.reset(new CaffeV1Classifier<float>(model_file, trained_file, mean_file, label_file));
+    #endif
   }
 #endif
   if (model_type == "mxnet") {

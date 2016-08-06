@@ -41,6 +41,11 @@ if (USE_GIE)
     add_definitions("-D USE_GIE")
 endif()
 
+if (ENABLE_FP16)
+    message("Build with FP16")
+    add_definitions("-D ENABLE_FP16")
+endif()
+
 include_directories(
     src
     ${GLOG_INCLUDE_DIRS}

@@ -9,7 +9,13 @@ set(COMMON_LIBRARIES
 
 set(COMMON_SOURCE_FILES gst_video_capture.cpp gst_video_capture.h utils.cpp utils.cpp classifier.cpp classifier.h)
 
-set(TX1DNN_CAFFE_SOURCE_FILES caffe_v1_classifier.cpp caffe_v1_classifier.h ${COMMON_SOURCE_FILES})
+if (ENABLE_FP16)
+	set(CAFFE_SOURCE_FILES caffe_fp16_classifier.h caffe_fp16_classifier.cpp float16.h float16.cpp)
+else()
+	set(CAFFE_SOURCE_FILES caffe_v1_classifier.cpp caffe_v1_classifier.h)
+endif()
+
+set(TX1DNN_CAFFE_SOURCE_FILES ${CAFFE_SOURCE_FILES} ${COMMON_SOURCE_FILES})
 
 add_library(tx1dnn-caffe ${TX1DNN_CAFFE_SOURCE_FILES})
 

@@ -8,7 +8,6 @@
 #include "common.h"
 #include "classifier.h"
 #include "gie_inferer.h"
-#include "float16.h"
 
 class GIEClassifier : public Classifier {
   typedef float DType;
