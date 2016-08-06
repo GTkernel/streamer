@@ -68,23 +68,16 @@ MXNetClassifier::MXNetClassifier(const string &model_desc,
                                  const string &label_file,
                                  const int input_width,
                                  const int input_height)
-    : input_geometry_(input_width, input_height),
+    : Classifier(label_file),
+      input_geometry_(input_width, input_height),
       num_channels_(3),
       predictor_(nullptr) {
-
-  // Load labels
-  std::ifstream labels(label_file.c_str());
-  CHECK(labels) << "Unable to open labels file " << label_file;
-  string line;
-  while (std::getline(labels, line)) {
-    labels_.push_back(string(line));
-  }
 
   // Load the model desc and weights
   BufferFile json_data(model_desc.c_str());
   BufferFile param_data(model_params.c_str());
 
-  int dev_type = 1; // GPU
+  int dev_type = 2; // GPU
   int dev_id = 0;
   mx_uint num_input_nodes = 1;
   const char* input_key[1] = {"data"};
@@ -123,19 +116,13 @@ MXNetClassifier::~MXNetClassifier() {
  * @param image The input image, with any size.
  * @param input_data The pointer to store the processed input, it must have enough capacity.
  */
-void MXNetClassifier::Preprocessing(const cv::Mat &image, mx_float *input_data) {
+void MXNetClassifier::Preprocess(const cv::Mat &image, mx_float *input_data) {
   #define MEAN_VALUE 117.0
 
-  cv::Mat sample_resized;
-  if (image.size() != input_geometry_) {
-    cv::resize(image, sample_resized, input_geometry_);
-  }
-
-  cv::Mat sample_float;
-  sample_resized.convertTo(sample_float, CV_32FC1);
+  cv::Mat sample_transformed = TransformImage(image, num_channels_, input_geometry_.width, input_geometry_.height);
 
   cv::Mat sample_normalized;
-  cv::subtract(sample_float, MEAN_VALUE, sample_normalized);
+  cv::subtract(sample_transformed, MEAN_VALUE, sample_normalized);
 
   std::vector<cv::Mat> split_channels;
   split_channels.resize(num_channels_);
@@ -149,17 +136,17 @@ void MXNetClassifier::Preprocessing(const cv::Mat &image, mx_float *input_data) 
   }
 }
 
-std::vector<Prediction> MXNetClassifier::Classify(const cv::Mat &image, int N) {
-  size_t image_size = input_geometry_.area() * num_channels_;
-  mx_float *input_data = new mx_float[image_size];
+std::vector<float> MXNetClassifier::Predict(const cv::Mat& img) {
+  int image_size = input_geometry_.area() * num_channels_;
+  std::vector<mx_float> input_data(image_size);
   Timer timer, total_timer;
   timer.Start();
   total_timer.Start();
-  Preprocessing(image, input_data);
+  Preprocess(img, input_data.data());
   LOG(INFO) << "Preprocessed in " << timer.ElapsedMSec() << " ms";
 
   timer.Start();
-  MXPredSetInput(predictor_, "data", input_data, image_size);
+  MXPredSetInput(predictor_, "data", input_data.data(), image_size);
   MXPredForward(predictor_);
   LOG(INFO) << "Forward in " << timer.ElapsedMSec() << " ms";
 
@@ -177,17 +164,7 @@ std::vector<Prediction> MXNetClassifier::Classify(const cv::Mat &image, int N) {
 
   std::vector<float> output(output_size);
 
-  MXPredGetOutput(predictor_, output_index, &(output[0]), output_size);
-  LOG(INFO) << "Get output in " << timer.ElapsedMSec() << " ms";
-  std::vector<Prediction> predictions;
-  std::vector<int> maxN = Argmax(output, N);
+  MXPredGetOutput(predictor_, output_index, output.data(), output_size);
 
-  for (int i = 0; i < N; ++i) {
-    int idx = maxN[i];
-    predictions.push_back(std::make_pair(labels_[idx], output[idx]));
-  }
-
-  LOG(INFO) << "Total classify done in " << total_timer.ElapsedMSec() << " ms";
-
-  return predictions;
+  return output;
 }

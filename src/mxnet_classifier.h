@@ -6,13 +6,14 @@
 #define TX1DNN_MXNET_CLASSIFIER_H
 
 #include "common.h"
+#include "classifier.h"
 #include <mxnet/c_predict_api.h>
 #include <mxnet/c_api.h>
 
 /**
  * \brief MXNet classifier
  */
-class MXNetClassifier {
+class MXNetClassifier : public Classifier {
  public:
   MXNetClassifier(const string &model_desc,
                   const string &model_params,
@@ -22,15 +23,14 @@ class MXNetClassifier {
                   const int input_height);
   ~MXNetClassifier();
 
-  std::vector<Prediction> Classify(const cv::Mat &image, int N = 5);
-
  private:
-  void Preprocessing(const cv::Mat &image, mx_float *input_data);
+  virtual std::vector<float> Predict(const cv::Mat& img);
+
+  void Preprocess(const cv::Mat &image, mx_float *input_data);
 
  private:
   cv::Size input_geometry_;
   int num_channels_;
-  std::vector<string> labels_;
   PredictorHandle predictor_;
 };
 

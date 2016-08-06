@@ -4,7 +4,7 @@ else()
 	set(TX1DNN_LIBRARIES tx1dnn-caffe)
 endif()
 
-add_executable(tx1_run_alexnet tx1_run_alexnet.cpp)
+add_executable(tx1_run_alexnet tx1_classify.cpp)
 target_link_libraries(tx1_run_alexnet ${TX1DNN_LIBRARIES} tx1dnn-mxnet)
 
 install(TARGETS tx1_run_alexnet DESTINATION apps)
