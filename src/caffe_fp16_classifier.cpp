@@ -90,6 +90,7 @@ void CaffeFp16Classifier::SetMean(const string& mean_file) {
  * @brief Transform to fp16.
  */
 void CaffeFp16Classifier::Preprocess(const cv::Mat &img, DataBuffer &buffer) {
+  CHECK(buffer.GetSize() == GetInputSize<DType>()) << "Buffer size does not match";
   DataBuffer temp_buffer(GetInputSize<float>());
   cv::Mat transformed = TransformImage(img, GetInputShape(), mean_image_, &temp_buffer);
 

@@ -19,6 +19,10 @@ class GIEClassifier : public Classifier {
                 const string &label_file);
   ~GIEClassifier();
 
+  virtual size_t GetInputBufferSize() {
+    return GetInputSize<float>();
+  }
+
  private:
   void SetMean(const string &mean_file);
   virtual std::vector<float> Predict();

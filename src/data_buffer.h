@@ -70,8 +70,7 @@ class DataBuffer {
    * @brief Clone another data buffer, deeply copy bytes.
    */
   void Clone(const DataBuffer &data_buffer) {
-    size_ = data_buffer.GetSize();
-    AllocateBuffer(size_);
+    CHECK(size_ == data_buffer.GetSize()) << "Can't clone buffer of a different size";
     memcpy(buffer_ptr_, data_buffer.GetBuffer(), size_);
   }
 

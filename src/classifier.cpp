@@ -41,7 +41,7 @@ std::vector<Prediction> Classifier::Classify(const cv::Mat &img, int N) {
 }
 
 std::vector<Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
-  Timer total_timer; total_timer.Start();
+  Timer total_timer;
   Timer timer;
 
   total_timer.Start();

@@ -23,6 +23,10 @@ class MXNetClassifier : public Classifier {
                   const int input_height);
   ~MXNetClassifier();
 
+  virtual size_t GetInputBufferSize() {
+    return GetInputSize<mx_float>();
+  }
+
  private:
   virtual std::vector<float> Predict();
   virtual DataBuffer GetInputBuffer();

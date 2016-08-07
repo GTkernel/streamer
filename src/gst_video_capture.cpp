@@ -60,19 +60,18 @@ void GstVideoCapture::CheckBuffer() {
   CHECK_NE(original_size_.area(), 0) << "Capture should have got frame size information but not";
   cv::Mat frame(original_size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
   cv::Mat resized_frame;
-  // Resize the frame if target_size_ is set. The benefit of doing this is because frame processing is not in the main
-  // thread, so offload some of the simple processing to the capture will help reduce latency. Ultimately Might also
-  // consider if we can make the pipeline directly emit frames that we want.
-  if (target_size_.area() != 0)
-    cv::resize(frame, resized_frame, target_size_);
-  else
-    resized_frame = frame;
+  // Do preprocessing if a classifier is specified;
+  if (IsPreprocessed()) {
+    DataBuffer data_buffer(preprocess_classifier_->GetInputBufferSize());
+    preprocess_classifier_->Preprocess(frame, data_buffer);
+    preprocessed_buffers_.push_back(data_buffer);
+  }
 
   // Push the frame
   {
     std::lock_guard<std::mutex> guard(capture_lock_);
     frames_.clear();
-    frames_.push_back(resized_frame);
+    frames_.push_back(frame);
   }
 
   gst_buffer_unmap(buffer, &map);
@@ -99,9 +98,10 @@ void GstVideoCapture::CheckBus() {
  * \brief Initialize the capture with a uri. Only supports rtsp protocol now.
  */
 GstVideoCapture::GstVideoCapture():
-  appsink_(NULL),
-  pipeline_(NULL),
-  connected_(false) {
+  appsink_(nullptr),
+  pipeline_(nullptr),
+  connected_(false),
+  preprocess_classifier_(nullptr) {
 }
 
 GstVideoCapture::~GstVideoCapture() {
@@ -140,38 +140,45 @@ void GstVideoCapture::DestroyPipeline() {
 /**
  * \brief Get next frame from the pipeline, busy wait (which should be improved) until frame available.
  */
-cv::Mat GstVideoCapture::GetFrame() {
-  Timer timer;
-  timer.Start();
+cv::Mat GstVideoCapture::GetFrame(DataBuffer *data_bufferp) {
+  Timer timer; timer.Start();
   if (!connected_)
     return cv::Mat();
 
   while (connected_ && frames_.size() == 0)
     ;
 
+  LOG(INFO) << "Waited " << timer.ElapsedMSec() << " until frame available";
+
   if (!connected_)
     return cv::Mat();
 
-  std::lock_guard<std::mutex> guard(capture_lock_);
-  cv::Mat frame = frames_.front();
-  frames_.pop_front();
-  LOG(INFO) << "Get frame in " << timer.ElapsedMSec() << " ms";
-  return frame;
+  // There must be a frame now
+  return TryGetFrame(data_bufferp);
 }
 
 /**
  * \brief Try to get next frame from the pipeline and does not block.
  * \return The frame currently in the frames queue. An empty Mat if no frame immediately available.
  */
-cv::Mat GstVideoCapture::TryGetFrame() {
-  Timer timer;
-  timer.Start();
+cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *data_bufferp) {
+  Timer timer; timer.Start();
   if (!connected_ || frames_.size() == 0) {
     return cv::Mat();
   } else {
     std::lock_guard<std::mutex> guard(capture_lock_);
     cv::Mat frame = frames_.front();
     frames_.pop_front();
+
+    if (IsPreprocessed()) {
+      DataBuffer preprocessed_buffer = preprocessed_buffers_.front();;
+      preprocessed_buffers_.pop_front();
+      if (data_bufferp != nullptr) {
+        CHECK(preprocess_classifier_ != nullptr) << "Can't get preprocessed buffer as no classifer is specified";
+        *data_bufferp = preprocessed_buffer;
+      }
+    }
+
     LOG(INFO) << "Get frame in " << timer.ElapsedMSec() << " ms";
     return frame;
   }
@@ -185,18 +192,17 @@ cv::Size GstVideoCapture::GetOriginalFrameSize() {
 }
 
 /**
- * \brief Get the size of target frame. This is set by user.
+ * @brief Set preprocess classifier, this is an optimization to offload the preprocessing step to the video pipeline.
+ * 
+ * @param classifier The classifier that needs this preprocessing. The classifier's Preprocess() will be called.
  */
-cv::Size GstVideoCapture::GetTargetFrameSize() {
-  return target_size_;
+void GstVideoCapture::SetPreprocessClassifier(std::shared_ptr<Classifier> classifier) {
+  CHECK(!connected_) << "Pipeline has already connected, can't set preprocess classifier";
+  preprocess_classifier_ = classifier;
 }
 
-/**
- * \brief Set the size of target frame.
- */
-void GstVideoCapture::SetTargetFrameSize(const cv::Size &target_size) {
-  CHECK(connected_ == false) << "The target frame size should be set before the pipeline is connected";
-  target_size_ = target_size;
+bool GstVideoCapture::IsPreprocessed() {
+  return preprocess_classifier_ != nullptr;
 }
 
 /**

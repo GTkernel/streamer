@@ -21,6 +21,10 @@ public:
                     const string& mean_file,
                     const string& label_file);
 
+  virtual size_t GetInputBufferSize() {
+    return GetInputSize<float>();
+  }
+
 private:
   void SetMean(const string& mean_file);
   virtual std::vector<float> Predict();

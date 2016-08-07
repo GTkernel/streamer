@@ -49,7 +49,25 @@ class Classifier {
    */
   virtual void Preprocess(const cv::Mat &img, DataBuffer &buffer);
 
+  /**
+   * @brief Transform the image to a given shape, substract mean image, and store to a buffer.
+   * @details Specify buffer as nullptr if do not want to store it.
+   * 
+   * @param img The image to be transformed;
+   * @param shape The shape of the desired image.
+   * @param mean_img Mean image.
+   * @param buffer The buffer to store the transformed image.
+   * @return The transformed image.
+   */
   static cv::Mat TransformImage(const cv::Mat &img, const Shape &shape, const cv::Mat &mean_img, DataBuffer *buffer);
+
+  /**
+   * // TODO: May want to refactor it, expose a public method only for a specific optimization seems terrible.
+   * @brief Get the size of the input buffer, used for video pipeline to preprocess image frames.
+   * @details It is not supposed to use for any other purporses.
+   * @return The size (number of bytes) of the input buffer.
+   */
+  virtual size_t GetInputBufferSize() = 0;
 
  private:
   virtual std::vector<float> Predict() = 0;

@@ -61,7 +61,7 @@ main (int argc, char *argv[])
   // Check options
   CHECK(model_type == "caffe" || model_type == "gie" || model_type == "mxnet") << "MODEL_TYPE can only be one of caffe, mxnet or gie";
 
-  std::unique_ptr<Classifier> classifier;
+  std::shared_ptr<Classifier> classifier;
 #ifdef USE_GIE
   CHECK(model_type != "caffe") << "Binary is compiled with GIE, can't run Caffe, recompile with -DGIE=false";
   if (model_type == "gie") {
@@ -105,16 +105,19 @@ main (int argc, char *argv[])
 
   } else {
     GstVideoCapture cap;
+    cap.SetPreprocessClassifier(classifier);
+    DataBuffer data_buffer;
+
     if (!cap.CreatePipeline(video_uri)) {
       LOG(FATAL) << "Can't create pipeline, check camera and pipeline uri";
       exit(1);
     }
 
     while(1) {
-      cv::Mat frame = cap.TryGetFrame();
+      cv::Mat frame = cap.TryGetFrame(&data_buffer);
 
       if (!frame.empty()) {
-        std::vector<Prediction> predictions = classifier->Classify(frame, 1);
+        std::vector<Prediction> predictions = classifier->Classify(data_buffer, 1);
         Prediction p = predictions[0];
         LOG(INFO) << p.second << " - \""
                   << p.first << "\"" << std::endl;

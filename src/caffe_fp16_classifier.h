@@ -22,6 +22,10 @@ class CaffeFp16Classifier : public Classifier {
                   const string& mean_file,
                   const string& label_file);
 
+  virtual size_t GetInputBufferSize() {
+    return GetInputSize<DType>();
+  }
+
  private:
   void SetMean(const string& mean_file);
   virtual std::vector<float> Predict();

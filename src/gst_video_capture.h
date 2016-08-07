@@ -6,6 +6,7 @@
 #define TX1_DNN_GSTVIDEOCAPTURE_H
 
 #include "common.h"
+#include "classifier.h"
 #include <opencv2/opencv.hpp>
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
@@ -21,14 +22,14 @@ class GstVideoCapture {
 public:
   GstVideoCapture();
   ~GstVideoCapture();
-  cv::Mat TryGetFrame();
-  cv::Mat GetFrame();
+  cv::Mat TryGetFrame(DataBuffer *data_bufferp = nullptr);
+  cv::Mat GetFrame(DataBuffer *data_bufferp = nullptr);
   cv::Size GetOriginalFrameSize();
-  cv::Size GetTargetFrameSize();
-  void SetTargetFrameSize(const cv::Size &target_size);
+  // TODO: Consider extract preprocessor logic to a configurable data member for better readability.
   bool CreatePipeline(std::string rtsp_uri);
   void DestroyPipeline();
   bool IsConnected();
+  void SetPreprocessClassifier(std::shared_ptr<Classifier> classifier);
 
 private:
   static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);
@@ -36,17 +37,19 @@ private:
 private:
   void CheckBuffer();
   void CheckBus();
+  bool IsPreprocessed();
 
 private:
   cv::Size original_size_;
-  cv::Size target_size_;
   std::string caps_string_;
   GstPipeline *pipeline_;
   GstAppSink *appsink_;
   GstBus *bus_;
   std::mutex capture_lock_;
   std::deque<cv::Mat> frames_;
+  std::deque<DataBuffer> preprocessed_buffers_;
   bool connected_;
+  std::shared_ptr<Classifier> preprocess_classifier_;
 };
 
 
