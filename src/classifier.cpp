@@ -93,13 +93,25 @@ cv::Mat Classifier::TransformImage(const cv::Mat &img, const Shape &shape, const
   else
     sample = img;
 
+  // Crop according to scale
+  int desired_width = (float)shape.width / shape.height * img.size[1];
+  int desired_height = (float)shape.height / shape.width * img.size[0];
+  int new_width = img.size[0], new_height = img.size[1];
+  if (desired_width < img.size[0]) {
+    new_width = desired_width;
+  } else {
+    new_height = desired_height;
+  }
+  cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2, new_width, new_height);
+  cv::Mat sample_cropped = sample(roi);
+
   // Resize
   cv::Mat sample_resized;
   cv::Size input_geometry(width, height);
-  if (sample.size() != input_geometry)
-    cv::resize(sample, sample_resized, input_geometry);
+  if (sample_cropped.size() != input_geometry)
+    cv::resize(sample_cropped, sample_resized, input_geometry);
   else
-    sample_resized = sample;
+    sample_resized = sample_cropped;
 
   // Convert to float
   cv::Mat sample_float;

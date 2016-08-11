@@ -59,18 +59,19 @@ void GstVideoCapture::CheckBuffer() {
 
   CHECK_NE(original_size_.area(), 0) << "Capture should have got frame size information but not";
   cv::Mat frame(original_size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
-  cv::Mat resized_frame;
-  // Do preprocessing if a classifier is specified;
-  if (IsPreprocessed()) {
-    DataBuffer data_buffer(preprocess_classifier_->GetInputBufferSize());
-    preprocess_classifier_->Preprocess(frame, data_buffer);
-    preprocessed_buffers_.push_back(data_buffer);
-  }
 
   // Push the frame
   {
     std::lock_guard<std::mutex> guard(capture_lock_);
+
     frames_.clear();
+    preprocessed_buffers_.clear();
+    // Do preprocessing if a classifier is specified;
+    if (IsPreprocessed()) {
+      DataBuffer data_buffer(preprocess_classifier_->GetInputBufferSize());
+      preprocess_classifier_->Preprocess(frame, data_buffer);
+      preprocessed_buffers_.push_back(data_buffer);
+    }
     frames_.push_back(frame);
   }
 
