@@ -11,7 +11,7 @@
 #include <mxnet/c_api.h>
 
 /**
- * \brief MXNet classifier
+ * @brief MXNet classifier
  */
 class MXNetClassifier : public Classifier {
  public:

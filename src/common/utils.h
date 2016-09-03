@@ -9,7 +9,7 @@
 #include <caffe/caffe.hpp>
 
 /**
- * \brief Get a list of GPUs in machine.
+ * @brief Get a list of GPUs in machine.
  */
 inline void GetGpus(std::vector<int> &gpus) {
   int count = 0;

@@ -19,7 +19,7 @@ find_package(MXNet)
 if (EXISTS /var/libopencv4tegra-repo)
     message("Build on Tegra")
     SET(ON_TEGRA 1)
-    add_definitions("-DON_TEGRA")
+    add_definitions("-D ON_TEGRA")
 endif()
 
 if (ON_TEGRA)

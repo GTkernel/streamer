@@ -13,7 +13,7 @@
 using namespace nvinfer1;
 using namespace nvcaffeparser1;
 /**
- * \brief Class for GIE (GPU Inference Engine)
+ * @brief Class for GIE (GPU Inference Engine)
  */
 template<typename DType>
 class GIEInferer {

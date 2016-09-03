@@ -24,9 +24,9 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_fil
 }
 
 /**
- * \brief Logger for GIE.
- * \param severity
- * \param msg
+ * @brief Logger for GIE.
+ * @param severity
+ * @param msg
  */
 template<typename DType>
 void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
@@ -48,12 +48,12 @@ void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
 }
 
 /**
- * \brief Transform Caffe model to GIE model.
- * \param deploy_file Caffe .proto file.
- * \param model_file Caffe .caffemodel file.
- * \param outputs Network outputs.
- * \param max_batch_size Maximum batch size.
- * \param gie_model_stream The stream to GIE model.
+ * @brief Transform Caffe model to GIE model.
+ * @param deploy_file Caffe .proto file.
+ * @param model_file Caffe .caffemodel file.
+ * @param outputs Network outputs.
+ * @param max_batch_size Maximum batch size.
+ * @param gie_model_stream The stream to GIE model.
  */
 template<typename DType>
 void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,

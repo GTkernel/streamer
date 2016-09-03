@@ -30,14 +30,23 @@ inline bool ends_with(const string &str, const string &ending)
 int
 main (int argc, char *argv[])
 {
+  // FIXME: Use more standard arg parse routine.
   if (argc != 8) {
     std::cout << "Usage: " << argv[0]
               << " deploy.prototxt network.caffemodel"
-              << " mean.binaryproto labels.txt RTSPURI"
+              << " mean.binaryproto labels.txt URI"
               << " DISPLAY MODEL_TYPE" << std::endl;
     std::cout << "";
-    std::cout << "  RTSPURI: uri to the camera or path to image. e.g rtsp://xxx, cat.jpeg" << std::endl;
-    std::cout << "  DISPLAY: true or false: enable display or not, must have a X window" << std::endl;
+    std::cout << "  deploy.prototxt: The Caffe model prototxt file" <<
+                                                                    std::endl;
+    std::cout << "  network.caffemodel: Caffe model params file" << std::endl;
+    std::cout << "  mean.binaryproto: The mean image file" << std::endl;
+    std::cout << "  labels.txt: The label file containing string labels for "
+        "each class" << std::endl;
+    std::cout << "  URI: rtspuri to the camera or path to image. e.g "
+        "rtsp://xxx, cat.jpeg" << std::endl;
+    std::cout << "  DISPLAY: enable display or not, must have a X window if "
+        "display is enabled" << std::endl;
     std::cout << "  MODEL_TYPE: caffe, mxnet, gie";
     exit(1);
   }
@@ -114,6 +123,8 @@ main (int argc, char *argv[])
     }
 
     while(1) {
+      // FIXME: Use something like a conditional variable to avoid busy
+      // waiting.
       cv::Mat frame = cap.TryGetFrame(&data_buffer);
 
       if (!frame.empty()) {

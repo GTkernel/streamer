@@ -32,9 +32,9 @@ class Classifier {
   std::vector<Prediction> Classify(const cv::Mat& img, int N = 5);
 
   /**
-   * @brief Classify an image by given a input buffer directly, this will save the step of preprocessing in the critical path.
+   * @brief Classify an image by given a input buffer directly, this will save preprocessing in the main thread.
    * 
-   * @param input_buffer The input buffer to store the preprocessing result.
+   * @param input_buffer The buffer that stores the preprocessed input.
    * @param N The number of predictions desired.
    * 
    * @return An array of prediction results, sorted by confidence score.
@@ -42,7 +42,7 @@ class Classifier {
   std::vector<Prediction> Classify(const DataBuffer &input_buffer, int N = 5);
   
   /**
-   * @brief Preprocess the image, and store to a buffer.
+   * @brief Preprocess the image and store to a buffer.
    * 
    * @param img The image to be preprocessed.
    * @param buffer The buffer to store the preprocessed result.
@@ -78,7 +78,6 @@ class Classifier {
   inline size_t GetInputSize() const {
     return input_width_ * input_height_ * input_channels_ * sizeof(T);
   }
-
 
   inline Shape GetInputShape() const {
     return Shape(input_channels_, input_width_, input_height_);

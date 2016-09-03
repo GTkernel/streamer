@@ -11,7 +11,7 @@
 #include "classifier.h"
 
 /**
- * \brief Caffe classifier. 
+ * @brief Caffe classifier.
  */
 template <typename DType>
 class CaffeV1Classifier : public Classifier {

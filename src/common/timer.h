@@ -8,7 +8,7 @@
 #include<chrono>
 
 /**
- * \brief Class used to measure wall clock time.
+ * @brief Class used to measure wall clock time.
  */
 class Timer {
 public:
@@ -18,28 +18,28 @@ public:
   Timer() {}
 
   /**
-   * \brief Start the timer.
+   * @brief Start the timer.
    */
   void Start() {
     start_time_ = std::chrono::system_clock::now();
   }
 
   /**
-   * \brief Get elapsed time in milliseconds.
+   * @brief Get elapsed time in milliseconds.
    */
   double ElapsedMSec() {
     return ElapsedMicroSec() / 1000.0;
   }
 
   /**
-   * \brief Get elapsed time in seconds.
+   * @brief Get elapsed time in seconds.
    */
   double ElapsedSec() {
     return ElapsedMicroSec() / 1000000.0;
   }
 
   /**
-   * \brief Get elapsed time in micro seconds.
+   * @brief Get elapsed time in micro seconds.
    */
   double ElapsedMicroSec() {
     return std::chrono::duration_cast<std::chrono::microseconds>(

@@ -34,6 +34,11 @@ class DataBuffer {
    */
   DataBuffer(void *data, size_t size): size_(size), buffer_ptr_(data) {};
 
+  /**
+   * @brief Construct a data buffer from content of a file.
+   * @param filename
+   * @return
+   */
   DataBuffer(const std::string &filename) {
     std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
     CHECK(ifs) << "Can't open the file. Please check " << filename;
@@ -75,6 +80,10 @@ class DataBuffer {
   }
 
  private:
+  /**
+   * @brief Allocate a buffer with size.
+   * @param size The size of the buffer to be allocated
+   */
   inline void AllocateBuffer(size_t size) {
     buffer_ = std::shared_ptr<char>(new char[size], std::default_delete<char[]>());
     buffer_ptr_ = buffer_.get();

@@ -11,14 +11,14 @@
 #include <cuda_fp16.h>
 
 /**
- * \brief 3-D shape structure
+ * @brief 3-D shape structure
  */
 struct Shape {
   Shape(): channel(0), width(0), height(0){};
   Shape(int c, int w, int h): channel(c), width(w), height(h){};
   Shape(int w, int h): channel(1), width(w), height(h){};
   /**
-   * \brief Return volumn (size) of the shape object
+   * @brief Return volumn (size) of the shape object
    */
   size_t GetVolume() const { return (size_t)channel * width * height; }
   // Number of channels
@@ -30,7 +30,7 @@ struct Shape {
 };
 
 /**
- * \brief Prediction result, a string label and a confidence score
+ * @brief Prediction result, a string label and a confidence score
  */
 typedef std::pair<std::string, float> Prediction;
 
@@ -38,7 +38,7 @@ half Cpu_Float2Half(float f);
 float Cpu_Half2Float(half h);
 
 /**
- * \brief Float16 type
+ * @brief Float16 type
  */
 struct float16 {
   inline float16() { data.x = 0; }
