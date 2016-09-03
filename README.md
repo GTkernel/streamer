@@ -37,5 +37,6 @@ Currently we support BVLC caffe, NVIDIA caffe (including fp16 caffe), GIE (GPU I
 
 ## TODO
 
-[ ] Refactor cmake files
-[ ] Port to CPU
+* [ ] Refactor cmake files
+* [ ] Support TensorFlow
+* [ ] Port to CPU
