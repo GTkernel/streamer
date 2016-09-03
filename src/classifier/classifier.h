@@ -5,8 +5,8 @@
 #ifndef TX1DNN_CLASSIFIER_H
 #define TX1DNN_CLASSIFIER_H
 
-#include "common.h"
-#include "data_buffer.h"
+#include "common/common.h"
+#include "../common/data_buffer.h"
 
 /**
  * @brief The classifier base class.

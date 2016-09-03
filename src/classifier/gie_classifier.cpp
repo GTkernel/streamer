@@ -6,7 +6,7 @@
 #include <fstream>
 
 #include "gie_classifier.h"
-#include "utils.h"
+#include "common/utils.h"
 
 GIEClassifier::GIEClassifier(const string &deploy_file,
                              const string &model_file,

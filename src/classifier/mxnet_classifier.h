@@ -5,7 +5,7 @@
 #ifndef TX1DNN_MXNET_CLASSIFIER_H
 #define TX1DNN_MXNET_CLASSIFIER_H
 
-#include "common.h"
+#include "common/common.h"
 #include "classifier.h"
 #include <mxnet/c_predict_api.h>
 #include <mxnet/c_api.h>

@@ -6,7 +6,7 @@
 #define TX1DNN_CAFFECLASSIFIER_H
 
 #include <caffe/caffe.hpp>
-#include "common.h"
+#include "common/common.h"
 #include "classifier.h"
 
 /**

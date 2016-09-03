@@ -3,7 +3,7 @@
 //
 
 #include "caffe_v1_classifier.h"
-#include "utils.h"
+#include "common/utils.h"
 
 template <typename DType>
 CaffeV1Classifier<DType>::CaffeV1Classifier(const string& model_file,

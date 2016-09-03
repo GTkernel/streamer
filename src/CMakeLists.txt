@@ -1,18 +1,25 @@
 set(COMMON_LIBRARIES
-	${GLIB_LIBRARIES}
-	${GLIB_GOBJECT_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	${GLOG_LIBRARIES}
-	${GSTREAMER_LIBRARIES}
-	${GSTREAMER_APP_LIBRARIES}
-	${Boost_SYSTEM_LIBRARY})
+        ${GLIB_LIBRARIES}
+        ${GLIB_GOBJECT_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+        ${GLOG_LIBRARIES}
+        ${GSTREAMER_LIBRARIES}
+        ${GSTREAMER_APP_LIBRARIES}
+        ${Boost_SYSTEM_LIBRARY})
 
-set(COMMON_SOURCE_FILES gst_video_capture.cpp gst_video_capture.h utils.cpp utils.cpp classifier.cpp classifier.h)
+set(COMMON_SOURCE_FILES
+        video/gst_video_capture.cpp
+        video/gst_video_capture.h
+        common/utils.h
+        common/data_buffer.h
+        common/types.cpp
+        classifier/classifier.cpp
+        classifier/classifier.h)
 
 if (ENABLE_FP16)
-	set(CAFFE_SOURCE_FILES caffe_fp16_classifier.h caffe_fp16_classifier.cpp float16.h float16.cpp)
+	set(CAFFE_SOURCE_FILES classifier/caffe_fp16_classifier.h classifier/caffe_fp16_classifier.cpp)
 else()
-	set(CAFFE_SOURCE_FILES caffe_v1_classifier.cpp caffe_v1_classifier.h)
+	set(CAFFE_SOURCE_FILES classifier/caffe_v1_classifier.cpp classifier/caffe_v1_classifier.h)
 endif()
 
 set(TX1DNN_CAFFE_SOURCE_FILES ${CAFFE_SOURCE_FILES} ${COMMON_SOURCE_FILES})
@@ -28,13 +35,18 @@ if (Cnmem_FOUND)
 	target_link_libraries(tx1dnn-caffe ${Cnmem_LIBRARIES})
 endif()
 
-set(TX1DNN_GIE_SOURCE_FILES gie_classifier.cpp gie_classifier.h gie_inferer.cpp gie_inferer.h float16.cpp float16.h ${COMMON_SOURCE_FILES} data_buffer.h)
+set(TX1DNN_GIE_SOURCE_FILES
+        classifier/gie_classifier.cpp
+        classifier/gie_classifier.h
+        classifier/gie_inferer.cpp
+        classifier/gie_inferer.h
+        ${COMMON_SOURCE_FILES})
 add_library(tx1dnn-gie ${TX1DNN_GIE_SOURCE_FILES})
 target_link_libraries(tx1dnn-gie
 	${GIE_LIBRARIES}
 	${COMMON_LIBRARIES})
 
-set(MXNET_SOURCE_FILES mxnet_classifier.cpp mxnet_classifier.h)
+set(MXNET_SOURCE_FILES classifier/mxnet_classifier.cpp classifier/mxnet_classifier.h)
 add_library(tx1dnn-mxnet ${MXNET_SOURCE_FILES})
 target_link_libraries(tx1dnn-mxnet
 	${MXNet_LIBRARIES}

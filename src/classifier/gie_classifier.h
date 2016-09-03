@@ -5,7 +5,7 @@
 #ifndef TX1DNN_GIECLASSIFIER_H
 #define TX1DNN_GIECLASSIFIER_H
 
-#include "common.h"
+#include "common/common.h"
 #include "classifier.h"
 #include "gie_inferer.h"
 

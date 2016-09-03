@@ -3,7 +3,7 @@
 //
 
 #include "mxnet_classifier.h"
-#include "utils.h"
+#include "common/utils.h"
 
 #define MEAN_VALUE 117.0
 

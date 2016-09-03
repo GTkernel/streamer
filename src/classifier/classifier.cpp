@@ -3,7 +3,7 @@
 //
 
 #include "classifier.h"
-#include "utils.h"
+#include "common/utils.h"
 
 Classifier::Classifier(const string &model_desc, const string &model_params, const string &mean_file, const string &label_file) {
   // Load labels.

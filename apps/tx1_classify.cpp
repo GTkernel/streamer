@@ -1,17 +1,17 @@
-#include "gst_video_capture.h"
+#include "video/gst_video_capture.h"
 
 // Hacking on building with different engines.
 #ifdef USE_GIE
-  #include "gie_classifier.h"
+  #include "classifier/gie_classifier.h"
 #else
   #ifdef ENABLE_FP16
-    #include "caffe_fp16_classifier.h"
+    #include "classifier/caffe_fp16_classifier.h"
   #else
-    #include "caffe_v1_classifier.h"
+    #include "classifier/caffe_v1_classifier.h"
   #endif
 #endif
 
-#include "mxnet_classifier.h"
+#include "classifier/mxnet_classifier.h"
 
 /**
  * @brief Determine if a string ends with certain prefix.

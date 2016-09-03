@@ -7,7 +7,7 @@
 
 #undef CPU_ONLY
 #include <caffe/caffe.hpp>
-#include "common.h"
+#include "common/common.h"
 #include "classifier.h"
 
 /**

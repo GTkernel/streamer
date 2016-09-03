@@ -3,8 +3,7 @@
 //
 
 #include "caffe_fp16_classifier.h"
-#include "utils.h"
-#include "float16.h"
+#include "common/utils.h"
 
 CaffeFp16Classifier::CaffeFp16Classifier(const string& model_file,
                        const string& trained_file,
