@@ -23,15 +23,13 @@ inline void GetGpus(std::vector<int> &gpus) {
   }
 }
 
-
-inline bool PairCompare(const std::pair<float, int>& lhs,
-                        const std::pair<float, int>& rhs) {
+inline bool PairCompare(const std::pair<float, int> &lhs,
+                        const std::pair<float, int> &rhs) {
   return lhs.first > rhs.first;
 }
 
-
-inline std::vector<int> Argmax(const std::vector<float>& v, int N) {
-  std::vector<std::pair<float, int> > pairs;
+inline std::vector<int> Argmax(const std::vector<float> &v, int N) {
+  std::vector <std::pair<float, int>> pairs;
   for (size_t i = 0; i < v.size(); ++i)
     pairs.push_back(std::make_pair(v[i], i));
   std::partial_sort(pairs.begin(), pairs.begin() + N, pairs.end(), PairCompare);

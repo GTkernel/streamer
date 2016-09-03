@@ -16,14 +16,15 @@
  */
 class DataBuffer {
  public:
-  DataBuffer(): size_(0), buffer_(nullptr) {}
+  DataBuffer() : size_(0), buffer_(nullptr) {}
   /**
    * @brief Constructor.
    * @param buf The data hold by the buffer.
    * @param size The size of the buffer.
    */
-  DataBuffer(size_t size): size_(size) {
-    buffer_ = std::shared_ptr<char>(new char[size], std::default_delete<char[]>());
+  DataBuffer(size_t size) : size_(size) {
+    buffer_ = std::shared_ptr<char>(new char[size], std::default_delete < char[]
+        > ());
     buffer_ptr_ = buffer_.get();
   }
 
@@ -32,7 +33,7 @@ class DataBuffer {
    * @param data The pointer to data.
    * @param size Size of the buffer
    */
-  DataBuffer(void *data, size_t size): size_(size), buffer_ptr_(data) {};
+  DataBuffer(void *data, size_t size) : size_(size), buffer_ptr_(data) {};
 
   /**
    * @brief Construct a data buffer from content of a file.
@@ -46,10 +47,11 @@ class DataBuffer {
     ifs.seekg(0, std::ios::end);
     size_ = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
-    LOG(INFO) << "Read from file into buffer: " << filename.c_str() << " ... "<< size_ << " bytes";
+    LOG(INFO) << "Read from file into buffer: " << filename.c_str() << " ... "
+              << size_ << " bytes";
 
     AllocateBuffer(size_);
-    ifs.read((char *)buffer_ptr_, size_);
+    ifs.read((char *) buffer_ptr_, size_);
     ifs.close();
   }
   /**
@@ -75,7 +77,8 @@ class DataBuffer {
    * @brief Clone another data buffer, deeply copy bytes.
    */
   void Clone(const DataBuffer &data_buffer) {
-    CHECK(size_ == data_buffer.GetSize()) << "Can't clone buffer of a different size";
+    CHECK(size_ == data_buffer.GetSize())
+        << "Can't clone buffer of a different size";
     memcpy(buffer_ptr_, data_buffer.GetBuffer(), size_);
   }
 
@@ -85,7 +88,8 @@ class DataBuffer {
    * @param size The size of the buffer to be allocated
    */
   inline void AllocateBuffer(size_t size) {
-    buffer_ = std::shared_ptr<char>(new char[size], std::default_delete<char[]>());
+    buffer_ = std::shared_ptr<char>(new char[size], std::default_delete < char[]
+        > ());
     buffer_ptr_ = buffer_.get();
   }
 

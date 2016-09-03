@@ -6,7 +6,7 @@
 #define TX1DNN_CLASSIFIER_H
 
 #include "common/common.h"
-#include "../common/data_buffer.h"
+#include "common/data_buffer.h"
 
 /**
  * @brief The classifier base class.
@@ -19,7 +19,10 @@ class Classifier {
    * 
    * @param label_file The labels file, one label per line.
    */
-  Classifier(const string &model_desc, const string &model_params, const string &mean_file, const string& label_file);
+  Classifier(const string &model_desc,
+             const string &model_params,
+             const string &mean_file,
+             const string &label_file);
 
   /**
    * @brief Classify an image, return top N predictions.
@@ -29,7 +32,7 @@ class Classifier {
    * 
    * @return An array of prediction results, sorted by confidence score.
    */
-  std::vector<Prediction> Classify(const cv::Mat& img, int N = 5);
+  std::vector <Prediction> Classify(const cv::Mat &img, int N = 5);
 
   /**
    * @brief Classify an image by given a input buffer directly, this will save preprocessing in the main thread.
@@ -39,8 +42,8 @@ class Classifier {
    * 
    * @return An array of prediction results, sorted by confidence score.
    */
-  std::vector<Prediction> Classify(const DataBuffer &input_buffer, int N = 5);
-  
+  std::vector <Prediction> Classify(const DataBuffer &input_buffer, int N = 5);
+
   /**
    * @brief Preprocess the image and store to a buffer.
    * 
@@ -59,7 +62,10 @@ class Classifier {
    * @param buffer The buffer to store the transformed image.
    * @return The transformed image.
    */
-  static cv::Mat TransformImage(const cv::Mat &img, const Shape &shape, const cv::Mat &mean_img, DataBuffer *buffer);
+  static cv::Mat TransformImage(const cv::Mat &img,
+                                const Shape &shape,
+                                const cv::Mat &mean_img,
+                                DataBuffer *buffer);
 
   /**
    * // TODO: May want to refactor it, expose a public method only for a specific optimization seems terrible.
@@ -74,7 +80,7 @@ class Classifier {
   virtual DataBuffer GetInputBuffer() = 0;
 
  protected:
-  template <typename T>
+  template<typename T>
   inline size_t GetInputSize() const {
     return input_width_ * input_height_ * input_channels_ * sizeof(T);
   }
@@ -87,7 +93,7 @@ class Classifier {
     return cv::Size(input_width_, input_height_);
   }
 
-  std::vector<string> labels_;
+  std::vector <string> labels_;
   int input_channels_;
   int input_width_;
   int input_height_;

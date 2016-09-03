@@ -6,7 +6,10 @@
 #include <cuda_runtime_api.h>
 
 template<typename DType>
-GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_file, const string &input_blob_name, const string &output_blob_name):
+GIEInferer<DType>::GIEInferer(const string &deploy_file,
+                              const string &model_file,
+                              const string &input_blob_name,
+                              const string &output_blob_name):
     deploy_file_(deploy_file),
     model_file_(model_file),
     input_blob_name_(input_blob_name),
@@ -19,7 +22,8 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_fil
     IBuilder *builder = createInferBuilder(logger_);
     bool supportFp16 = builder->plaformHasFastFp16();
     builder->destroy();
-    CHECK(supportFp16) << "Platform does not support fp16 but GIEInferer is initialized with fp16";
+    CHECK(supportFp16)
+        << "Platform does not support fp16 but GIEInferer is initialized with fp16";
   }
 }
 
@@ -30,19 +34,15 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file, const string &model_fil
  */
 template<typename DType>
 void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
-                                                    const char *msg) {
+                                    const char *msg) {
   switch (severity) {
-    case Severity::kERROR:
-      LOG(ERROR) << "GIE: " << msg;
+    case Severity::kERROR:LOG(ERROR) << "GIE: " << msg;
       break;
-    case Severity::kINFO:
-      LOG(INFO) << "GIE: " << msg;
+    case Severity::kINFO:LOG(INFO) << "GIE: " << msg;
       break;
-    case Severity::kINTERNAL_ERROR:
-      LOG(ERROR) << "GIE internal: " << msg;
+    case Severity::kINTERNAL_ERROR:LOG(ERROR) << "GIE internal: " << msg;
       break;
-    case Severity::kWARNING:
-      LOG(WARNING) << "GIE: " << msg;
+    case Severity::kWARNING:LOG(WARNING) << "GIE: " << msg;
       break;
   }
 }
@@ -57,16 +57,16 @@ void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
  */
 template<typename DType>
 void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
-                                 const string &model_file,
-                                 const std::vector<string> &outputs,
-                                 unsigned int max_batch_size,
-                                 std::ostream &gie_model_stream) {
+                                        const string &model_file,
+                                        const std::vector <string> &outputs,
+                                        unsigned int max_batch_size,
+                                        std::ostream &gie_model_stream) {
   // Create API root class - must span the lifetime of the engine usage.
   IBuilder *builder = createInferBuilder(logger_);
   INetworkDefinition *network = builder->createNetwork();
 
   // Parse the caffe model to populate the network, then set the outputs
-  std::shared_ptr<CaffeParser> parser(new CaffeParser);
+  std::shared_ptr <CaffeParser> parser(new CaffeParser);
 
   // Determine data type
   bool useFp16 = (builder->plaformHasFastFp16() && sizeof(DType) == 4);
@@ -74,11 +74,13 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
 
   // Get blob:tensor name mappings
   DataType model_data_type = useFp16 ? DataType::kHALF : DataType::kFLOAT;
-  const IBlobNameToTensor *blob_name_to_tensor = parser->parse(deploy_file.c_str(),
-                                                            model_file.c_str(),
-                                                            *network,
-                                                            model_data_type);
-  CHECK(blob_name_to_tensor != nullptr) << "Map from blob name to tensor is null";
+  const IBlobNameToTensor
+      *blob_name_to_tensor = parser->parse(deploy_file.c_str(),
+                                           model_file.c_str(),
+                                           *network,
+                                           model_data_type);
+  CHECK(blob_name_to_tensor != nullptr)
+      << "Map from blob name to tensor is null";
 
   // Mark outputs
   for (auto &s : outputs) {
@@ -109,7 +111,11 @@ template<typename DType>
 void GIEInferer<DType>::CreateEngine() {
   gie_model_stream_.seekg(0, gie_model_stream_.beg);
 
-  CaffeToGIEModel(deploy_file_, model_file_, {output_blob_name_}, BATCH_SIZE, gie_model_stream_);
+  CaffeToGIEModel(deploy_file_,
+                  model_file_,
+                  {output_blob_name_},
+                  BATCH_SIZE,
+                  gie_model_stream_);
 
   // Create an engine
   gie_model_stream_.seekg(0, gie_model_stream_.beg);
@@ -129,8 +135,10 @@ void GIEInferer<DType>::CreateEngine() {
   input_size_ = BATCH_SIZE * input_shape_.GetVolume() * sizeof(DType);
   output_size_ = BATCH_SIZE * output_shape_.GetVolume() * sizeof(DType);
 
-  CHECK_EQ(cudaMalloc((void **)(&d_input_buffer), input_size_), cudaSuccess) << "Can't malloc device input buffer";
-  CHECK_EQ(cudaMalloc((void **)(&d_output_buffer), output_size_), cudaSuccess) << "Can't malloc device output buffer";
+  CHECK_EQ(cudaMalloc((void **) (&d_input_buffer), input_size_), cudaSuccess)
+      << "Can't malloc device input buffer";
+  CHECK_EQ(cudaMalloc((void **) (&d_output_buffer), output_size_), cudaSuccess)
+      << "Can't malloc device output buffer";
 }
 
 template<typename DType>
@@ -148,16 +156,29 @@ void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   int inputIndex = engine_->getBindingIndex(input_blob_name_.c_str()),
       outputIndex = engine_->getBindingIndex(output_blob_name_.c_str());
 
-  CHECK_EQ(cudaMalloc(&buffers[inputIndex], BATCH_SIZE * input_size_), cudaSuccess);
-  CHECK_EQ(cudaMalloc(&buffers[outputIndex], BATCH_SIZE * output_size_), cudaSuccess);
+  CHECK_EQ(cudaMalloc(&buffers[inputIndex], BATCH_SIZE * input_size_),
+           cudaSuccess);
+  CHECK_EQ(cudaMalloc(&buffers[outputIndex], BATCH_SIZE * output_size_),
+           cudaSuccess);
 
   cudaStream_t stream;
-  CHECK_EQ(cudaStreamCreate(&stream), cudaSuccess) << "CUDA error, can't create cuda stream";
+  CHECK_EQ(cudaStreamCreate(&stream), cudaSuccess)
+      << "CUDA error, can't create cuda stream";
 
   // DMA the input to the GPU, execute the batch asynchronously, and DMA it back
-  CHECK_EQ(cudaMemcpyAsync(buffers[inputIndex], input, input_size_ * BATCH_SIZE, cudaMemcpyHostToDevice, stream), cudaSuccess) << "CUDA error, can't async memcpy input to device";
+  CHECK_EQ(cudaMemcpyAsync(buffers[inputIndex],
+                           input,
+                           input_size_ * BATCH_SIZE,
+                           cudaMemcpyHostToDevice,
+                           stream), cudaSuccess)
+      << "CUDA error, can't async memcpy input to device";
   context->enqueue(BATCH_SIZE, buffers, stream, nullptr);
-  CHECK_EQ(cudaMemcpyAsync(output, buffers[outputIndex], output_size_ * BATCH_SIZE, cudaMemcpyDeviceToHost, stream), cudaSuccess) << "CUDA error, can't async memcpy to output from device";
+  CHECK_EQ(cudaMemcpyAsync(output,
+                           buffers[outputIndex],
+                           output_size_ * BATCH_SIZE,
+                           cudaMemcpyDeviceToHost,
+                           stream), cudaSuccess)
+      << "CUDA error, can't async memcpy to output from device";
   cudaStreamSynchronize(stream);
 
   cudaStreamDestroy(stream);
@@ -172,8 +193,10 @@ void GIEInferer<DType>::DestroyEngine() {
   engine_ = nullptr;
   infer_runtime_->destroy();
   infer_runtime_ = nullptr;
-  CHECK_EQ(cudaFree(d_input_buffer), cudaSuccess) << "Can't free device input buffer";
-  CHECK_EQ(cudaFree(d_output_buffer), cudaSuccess) << "Can't free device output buffer";
+  CHECK_EQ(cudaFree(d_input_buffer), cudaSuccess)
+      << "Can't free device input buffer";
+  CHECK_EQ(cudaFree(d_output_buffer), cudaSuccess)
+      << "Can't free device output buffer";
 }
 
 template<typename DType>
@@ -186,7 +209,8 @@ Shape GIEInferer<DType>::GetOutputShape() {
   return output_shape_;
 }
 
-template class GIEInferer<float>;
+template
+class GIEInferer<float>;
 #ifdef ON_TEGRA
 template class GIEInferer<float16>;
 #endif

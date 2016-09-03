@@ -36,17 +36,17 @@ MXNetClassifier::MXNetClassifier(const string &model_desc,
   int dev_type = 2; // GPU
   int dev_id = 0;
   mx_uint num_input_nodes = 1;
-  const char* input_key[1] = {"data"};
-  const char** input_keys = input_key;
+  const char *input_key[1] = {"data"};
+  const char **input_keys = input_key;
 
-  const mx_uint input_shape_indptr[2] = { 0, 4 };
-  const mx_uint input_shape_data[4] = { 1,
-                                        static_cast<mx_uint>(3),
-                                        static_cast<mx_uint>(input_width),
-                                        static_cast<mx_uint>(input_height) };
+  const mx_uint input_shape_indptr[2] = {0, 4};
+  const mx_uint input_shape_data[4] = {1,
+                                       static_cast<mx_uint>(3),
+                                       static_cast<mx_uint>(input_width),
+                                       static_cast<mx_uint>(input_height)};
 
-  MXPredCreate((const char*)json_data.GetBuffer(),
-               (const char*)param_data.GetBuffer(),
+  MXPredCreate((const char *) json_data.GetBuffer(),
+               (const char *) param_data.GetBuffer(),
                static_cast<size_t>(param_data.GetSize()),
                dev_type,
                dev_id,
@@ -71,7 +71,10 @@ MXNetClassifier::~MXNetClassifier() {
 
 std::vector<float> MXNetClassifier::Predict() {
   size_t image_size = GetInputShape().GetVolume();
-  MXPredSetInput(predictor_, "data", (mx_float *)input_buffer_.GetBuffer(), image_size);
+  MXPredSetInput(predictor_,
+                 "data",
+                 (mx_float *) input_buffer_.GetBuffer(),
+                 image_size);
   MXPredForward(predictor_);
 
   mx_uint output_index = 0;
@@ -79,7 +82,10 @@ std::vector<float> MXNetClassifier::Predict() {
   mx_uint output_shape_len;
 
   // Get Output Result
-  MXPredGetOutputShape(predictor_, output_index, &output_shape, &output_shape_len);
+  MXPredGetOutputShape(predictor_,
+                       output_index,
+                       &output_shape,
+                       &output_shape_len);
 
   size_t output_size = 1;
   for (mx_uint i = 0; i < output_shape_len; ++i)

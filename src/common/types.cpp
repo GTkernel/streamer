@@ -4,11 +4,10 @@
 
 #include "types.h"
 
-half Cpu_Float2Half(float f)
-{
+half Cpu_Float2Half(float f) {
   half ret;
 
-  unsigned x = *((int*)(void*)(&f));
+  unsigned x = *((int *) (void *) (&f));
   unsigned u = (x & 0x7fffffff), remainder, shift, lsb, lsb_s1, lsb_m1;
   unsigned sign, exponent, mantissa;
 
@@ -61,8 +60,7 @@ half Cpu_Float2Half(float f)
   return ret;
 }
 
-float Cpu_Half2Float(half h)
-{
+float Cpu_Half2Float(half h) {
   unsigned sign = ((h.x >> 15) & 1);
   unsigned exponent = ((h.x >> 10) & 0x1f);
   unsigned mantissa = ((h.x & 0x3ff) << 13);
@@ -87,5 +85,5 @@ float Cpu_Half2Float(half h)
 
   int temp = ((sign << 31) | (exponent << 23) | mantissa);
 
-  return *((float*)((void*)&temp));
+  return *((float *) ((void *) &temp));
 }

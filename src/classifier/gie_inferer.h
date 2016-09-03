@@ -42,8 +42,9 @@ class GIEInferer {
  private:
   void CaffeToGIEModel(const string &deploy_file,
                        const string &model_file,
-                       const std::vector<string> &outputs,
-                       unsigned int max_batch_size, std::ostream &gie_model_stream);
+                       const std::vector <string> &outputs,
+                       unsigned int max_batch_size,
+                       std::ostream &gie_model_stream);
 
  private:
   string deploy_file_;
@@ -61,6 +62,5 @@ class GIEInferer {
   DType *d_input_buffer;
   DType *d_output_buffer;
 };
-
 
 #endif //TX1DNN_GIEINFERER_H

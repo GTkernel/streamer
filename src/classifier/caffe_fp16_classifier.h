@@ -17,23 +17,23 @@ class CaffeFp16Classifier : public Classifier {
   typedef caffe::float16 DType;
   typedef CAFFE_FP16_MTYPE MType;
  public:
-  CaffeFp16Classifier(const string& model_file,
-                  const string& trained_file,
-                  const string& mean_file,
-                  const string& label_file);
+  CaffeFp16Classifier(const string &model_file,
+                      const string &trained_file,
+                      const string &mean_file,
+                      const string &label_file);
 
   virtual size_t GetInputBufferSize() {
     return GetInputSize<DType>();
   }
 
  private:
-  void SetMean(const string& mean_file);
+  void SetMean(const string &mean_file);
   virtual std::vector<float> Predict();
   virtual DataBuffer GetInputBuffer();
   virtual void Preprocess(const cv::Mat &img, DataBuffer &buffer);
 
  private:
-  std::shared_ptr<caffe::Net<DType, MType>> net_;
+  std::shared_ptr <caffe::Net<DType, MType>> net_;
 };
 
 #endif //TX1DNN_CAFFECLASSIFIER_H

@@ -13,25 +13,25 @@
 /**
  * @brief Caffe classifier.
  */
-template <typename DType>
+template<typename DType>
 class CaffeV1Classifier : public Classifier {
-public:
-  CaffeV1Classifier(const string& model_file,
-                    const string& trained_file,
-                    const string& mean_file,
-                    const string& label_file);
+ public:
+  CaffeV1Classifier(const string &model_file,
+                    const string &trained_file,
+                    const string &mean_file,
+                    const string &label_file);
 
   virtual size_t GetInputBufferSize() {
     return GetInputSize<float>();
   }
 
-private:
-  void SetMean(const string& mean_file);
+ private:
+  void SetMean(const string &mean_file);
   virtual std::vector<float> Predict();
   virtual DataBuffer GetInputBuffer();
 
-private:
-  std::shared_ptr<caffe::Net<DType> > net_;
+ private:
+  std::shared_ptr <caffe::Net<DType>> net_;
 };
 
 #endif //TX1DNN_CAFFEV1CLASSIFIER_H

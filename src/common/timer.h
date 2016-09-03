@@ -11,10 +11,10 @@
  * @brief Class used to measure wall clock time.
  */
 class Timer {
-public:
-  typedef std::chrono::time_point<std::chrono::system_clock> TimerTimePoint;
+ public:
+  typedef std::chrono::time_point <std::chrono::system_clock> TimerTimePoint;
 
-public:
+ public:
   Timer() {}
 
   /**
@@ -45,7 +45,7 @@ public:
     return std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::system_clock::now() - start_time_).count();
   }
-private:
+ private:
   TimerTimePoint start_time_;
 };
 
