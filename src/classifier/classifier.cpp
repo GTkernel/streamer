@@ -83,7 +83,7 @@ cv::Mat Classifier::TransformImage(const cv::Mat &img,
                                    const cv::Mat &mean_img,
                                    DataBuffer *buffer) {
   CHECK(mean_img.channels() == shape.channel && mean_img.size[0] == shape.width
-            && mean_img.size[1] == shape.height)
+        && mean_img.size[1] == shape.height)
       << "Mean image shape does not match that of desired shape";
   int num_channel = shape.channel, width = shape.width, height = shape.height;
 

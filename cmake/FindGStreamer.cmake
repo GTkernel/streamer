@@ -56,18 +56,18 @@ find_package(PkgConfig)
 #   _library is the component's library name (eg. "gstreamer-1.0" or "gstvideo-1.0")
 macro(FIND_GSTREAMER_COMPONENT _component_prefix _pkgconfig_name _library)
 
-    string(REGEX MATCH "(.*)>=(.*)" _dummy "${_pkgconfig_name}")
-    if ("${CMAKE_MATCH_2}" STREQUAL "")
-        pkg_check_modules(PC_${_component_prefix} "${_pkgconfig_name} >= ${GStreamer_FIND_VERSION}")
-    else ()
-        pkg_check_modules(PC_${_component_prefix} ${_pkgconfig_name})
-    endif ()
-    set(${_component_prefix}_INCLUDE_DIRS ${PC_${_component_prefix}_INCLUDE_DIRS})
+  string(REGEX MATCH "(.*)>=(.*)" _dummy "${_pkgconfig_name}")
+  if ("${CMAKE_MATCH_2}" STREQUAL "")
+    pkg_check_modules(PC_${_component_prefix} "${_pkgconfig_name} >= ${GStreamer_FIND_VERSION}")
+  else ()
+    pkg_check_modules(PC_${_component_prefix} ${_pkgconfig_name})
+  endif ()
+  set(${_component_prefix}_INCLUDE_DIRS ${PC_${_component_prefix}_INCLUDE_DIRS})
 
-    find_library(${_component_prefix}_LIBRARIES
-        NAMES ${_library}
-        HINTS ${PC_${_component_prefix}_LIBRARY_DIRS} ${PC_${_component_prefix}_LIBDIR}
-    )
+  find_library(${_component_prefix}_LIBRARIES
+          NAMES ${_library}
+          HINTS ${PC_${_component_prefix}_LIBRARY_DIRS} ${PC_${_component_prefix}_LIBDIR}
+          )
 endmacro()
 
 # ------------------------
@@ -97,35 +97,35 @@ FIND_GSTREAMER_COMPONENT(GSTREAMER_VIDEO gstreamer-video-1.0 gstvideo-1.0)
 set(_GSTREAMER_REQUIRED_VARS GSTREAMER_INCLUDE_DIRS GSTREAMER_LIBRARIES GSTREAMER_VERSION GSTREAMER_BASE_INCLUDE_DIRS GSTREAMER_BASE_LIBRARIES)
 
 foreach (_component ${GStreamer_FIND_COMPONENTS})
-    set(_gst_component "GSTREAMER_${_component}")
-    string(TOUPPER ${_gst_component} _UPPER_NAME)
+  set(_gst_component "GSTREAMER_${_component}")
+  string(TOUPPER ${_gst_component} _UPPER_NAME)
 
-    list(APPEND _GSTREAMER_REQUIRED_VARS ${_UPPER_NAME}_INCLUDE_DIRS ${_UPPER_NAME}_LIBRARIES)
+  list(APPEND _GSTREAMER_REQUIRED_VARS ${_UPPER_NAME}_INCLUDE_DIRS ${_UPPER_NAME}_LIBRARIES)
 endforeach ()
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(GStreamer REQUIRED_VARS _GSTREAMER_REQUIRED_VARS
-                                            VERSION_VAR   GSTREAMER_VERSION)
+        VERSION_VAR GSTREAMER_VERSION)
 
 mark_as_advanced(
-    GSTREAMER_APP_INCLUDE_DIRS
-    GSTREAMER_APP_LIBRARIES
-    GSTREAMER_AUDIO_INCLUDE_DIRS
-    GSTREAMER_AUDIO_LIBRARIES
-    GSTREAMER_BASE_INCLUDE_DIRS
-    GSTREAMER_BASE_LIBRARIES
-    GSTREAMER_FFT_INCLUDE_DIRS
-    GSTREAMER_FFT_LIBRARIES
-    GSTREAMER_GL_INCLUDE_DIRS
-    GSTREAMER_GL_LIBRARIES
-    GSTREAMER_INCLUDE_DIRS
-    GSTREAMER_LIBRARIES
-    GSTREAMER_MPEGTS_INCLUDE_DIRS
-    GSTREAMER_MPEGTS_LIBRARIES
-    GSTREAMER_PBUTILS_INCLUDE_DIRS
-    GSTREAMER_PBUTILS_LIBRARIES
-    GSTREAMER_TAG_INCLUDE_DIRS
-    GSTREAMER_TAG_LIBRARIES
-    GSTREAMER_VIDEO_INCLUDE_DIRS
-    GSTREAMER_VIDEO_LIBRARIES
+        GSTREAMER_APP_INCLUDE_DIRS
+        GSTREAMER_APP_LIBRARIES
+        GSTREAMER_AUDIO_INCLUDE_DIRS
+        GSTREAMER_AUDIO_LIBRARIES
+        GSTREAMER_BASE_INCLUDE_DIRS
+        GSTREAMER_BASE_LIBRARIES
+        GSTREAMER_FFT_INCLUDE_DIRS
+        GSTREAMER_FFT_LIBRARIES
+        GSTREAMER_GL_INCLUDE_DIRS
+        GSTREAMER_GL_LIBRARIES
+        GSTREAMER_INCLUDE_DIRS
+        GSTREAMER_LIBRARIES
+        GSTREAMER_MPEGTS_INCLUDE_DIRS
+        GSTREAMER_MPEGTS_LIBRARIES
+        GSTREAMER_PBUTILS_INCLUDE_DIRS
+        GSTREAMER_PBUTILS_LIBRARIES
+        GSTREAMER_TAG_INCLUDE_DIRS
+        GSTREAMER_TAG_LIBRARIES
+        GSTREAMER_VIDEO_INCLUDE_DIRS
+        GSTREAMER_VIDEO_LIBRARIES
 )

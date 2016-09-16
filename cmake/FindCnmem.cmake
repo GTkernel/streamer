@@ -10,8 +10,8 @@ INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Cnmem DEFAULT_MSG
         Cnmem_LIBRARIES)
 
-if(Cnmem_LIBRARIES)
-    set(Cnmem_FOUND 1)
-else()
-    message("Not found Cnmem")
-endif()
+if (Cnmem_LIBRARIES)
+  set(Cnmem_FOUND 1)
+else ()
+  message("Not found Cnmem")
+endif ()

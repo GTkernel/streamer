@@ -6,9 +6,9 @@
 #  vecLib_LINKER_LIBS
 
 
-if(NOT APPLE)
-    return()
-endif()
+if (NOT APPLE)
+  return()
+endif ()
 
 set(__veclib_include_suffix "Frameworks/vecLib.framework/Versions/Current/Headers")
 
@@ -22,14 +22,14 @@ find_path(vecLib_INCLUDE_DIR vecLibTypes.h
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(vecLib DEFAULT_MSG vecLib_INCLUDE_DIR)
 
-if(VECLIB_FOUND)
-    if(vecLib_INCLUDE_DIR MATCHES "^/System/Library/Frameworks/vecLib.framework.*")
-        set(vecLib_LINKER_LIBS -lcblas "-framework vecLib")
-        message(STATUS "Found standalone vecLib.framework")
-    else()
-        set(vecLib_LINKER_LIBS -lcblas "-framework Accelerate")
-        message(STATUS "Found vecLib as part of Accelerate.framework")
-    endif()
+if (VECLIB_FOUND)
+  if (vecLib_INCLUDE_DIR MATCHES "^/System/Library/Frameworks/vecLib.framework.*")
+    set(vecLib_LINKER_LIBS -lcblas "-framework vecLib")
+    message(STATUS "Found standalone vecLib.framework")
+  else ()
+    set(vecLib_LINKER_LIBS -lcblas "-framework Accelerate")
+    message(STATUS "Found vecLib as part of Accelerate.framework")
+  endif ()
 
-    mark_as_advanced(vecLib_INCLUDE_DIR)
-endif()
+  mark_as_advanced(vecLib_INCLUDE_DIR)
+endif ()

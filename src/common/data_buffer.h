@@ -24,7 +24,7 @@ class DataBuffer {
    */
   DataBuffer(size_t size) : size_(size) {
     buffer_ = std::shared_ptr<char>(new char[size], std::default_delete < char[]
-        > ());
+              > ());
     buffer_ptr_ = buffer_.get();
   }
 
@@ -89,7 +89,7 @@ class DataBuffer {
    */
   inline void AllocateBuffer(size_t size) {
     buffer_ = std::shared_ptr<char>(new char[size], std::default_delete < char[]
-        > ());
+              > ());
     buffer_ptr_ = buffer_.get();
   }
 
