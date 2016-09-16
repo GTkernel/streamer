@@ -1,5 +1,7 @@
 ## tx1dnn
 
+[![GitHub license](https://img.shields.io/badge/license-apache-green.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
+
 This is a playground for running DNN on NVIDIA's TX1 platform. The project is currently only going to be built and run on Tegra X1, the code will be ported to intel CPU when I have time and interests. 
 
 ## Get Started
