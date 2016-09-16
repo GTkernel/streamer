@@ -2,6 +2,11 @@
 # Taken from https://devtalk.nvidia.com/default/topic/935300/jetson-tx1/deep-learning-inference-performance-validation-on-tx1/post/4876280/#4876280
 # This is used to enable max performance on Tegra
 
+echo "Enabling fan for safety..."
+if [ ! -w /sys/kernel/debug/tegra_fan/target_pwm   ] ; then
+  -1echo "Cannot set fan -- exiting..."
+fi
+echo 255 > /sys/kernel/debug/tegra_fan/target_pwm
 echo "Set Tegra CPUs to max freq"
 echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 echo userspace > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
