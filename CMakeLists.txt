@@ -9,20 +9,17 @@ find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(GLIB REQUIRED gobject)
-find_package(Caffe REQUIRED)
-find_package(GIE REQUIRED)
 find_package(Protobuf 3.0 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
-find_package(MXNet)
 
-# Determine platform
+# Determine if is on Tegra
 if (EXISTS /var/libopencv4tegra-repo)
   message("Build on Tegra")
-  SET(ON_TEGRA 1)
-  add_definitions("-D ON_TEGRA")
+  SET(TEGRA 1)
+  add_definitions("-D TEGRA")
 endif ()
 
-if (ON_TEGRA)
+if (TEGRA)
   find_package(Cnmem)
   find_package(CUDA)
 endif ()
@@ -31,36 +28,67 @@ endif ()
 if (APPLE)
   message("Build on Mac")
   find_package(vecLib)
-  SET(ON_MAC 1)
-  add_definitions("-D ON_MAC")
+  add_definitions("-D APPLE")
+endif ()
+
+# Options
+option(CPU_ONLY "use CPU only or not" OFF)
+if (NOT CUDA_FOUND AND NOT CPU_ONLY)
+  message(FATAL_ERROR "Not in CPU_ONLY mode, but CUDA is not found")
+endif ()
+
+if (CPU_ONLY)
+  message("Build in CPU_ONLY mode")
   add_definitions("-D CPU_ONLY")
 endif ()
 
-if (USE_GIE)
-  message("Build using GIE")
-  add_definitions("-D USE_GIE")
-endif ()
-
-if (ENABLE_FP16)
+option(USE_FP16 "use FP16 or not, it should only be enabled on Tegra" OFF)
+if (USE_FP16)
   message("Build with FP16")
-  add_definitions("-D ENABLE_FP16")
+  add_definitions("-D USE_FP16")
 endif ()
 
+option(USE_CAFFE "Build with Caffe" ON)
+if (USE_CAFFE)
+  find_package(Caffe REQUIRED)
+  include_directories(${Caffe_INCLUDE_DIRS})
+  add_definitions("-D USE_CAFFE")
+  message("Build with Caffe")
+endif ()
+
+option(USE_GIE "Build with GIE or not. GIE could not be used Caffe for now." OFF)
+if (USE_GIE)
+  if (USE_CAFFE)
+    message(FATAL "GIE can't be built with Caffe")
+  endif ()
+  find_package(GIE REQUIRED)
+  include_directories(${GIE_INCLUDE_DIRS})
+  add_definitions("-D USE_GIE")
+  message("Build with GIE")
+endif ()
+
+option(USE_MXNET "Build with MXNet or not." OFF)
+if (USE_MXNET)
+  find_package(MXNet REQUIRED)
+  include_directories(${MXNet_INCLUDE_DIRS})
+  add_definitions("-D USE_MXNET")
+  message("Build with MXNet")
+endif ()
+
+# Include paths
 include_directories(
-        src
-        ${GLOG_INCLUDE_DIRS}
-        ${GSTREAMER_INCLUDE_DIRS}
-        ${GSTREAMER_APP_INCLUDE_DIRS}
-        ${Caffe_INCLUDE_DIRS}
-        ${GIE_INCLUDE_DIRS}
-        ${MXNet_INCLUDE_DIRS}
+  src
+  ${GLOG_INCLUDE_DIRS}
+  ${GSTREAMER_INCLUDE_DIRS}
+  ${GSTREAMER_APP_INCLUDE_DIRS}
 )
 
+# Include cblas libraries
 if (CUDA_FOUND)
   include_directories(${CUDA_INCLUDE_DIRS})
 endif ()
 
-if (ON_MAC)
+if (APPLE)
   include_directories(${vecLib_INCLUDE_DIR})
 endif ()
 

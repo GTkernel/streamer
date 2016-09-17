@@ -211,6 +211,6 @@ Shape GIEInferer<DType>::GetOutputShape() {
 
 template
 class GIEInferer<float>;
-#ifdef ON_TEGRA
+#ifdef TEGRA
 template class GIEInferer<float16>;
 #endif

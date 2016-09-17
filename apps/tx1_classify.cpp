@@ -3,16 +3,20 @@
 // Hacking on building with different engines.
 #ifdef USE_GIE
 #include "classifier/gie_classifier.h"
-#else
-#ifdef ENABLE_FP16
+#endif
+
+#ifdef USE_CAFFE
+#ifdef USE_FP16
 #include "classifier/caffe_fp16_classifier.h"
 #else
-#include "classifier/caffe_v1_classifier.h"
+#include "classifier/caffe_classifier.h"
 
 #endif
 #endif
 
+#ifdef USE_MXNET
 #include "classifier/mxnet_classifier.h"
+#endif
 
 /**
  * @brief Determine if a string ends with certain prefix.
@@ -48,7 +52,7 @@ int main(int argc, char *argv[]) {
     std::cout
         << "  DISPLAY: enable display or not, must have a X window if display is enabled"
         << std::endl;
-    std::cout << "  MODEL_TYPE: caffe, mxnet, gie";
+    std::cout << "  MODEL_TYPE: caffe, mxnet, gie" << std::endl;
     exit(1);
   }
 
@@ -70,48 +74,46 @@ int main(int argc, char *argv[]) {
 
   // Check options
   CHECK(model_type == "caffe" || model_type == "gie" || model_type == "mxnet")
-      << "MODEL_TYPE can only be one of caffe, mxnet or gie";
+  << "MODEL_TYPE can only be one of caffe, mxnet or gie";
 
-  std::shared_ptr <Classifier> classifier;
+  std::shared_ptr<Classifier> classifier;
+
+#ifdef USE_CAFFE
+  if (model_type == "caffe") {
+#ifdef USE_FP16
+    classifier.reset(new CaffeFp16Classifier(model_file, trained_file, mean_file, label_file));
+#else
+    classifier.reset(new CaffeClassifier<float>(model_file,
+                                                trained_file,
+                                                mean_file,
+                                                label_file));
+#endif
+  }
+#endif
+
 #ifdef USE_GIE
-  CHECK(model_type != "caffe") << "Binary is compiled with GIE, can't run Caffe, recompile with -DGIE=false";
   if (model_type == "gie") {
     classifier.reset(new GIEClassifier(model_file, trained_file, mean_file, label_file));
   }
-#else
-  CHECK(model_type != "gie")
-      << "Binary is not compiled with GIE enabled, recompile with -DGIE=true";
+#endif
 
-  if (model_type == "caffe") {
-#ifdef ENABLE_FP16
-    // Run Caffe fp16
-    classifier.reset(new CaffeFp16Classifier(model_file, trained_file, mean_file, label_file));
-#else
-    // Run BVLC Caffe
-    classifier.reset(new CaffeV1Classifier<float>(model_file,
-                                                  trained_file,
-                                                  mean_file,
-                                                  label_file));
-#endif
-  }
-#endif
-  // Run MXNet
+#ifdef USE_MXNET
   if (model_type == "mxnet") {
-    classifier.reset(new MXNetClassifier(model_file,
+  classifier.reset(new MXNetClassifier(model_file,
                                          trained_file,
                                          mean_file,
                                          label_file,
                                          224,
                                          224));
   }
+#endif
 
   bool display = (display_on == "true");
-  if (display) {
-    cv::namedWindow("camera");
-  }
 
+  // Do single image classification
   if (ends_with(video_uri, "jpeg") || ends_with(video_uri, "png")
       || ends_with(video_uri, "jpg")) {
+    LOG(INFO) << "Do single image classification on " + video_uri;
     cv::Mat image = cv::imread(video_uri, CV_LOAD_IMAGE_ANYCOLOR);
     CHECK(image.data != nullptr) << "Can't read image " << video_uri;
     if (display) {
@@ -120,7 +122,7 @@ int main(int argc, char *argv[]) {
     }
 
     int num_pred = 5;
-    std::vector <Prediction>
+    std::vector<Prediction>
         predictions = classifier->Classify(image, num_pred);
     for (int i = 0; i < num_pred; i++) {
       Prediction p = predictions[i];
@@ -130,6 +132,11 @@ int main(int argc, char *argv[]) {
 
     cv::destroyAllWindows();
   } else {
+    // Do video stream classification
+    LOG(INFO) << "Do video stream classification on " + video_uri;
+    if (display) {
+      cv::namedWindow("camera");
+    }
     GstVideoCapture cap;
     cap.SetPreprocessClassifier(classifier);
     DataBuffer data_buffer;
@@ -140,12 +147,11 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
-      // FIXME: Use something like a conditional variable to avoid busy
-      // waiting.
+      // FIXME: Use something like a conditional variable to avoid busy waiting.
       cv::Mat frame = cap.TryGetFrame(&data_buffer);
 
       if (!frame.empty()) {
-        std::vector <Prediction>
+        std::vector<Prediction>
             predictions = classifier->Classify(data_buffer, 1);
         Prediction p = predictions[0];
         LOG(INFO) << p.second << " - \""

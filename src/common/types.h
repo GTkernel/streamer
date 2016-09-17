@@ -7,8 +7,11 @@
 
 #include <cstdlib>
 #include <string>
+
+#ifdef USE_FP16
 #include <driver_types.h>
 #include <cuda_fp16.h>
+#endif
 
 /**
  * @brief 3-D shape structure
@@ -34,6 +37,7 @@ struct Shape {
  */
 typedef std::pair<std::string, float> Prediction;
 
+#ifdef USE_FP16
 half Cpu_Float2Half(float f);
 float Cpu_Half2Float(half h);
 
@@ -53,5 +57,6 @@ struct float16 {
 
   half data;
 };
+#endif
 
 #endif //TX1DNN_TYPE_H

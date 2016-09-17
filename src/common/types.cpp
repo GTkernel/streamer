@@ -4,6 +4,7 @@
 
 #include "types.h"
 
+#ifdef USE_FP16
 half Cpu_Float2Half(float f) {
   half ret;
 
@@ -87,3 +88,4 @@ float Cpu_Half2Float(half h) {
 
   return *((float *) ((void *) &temp));
 }
+#endif // USE_FP16

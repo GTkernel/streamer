@@ -2,14 +2,14 @@
 // Created by Ran Xian on 8/1/16.
 //
 
-#include "caffe_v1_classifier.h"
+#include "caffe_classifier.h"
 #include "common/utils.h"
 
 template<typename DType>
-CaffeV1Classifier<DType>::CaffeV1Classifier(const string &model_file,
-                                            const string &trained_file,
-                                            const string &mean_file,
-                                            const string &label_file)
+CaffeClassifier<DType>::CaffeClassifier(const string &model_file,
+                                        const string &trained_file,
+                                        const string &mean_file,
+                                        const string &label_file)
     : Classifier(model_file, trained_file, mean_file, label_file) {
 #ifdef CPU_ONLY
   caffe::Caffe::set_mode(caffe::Caffe::CPU);
@@ -56,7 +56,7 @@ CaffeV1Classifier<DType>::CaffeV1Classifier(const string &model_file,
 
 /* Load the mean file in binaryproto format. */
 template<typename DType>
-void CaffeV1Classifier<DType>::SetMean(const string &mean_file) {
+void CaffeClassifier<DType>::SetMean(const string &mean_file) {
   caffe::BlobProto blob_proto;
   caffe::ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
 
@@ -87,14 +87,11 @@ void CaffeV1Classifier<DType>::SetMean(const string &mean_file) {
 }
 
 template<typename DType>
-std::vector<float> CaffeV1Classifier<DType>::Predict() {
-  Timer timer;
-  timer.Start();
+std::vector<float> CaffeClassifier<DType>::Predict() {
   net_->Forward();
   // Copy the output layer to a std::vector
   caffe::Blob <DType> *output_layer = net_->output_blobs()[0];
   const DType *begin = output_layer->cpu_data();
-  LOG(INFO) << "Forward done in " << timer.ElapsedMSec() << " ms";
 
   std::vector<float> scores;
   const DType *end = begin + output_layer->channels();
@@ -105,7 +102,7 @@ std::vector<float> CaffeV1Classifier<DType>::Predict() {
 }
 
 template<typename DType>
-DataBuffer CaffeV1Classifier<DType>::GetInputBuffer() {
+DataBuffer CaffeClassifier<DType>::GetInputBuffer() {
   caffe::Blob <DType> *input_layer = net_->input_blobs()[0];
   DType *input_data = input_layer->mutable_cpu_data();
 
@@ -115,4 +112,4 @@ DataBuffer CaffeV1Classifier<DType>::GetInputBuffer() {
 }
 
 template
-class CaffeV1Classifier<float>;
+class CaffeClassifier<float>;
