@@ -27,10 +27,10 @@ class GstVideoCapture {
   cv::Mat TryGetFrame(DataBuffer *data_bufferp = nullptr);
   cv::Mat GetFrame(DataBuffer *data_bufferp = nullptr);
   cv::Size GetOriginalFrameSize();
-  bool CreatePipeline(std::string rtsp_uri);
+  bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
   bool IsConnected();
-  void SetPreprocessClassifier(std::shared_ptr <Classifier> classifier);
+  void SetPreprocessClassifier(std::shared_ptr<Classifier> classifier);
 
  private:
   static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);
@@ -47,10 +47,10 @@ class GstVideoCapture {
   GstAppSink *appsink_;
   GstBus *bus_;
   std::mutex capture_lock_;
-  std::deque <cv::Mat> frames_;
-  std::deque <DataBuffer> preprocessed_buffers_;
+  std::deque<cv::Mat> frames_;
+  std::deque<DataBuffer> preprocessed_buffers_;
   bool connected_;
-  std::shared_ptr <Classifier> preprocess_classifier_;
+  std::shared_ptr<Classifier> preprocess_classifier_;
 };
 
 #endif //TX1_DNN_GSTVIDEOCAPTURE_H

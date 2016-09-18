@@ -59,12 +59,12 @@ void GstVideoCapture::CheckBuffer() {
   }
 
   CHECK_NE(original_size_.area(), 0)
-      << "Capture should have got frame size information but not";
+    << "Capture should have got frame size information but not";
   cv::Mat frame(original_size_, CV_8UC3, (char *) map.data, cv::Mat::AUTO_STEP);
 
   // Push the frame
   {
-    std::lock_guard <std::mutex> guard(capture_lock_);
+    std::lock_guard<std::mutex> guard(capture_lock_);
 
     frames_.clear();
     preprocessed_buffers_.clear();
@@ -126,7 +126,7 @@ bool GstVideoCapture::IsConnected() {
  * @brief Destroy the pipeline, free any resources allocated.
  */
 void GstVideoCapture::DestroyPipeline() {
-  std::lock_guard <std::mutex> guard(this->capture_lock_);
+  std::lock_guard<std::mutex> guard(this->capture_lock_);
   if (!connected_)
     return;
 
@@ -171,7 +171,7 @@ cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *data_bufferp) {
   if (!connected_ || frames_.size() == 0) {
     return cv::Mat();
   } else {
-    std::lock_guard <std::mutex> guard(capture_lock_);
+    std::lock_guard<std::mutex> guard(capture_lock_);
     cv::Mat frame = frames_.front();
     frames_.pop_front();
 
@@ -180,7 +180,7 @@ cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *data_bufferp) {
       preprocessed_buffers_.pop_front();
       if (data_bufferp != nullptr) {
         CHECK(preprocess_classifier_ != nullptr)
-            << "Can't get preprocessed buffer as no classifer is specified";
+        << "Can't get preprocessed buffer as no classifer is specified";
         *data_bufferp = preprocessed_buffer;
       }
     }
@@ -204,9 +204,9 @@ cv::Size GstVideoCapture::GetOriginalFrameSize() {
  * @param classifier The classifier that needs this preprocessing. The
  * classifier's Preprocess() will be called.
  */
-void GstVideoCapture::SetPreprocessClassifier(std::shared_ptr <Classifier> classifier) {
+void GstVideoCapture::SetPreprocessClassifier(std::shared_ptr<Classifier> classifier) {
   CHECK(!connected_)
-      << "Pipeline has already connected, can't set preprocess classifier";
+  << "Pipeline has already connected, can't set preprocess classifier";
   preprocess_classifier_ = classifier;
 }
 
@@ -216,19 +216,30 @@ bool GstVideoCapture::IsPreprocessed() {
 
 /**
  * @brief Create GStreamer pipeline.
- * @param rtsp_uri The uri to rtsp endpoints.
+ * @param video_uri The uri to video source, could be rtsp endpoint or facetime.
+ * If it is facetime, will try to use macbook's facetime camera.
  * @return True if the pipeline is sucessfully built.
  */
-bool GstVideoCapture::CreatePipeline(std::string rtsp_uri) {
-  CHECK(rtsp_uri.substr(0, 7) == "rtsp://")
-      << "Streaming protocol other than rtsp is not supported";
+bool GstVideoCapture::CreatePipeline(std::string video_uri) {
+  // The pipeline that emits video frames
+  string video_pipeline = "";
+  if (video_uri == "facetime") {
+    // Facetime camera, hardcode the video pipeline
+    video_pipeline = "avfvideosrc "
+        "! capsfilter caps=video/x-raw,width=(int)640,height=(int)480,framerate=(fraction)30/1 ";
+  } else if (video_uri.substr(0, 7) == "rtsp://") {
+    video_pipeline = "rtspsrc location=\"" + video_uri + "\""
+        "! rtph264depay ! h264parse ! omxh264dec";
+  } else {
+    LOG(WARNING) << "Directly using video uri as video pipeline";
+    video_pipeline = video_uri;
+  }
 
   gchar *descr = g_strdup_printf(
-      "rtspsrc location=\"%s\" "
-          "! rtph264depay ! h264parse ! omxh264dec ! videoconvert ! "
-          "capsfilter caps=video/x-raw,format=(string)BGR "
-          "! appsink name=sink sync=true",
-      rtsp_uri.c_str()
+      "%s",
+      (video_pipeline + " ! videoconvert "
+          "! capsfilter caps=video/x-raw,format=(string)BGR "
+          "! appsink name=sink sync=true").c_str()
   );
 
   GError *error = NULL;

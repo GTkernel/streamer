@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 2.8)
 project(tx1dnn)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -9,7 +9,6 @@ find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(GLIB REQUIRED gobject)
-find_package(Protobuf 3.0 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
 # Determine if is on Tegra
@@ -51,6 +50,7 @@ endif ()
 option(USE_CAFFE "Build with Caffe" ON)
 if (USE_CAFFE)
   find_package(Caffe REQUIRED)
+  find_package(Protobuf 3.0 REQUIRED)
   include_directories(${Caffe_INCLUDE_DIRS})
   add_definitions("-D USE_CAFFE")
   message("Build with Caffe")
