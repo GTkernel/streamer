@@ -11,7 +11,6 @@ find_library(Caffe_LIBRARIES NAMES caffe-nv caffe
   ${CAFFE_HOME}/lib
   /usr/local/lib)
 
-find_package(OpenCV REQUIRED)
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Caffe DEFAULT_MSG
   Caffe_INCLUDE_DIRS Caffe_LIBRARIES)

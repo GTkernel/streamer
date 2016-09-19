@@ -32,6 +32,7 @@ if (USE_CAFFE)
   target_link_libraries(tx1dnn-caffe
     ${Caffe_LIBRARIES}
     ${PROTOBUF_LIBRARIES}
+    ${HDF5_LIBRARIES}
     ${COMMON_LIBRARIES})
 
   if (Cnmem_FOUND)

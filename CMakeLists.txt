@@ -4,6 +4,9 @@ project(tx1dnn)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+# See https://github.com/opencv/opencv/issues/6542
+set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
+
 # Find libraries
 find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)
@@ -50,7 +53,9 @@ endif ()
 option(USE_CAFFE "Build with Caffe" ON)
 if (USE_CAFFE)
   find_package(Caffe REQUIRED)
-  find_package(Protobuf 3.0 REQUIRED)
+  find_package(HDF5 REQUIRED)
+  find_package(Protobuf REQUIRED)
+  include_directories(${HDF5_INCLUDE_DIRS})
   include_directories(${Caffe_INCLUDE_DIRS})
   add_definitions("-D USE_CAFFE")
   message("Build with Caffe")
