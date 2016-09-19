@@ -30,7 +30,6 @@ sudo apt-get update
 # Install OpenCV following http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html#linux-installation
 sudo apt-get install -y gstreamer1.0 cmake libglib2.0-dev \
 	libgoogle-glog-dev libboost-all-dev
-
 ```
 
 #### 3. Tegra X1
@@ -49,8 +48,6 @@ cd build
 cmake ..
 make
 sudo make install
-	
-	
 ```
 
 

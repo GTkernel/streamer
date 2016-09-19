@@ -23,12 +23,7 @@ find_library(GIE_WCONV_LIB
         HINTS
         ${lib_hints_path})
 
-find_library(GIE_PROTOBUF_LIB
-        NAMES protobuf
-        HINTS
-        ${lib_hints_path})
-
-set(GIE_LIBRARIES ${GIE_NVINFER_LIB} ${GIE_NVCAFFE_PARSER_LIB} ${GIE_WCONV_LIB} ${GIE_PROTOBUF_LIB})
+set(GIE_LIBRARIES ${GIE_NVINFER_LIB} ${GIE_NVCAFFE_PARSER_LIB} ${GIE_WCONV_LIB})
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set LIBXML2_FOUND to TRUE
 # if all listed variables are TRUE
