@@ -10,6 +10,7 @@
 #include <glog/logging.h>
 #include <thread>
 #include <memory>
+#include <stdlib.h>
 
 #ifndef CPU_ONLY
 #include <cuda.h>

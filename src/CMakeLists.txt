@@ -81,7 +81,7 @@ endif ()
 
 # Build MXNet libraries
 if (USE_MXNET)
-  set(MXNET_SOURCE_FILES classifier/mxnket_classifier.cpp classifier/mxnet_classifier.h)
+  set(MXNET_SOURCE_FILES classifier/mxnet_classifier.cpp classifier/mxnet_classifier.h ${COMMON_SOURCE_FILES})
   add_library(tx1dnn-mxnet ${MXNET_SOURCE_FILES})
   target_link_libraries(tx1dnn-mxnet
     ${MXNet_LIBRARIES}

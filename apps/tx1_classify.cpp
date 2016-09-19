@@ -78,8 +78,8 @@ int main(int argc, char *argv[]) {
 
   std::shared_ptr<Classifier> classifier;
 
-#ifdef USE_CAFFE
   if (model_type == "caffe") {
+#ifdef USE_CAFFE
 #ifdef USE_FP16
     classifier.reset(new CaffeFp16Classifier(model_file, trained_file, mean_file, label_file));
 #else
@@ -88,25 +88,31 @@ int main(int argc, char *argv[]) {
                                                 mean_file,
                                                 label_file));
 #endif
-  }
+#else
+    LOG(FATAL) << "Not build with Caffe, failed to initialize classifier";
 #endif
+  }
 
-#ifdef USE_GIE
   if (model_type == "gie") {
+#ifdef USE_GIE
     classifier.reset(new GIEClassifier(model_file, trained_file, mean_file, label_file));
-  }
+#else
+    LOG(FATAL) << "Not build with GIE, failed to initialize classifier";
 #endif
+  }
 
-#ifdef USE_MXNET
   if (model_type == "mxnet") {
+#ifdef USE_MXNET
   classifier.reset(new MXNetClassifier(model_file,
                                          trained_file,
                                          mean_file,
                                          label_file,
                                          224,
                                          224));
-  }
+#else
+    LOG(FATAL) << "Not build with MXNet, failed to initialize classifier";
 #endif
+  }
 
   bool display = (display_on == "true");
 
