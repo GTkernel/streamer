@@ -5,23 +5,20 @@
 #ifndef TX1DNN_GIECLASSIFIER_H
 #define TX1DNN_GIECLASSIFIER_H
 
-#include "common/common.h"
 #include "classifier.h"
+#include "common/common.h"
 #include "gie_inferer.h"
 
 class GIEClassifier : public Classifier {
   typedef float DType;
+
  public:
   typedef std::pair<string, float> Prediction;
-  GIEClassifier(const string &model_file,
-                const string &trained_file,
-                const string &mean_file,
-                const string &label_file);
+  GIEClassifier(const string &model_file, const string &trained_file,
+                const string &mean_file, const string &label_file);
   ~GIEClassifier();
 
-  virtual size_t GetInputBufferSize() {
-    return GetInputSize<float>();
-  }
+  virtual size_t GetInputBufferSize() { return GetInputSize<float>(); }
 
  private:
   void SetMean(const string &mean_file);
@@ -34,4 +31,4 @@ class GIEClassifier : public Classifier {
   DataBuffer output_buffer_;
 };
 
-#endif //TX1DNN_GIECLASSIFIER_H
+#endif  // TX1DNN_GIECLASSIFIER_H

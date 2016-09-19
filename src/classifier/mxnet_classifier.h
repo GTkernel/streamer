@@ -5,27 +5,22 @@
 #ifndef TX1DNN_MXNET_CLASSIFIER_H
 #define TX1DNN_MXNET_CLASSIFIER_H
 
-#include "common/common.h"
-#include "classifier.h"
-#include <mxnet/c_predict_api.h>
 #include <mxnet/c_api.h>
+#include <mxnet/c_predict_api.h>
+#include "classifier.h"
+#include "common/common.h"
 
 /**
  * @brief MXNet classifier
  */
 class MXNetClassifier : public Classifier {
  public:
-  MXNetClassifier(const string &model_desc,
-                  const string &model_params,
-                  const string &mean_file,
-                  const string &label_file,
-                  const int input_width,
-                  const int input_height);
+  MXNetClassifier(const string &model_desc, const string &model_params,
+                  const string &mean_file, const string &label_file,
+                  const int input_width, const int input_height);
   ~MXNetClassifier();
 
-  virtual size_t GetInputBufferSize() {
-    return GetInputSize<mx_float>();
-  }
+  virtual size_t GetInputBufferSize() { return GetInputSize<mx_float>(); }
 
  private:
   virtual std::vector<float> Predict();
@@ -36,4 +31,4 @@ class MXNetClassifier : public Classifier {
   DataBuffer input_buffer_;
 };
 
-#endif //TX1DNN_MXNET_CLASSIFIER_H
+#endif  // TX1DNN_MXNET_CLASSIFIER_H

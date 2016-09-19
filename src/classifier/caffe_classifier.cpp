@@ -5,7 +5,7 @@
 #include "caffe_classifier.h"
 #include "common/utils.h"
 
-template<typename DType>
+template <typename DType>
 CaffeClassifier<DType>::CaffeClassifier(const string &model_file,
                                         const string &trained_file,
                                         const string &mean_file,
@@ -36,7 +36,7 @@ CaffeClassifier<DType>::CaffeClassifier(const string &model_file,
   CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";
   CHECK_EQ(net_->num_outputs(), 1) << "Network should have exactly one output.";
 
-  caffe::Blob <DType> *input_layer = net_->input_blobs()[0];
+  caffe::Blob<DType> *input_layer = net_->input_blobs()[0];
   input_channels_ = input_layer->channels();
   CHECK(input_channels_ == 3 || input_channels_ == 1)
       << "Input layer should have 1 or 3 channels.";
@@ -46,7 +46,7 @@ CaffeClassifier<DType>::CaffeClassifier(const string &model_file,
   // Load the binaryproto mean file.
   SetMean(mean_file);
 
-  caffe::Blob <DType> *output_layer = net_->output_blobs()[0];
+  caffe::Blob<DType> *output_layer = net_->output_blobs()[0];
 
   // Adjust input dimensions
   input_layer->Reshape(1, input_channels_, input_height_, input_width_);
@@ -55,7 +55,7 @@ CaffeClassifier<DType>::CaffeClassifier(const string &model_file,
 }
 
 /* Load the mean file in binaryproto format. */
-template<typename DType>
+template <typename DType>
 void CaffeClassifier<DType>::SetMean(const string &mean_file) {
   caffe::BlobProto blob_proto;
   caffe::ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
@@ -67,7 +67,7 @@ void CaffeClassifier<DType>::SetMean(const string &mean_file) {
       << "Number of channels of mean file doesn't match input layer.";
 
   /* The format of the mean file is planar 32-bit float BGR or grayscale. */
-  std::vector <cv::Mat> channels;
+  std::vector<cv::Mat> channels;
   float *data = mean_blob.mutable_cpu_data();
   for (int i = 0; i < input_channels_; ++i) {
     /* Extract an individual channel. */
@@ -86,11 +86,11 @@ void CaffeClassifier<DType>::SetMean(const string &mean_file) {
   mean_image_ = cv::Mat(GetInputGeometry(), mean.type(), channel_mean);
 }
 
-template<typename DType>
+template <typename DType>
 std::vector<float> CaffeClassifier<DType>::Predict() {
   net_->Forward();
   // Copy the output layer to a std::vector
-  caffe::Blob <DType> *output_layer = net_->output_blobs()[0];
+  caffe::Blob<DType> *output_layer = net_->output_blobs()[0];
   const DType *begin = output_layer->cpu_data();
 
   std::vector<float> scores;
@@ -101,9 +101,9 @@ std::vector<float> CaffeClassifier<DType>::Predict() {
   return scores;
 }
 
-template<typename DType>
+template <typename DType>
 DataBuffer CaffeClassifier<DType>::GetInputBuffer() {
-  caffe::Blob <DType> *input_layer = net_->input_blobs()[0];
+  caffe::Blob<DType> *input_layer = net_->input_blobs()[0];
   DType *input_data = input_layer->mutable_cpu_data();
 
   DataBuffer buffer(input_data, GetInputSize<DType>());
@@ -111,5 +111,4 @@ DataBuffer CaffeClassifier<DType>::GetInputBuffer() {
   return buffer;
 }
 
-template
-class CaffeClassifier<float>;
+template class CaffeClassifier<float>;

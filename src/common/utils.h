@@ -6,7 +6,6 @@
 #define TX1DNN_UTILS_H
 
 #include "common.h"
-#include <caffe/caffe.hpp>
 
 /**
  * @brief Get a list of GPUs in machine.

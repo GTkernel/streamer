@@ -13,8 +13,15 @@
 
 #ifndef CPU_ONLY
 #include <cuda.h>
-
+#include <cuda_runtime_api.h>
 #endif
+
+#define CUDA_CHECK(condition) \
+  /* Code block avoids redefinition of cudaError_t error */ \
+  do { \
+    cudaError_t error = condition; \
+    CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
+  } while (0)
 
 #include "timer.h"
 #include "types.h"

@@ -5,17 +5,17 @@
 #ifndef TX1DNN_GIEINFERER_H
 #define TX1DNN_GIEINFERER_H
 
-#include "common/common.h"
-#include <Infer.h>
-#include <caffeParser.h>
+#include <NvCaffeParser.h>
+#include <NvInfer.h>
 #include <opencv2/opencv.hpp>
+#include "common/common.h"
 
 using namespace nvinfer1;
 using namespace nvcaffeparser1;
 /**
  * @brief Class for GIE (GPU Inference Engine)
  */
-template<typename DType>
+template <typename DType>
 class GIEInferer {
  public:
   typedef std::stringstream GIEModelStreamType;
@@ -29,10 +29,8 @@ class GIEInferer {
   static const size_t BATCH_SIZE = 1;
 
  public:
-  GIEInferer(const string &deploy_file,
-             const string &model_file,
-             const string &input_blob_name_,
-             const string &output_blob_name_);
+  GIEInferer(const string &deploy_file, const string &model_file,
+             const string &input_blob_name_, const string &output_blob_name_);
   void CreateEngine();
   void DestroyEngine();
   void DoInference(DType *input, DType *output);
@@ -40,9 +38,8 @@ class GIEInferer {
   Shape GetOutputShape();
 
  private:
-  void CaffeToGIEModel(const string &deploy_file,
-                       const string &model_file,
-                       const std::vector <string> &outputs,
+  void CaffeToGIEModel(const string &deploy_file, const string &model_file,
+                       const std::vector<string> &outputs,
                        unsigned int max_batch_size,
                        std::ostream &gie_model_stream);
 
@@ -63,4 +60,4 @@ class GIEInferer {
   DType *d_output_buffer;
 };
 
-#endif //TX1DNN_GIEINFERER_H
+#endif  // TX1DNN_GIEINFERER_H

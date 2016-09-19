@@ -5,19 +5,16 @@
 #include "classifier.h"
 #include "common/utils.h"
 
-Classifier::Classifier(const string &model_desc,
-                       const string &model_params,
-                       const string &mean_file,
-                       const string &label_file) {
+Classifier::Classifier(const string &model_desc, const string &model_params,
+                       const string &mean_file, const string &label_file) {
   // Load labels.
   std::ifstream labels(label_file.c_str());
   CHECK(labels) << "Unable to open labels file " << label_file;
   string line;
-  while (std::getline(labels, line))
-    labels_.push_back(string(line));
+  while (std::getline(labels, line)) labels_.push_back(string(line));
 }
 
-std::vector <Prediction> Classifier::Classify(const cv::Mat &img, int N) {
+std::vector<Prediction> Classifier::Classify(const cv::Mat &img, int N) {
   Timer total_timer;
   Timer timer;
 
@@ -33,7 +30,7 @@ std::vector <Prediction> Classifier::Classify(const cv::Mat &img, int N) {
 
   N = std::min<int>(labels_.size(), N);
   std::vector<int> maxN = Argmax(output, N);
-  std::vector <Prediction> predictions;
+  std::vector<Prediction> predictions;
   for (int i = 0; i < N; ++i) {
     int idx = maxN[i];
     predictions.push_back(std::make_pair(labels_[idx], output[idx]));
@@ -43,7 +40,7 @@ std::vector <Prediction> Classifier::Classify(const cv::Mat &img, int N) {
   return predictions;
 }
 
-std::vector <Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
+std::vector<Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
   Timer total_timer;
   Timer timer;
 
@@ -58,7 +55,7 @@ std::vector <Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
 
   N = std::min<int>(labels_.size(), N);
   std::vector<int> maxN = Argmax(output, N);
-  std::vector <Prediction> predictions;
+  std::vector<Prediction> predictions;
   for (int i = 0; i < N; ++i) {
     int idx = maxN[i];
     predictions.push_back(std::make_pair(labels_[idx], output[idx]));
@@ -69,21 +66,25 @@ std::vector <Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
 }
 
 /**
- * @brief Transform and normalize an image and flatten the bytes of the image to a data buffer if provided
- * @details The image will first be resized to the given shape, and then substract the mean image, finally flattend to a buffer.
- * 
- * @param img The image to be transformed, can be either in RGB, RGBA, or gray scale
+ * @brief Transform and normalize an image and flatten the bytes of the image to
+ * a data buffer if provided
+ * @details The image will first be resized to the given shape, and then
+ * substract the mean image, finally flattend to a buffer.
+ *
+ * @param img The image to be transformed, can be either in RGB, RGBA, or gray
+ * scale
  * @param shape The wanted shape of the transformed image.
- * @param mean_img Mean image. If don't want to substract mean image, provide a *zero* image, (e.g. cv::Mat::zeros(channel, height, width)).
- * @param buffer The buffer to store the transformed image. No storage will happen if \b buffer is nullptr.
+ * @param mean_img Mean image. If don't want to substract mean image, provide a
+ * *zero* image, (e.g. cv::Mat::zeros(channel, height, width)).
+ * @param buffer The buffer to store the transformed image. No storage will
+ * happen if \b buffer is nullptr.
  * @return The transformed image.
  */
-cv::Mat Classifier::TransformImage(const cv::Mat &img,
-                                   const Shape &shape,
+cv::Mat Classifier::TransformImage(const cv::Mat &img, const Shape &shape,
                                    const cv::Mat &mean_img,
                                    DataBuffer *buffer) {
-  CHECK(mean_img.channels() == shape.channel && mean_img.size[0] == shape.width
-        && mean_img.size[1] == shape.height)
+  CHECK(mean_img.channels() == shape.channel &&
+        mean_img.size[0] == shape.width && mean_img.size[1] == shape.height)
       << "Mean image shape does not match that of desired shape";
   int num_channel = shape.channel, width = shape.width, height = shape.height;
 
@@ -101,18 +102,16 @@ cv::Mat Classifier::TransformImage(const cv::Mat &img,
     sample = img;
 
   // Crop according to scale
-  int desired_width = (float) shape.width / shape.height * img.size[1];
-  int desired_height = (float) shape.height / shape.width * img.size[0];
+  int desired_width = (float)shape.width / shape.height * img.size[1];
+  int desired_height = (float)shape.height / shape.width * img.size[0];
   int new_width = img.size[0], new_height = img.size[1];
   if (desired_width < img.size[0]) {
     new_width = desired_width;
   } else {
     new_height = desired_height;
   }
-  cv::Rect roi((img.size[1] - new_height) / 2,
-               (img.size[0] - new_width) / 2,
-               new_width,
-               new_height);
+  cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2,
+               new_width, new_height);
   cv::Mat sample_cropped = sample(roi);
 
   // Resize
@@ -136,11 +135,11 @@ cv::Mat Classifier::TransformImage(const cv::Mat &img,
 
   if (buffer != nullptr) {
     CHECK(shape.GetVolume() * sizeof(float) == buffer->GetSize())
-        << "Buffer size " << buffer->GetSize()
-        << " does not match input size " << shape.GetVolume() * sizeof(float);
+        << "Buffer size " << buffer->GetSize() << " does not match input size "
+        << shape.GetVolume() * sizeof(float);
     // Wrap buffer to channels to save memory copy.
-    float *data = (float *) buffer->GetBuffer();
-    std::vector <cv::Mat> output_channels;
+    float *data = (float *)buffer->GetBuffer();
+    std::vector<cv::Mat> output_channels;
     for (int i = 0; i < num_channel; i++) {
       cv::Mat channel(height, width, CV_32FC1, data);
       output_channels.push_back(channel);

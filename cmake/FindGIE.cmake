@@ -4,7 +4,7 @@ unset(GIE_FOUND)
 set(include_hints_path ${GIE_HOME}/include)
 set(lib_hints_path ${GIE_HOME}/lib)
 
-find_path(GIE_INCLUDE_DIRS NAMES Infer.h caffeParser.h
+find_path(GIE_INCLUDE_DIRS NAMES NvInfer.h NvCaffeParser.h Infer.h caffeParser.h
         HINTS
         ${include_hints_path})
 
