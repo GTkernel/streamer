@@ -15,7 +15,7 @@ inline void GetGpus(std::vector<int> &gpus) {
 #ifndef CPU_ONLY
   CUDA_CHECK(cudaGetDeviceCount(&count));
 #else
-  NO_GPU;
+  LOG(FATAL) << "Can't use Cuda function in NO_GPU mode";
 #endif
   for (int i = 0; i < count; ++i) {
     gpus.push_back(i);
