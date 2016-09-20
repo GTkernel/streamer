@@ -19,6 +19,6 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false ..
-  - make -j`nproc`
-  - make -j`nproc` test
+  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DCPU_ONLY=true ..
+  - make -j4
+  - make -j4 test
