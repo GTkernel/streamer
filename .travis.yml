@@ -7,26 +7,31 @@ matrix:
       sudo: required
     - os: osx
       osx_image: xcode7.2
+  exclude:
+    - os: linux
+      dist: precise
 
 branches:
   only:
     - master
 
 cache:
-  apt: true
   directories:
-    - ${HOME}/installed
+    - ${HOME}/installed_linux
+    - ${HOME}/installed_osx
 
 env:
-  - CAFFE_COMMIT_HASH=25422de79f58e214e55834524bfe696f8651889f
+  global:
+    - CAFFE_COMMIT_HASH=a8ec123c00723df0d0ad897e1eea32a29201c81b
 
 install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H bash ./script/install_dependencies_linux.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]  ; then bash ./script/install_dependencies_mac.sh          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash ./script/install_dependencies_linux.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]  ; then bash ./script/install_dependencies_mac.sh  ; fi
 
 script:
   - mkdir build
   - cd build
-  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DCPU_ONLY=true ..
+  - echo $HOME/installed
+  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DCPU_ONLY=true -DCAFFE_HOME=$HOME/installed_${TRAVIS_OS_NAME} ..
   - make -j4
   - make -j4 test

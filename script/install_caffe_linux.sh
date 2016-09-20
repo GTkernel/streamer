@@ -9,7 +9,7 @@ cd caffe
 git reset --hard ${CAFFE_COMMIT_HASH}
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=release -DCPU_ONLY=ON -DBUILD_docs=OFF -DBUILD_python=OFF -DBUILD_python_layer=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/installed/ -DUSE_LMDB=off ..
+cmake -DCMAKE_BUILD_TYPE=release -DCPU_ONLY=ON -DBUILD_docs=OFF -DBUILD_python=OFF -DBUILD_python_layer=OFF -DCMAKE_INSTALL_PREFIX=$HOME/installed_${TRAVIS_OS_NAME} -DUSE_LMDB=off ..
 make -j`nproc`
 sudo make install
 cd ..

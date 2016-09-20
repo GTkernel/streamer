@@ -21,4 +21,4 @@
 103c103
 < DISTRIBUTE_DIR := distribute
 ---
-> DISTRIBUTE_DIR := ${HOME}/installed/
+> DISTRIBUTE_DIR := $HOME/installed_${TRAVIS_OS_NAME}

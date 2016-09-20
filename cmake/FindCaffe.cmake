@@ -1,7 +1,7 @@
 # Caffe package for CNN Triplet training
 unset(Caffe_FOUND)
 
-find_path(Caffe_INCLUDE_DIRS NAMES caffe/caffe.hpp caffe/common.hpp caffe/net.hpp caffe/proto/caffe.pb.h caffe/util/io.hpp caffe/vision_layers.hpp
+find_path(Caffe_INCLUDE_DIRS NAMES caffe/caffe.hpp
   HINTS
   ${CAFFE_HOME}/include
   /usr/local/include)

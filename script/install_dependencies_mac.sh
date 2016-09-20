@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 brew update
+brew tap homebrew/science
 brew install cmake glog glib gstreamer gst-plugins-base \
     gst-plugins-good gst-plugins-bad gst-plugins-ugly \
     boost opencv
 
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-if [ ! -d "$HOME/installed" ]; then
-    mkdir -p $HOME/installed
+# Install Caffe
+INSTALL_DIR=$HOME/installed_${TRAVIS_OS_NAME}
+if [ ! -d $INSTALL_DIR ]; then
+    mkdir -p $INSTALL_DIR
 fi
-if [ ! -d "$HOME/installed/Caffe-${CAFFE_COMMIT_HASH}" ]; then
+if [ ! -f "$INSTALL_DIR/Caffe-${CAFFE_COMMIT_HASH}" ]; then
     bash $SCRIPT_DIR/install_caffe_mac.sh
-    touch $HOME/installed/Caffe-${CAFFE_COMMIT_HASH}
+    # install successful, add a mark
+    if [ $? -eq 0 ]; then
+        touch $INSTALL_DIR/Caffe-${CAFFE_COMMIT_HASH}
+    fi
 fi
