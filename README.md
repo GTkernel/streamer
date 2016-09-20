@@ -60,6 +60,10 @@ sudo make install
 * `cmake -DCMAKE_BUILD_TYPE=Release -DCAFFE_HOME=/path/to/caffe -USE_CAFFE=true ..` (this is an example of building with Caffe)
 * `make`
 
+To run unit tests:
+* `cmake -DTEST_ON=true`
+* `make test`
+
 ### Run
 
 This is an example of running classification network in Caffe.

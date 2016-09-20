@@ -7,6 +7,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # See https://github.com/opencv/opencv/issues/6542
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 
+set(CMAKE_MACOSX_RPATH 1)
+
 # Find libraries
 find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)
@@ -99,3 +101,10 @@ endif ()
 add_subdirectory(src)
 add_subdirectory(3rdparty)
 add_subdirectory(apps)
+
+# Enable CTest
+option(TEST_ON "Build with test cases" OFF)
+if (TEST_ON)
+  enable_testing()
+  add_subdirectory(test)
+endif ()
