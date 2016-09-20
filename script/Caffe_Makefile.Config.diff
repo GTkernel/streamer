@@ -21,4 +21,4 @@
 103c103
 < DISTRIBUTE_DIR := distribute
 ---
-> DISTRIBUTE_DIR := /usr/local/
+> DISTRIBUTE_DIR := ${HOME}/installed/

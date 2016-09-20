@@ -11,7 +11,7 @@ brew install numpy
 
 git clone https://github.com/BVLC/caffe
 cd caffe
-git reset --hard 25422de79f58e214e55834524bfe696f8651889f
+git reset --hard ${CAFFE_COMMIT_HASH}
 patch Makefile.config.example<$SCRIPT_DIR/Caffe_Makefile.config.diff -o Makefile.config
 make -j4
 sudo make distribute

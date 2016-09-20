@@ -12,6 +12,14 @@ branches:
   only:
     - master
 
+cache:
+  apt: true
+  directories:
+    - ${HOME}/installed
+
+env:
+  - CAFFE_COMMIT_HASH=25422de79f58e214e55834524bfe696f8651889f
+
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H bash ./script/install_dependencies_linux.sh; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]  ; then bash ./script/install_dependencies_mac.sh          ; fi

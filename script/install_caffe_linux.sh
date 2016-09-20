@@ -6,10 +6,10 @@ sudo apt-get -y install libgflags-dev libgoogle-glog-dev
 sudo apt-get -y install libatlas-base-dev
 git clone https://github.com/BVLC/caffe
 cd caffe
-git reset --hard 25422de79f58e214e55834524bfe696f8651889f
+git reset --hard ${CAFFE_COMMIT_HASH}
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=release -DCPU_ONLY=ON -DBUILD_docs=OFF -DBUILD_python=OFF -DBUILD_python_layer=OFF -DCMAKE_INSTALL_PREFIX=/usr/local -DUSE_LMDB=off ..
+cmake -DCMAKE_BUILD_TYPE=release -DCPU_ONLY=ON -DBUILD_docs=OFF -DBUILD_python=OFF -DBUILD_python_layer=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/installed/ -DUSE_LMDB=off ..
 make -j`nproc`
 sudo make install
 cd ..
