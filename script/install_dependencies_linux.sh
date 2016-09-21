@@ -6,10 +6,5 @@ INSTALL_DIR=$HOME/installed_${TRAVIS_OS_NAME}
 if [ ! -d $INSTALL_DIR ]; then
     mkdir -p $INSTALL_DIR
 fi
-if [ ! -f "$INSTALL_DIR/Caffe-${CAFFE_COMMIT_HASH}" ]; then
-    bash $SCRIPT_DIR/install_caffe_linux.sh
-    # install successful, add a mark
-    if [ $? -eq 0 ]; then
-        touch $INSTALL_DIR/Caffe-${CAFFE_COMMIT_HASH}
-    fi
-fi
+
+bash $SCRIPT_DIR/install_caffe_linux.sh

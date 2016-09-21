@@ -15,11 +15,6 @@ branches:
   only:
     - master
 
-cache:
-  directories:
-    - ${HOME}/installed_linux
-    - ${HOME}/installed_osx
-
 env:
   global:
     - CAFFE_COMMIT_HASH=a8ec123c00723df0d0ad897e1eea32a29201c81b
