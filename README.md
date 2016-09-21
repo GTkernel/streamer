@@ -1,6 +1,7 @@
 ## tx1dnn
 
 [![GitHub license](https://img.shields.io/badge/license-apache-green.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Build Status](https://travis-ci.com/ranxian/tx1dnn.svg?token=QaYrj2g7p1xx7VjDqDzv&branch=master)](https://travis-ci.com/ranxian/tx1dnn)
 
 This is a playground for running DNN on NVIDIA's TX1 platform. The simplest thing it can do right now is to consume live video frames from a camera and run your favorite neural network on the frames.
 
@@ -29,7 +30,7 @@ brew install cmake glog glib gstreamer gst-plugins-base \
 sudo apt-get update
 # Install OpenCV following http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html#linux-installation
 sudo apt-get install -y gstreamer1.0 cmake libglib2.0-dev \
-	libgoogle-glog-dev libboost-all-dev
+	libgoogle-glog-dev libboost-all-dev libopencv-dev
 ```
 
 #### 3. Tegra X1
