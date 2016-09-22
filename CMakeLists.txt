@@ -81,9 +81,10 @@ if (USE_MXNET)
   message("Build with MXNet")
 endif ()
 
-# Include paths
+# Common include paths
 include_directories(
   src
+  3rdparty
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
   ${GSTREAMER_APP_INCLUDE_DIRS}

@@ -1,5 +1,4 @@
 #include "video/gst_video_capture.h"
-
 // Hacking on building with different engines.
 #ifdef USE_GIE
 #include "classifier/gie_classifier.h"
