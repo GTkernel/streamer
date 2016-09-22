@@ -229,7 +229,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
         "! capsfilter caps=video/x-raw,width=(int)640,height=(int)480,framerate=(fraction)30/1 ";
   } else if (video_uri.substr(0, 7) == "rtsp://") {
     video_pipeline = "rtspsrc location=\"" + video_uri + "\""
-        "! rtph264depay ! h264parse ! omxh264dec";
+        " ! rtph264depay ! h264parse ! omxh264dec";
   } else {
     LOG(WARNING) << "Directly using video uri as video pipeline";
     video_pipeline = video_uri;
