@@ -22,13 +22,21 @@ CameraManager::CameraManager() {
 
   for (const auto &camera_value : cameras_value) {
     string name = camera_value.get<string>("name");
-    string uri = camera_value.get<string>("video_uri");
-    std::shared_ptr<Camera> camera(new Camera(name, uri));
-    LOG(INFO) << "Camera - name: " << name << " " << "uri: " << uri;
-    cameras_.push_back(camera);
+    string video_uri = camera_value.get<string>("video_uri");
+    std::shared_ptr<Camera> camera(new Camera(name, video_uri));
+    LOG(INFO) << "Camera - name: " << name << " " << "uri: " << video_uri;
+    cameras_.emplace(name, camera);
   }
 }
 
-std::vector<std::shared_ptr<Camera>> CameraManager::ListCameras() {
+std::unordered_map<string,
+                   std::shared_ptr<Camera>> CameraManager::GetCameras() {
   return cameras_;
+}
+
+std::shared_ptr<Camera> CameraManager::GetCamera(const string &name) {
+  auto itr = cameras_.find(name);
+  CHECK(itr != cameras_.end()) << "Camera with name " << name
+                               << " is not present";
+  return itr->second;
 }

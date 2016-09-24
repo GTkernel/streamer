@@ -147,4 +147,4 @@ ENV/
 .DS_Store
 .ycm_extra_conf.py
 sftp-config.json
-/config/cameras.toml
+/config/*.toml

@@ -37,6 +37,15 @@ struct Shape {
  */
 typedef std::pair<std::string, float> Prediction;
 
+//// Model types
+enum ModelType {
+  MODEL_TYPE_INVALID = 0,
+  MODEL_TYPE_CAFFE,
+  MODEL_TYPE_MXNET,
+  MODEL_TYPE_GIE,
+  MODEL_TYPE_TENSORFLOW
+};
+
 #ifdef USE_FP16
 half Cpu_Float2Half(float f);
 float Cpu_Half2Float(half h);

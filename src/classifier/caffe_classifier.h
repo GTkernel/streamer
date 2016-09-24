@@ -11,7 +11,7 @@
 
 /**
  * @brief Vanila Caffe classifier. This classifier is compatible with Caffe V1
- * interfaces. It could be built on both CPU and CPU (unlike CaffeFp16Classifier
+ * interfaces. It could be built on both CPU and GPU (unlike CaffeFp16Classifier
  * which can only be built on GPU).
  */
 template <typename DType>

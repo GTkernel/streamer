@@ -1,8 +1,8 @@
 # Configurations for cameras
 [[camera]]
 name = AMC_white
-uri = "rtsp://username1:password1@camera_url1"
+video_uri = "rtsp://username1:password1@camera_url1"
 
 [[camera]]
 name = AMC_black
-uri = "rtsp://username2:password2@camera_url2"
+video_uri = "rtsp://username2:password2@camera_url2"

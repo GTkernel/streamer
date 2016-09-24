@@ -13,7 +13,7 @@
 class Camera {
  public:
   Camera() {};
-  Camera(const string &name, const string &video_uri);
+  Camera(const string &id, const string &video_uri);
   string GetName() const;
   string GetVideoURI() const;
  private:
