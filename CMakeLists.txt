@@ -109,3 +109,10 @@ if (TEST_ON)
   enable_testing()
   add_subdirectory(test)
 endif ()
+
+# Copy config files
+file(GLOB CONFIG_FILES ${PROJECT_SOURCE_DIR}/config/*.toml)
+foreach (f ${CONFIG_FILES})
+  file(COPY ${f} DESTINATION config)
+endforeach ()
+

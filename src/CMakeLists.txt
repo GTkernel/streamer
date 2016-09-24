@@ -1,4 +1,20 @@
 # Common libraries to be linked against
+
+# Pick source files
+set(SRC_ROOT ${PROJECT_SOURCE_DIR}/src)
+file(GLOB_RECURSE TX1DNN_SOURCE_FILES ${SRC_ROOT}/*.cpp ${SRC_ROOT}/*.h)
+file(GLOB_RECURSE CAFFE_SOURCE_FILES ${SRC_ROOT}/caffe_*.cpp ${SRC_ROOT}/caffe_*.h)
+file(GLOB_RECURSE CAFFE_FP16_SOURCE_FILES ${SRC_ROOT}/caffe_fp16*.cpp ${SRC_ROOT}/caffe_fp16*.h)
+list(REMOVE_ITEM CAFFE_SOURCE_FILES ${CAFFE_FP16_SOURCE_FILES})
+file(GLOB_RECURSE MXNET_SOURCE_FILES ${SRC_ROOT}/mxnet_*.cpp ${SRC_ROOT}/mxnet_*.h)
+file(GLOB_RECURSE GIE_SOURCE_FILES ${SRC_ROOT}/gie_*.cpp ${SRC_ROOT}/gie_*.h)
+list(REMOVE_ITEM TX1DNN_SOURCE_FILES
+  ${CAFFE_SOURCE_FILES}
+  ${CAFFE_FP16_SOURCE_FILES}
+  ${MXNET_SOURCE_FILES}
+  ${GIE_SOURCE_FILES})
+
+# Pick libraries
 set(TX1DNN_LIBRARIES
   ${GLIB_LIBRARIES}
   ${GLIB_GOBJECT_LIBRARIES}
@@ -6,35 +22,23 @@ set(TX1DNN_LIBRARIES
   ${GLOG_LIBRARIES}
   ${GSTREAMER_LIBRARIES}
   ${GSTREAMER_APP_LIBRARIES}
-  ${Boost_SYSTEM_LIBRARY}
-  ${JSONCPP_LIBRARIES})
-
-set(TX1DNN_SOURCE_FILES
-  video/gst_video_capture.cpp
-  video/gst_video_capture.h
-  common/utils.h
-  common/data_buffer.h
-  common/types.cpp
-  classifier/classifier.cpp
-  classifier/classifier.h)
+  ${Boost_SYSTEM_LIBRARY})
 
 # Build caffe libraries
 if (USE_CAFFE)
   if (USE_FP16)
-    set(CAFFE_SOURCE_FILES classifier/caffe_fp16_classifier.h classifier/caffe_fp16_classifier.cpp)
+    list(APPEND TX1DNN_SOURCE_FILES ${CAFFE_FP16_SOURCE_FILES})
   else ()
-    set(CAFFE_SOURCE_FILES classifier/caffe_classifier.cpp classifier/caffe_classifier.h)
+    list(APPEND TX1DNN_SOURCE_FILES ${CAFFE_SOURCE_FILES})
   endif ()
 
-  list(APPEND TX1DNN_SOURCE_FILES ${CAFFE_SOURCE_FILES})
   list(APPEND TX1DNN_LIBRARIES ${Caffe_LIBRARIES} ${HDF5_LIBRARIES})
 
   if (Cnmem_FOUND)
     list(APPEND TX1DNN_LIBRARIES ${Cnmem_LIBRARIES})
   endif ()
-
-  # target_include_directories(tx1dnn-caffe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 endif ()
+
 # Set Caffe compile flags
 function(add_caffe_cflags TARGET)
   SET(CAFFE_CFLAGS "-MMD -MP -pthread -fPIC -O2 -DUSE_OPENCV")
@@ -52,24 +56,14 @@ function(add_caffe_cflags TARGET)
   set_target_properties(${TARGET} PROPERTIES COMPILE_FLAGS ${TEMP})
 endfunction()
 
-# add_caffe_cflags(tx1dnn-caffe)
-
 # Build GIE libraries
 if (USE_GIE)
-  set(GIE_SOURCE_FILES
-    classifier/gie_classifier.cpp
-    classifier/gie_classifier.h
-    classifier/gie_inferer.cpp
-    classifier/gie_inferer.h)
-
   list(APPEND TX1DNN_SOURCE_FILES ${GIE_SOURCE_FILES})
   list(APPEND TX1DNN_LIBRARIES ${GIE_LIBRARIES})
 endif ()
 
 # Build MXNet libraries
 if (USE_MXNET)
-  set(MXNET_SOURCE_FILES classifier/mxnet_classifier.cpp classifier/mxnet_classifier.h ${COMMON_SOURCE_FILES})
-
   list(APPEND TX1DNN_SOURCE_FILES ${MXNET_SOURCE_FILES})
   list(APPEND TX1DNN_LIBRARIES ${MXNet_LIBRARIES})
 endif ()

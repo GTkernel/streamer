@@ -1,3 +1,8 @@
+/**
+ * @brief tx1_classify.cpp - An example showing the usage to run realtime
+ * classification.
+ */
+
 #include "video/gst_video_capture.h"
 // Hacking on building with different engines.
 #ifdef USE_GIE
