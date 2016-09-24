@@ -11,6 +11,10 @@
 #include <thread>
 #include <memory>
 #include <stdlib.h>
+#include <tinytoml/toml.h>
+#include <fstream>
+
+using std::string;
 
 #ifndef CPU_ONLY
 #include <cuda.h>
@@ -27,6 +31,7 @@
 #include "timer.h"
 #include "types.h"
 
-using std::string;
+//// TOML
+toml::Value ParseTomlFromFile(const string &filepath);
 
 #endif //TX1_DNN_COMMON_H
