@@ -1,0 +1,20 @@
+[mean_image]
+BLUE  = 104
+GREEN = 117
+RED   = 123
+
+[[model]]
+name = "AlexNet"
+type = "caffe"
+desc_path = "/path/to/caffe/model.prototxt"
+params_path = "/path/to/caffe/model.caffemodel"
+input_width = 227
+input_height = 227
+
+[[model]]
+name = "GoogleNet"
+type = "caffe"
+desc_path = "/path/to/caffe/model.prototxt"
+params_path = "/path/to/caffe/model.caffemodel"
+input_width = 227
+input_height = 227
