@@ -12,3 +12,22 @@ toml::Value ParseTomlFromFile(const string &filepath) {
                     << std::endl << pr.errorReason;
   return pr.value;
 }
+
+// Context
+Context &Context::GetContext() {
+  static Context context;
+  return context;
+}
+string Context::GetConfigDir() const {
+  return config_dir_;
+}
+void Context::SetConfigDir(const string &config_dir) {
+  // Check config dir exists
+  config_dir_ = config_dir;
+}
+string Context::GetConfigFile(const string &filename) const {
+  return config_dir_ + "/" + filename;
+}
+
+// Set default config dir
+Context::Context() : config_dir_("config/") {}

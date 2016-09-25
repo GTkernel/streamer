@@ -4,7 +4,7 @@
 
 #include "model_manager.h"
 
-static const string MODEL_TOML_PATH = "config/models.toml";
+static const string MODEL_TOML_FILENAME = "models.toml";
 
 ModelManager &ModelManager::GetInstance() {
   static ModelManager manager;
@@ -12,7 +12,9 @@ ModelManager &ModelManager::GetInstance() {
 }
 
 ModelManager::ModelManager() {
-  auto root_value = ParseTomlFromFile(MODEL_TOML_PATH);
+  // FIXME: Use a safer way to construct path.
+  string model_toml_path = Context::GetContext().GetConfigFile(MODEL_TOML_FILENAME);
+  auto root_value = ParseTomlFromFile(model_toml_path);
   // Get mean colors
   auto mean_image_value = root_value.find("mean_image");
   CHECK(mean_image_value != nullptr) << "[mean_image] is not found";
@@ -23,7 +25,7 @@ ModelManager::ModelManager() {
 
   // Get model descriptions
   auto model_values = root_value.find("model")->as<toml::Array>();
-  
+
   for (auto model_value : model_values) {
     string name = model_value.get<string>("name");
     string type_string = model_value.get<string>("type");

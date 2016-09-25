@@ -5,7 +5,7 @@
 #include "camera_manager.h"
 
 // The path to the camera config file
-static const string CAMERA_TOML_PATH = "config/cameras.toml";
+static const string CAMERA_TOML_FILENAME = "cameras.toml";
 
 CameraManager &CameraManager::GetInstance() {
   static CameraManager manager;
@@ -16,7 +16,8 @@ CameraManager &CameraManager::GetInstance() {
  * @brief Read from the configurations and initialize the list of cameras.
  */
 CameraManager::CameraManager() {
-  auto root_value = ParseTomlFromFile(CAMERA_TOML_PATH);
+  string camera_toml_path = Context::GetContext().GetConfigFile(CAMERA_TOML_FILENAME);
+  auto root_value = ParseTomlFromFile(camera_toml_path);
 
   auto cameras_value = root_value.find("camera")->as<toml::Array>();
 

@@ -1,0 +1,7 @@
+[[camera]]
+name = "testcam1"
+video_uri = "rtsp://test_uri"
+
+[[camera]]
+name = "testcam2"
+video_uri = "facetime"
