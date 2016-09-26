@@ -18,6 +18,7 @@ class ModelManager {
   static ModelManager &GetInstance();
  public:
   ModelManager();
+  ModelManager(const ModelManager &other) = delete;
   std::vector<int> GetMeanColors() const;
   std::unordered_map<string, ModelDesc> GetModelDescs() const;
   ModelDesc GetModelDesc(const string &name) const;

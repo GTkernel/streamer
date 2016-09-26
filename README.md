@@ -71,7 +71,7 @@ This is an example of running classification network in Caffe.
 
 ```
 export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/tx1_classify \
+apps/classify \
     ~/Code/caffe/models/bvlc_alexnet/deploy.prototxt \
     ~/Code/caffe/models/bvlc_alexnet/bvlc_alexnet.caffemodel \
     ~/Code/caffe/data/ilsvrc12/imagenet_mean.binaryproto \
@@ -87,7 +87,7 @@ apps/tx1_classify \
 * `rtsp://xxx`: A rtsp endpoint
 * Any other valid gstreamer video pipeline, e.g. `videotestsrc`
 
-Use `apps/tx1_classify -h` to show options.
+Use `apps/classify -h` to show options.
 
 ## Run with different frameworks
 
@@ -95,17 +95,17 @@ Currently we support BVLC caffe, NVIDIA caffe (including fp16 caffe), GIE (GPU I
 
 * Caffe
 	* Installation: http://caffe.berkeleyvision.org/installation.html
-	* Build with: `cmake -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE ..`
+	* Build with: `cmake -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true ..`
 * NVDIA fp16 Caffe
 	* Installation: install from https://github.com/NVIDIA/caffe/tree/experimental/fp16
-	* Build with: `cmake -DCAFFE_HOME=/path/to/fp16caffe -DUSE_CAFFE -DUSE_FP16 ..`
+	* Build with: `cmake -DCAFFE_HOME=/path/to/fp16caffe -DUSE_CAFFE=true -DUSE_FP16=true ..`
 * GIE
 	* Installation: Apply through NVIDIA developer program: https://developer.nvidia.com/tensorrt
-	* Build with: `cmake -DGIE_HOME=/path/to/gie -DUSE_GIE ..`
+	* Build with: `cmake -DGIE_HOME=/path/to/gie -DUSE_GIE=true ..`
 	* Note that GIE can't be built together with Caffe
 * MXNet
 	* Installation: http://mxnet.readthedocs.io/en/latest/how_to/build.html
-	* Build with: `cmake -DMXNET_HOME=/path/to/mxnet -DUSE_MXNET ..`
+	* Build with: `cmake -DMXNET_HOME=/path/to/mxnet -DUSE_MXNET=true ..`
 
 ## Compile configurations
 

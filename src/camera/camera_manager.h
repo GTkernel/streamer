@@ -17,6 +17,7 @@ class CameraManager {
   static CameraManager &GetInstance();
  public:
   CameraManager();
+  CameraManager(const CameraManager &other) = delete;
   std::unordered_map<string, std::shared_ptr<Camera>> GetCameras();
   std::shared_ptr<Camera> GetCamera(const string &name);
  private:

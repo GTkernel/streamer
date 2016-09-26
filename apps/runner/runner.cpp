@@ -5,6 +5,7 @@
  * manages the cameras and streams, run DNN on realtime camera frames, push
  * stats and video frames to local storage.
  */
+
 int main(int argc, char *argv[]) {
   // Get camera manager
   CameraManager &camera_manager = CameraManager::GetInstance();
