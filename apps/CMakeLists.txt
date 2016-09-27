@@ -21,3 +21,4 @@ foreach (app_dir ${APP_DIRS})
   install(TARGETS ${basename} DESTINATION apps)
 endforeach ()
 
+target_link_libraries(runner linenoise)

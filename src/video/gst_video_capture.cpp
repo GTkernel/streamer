@@ -5,6 +5,7 @@
 #include <gst/app/gstappsink.h>
 #include <thread>
 #include "gst_video_capture.h"
+#include "utils/string_utils.h"
 /************************
 * GStreamer callbacks ***
 ************************/
@@ -150,7 +151,10 @@ cv::Mat GstVideoCapture::GetFrame(DataBuffer *data_bufferp) {
   if (!connected_)
     return cv::Mat();
 
-  while (connected_ && frames_.size() == 0);
+  while (connected_ && frames_.size() == 0) {
+    // FIXME: this is REALLY REALLY bad
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
 
   LOG(INFO) << "Waited " << timer.ElapsedMSec() << " until frame available";
 
@@ -230,9 +234,12 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   } else if (video_uri.substr(0, 7) == "rtsp://") {
     video_pipeline = "rtspsrc location=\"" + video_uri + "\""
         " ! rtph264depay ! h264parse ! omxh264dec";
+  } else if (StartsWith(video_uri, "gst://")) {
+    LOG(WARNING) << "Directly use gst pipeline as video pipeline";
+    video_pipeline = video_uri.substr(6);
+    LOG(INFO) << video_pipeline;
   } else {
-    LOG(WARNING) << "Directly using video uri as video pipeline";
-    video_pipeline = video_uri;
+    LOG(FATAL) << "Video uri: " << video_uri << " is not valid";
   }
 
   gchar *descr = g_strdup_printf(
@@ -241,6 +248,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
           "! capsfilter caps=video/x-raw,format=(string)BGR "
           "! appsink name=sink sync=true").c_str()
   );
+  LOG(INFO) << "Video pipeline: " << descr;
 
   GError *error = NULL;
 
