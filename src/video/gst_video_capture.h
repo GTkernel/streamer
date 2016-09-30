@@ -30,7 +30,6 @@ class GstVideoCapture {
   bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
   bool IsConnected();
-  void SetPreprocessClassifier(std::shared_ptr<Classifier> classifier);
 
  private:
   static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);
@@ -38,7 +37,6 @@ class GstVideoCapture {
  private:
   void CheckBuffer();
   void CheckBus();
-  bool IsPreprocessed();
 
  private:
   cv::Size original_size_;
@@ -48,9 +46,7 @@ class GstVideoCapture {
   GstBus *bus_;
   std::mutex capture_lock_;
   std::deque<cv::Mat> frames_;
-  std::deque<DataBuffer> preprocessed_buffers_;
   bool connected_;
-  std::shared_ptr<Classifier> preprocess_classifier_;
 };
 
 #endif //TX1_DNN_GSTVIDEOCAPTURE_H

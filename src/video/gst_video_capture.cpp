@@ -68,13 +68,6 @@ void GstVideoCapture::CheckBuffer() {
     std::lock_guard<std::mutex> guard(capture_lock_);
 
     frames_.clear();
-    preprocessed_buffers_.clear();
-    // Do preprocessing if a classifier is specified;
-    if (IsPreprocessed()) {
-      DataBuffer data_buffer(preprocess_classifier_->GetInputBufferSize());
-      preprocess_classifier_->Preprocess(frame, data_buffer);
-      preprocessed_buffers_.push_back(data_buffer);
-    }
     frames_.push_back(frame);
   }
 
@@ -104,8 +97,7 @@ void GstVideoCapture::CheckBus() {
 GstVideoCapture::GstVideoCapture() :
     appsink_(nullptr),
     pipeline_(nullptr),
-    connected_(false),
-    preprocess_classifier_(nullptr) {
+    connected_(false) {
 }
 
 GstVideoCapture::~GstVideoCapture() {
@@ -179,16 +171,6 @@ cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *data_bufferp) {
     cv::Mat frame = frames_.front();
     frames_.pop_front();
 
-    if (IsPreprocessed()) {
-      DataBuffer preprocessed_buffer = preprocessed_buffers_.front();;
-      preprocessed_buffers_.pop_front();
-      if (data_bufferp != nullptr) {
-        CHECK(preprocess_classifier_ != nullptr)
-        << "Can't get preprocessed buffer as no classifer is specified";
-        *data_bufferp = preprocessed_buffer;
-      }
-    }
-
     LOG(INFO) << "Get frame in " << timer.ElapsedMSec() << " ms";
     return frame;
   }
@@ -199,23 +181,6 @@ cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *data_bufferp) {
  */
 cv::Size GstVideoCapture::GetOriginalFrameSize() {
   return original_size_;
-}
-
-/**
- * @brief Set preprocess classifier, this is an optimization to offload the
- * preprocessing step to the video pipeline.
- * 
- * @param classifier The classifier that needs this preprocessing. The
- * classifier's Preprocess() will be called.
- */
-void GstVideoCapture::SetPreprocessClassifier(std::shared_ptr<Classifier> classifier) {
-  CHECK(!connected_)
-  << "Pipeline has already connected, can't set preprocess classifier";
-  preprocess_classifier_ = classifier;
-}
-
-bool GstVideoCapture::IsPreprocessed() {
-  return preprocess_classifier_ != nullptr;
 }
 
 /**

@@ -15,7 +15,7 @@ using namespace nvcaffeparser1;
 /**
  * @brief Class for GIE (GPU Inference Engine)
  */
-template <typename DType>
+template<typename DType>
 class GIEInferer {
  public:
   typedef std::stringstream GIEModelStreamType;

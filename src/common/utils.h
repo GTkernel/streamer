@@ -27,14 +27,21 @@ inline bool PairCompare(const std::pair<float, int> &lhs,
   return lhs.first > rhs.first;
 }
 
-inline std::vector<int> Argmax(const std::vector<float> &v, int N) {
+/**
+ * @brief Find the largest K numbers for <code>scores</code>.
+ * @param scores The list of scores to be compared.
+ * @param N The length of scores.
+ * @param K Number of numbers to be selected
+ * @return
+ */
+inline std::vector<int> Argmax(float *scores, int N, int K) {
   std::vector <std::pair<float, int>> pairs;
-  for (size_t i = 0; i < v.size(); ++i)
-    pairs.push_back(std::make_pair(v[i], i));
-  std::partial_sort(pairs.begin(), pairs.begin() + N, pairs.end(), PairCompare);
+  for (size_t i = 0; i < N; ++i)
+    pairs.push_back(std::make_pair(scores[i], i));
+  std::partial_sort(pairs.begin(), pairs.begin() + K, pairs.end(), PairCompare);
 
   std::vector<int> result;
-  for (int i = 0; i < N; ++i)
+  for (int i = 0; i < K; ++i)
     result.push_back(pairs[i].second);
   return result;
 }

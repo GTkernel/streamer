@@ -82,6 +82,11 @@ class DataBuffer {
     memcpy(buffer_ptr_, data_buffer.GetBuffer(), size_);
   }
 
+  void Clone(const void *src, size_t size) {
+    CHECK(size <= size_) << "Size exceeds the size of the data buffer";
+    memcpy(buffer_ptr_, src, size);
+  }
+
  private:
   /**
    * @brief Allocate a buffer with size.

@@ -28,7 +28,6 @@ brew install cmake glog glib gstreamer gst-plugins-base \
 
 ```
 sudo apt-get update
-# Install OpenCV following http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html#linux-installation
 sudo apt-get install -y gstreamer1.0 cmake libglib2.0-dev \
 	libgoogle-glog-dev libboost-all-dev libopencv-dev
 ```
@@ -54,7 +53,6 @@ sudo make install
 
 ### Compile
 
-
 * `git clone https://github.com/ranxian/tx1dnn`
 * `mkdir build`
 * `cd build`
@@ -65,29 +63,44 @@ To run unit tests:
 * `cmake -DTEST_ON=true`
 * `make test`
 
-### Run
+### Run demo
 
 This is an example of running classification network in Caffe.
 
+First you need to config your cameras and models. In your build directory, there should be a `config` directory.
+
+#### Configure cameras
+1. `cp config/cameras.toml.example config/cameras.toml`
+2. Edit `config/cameras.toml`, you need to fill the `name` of the camera, and the `video_uri` of the camera. `video_uri` could be
+    * `rtsp://xxx`: An rtsp endpoint.
+    * `facetime`: The iSight camera available on Mac.
+    * `gst://xxx`: xxx could be any raw GStreamer video pipeline, as long as the pipleine emits valid video frames. For example `videotestsrc`
+    
+    
+#### Configure models
+1. `cp config/models.toml.example config/models.toml`
+2. Edit `config/models.toml`, fill in various fields for each of your model.
+    * `name`: name of the model
+    * `type`: either `"caffe"`, `"mxnet"` or `"gie"`
+    * `desc_path`: The path to the model description file. For caffe and GIE it is `.prototxt` file, for mxnet it is `.json` file
+    * `params_path`: The path to the model weights. For caffe and GIE it is `.caffemodel` file, for mxnet it is `.params` file
+    * `input_width`: The suggested width of the input image.
+    * `input_height`: The suggested height of the input image.
+    * `label_file`: this is optional. For classification network or other network that requires a label file to produce a string label, you may add the path to that file here.
+    
+    
+#### Run the classification demo    
+
 ```
 export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/classify \
-    ~/Code/caffe/models/bvlc_alexnet/deploy.prototxt \
-    ~/Code/caffe/models/bvlc_alexnet/bvlc_alexnet.caffemodel \
-    ~/Code/caffe/data/ilsvrc12/imagenet_mean.binaryproto \
-    ~/Code/caffe/data/ilsvrc12/synset_words.txt \
-    'VIDEO_URI' \
-    false \
-    caffe
+apps/classify CAMERA MODEL DISPLAY?
 ```
 
-`VIDEO_URI` could be: 
+* `CAMERA` is the name of the camera.
+* `MODEL` is the name of the model.
+* `DISPLAY?` is either true: enable preview, or false.
 
-* `facetime`: The iSight camera available on Mac
-* `rtsp://xxx`: A rtsp endpoint
-* Any other valid gstreamer video pipeline, e.g. `videotestsrc`
-
-Use `apps/classify -h` to show options.
+Use `apps/classify -h` to show helps.
 
 ## Run with different frameworks
 

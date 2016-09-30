@@ -41,3 +41,7 @@ std::shared_ptr<Camera> CameraManager::GetCamera(const string &name) {
                                << " is not present";
   return itr->second;
 }
+
+bool CameraManager::HasCamera(const string &name) const {
+  return cameras_.count(name) != 0;
+}

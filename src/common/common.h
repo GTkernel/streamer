@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <tinytoml/toml.h>
 #include <fstream>
+#include <mutex>
 #include "timer.h"
 #include "types.h"
 
