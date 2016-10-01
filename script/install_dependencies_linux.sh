@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-sudo apt-get -y install gstreamer1.0 cmake libglib2.0-dev libgoogle-glog-dev libboost-all-dev libopencv-dev
+sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
+    libboost-all-dev libopencv-dev gstreamer1.0 libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
+    libgstreamer-plugins-bad1.0-dev
+
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 # Install Caffe
 INSTALL_DIR=$HOME/installed_${TRAVIS_OS_NAME}

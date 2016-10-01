@@ -28,8 +28,20 @@ brew install cmake glog glib gstreamer gst-plugins-base \
 
 ```
 sudo apt-get update
-sudo apt-get install -y gstreamer1.0 cmake libglib2.0-dev \
-	libgoogle-glog-dev libboost-all-dev libopencv-dev
+sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
+    libboost-all-dev libopencv-dev gstreamer1.0 libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
+    libgstreamer-plugins-bad1.0-dev
+```
+
+For Ubuntu <= 14.04, also need to install cmake 3. 
+```
+sudo add-apt-repository ppa:george-edison55/cmake-3.x
+sudo apt-get update
+# When cmake is not installed
+sudo apt-get install cmake
+# When cmake is already installed
+sudo apt-get upgrade
 ```
 
 #### 3. Tegra X1
@@ -56,7 +68,7 @@ sudo make install
 * `git clone https://github.com/ranxian/tx1dnn`
 * `mkdir build`
 * `cd build`
-* `cmake -DCMAKE_BUILD_TYPE=Release -DCAFFE_HOME=/path/to/caffe -USE_CAFFE=true ..` (this is an example of building with Caffe)
+* `cmake -DCMAKE_BUILD_TYPE=Release -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true ..` (this is an example of building with Caffe)
 * `make`
 
 To run unit tests:
