@@ -11,8 +11,14 @@ CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape)
 template<typename DType>
 void CaffeModel<DType>::Load() {
   // Load the network.
+#ifdef USE_OPENCL
+  net_.reset(new caffe::Net<DType>(model_desc_.GetModelDescPath(),
+                                   caffe::TEST,
+                                   caffe::Caffe::GetDefaultDevice()));
+#else
   net_.reset(new caffe::Net<DType>(model_desc_.GetModelDescPath(),
                                    caffe::TEST));
+#endif
   net_->CopyTrainedLayersFrom(model_desc_.GetModelParamsPath());
 
   CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";

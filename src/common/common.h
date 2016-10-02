@@ -19,10 +19,9 @@
 
 using std::string;
 
-#ifndef CPU_ONLY
+#ifdef USE_CUDA
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#endif
 
 #define CUDA_CHECK(condition) \
   /* Code block avoids redefinition of cudaError_t error */ \
@@ -30,6 +29,8 @@ using std::string;
     cudaError_t error = condition; \
     CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
   } while (0)
+
+#endif
 
 //// TOML
 toml::Value ParseTomlFromFile(const string &filepath);

@@ -8,6 +8,8 @@
 #ifdef USE_CAFFE
 #ifdef USE_FP16
 #include "caffe_fp16_model.h"
+#elseif USE_OPENCL
+
 #else
 #include "caffe_model.h"
 #endif
@@ -81,7 +83,7 @@ ModelManager::ModelManager() {
 
   // Global Caffe settings
 #ifdef USE_CAFFE
-#ifdef CPU_ONLY
+#ifndef USE_GPU
   caffe::Caffe::set_mode(caffe::Caffe::CPU);
 #else
   std::vector<int> gpus;

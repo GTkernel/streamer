@@ -68,7 +68,7 @@ sudo make install
 * `git clone https://github.com/ranxian/tx1dnn`
 * `mkdir build`
 * `cd build`
-* `cmake -DCMAKE_BUILD_TYPE=Release -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true ..` (this is an example of building with Caffe)
+* `cmake -DCMAKE_BUILD_TYPE=Release -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true -DBACKEND=cuda ..` (this is an example of building with Caffe)
 * `make`
 
 To run unit tests:
@@ -126,8 +126,8 @@ Currently we support BVLC caffe, NVIDIA caffe (including fp16 caffe), GIE (GPU I
 	* Build with: `cmake -DCAFFE_HOME=/path/to/fp16caffe -DUSE_CAFFE=true -DUSE_FP16=true ..`
 * GIE
 	* Installation: Apply through NVIDIA developer program: https://developer.nvidia.com/tensorrt
-	* Build with: `cmake -DGIE_HOME=/path/to/gie -DUSE_GIE=true ..`
-	* Note that GIE can't be built together with Caffe
+	* Build with: `cmake -DGIE_HOME=/path/to/gie -DUSE_GIE=true -DBACKEND=cuda ..`
+	* GIE must be built with `-DBACKEND=cuda`. Also note that GIE can't be built together with Caffe
 * MXNet
 	* Installation: http://mxnet.readthedocs.io/en/latest/how_to/build.html
 	* Build with: `cmake -DMXNET_HOME=/path/to/mxnet -DUSE_MXNET=true ..`
@@ -136,7 +136,10 @@ Currently we support BVLC caffe, NVIDIA caffe (including fp16 caffe), GIE (GPU I
 
 Apart from various configuations for different frameworks:
 
-* `-DCPU_ONLY`: Compile without NVIDIA GPU available.
+* Control the backend
+    1. Use cpu. `-DBACKEND=cpu`
+    2. Use CUDA device. `-DBACKEND=cuda`
+    3. Use OpenCL device. `-DBACKEND=opencl'
 
 ## TODO
 

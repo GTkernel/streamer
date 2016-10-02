@@ -12,7 +12,7 @@
  */
 inline void GetGpus(std::vector<int> &gpus) {
   int count = 0;
-#ifndef CPU_ONLY
+#ifdef USE_CUDA
   CUDA_CHECK(cudaGetDeviceCount(&count));
 #else
   LOG(FATAL) << "Can't use Cuda function in NO_GPU mode";
