@@ -116,11 +116,19 @@ Use `apps/classify -h` to show helps.
 
 ## Run with different frameworks
 
-Currently we support BVLC caffe, NVIDIA caffe (including fp16 caffe), GIE (GPU Inference Engine) and MXNet. Different frameworks are supported through several cmake flags.
+Currently we support BVLC caffe, Caffe's OpenCL branch, NVIDIA caffe (including fp16 caffe), GIE (GPU Inference Engine) and MXNet. Different frameworks are supported through several cmake flags.
+**Cmake will cache the variables**, when you switch to another framework, better clean existed build.
 
 * Caffe
 	* Installation: http://caffe.berkeleyvision.org/installation.html
 	* Build with: `cmake -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true ..`
+* Caffe OpenCL
+    * Installation`git clone https://github.com/BVLC/caffe/tree/opencl`
+    * I can successfully built it with cmake, the steps are
+    * `mkdir build`
+    * `cmake ..`, check that `-DCPU_ONLY=off` if you want to use OpenCL
+    * `make -j && make install`, built targets should be in `build/install`
+    * Then build `tx1dnn` with `cmake -DCAFFE_HOME=/path/to/opencl-caffe -DBACKEND=opencl`
 * NVDIA fp16 Caffe
 	* Installation: install from https://github.com/NVIDIA/caffe/tree/experimental/fp16
 	* Build with: `cmake -DCAFFE_HOME=/path/to/fp16caffe -DUSE_CAFFE=true -DUSE_FP16=true ..`
@@ -139,13 +147,14 @@ Apart from various configuations for different frameworks:
 * Control the backend
     1. Use cpu. `-DBACKEND=cpu`
     2. Use CUDA device. `-DBACKEND=cuda`
-    3. Use OpenCL device. `-DBACKEND=opencl'
+    3. Use OpenCL device. `-DBACKEND=opencl`
 
 ## TODO
 
 * [x] Refactor cmake files
 * [x] Port to CPU
+* [x] Support Intel integrated gpu
 * [ ] Video and metadata storage
 * [ ] Tegra as a streaming hub
 * [ ] Support TensorFlow
-* [ ] Support Intel integrated gpu
+
