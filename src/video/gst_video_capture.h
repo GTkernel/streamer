@@ -12,6 +12,7 @@
 #include <gst/app/gstappsink.h>
 #include <gst/gstmemory.h>
 #include <mutex>
+#include <condition_variable>
 
 /**
  * @brief Video capture for reading frames from GStreamer. Return frames in
@@ -45,6 +46,7 @@ class GstVideoCapture {
   GstAppSink *appsink_;
   GstBus *bus_;
   std::mutex capture_lock_;
+  std::condition_variable capture_cv_;
   std::deque<cv::Mat> frames_;
   bool connected_;
 };

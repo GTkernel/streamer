@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
   DataBuffer data_buffer(input_shape.GetSize() * sizeof(float));
 
   while (1) {
-    // FIXME: Use something like a conditional variable to avoid busy waiting.
     cv::Mat frame = camera->Capture();
     classifier->Preprocess(frame, data_buffer);
     std::vector<Prediction>
@@ -69,7 +68,10 @@ int main(int argc, char *argv[]) {
               << p.first << "\"" << std::endl;
     if (display) {
       cv::imshow("camera", frame);
-      cv::waitKey(10);
+    }
+    if (cv::waitKey(10) == 'q') {
+      LOG(INFO) << "exit.";
+      break;
     }
   }
 

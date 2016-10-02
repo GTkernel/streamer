@@ -35,7 +35,6 @@ void GstVideoCapture::CheckBuffer() {
     return;
   }
 
-  CHECK(connected_) << "Capture is not connected yet";
   GstSample *sample = gst_app_sink_pull_sample(appsink_);
 
   if (sample == NULL) {
@@ -70,6 +69,7 @@ void GstVideoCapture::CheckBuffer() {
     frames_.clear();
     frames_.push_back(frame);
   }
+  capture_cv_.notify_all();
 
   gst_buffer_unmap(buffer, &map);
   gst_sample_unref(sample);
@@ -143,18 +143,21 @@ cv::Mat GstVideoCapture::GetFrame(DataBuffer *data_bufferp) {
   if (!connected_)
     return cv::Mat();
 
-  while (connected_ && frames_.size() == 0) {
-    // FIXME: this is REALLY REALLY bad
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-  }
+  std::unique_lock<std::mutex> lk(capture_lock_);
+  capture_cv_.wait(lk, [this]{
+    // Stop waiting when frame available or connection fails
+    return !connected_ || frames_.size() != 0;
+  });
 
   LOG(INFO) << "Waited " << timer.ElapsedMSec() << " until frame available";
 
   if (!connected_)
     return cv::Mat();
 
-  // There must be a frame now
-  return TryGetFrame(data_bufferp);
+  cv::Mat frame = frames_.front();
+  frames_.pop_back();
+
+  return frame;
 }
 
 /**
