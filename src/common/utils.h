@@ -10,12 +10,12 @@
 /**
  * @brief Get a list of GPUs in machine.
  */
-inline void GetGpus(std::vector<int> &gpus) {
+inline void GetCUDAGpus(std::vector<int> &gpus) {
   int count = 0;
 #ifdef USE_CUDA
   CUDA_CHECK(cudaGetDeviceCount(&count));
 #else
-  LOG(FATAL) << "Can't use Cuda function in NO_GPU mode";
+  LOG(FATAL) << "Can't use CUDA function in NO_GPU mode";
 #endif
   for (int i = 0; i < count; ++i) {
     gpus.push_back(i);

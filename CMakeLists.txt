@@ -7,8 +7,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # See https://github.com/opencv/opencv/issues/6542
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 
-
-set(CMAKE_MACOSX_RPATH 1)
+if (APPLE)
+  set(CMAKE_MACOSX_RPATH 1)
+endif ()
 
 # Find libraries
 find_package(OpenCV REQUIRED)
@@ -62,8 +63,8 @@ endif ()
 
 option(USE_FP16 "use FP16 or not, it should only be enabled on Tegra" OFF)
 if (USE_FP16)
-  if (NOT TEGRA)
-    message(FATAL_ERROR "FP16 enabled, but not on Tegra")
+  if (NOT TEGRA OR NOT USE_CUDA)
+    message(FATAL_ERROR "FP16 enabled, but not on Tegra, or not built with CUDA")
   endif ()
   message("Build with FP16")
   add_definitions("-D USE_FP16")

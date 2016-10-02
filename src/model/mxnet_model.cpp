@@ -12,7 +12,12 @@ void MXNetModel::Load() {
   DataBuffer json_data(model_desc_.GetModelDescPath());
   DataBuffer param_data(model_desc_.GetModelParamsPath());
 
-  int dev_type = 2;  // GPU
+#ifdef CPU_ONLY
+  int dev_type = 1; // CPU
+#else
+  int dev_type = 2; // GPU
+#endif
+
   int dev_id = 0;
   mx_uint num_input_nodes = 1;
   const char *input_key[1] = {"data"};

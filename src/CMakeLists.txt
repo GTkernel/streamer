@@ -1,3 +1,4 @@
+set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 # Common libraries to be linked against
 
 # Pick source files
@@ -15,7 +16,6 @@ list(REMOVE_ITEM TX1DNN_SOURCE_FILES
   ${CAFFE_OPENCL_SOURCE_FILES}
   ${MXNET_SOURCE_FILES}
   ${GIE_SOURCE_FILES})
-
 
 # Pick libraries
 set(TX1DNN_LIBRARIES

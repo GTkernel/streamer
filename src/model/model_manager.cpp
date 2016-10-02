@@ -3,13 +3,12 @@
 //
 
 #include "common/common.h"
+#include "common/utils.h"
 #include "model_manager.h"
 
 #ifdef USE_CAFFE
 #ifdef USE_FP16
 #include "caffe_fp16_model.h"
-#elseif USE_OPENCL
-
 #else
 #include "caffe_model.h"
 #endif
@@ -83,11 +82,9 @@ ModelManager::ModelManager() {
 
   // Global Caffe settings
 #ifdef USE_CAFFE
-#ifndef USE_GPU
-  caffe::Caffe::set_mode(caffe::Caffe::CPU);
-#else
+#ifdef USE_CUDA
   std::vector<int> gpus;
-  GetGpus(gpus);
+  GetCUDAGpus(gpus);
 
   if (gpus.size() != 0) {
     LOG(INFO) << "Use GPU with device ID " << gpus[0];
@@ -97,8 +94,26 @@ ModelManager::ModelManager() {
     LOG(INFO) << "Use CPU.";
     caffe::Caffe::set_mode(caffe::Caffe::CPU);
   }
+#endif
+#ifdef USE_OPENCL
+  std::vector<int> gpus;
+  int count = caffe::Caffe::EnumerateDevices();
+  for (int i = 0; i < count; i++) {
+    gpus.push_back(i);
+  }
 
-  CHECK(gpus.size() != 0);
+  if (gpus.size() != 0) {
+    LOG(INFO) << "Use GPU with device ID " << 0;
+    caffe::Caffe::SetDevice(1);
+    caffe::Caffe::set_mode(caffe::Caffe::GPU);
+  } else {
+    LOG(INFO) << "Use CPU.";
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  }
+#endif
+#ifdef CPU_ONLY
+  caffe::Caffe::set_mode(caffe::Caffe::CPU);
+#else
 #endif
 #endif
 }
