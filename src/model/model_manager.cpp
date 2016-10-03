@@ -3,7 +3,7 @@
 //
 
 #include "common/common.h"
-#include "common/utils.h"
+#include "utils/utils.h"
 #include "model_manager.h"
 
 #ifdef USE_CAFFE

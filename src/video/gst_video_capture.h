@@ -6,7 +6,6 @@
 #define TX1_DNN_GSTVIDEOCAPTURE_H
 
 #include "common/common.h"
-#include "classifier/classifier.h"
 #include <opencv2/opencv.hpp>
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>

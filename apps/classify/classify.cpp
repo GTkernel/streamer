@@ -41,9 +41,6 @@ int main(int argc, char *argv[]) {
   << "Camera " << camera_name << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
-  auto model_desc = model_manager.GetModelDesc(model_name);
-  Shape input_shape(3, 227, 227);
-
   bool display = (display_on == "true");
 
   // Do video stream classification
@@ -57,12 +54,22 @@ int main(int argc, char *argv[]) {
 
   auto camera_stream = camera->GetStream();
 
-  // Prepare classifier
-  std::unique_ptr<Classifier>
-      classifier(new Classifier(camera_stream, model_desc, input_shape));
+  // Processor
+  auto model_desc = model_manager.GetModelDesc(model_name);
+  Shape input_shape(3, 227, 227);
+  ImageClassificationProcessor processor(camera_stream, model_desc, input_shape);
 
-  classifier->Start();
+  processor.Start();
 
+  string user_input;
+  while (true) {
+    std::cin >> user_input;
+    if (user_input == "exit") {
+      break;
+    }
+  }
+
+  processor.Stop();
   camera->Stop();
 
   return 0;

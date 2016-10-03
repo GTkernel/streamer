@@ -32,11 +32,10 @@ inline bool StartsWith(const string &str, const string &start) {
   return std::equal(start.begin(), start.end(), str.begin());
 }
 
-string TrimSpaces(const string &str)
-{
+inline string TrimSpaces(const string &str) {
   size_t first = str.find_first_not_of(' ');
   size_t last = str.find_last_not_of(' ');
-  return str.substr(first, (last-first+1));
+  return str.substr(first, (last - first + 1));
 }
 
 #endif //TX1DNN_STRINGUTILS_H

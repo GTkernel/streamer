@@ -14,6 +14,8 @@
 #include <tinytoml/toml.h>
 #include <fstream>
 #include <mutex>
+#include <vector>
+#include "data_buffer.h"
 #include "timer.h"
 #include "types.h"
 

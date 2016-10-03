@@ -1,56 +1,63 @@
 //
-// Created by Ran Xian on 8/5/16.
+// Created by xianran on 10/2/16.
 //
 
-#include "classifier.h"
-#include "common/utils.h"
+#include "image_classification_processor.h"
 #include "model/model_manager.h"
+#include "utils/utils.h"
 
-Classifier::Classifier(std::shared_ptr<Stream> input_stream,
-                       const ModelDesc &model_desc,
-                       Shape input_shape)
-    : input_shape_(input_shape), input_stream_(input_stream), stopped_(false) {
+ImageClassificationProcessor::ImageClassificationProcessor(
+    std::shared_ptr<Stream> input_stream,
+    const ModelDesc &model_desc,
+    Shape input_shape) : model_desc_(model_desc), input_shape_(input_shape) {
+  sources_.push_back(input_stream);
+}
+
+bool ImageClassificationProcessor::Init() {
   // Load labels.
-  CHECK(model_desc.GetLabelFilePath() != "")
-  << "Model " << model_desc.GetName() << " has an empty label file";
-  std::ifstream labels(model_desc.GetLabelFilePath());
+  CHECK(model_desc_.GetLabelFilePath() != "")
+  << "Model " << model_desc_.GetName() << " has an empty label file";
+  std::ifstream labels(model_desc_.GetLabelFilePath());
   CHECK(labels)
-  << "Unable to open labels file " << model_desc.GetLabelFilePath();
+  << "Unable to open labels file " << model_desc_.GetLabelFilePath();
   string line;
   while (std::getline(labels, line)) labels_.push_back(string(line));
 
   // Load model
   auto &manager = ModelManager::GetInstance();
-  model_ = manager.CreateModel(model_desc, input_shape);
+  model_ = manager.CreateModel(model_desc_, input_shape_);
   model_->Load();
 
   // Create mean image
   auto mean_colors = manager.GetMeanColors();
   mean_image_ =
-      cv::Mat(cv::Size(input_shape.width, input_shape.height),
+      cv::Mat(cv::Size(input_shape_.width, input_shape_.height),
               CV_32FC3,
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
 
+  // Prepare data buffer
+  input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float));
+
   LOG(INFO) << "Classifier initialized";
+  return true;
 }
 
-void Classifier::Start() {
-  DataBuffer buffer(input_shape_.GetSize() * sizeof(float));
-  while (!stopped_) {
-    cv::Mat frame = input_stream_->PopFrame();
-    TransformImage(frame, input_shape_, mean_image_, &buffer);
-    auto predictions = Classify(buffer, 1);
-    for (auto prediction : predictions) {
-      LOG(INFO) << prediction.first << " " << prediction.second;
-    }
+bool ImageClassificationProcessor::OnStop() {
+  model_.reset(nullptr);
+  return true;
+}
+
+void ImageClassificationProcessor::Consume() {
+  auto input_stream = sources_[0];
+  cv::Mat frame = input_stream->PopFrame();
+  Preprocess(frame, input_buffer_);
+  auto predictions = Classify(1);
+  for (auto prediction : predictions) {
+    LOG(INFO) << prediction.first << " " << prediction.second;
   }
 }
 
-void Classifier::Stop() {
-  stopped_ = true;
-}
-
-std::vector<Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
+std::vector<Prediction> ImageClassificationProcessor::Classify(int N) {
   Timer total_timer;
   Timer timer;
 
@@ -58,7 +65,7 @@ std::vector<Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
   timer.Start();
 
   auto input_buffer = model_->GetInputBuffer();
-  input_buffer.Clone(buffer);
+  input_buffer.Clone(input_buffer_);
 
   model_->Evaluate();
   CHECK(model_->GetOutputBuffers().size() == 1
@@ -96,9 +103,10 @@ std::vector<Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
  * happen if \b buffer is nullptr.
  * @return The transformed image.
  */
-cv::Mat Classifier::TransformImage(const cv::Mat &img, const Shape &shape,
-                                   const cv::Mat &mean_img,
-                                   DataBuffer *buffer) {
+cv::Mat ImageClassificationProcessor::TransformImage(const cv::Mat &img,
+                                                     const Shape &shape,
+                                                     const cv::Mat &mean_img,
+                                                     DataBuffer *buffer) {
   CHECK(mean_img.channels() == shape.channel &&
       mean_img.size[0] == shape.width && mean_img.size[1] == shape.height)
   << "Mean image shape does not match that of desired shape";
@@ -167,9 +175,12 @@ cv::Mat Classifier::TransformImage(const cv::Mat &img, const Shape &shape,
   return sample_float;
 }
 
-void Classifier::Preprocess(const cv::Mat &img, DataBuffer &buffer) {
+void ImageClassificationProcessor::Preprocess(const cv::Mat &img,
+                                              DataBuffer &buffer) {
   Timer timer;
   timer.Start();
   TransformImage(img, input_shape_, mean_image_, &buffer);
   LOG(INFO) << "Preprocess takes " << timer.ElapsedMSec() << " ms";
 }
+
+
