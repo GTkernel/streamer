@@ -6,8 +6,10 @@
 #include "common/utils.h"
 #include "model/model_manager.h"
 
-Classifier::Classifier(const ModelDesc &model_desc, Shape input_shape)
-    : input_shape_(input_shape) {
+Classifier::Classifier(std::shared_ptr<Stream> input_stream,
+                       const ModelDesc &model_desc,
+                       Shape input_shape)
+    : input_shape_(input_shape), input_stream_(input_stream), stopped_(false) {
   // Load labels.
   CHECK(model_desc.GetLabelFilePath() != "")
   << "Model " << model_desc.GetName() << " has an empty label file";
@@ -30,6 +32,22 @@ Classifier::Classifier(const ModelDesc &model_desc, Shape input_shape)
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
 
   LOG(INFO) << "Classifier initialized";
+}
+
+void Classifier::Start() {
+  DataBuffer buffer(input_shape_.GetSize() * sizeof(float));
+  while (!stopped_) {
+    cv::Mat frame = input_stream_->PopFrame();
+    TransformImage(frame, input_shape_, mean_image_, &buffer);
+    auto predictions = Classify(buffer, 1);
+    for (auto prediction : predictions) {
+      LOG(INFO) << prediction.first << " " << prediction.second;
+    }
+  }
+}
+
+void Classifier::Stop() {
+  stopped_ = true;
 }
 
 std::vector<Prediction> Classifier::Classify(const DataBuffer &buffer, int N) {
@@ -150,5 +168,8 @@ cv::Mat Classifier::TransformImage(const cv::Mat &img, const Shape &shape,
 }
 
 void Classifier::Preprocess(const cv::Mat &img, DataBuffer &buffer) {
+  Timer timer;
+  timer.Start();
   TransformImage(img, input_shape_, mean_image_, &buffer);
+  LOG(INFO) << "Preprocess takes " << timer.ElapsedMSec() << " ms";
 }

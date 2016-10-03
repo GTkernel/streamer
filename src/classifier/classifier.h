@@ -8,6 +8,7 @@
 #include "common/common.h"
 #include "common/data_buffer.h"
 #include "model/model.h"
+#include "stream/stream.h"
 
 /**
  * @brief The classifier base class.
@@ -21,7 +22,26 @@ class Classifier {
    *
    * @param model_desc The decription of the model.
    */
-  Classifier(const ModelDesc &model_desc, Shape input_shape);
+  Classifier(std::shared_ptr<Stream> input_stream,
+             const ModelDesc &model_desc,
+             Shape input_shape);
+
+  void Start();
+  void Stop();
+ protected:
+  /**
+   * @brief Transform the image to a given shape, substract mean image, and
+   * store to a buffer.
+   * @details Specify buffer as nullptr if do not want to store it.
+   *
+   * @param img The image to be transformed;
+   * @param shape The shape of the desired image.
+   * @param mean_img Mean image.
+   * @param buffer The buffer to store the transformed image.
+   * @return The transformed image.
+   */
+  static cv::Mat TransformImage(const cv::Mat &src_img, const Shape &shape,
+                                const cv::Mat &mean_img, DataBuffer *buffer);
 
   /**
    * @brief Classify an image by given a input buffer directly, this will save
@@ -42,27 +62,13 @@ class Classifier {
    */
   virtual void Preprocess(const cv::Mat &img, DataBuffer &buffer);
 
-  void SetMean(const string &mean_file);
-
-  /**
-   * @brief Transform the image to a given shape, substract mean image, and
-   * store to a buffer.
-   * @details Specify buffer as nullptr if do not want to store it.
-   *
-   * @param img The image to be transformed;
-   * @param shape The shape of the desired image.
-   * @param mean_img Mean image.
-   * @param buffer The buffer to store the transformed image.
-   * @return The transformed image.
-   */
-  static cv::Mat TransformImage(const cv::Mat &img, const Shape &shape,
-                                const cv::Mat &mean_img, DataBuffer *buffer);
-
- protected:
   std::unique_ptr<Model> model_;
   std::vector<string> labels_;
   Shape input_shape_;
   cv::Mat mean_image_;
+
+  std::shared_ptr<Stream> input_stream_;
+  bool stopped_;
 };
 
 #endif  // TX1DNN_CLASSIFIER_H

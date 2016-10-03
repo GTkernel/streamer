@@ -44,9 +44,6 @@ int main(int argc, char *argv[]) {
   auto model_desc = model_manager.GetModelDesc(model_name);
   Shape input_shape(3, 227, 227);
 
-  std::unique_ptr<Classifier>
-      classifier(new Classifier(model_desc, input_shape));
-
   bool display = (display_on == "true");
 
   // Do video stream classification
@@ -55,27 +52,18 @@ int main(int argc, char *argv[]) {
     cv::namedWindow("camera");
   }
 
-  CHECK(camera->Open()) << "Can't open camera, check camera and pipeline uri";
-  DataBuffer data_buffer(input_shape.GetSize() * sizeof(float));
+  LOG(INFO) << "Opening camera " << camera->GetName();
+  CHECK(camera->Start()) << "Can't open camera, check camera and pipeline uri";
 
-  while (1) {
-    cv::Mat frame = camera->Capture();
-    classifier->Preprocess(frame, data_buffer);
-    std::vector<Prediction>
-        predictions = classifier->Classify(data_buffer, 1);
-    Prediction p = predictions[0];
-    LOG(INFO) << p.second << " - \""
-              << p.first << "\"" << std::endl;
-    if (display) {
-      cv::imshow("camera", frame);
-    }
-    if (cv::waitKey(10) == 'q') {
-      LOG(INFO) << "exit.";
-      break;
-    }
-  }
+  auto camera_stream = camera->GetStream();
 
-  camera->Close();
+  // Prepare classifier
+  std::unique_ptr<Classifier>
+      classifier(new Classifier(camera_stream, model_desc, input_shape));
+
+  classifier->Start();
+
+  camera->Stop();
 
   return 0;
 }

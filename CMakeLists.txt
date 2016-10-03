@@ -11,6 +11,10 @@ if (APPLE)
   set(CMAKE_MACOSX_RPATH 1)
 endif ()
 
+# Prevent cmake from caching Caffe paths
+unset(Caffe_FOUND CACHE)
+unset(Caffe_INCLUDE_DIRS CACHE)
+unset(Caffe_LIBRARIES CACHE)
 # Find libraries
 find_package(OpenCV REQUIRED)
 find_package(Glog REQUIRED)

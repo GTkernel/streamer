@@ -68,7 +68,7 @@ struct Args {
 static void PreviewStream(const string &name, std::shared_ptr<Stream> stream) {
   cv::namedWindow(name);
   while (true) {
-    cv::Mat frame = stream->GetFrame();
+    cv::Mat frame = stream->PopFrame();
     cv::imshow(name, frame);
     int key = cv::waitKey(10);
     if (key == 'q') {
@@ -101,13 +101,6 @@ void ExecuteStreamCommand(const string &subcommand, Args *args) {
     LOG(INFO) << "Open stream";
     options.add_options()
         ("camera", "camera name", cxxopts::value<string>());
-    options.parse(args->argc, args->argv);
-    string name = options["name"].as<string>();
-    string camera = options["camera"].as<string>();
-    std::shared_ptr<Stream>
-        stream(new Stream(camera_manager.GetCamera(camera)));
-    streams.emplace(name, stream);
-    LOG(INFO) << "Created stream " << name;
   } else if (subcommand == "preview") {
     options.parse(args->argc, args->argv);
     string name = options["name"].as<string>();
