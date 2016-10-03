@@ -5,13 +5,13 @@
 #ifndef TX1_DNN_GSTVIDEOCAPTURE_H
 #define TX1_DNN_GSTVIDEOCAPTURE_H
 
-#include "common/common.h"
-#include <opencv2/opencv.hpp>
-#include <gst/gst.h>
 #include <gst/app/gstappsink.h>
+#include <gst/gst.h>
 #include <gst/gstmemory.h>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <opencv2/opencv.hpp>
+#include "common/common.h"
 
 /**
  * @brief Video capture for reading frames from GStreamer. Return frames in
@@ -50,4 +50,4 @@ class GstVideoCapture {
   bool connected_;
 };
 
-#endif //TX1_DNN_GSTVIDEOCAPTURE_H
+#endif  // TX1_DNN_GSTVIDEOCAPTURE_H

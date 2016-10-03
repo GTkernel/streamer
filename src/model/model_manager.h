@@ -5,8 +5,8 @@
 #ifndef TX1DNN_MODEL_CONTROLLER_H
 #define TX1DNN_MODEL_CONTROLLER_H
 
-#include "model.h"
 #include "common/common.h"
+#include "model.h"
 
 #include <unordered_map>
 
@@ -16,6 +16,7 @@
 class ModelManager {
  public:
   static ModelManager &GetInstance();
+
  public:
   ModelManager();
   ModelManager(const ModelManager &other) = delete;
@@ -25,10 +26,11 @@ class ModelManager {
   bool HasModel(const string &name) const;
   std::unique_ptr<Model> CreateModel(const ModelDesc &model_desc,
                                      Shape input_shape);
+
  private:
   // Mean colors, in BGR order.
   std::vector<int> mean_colors_;
   std::unordered_map<string, ModelDesc> model_descs_;
 };
 
-#endif //TX1DNN_MODEL_CONTROLLER_H
+#endif  // TX1DNN_MODEL_CONTROLLER_H

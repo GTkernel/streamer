@@ -2,9 +2,9 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/24/16.
 //
 
+#include "model_manager.h"
 #include "common/common.h"
 #include "utils/utils.h"
-#include "model_manager.h"
 
 #ifdef USE_CAFFE
 #ifdef USE_FP16
@@ -58,18 +58,14 @@ ModelManager::ModelManager() {
     } else if (type_string == "tensorflow") {
       type = MODEL_TYPE_TENSORFLOW;
     }
-    CHECK(type != MODEL_TYPE_INVALID)
-    << "Type " << type_string << " is not a valid mode type";
+    CHECK(type != MODEL_TYPE_INVALID) << "Type " << type_string
+                                      << " is not a valid mode type";
     string desc_path = model_value.get<string>("desc_path");
     string params_path = model_value.get<string>("params_path");
     int input_width = model_value.get<int>("input_width");
     int input_height = model_value.get<int>("input_height");
 
-    ModelDesc model_desc(name,
-                         type,
-                         desc_path,
-                         params_path,
-                         input_width,
+    ModelDesc model_desc(name, type, desc_path, params_path, input_width,
                          input_height);
 
     auto label_file_value = model_value.find("label_file");
@@ -80,7 +76,7 @@ ModelManager::ModelManager() {
     model_descs_.emplace(name, model_desc);
   }
 
-  // Global Caffe settings
+// Global Caffe settings
 #ifdef USE_CAFFE
 #ifdef USE_CUDA
   std::vector<int> gpus;
@@ -118,16 +114,14 @@ ModelManager::ModelManager() {
 #endif
 }
 
-std::vector<int> ModelManager::GetMeanColors() const {
-  return mean_colors_;
-}
+std::vector<int> ModelManager::GetMeanColors() const { return mean_colors_; }
 std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
   return model_descs_;
 }
 ModelDesc ModelManager::GetModelDesc(const string &name) const {
   auto itr = model_descs_.find(name);
-  CHECK(itr != model_descs_.end())
-  << "Model description with name " << name << " is not present";
+  CHECK(itr != model_descs_.end()) << "Model description with name " << name
+                                   << " is not present";
   return itr->second;
 }
 

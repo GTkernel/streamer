@@ -38,4 +38,4 @@ inline string TrimSpaces(const string &str) {
   return str.substr(first, (last - first + 1));
 }
 
-#endif //TX1DNN_STRINGUTILS_H
+#endif  // TX1DNN_STRINGUTILS_H

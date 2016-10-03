@@ -3,6 +3,4 @@
 //
 #include <gtest/gtest.h>
 
-TEST(SIMPLE_TEST, TEST_TRUE) {
-  EXPECT_EQ(true, true);
-}
+TEST(SIMPLE_TEST, TEST_TRUE) { EXPECT_EQ(true, true); }

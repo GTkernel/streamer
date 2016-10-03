@@ -7,7 +7,7 @@
 //
 //#include "processor.h"
 //
-//class ImageTransformProcessor : public Processor {
+// class ImageTransformProcessor : public Processor {
 //
 //};
 //

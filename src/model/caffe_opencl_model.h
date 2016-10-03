@@ -8,14 +8,15 @@
 #include <caffe/caffe.hpp>
 #include "model.h"
 
-template<typename DType>
+template <typename DType>
 class CaffeOpenCLModel : public Model {
  public:
   CaffeOpenCLModel(const ModelDesc &model_desc, Shape input_shape);
   virtual void Load();
   virtual void Evaluate();
+
  private:
   std::unique_ptr<caffe::Net<DType>> net_;
 };
 
-#endif //TX1DNN_CAFFE_OPENCL_MODEL_H
+#endif  // TX1DNN_CAFFE_OPENCL_MODEL_H

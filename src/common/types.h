@@ -9,21 +9,21 @@
 #include <string>
 
 #ifdef USE_FP16
-#include <driver_types.h>
 #include <cuda_fp16.h>
+#include <driver_types.h>
 #endif
 
 /**
  * @brief 3-D shape structure
  */
 struct Shape {
-  Shape() : channel(0), width(0), height(0) {};
-  Shape(int c, int w, int h) : channel(c), width(w), height(h) {};
-  Shape(int w, int h) : channel(1), width(w), height(h) {};
+  Shape() : channel(0), width(0), height(0){};
+  Shape(int c, int w, int h) : channel(c), width(w), height(h){};
+  Shape(int w, int h) : channel(1), width(w), height(h){};
   /**
    * @brief Return volumn (size) of the shape object
    */
-  size_t GetSize() const { return (size_t) channel * width * height; }
+  size_t GetSize() const { return (size_t)channel * width * height; }
   // Number of channels
   int channel;
   // Width
@@ -56,16 +56,12 @@ float Cpu_Half2Float(half h);
 struct float16 {
   inline float16() { data.x = 0; }
 
-  inline float16(const float &rhs) {
-    data = Cpu_Float2Half(rhs);
-  }
+  inline float16(const float &rhs) { data = Cpu_Float2Half(rhs); }
 
-  inline operator float() const {
-    return Cpu_Half2Float(data);
-  }
+  inline operator float() const { return Cpu_Half2Float(data); }
 
   half data;
 };
 #endif
 
-#endif //TX1DNN_TYPE_H
+#endif  // TX1DNN_TYPE_H

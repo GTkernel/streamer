@@ -18,7 +18,8 @@ int main(int argc, char *argv[]) {
     std::cout << std::endl;
     std::cout << "  CAMERA: the name of the camera in the config file\n"
               << "  MODEL: the name of the model in the config file\n"
-              << "  DISPLAY: display the frame or not, must have a X window if display is enabled\n";
+              << "  DISPLAY: display the frame or not, must have a X window if "
+                 "display is enabled\n";
     exit(1);
   }
 
@@ -35,10 +36,10 @@ int main(int argc, char *argv[]) {
   string display_on = argv[3];
 
   // Check options
-  CHECK(model_manager.HasModel(model_name))
-  << "Model " << model_name << " does not exist";
-  CHECK(camera_manager.HasCamera(camera_name))
-  << "Camera " << camera_name << " does not exist";
+  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
+                                            << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                               << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
   bool display = (display_on == "true");
@@ -57,7 +58,8 @@ int main(int argc, char *argv[]) {
   // Processor
   auto model_desc = model_manager.GetModelDesc(model_name);
   Shape input_shape(3, 227, 227);
-  ImageClassificationProcessor processor(camera_stream, model_desc, input_shape);
+  ImageClassificationProcessor processor(camera_stream, model_desc,
+                                         input_shape);
 
   processor.Start();
 

@@ -8,7 +8,7 @@
 half Cpu_Float2Half(float f) {
   half ret;
 
-  unsigned x = *((int *) (void *) (&f));
+  unsigned x = *((int *)(void *)(&f));
   unsigned u = (x & 0x7fffffff), remainder, shift, lsb, lsb_s1, lsb_m1;
   unsigned sign, exponent, mantissa;
 
@@ -66,19 +66,19 @@ float Cpu_Half2Float(half h) {
   unsigned exponent = ((h.x >> 10) & 0x1f);
   unsigned mantissa = ((h.x & 0x3ff) << 13);
 
-  if (exponent == 0x1f) {  /* NaN or Inf */
+  if (exponent == 0x1f) { /* NaN or Inf */
     mantissa = (mantissa ? (sign = 0, 0x7fffff) : 0);
     exponent = 0xff;
-  } else if (!exponent) {  /* Denorm or Zero */
+  } else if (!exponent) { /* Denorm or Zero */
     if (mantissa) {
       unsigned int msb;
       exponent = 0x71;
       do {
         msb = (mantissa & 0x400000);
-        mantissa <<= 1;  /* normalize */
+        mantissa <<= 1; /* normalize */
         --exponent;
       } while (!msb);
-      mantissa &= 0x7fffff;  /* 1.mantissa is implicit */
+      mantissa &= 0x7fffff; /* 1.mantissa is implicit */
     }
   } else {
     exponent += 0x70;
@@ -86,6 +86,6 @@ float Cpu_Half2Float(half h) {
 
   int temp = ((sign << 31) | (exponent << 23) | mantissa);
 
-  return *((float *) ((void *) &temp));
+  return *((float *)((void *)&temp));
 }
-#endif // USE_FP16
+#endif  // USE_FP16

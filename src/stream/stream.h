@@ -7,9 +7,9 @@
 
 #include "common/common.h"
 
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <queue>
 
 /**
  * @brief A stream is a serious of data, the data itself could be stats, images,
@@ -19,7 +19,8 @@ class Stream {
  public:
   Stream(int max_buffer_size = 5);
   /**
-   * @brief Pop a frame from the stream, the frame will be removed from the stream.
+   * @brief Pop a frame from the stream, the frame will be removed from the
+   * stream.
    * @return The first frame in the series.
    */
   cv::Mat PopFrame();
@@ -28,6 +29,7 @@ class Stream {
    * @param frame The frame to be pushed into the stream.
    */
   void PushFrame(const cv::Mat &frame);
+
  private:
   int max_buffer_size_;
   std::queue<cv::Mat> frame_buffer_;
@@ -35,4 +37,4 @@ class Stream {
   std::condition_variable stream_cv_;
 };
 
-#endif //TX1DNN_STREAM_H
+#endif  // TX1DNN_STREAM_H

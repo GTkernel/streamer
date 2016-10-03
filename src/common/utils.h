@@ -7,4 +7,4 @@
 
 #include "common.h"
 
-#endif //TX1DNN_UTILS_H
+#endif  // TX1DNN_UTILS_H

@@ -7,17 +7,12 @@
 Camera::Camera(const string &name, const string &video_uri)
     : name_(name), video_uri_(video_uri), opened_(false), stream_(new Stream) {}
 
-string Camera::GetName() const {
-  return name_;
-}
+string Camera::GetName() const { return name_; }
 
-string Camera::GetVideoURI() const {
-  return video_uri_;
-}
+string Camera::GetVideoURI() const { return video_uri_; }
 
 bool Camera::Start() {
-  if (opened_)
-    return true;
+  if (opened_) return true;
   opened_ = capture_.CreatePipeline(video_uri_);
   if (!opened_) {
     return false;
@@ -41,6 +36,4 @@ void Camera::CaptureLoop() {
   }
 }
 
-std::shared_ptr<Stream> Camera::GetStream() const {
-  return stream_;
-}
+std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }

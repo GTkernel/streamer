@@ -5,11 +5,11 @@
 #ifndef TX1DNN_DATA_BUFFER_H
 #define TX1DNN_DATA_BUFFER_H
 
+#include <glog/logging.h>
 #include <cstdlib>
+#include <fstream>
 #include <memory>
 #include <string>
-#include <fstream>
-#include <glog/logging.h>
 
 /**
  * @brief The buffer wrapper for a bunch of data.
@@ -23,8 +23,8 @@ class DataBuffer {
    * @param size The size of the buffer.
    */
   DataBuffer(size_t size) : size_(size) {
-    buffer_ = std::shared_ptr<char>(new char[size], std::default_delete < char[]
-              > ());
+    buffer_ =
+        std::shared_ptr<char>(new char[size], std::default_delete<char[]>());
     buffer_ptr_ = buffer_.get();
   }
 
@@ -33,7 +33,7 @@ class DataBuffer {
    * @param data The pointer to data.
    * @param size Size of the buffer
    */
-  DataBuffer(void *data, size_t size) : size_(size), buffer_ptr_(data) {};
+  DataBuffer(void *data, size_t size) : size_(size), buffer_ptr_(data){};
 
   /**
    * @brief Construct a data buffer from content of a file.
@@ -51,28 +51,22 @@ class DataBuffer {
               << size_ << " bytes";
 
     AllocateBuffer(size_);
-    ifs.read((char *) buffer_ptr_, size_);
+    ifs.read((char *)buffer_ptr_, size_);
     ifs.close();
   }
   /**
    * @brief The pointer to the buffer.
    */
-  inline void *GetBuffer() {
-    return buffer_ptr_;
-  }
+  inline void *GetBuffer() { return buffer_ptr_; }
 
   /**
    * @brief Get a const pointer to the buffer.
    */
-  inline const void *GetBuffer() const {
-    return buffer_ptr_;
-  }
+  inline const void *GetBuffer() const { return buffer_ptr_; }
   /**
    * @brief Get size of the buffer.
    */
-  inline size_t GetSize() const {
-    return size_;
-  }
+  inline size_t GetSize() const { return size_; }
   /**
    * @brief Clone another data buffer, deeply copy bytes.
    */
@@ -93,8 +87,8 @@ class DataBuffer {
    * @param size The size of the buffer to be allocated
    */
   inline void AllocateBuffer(size_t size) {
-    buffer_ = std::shared_ptr<char>(new char[size], std::default_delete < char[]
-              > ());
+    buffer_ =
+        std::shared_ptr<char>(new char[size], std::default_delete<char[]>());
     buffer_ptr_ = buffer_.get();
   }
 
@@ -104,4 +98,4 @@ class DataBuffer {
   void *buffer_ptr_;
 };
 
-#endif //TX1DNN_DATA_BUFFER_H
+#endif  // TX1DNN_DATA_BUFFER_H

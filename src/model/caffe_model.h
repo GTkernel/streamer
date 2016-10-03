@@ -13,14 +13,15 @@
  * interfaces. It could be built on both CPU and GPU (unlike CaffeFp16Classifier
  * which can only be built on GPU).
  */
-template<typename DType>
+template <typename DType>
 class CaffeModel : public Model {
  public:
   CaffeModel(const ModelDesc &model_desc, Shape input_shape);
   virtual void Load();
   virtual void Evaluate();
+
  private:
   std::unique_ptr<caffe::Net<DType>> net_;
 };
 
-#endif //TX1DNN_CAFFE_MODEL_H
+#endif  // TX1DNN_CAFFE_MODEL_H

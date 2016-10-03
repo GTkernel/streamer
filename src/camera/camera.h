@@ -5,22 +5,23 @@
 #ifndef TX1DNN_CAMERA_H
 #define TX1DNN_CAMERA_H
 
-#include "video/gst_video_capture.h"
 #include "common/common.h"
 #include "stream/stream.h"
+#include "video/gst_video_capture.h"
 
 /**
  * @brief This class represents a camera available on the device.
  */
 class Camera {
  public:
-  Camera() {};
+  Camera(){};
   Camera(const string &name, const string &video_uri);
   string GetName() const;
   string GetVideoURI() const;
   std::shared_ptr<Stream> GetStream() const;
   bool Start();
   bool Stop();
+
  private:
   void CaptureLoop();
   string name_;
@@ -31,4 +32,4 @@ class Camera {
   std::shared_ptr<Stream> stream_;
 };
 
-#endif //TX1DNN_CAMERA_H
+#endif  // TX1DNN_CAMERA_H

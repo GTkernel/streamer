@@ -5,15 +5,15 @@
 #ifndef TX1_DNN_COMMON_H
 #define TX1_DNN_COMMON_H
 
-#include <opencv2/opencv.hpp>
-#include <string>
 #include <glog/logging.h>
-#include <thread>
-#include <memory>
 #include <stdlib.h>
 #include <tinytoml/toml.h>
 #include <fstream>
+#include <memory>
 #include <mutex>
+#include <opencv2/opencv.hpp>
+#include <string>
+#include <thread>
 #include <vector>
 #include "data_buffer.h"
 #include "timer.h"
@@ -25,10 +25,10 @@ using std::string;
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
-#define CUDA_CHECK(condition) \
-  /* Code block avoids redefinition of cudaError_t error */ \
-  do { \
-    cudaError_t error = condition; \
+#define CUDA_CHECK(condition)                                         \
+  /* Code block avoids redefinition of cudaError_t error */           \
+  do {                                                                \
+    cudaError_t error = condition;                                    \
     CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
   } while (0)
 
@@ -41,13 +41,15 @@ toml::Value ParseTomlFromFile(const string &filepath);
 class Context {
  public:
   static Context &GetContext();
+
  public:
   Context();
   string GetConfigDir() const;
   string GetConfigFile(const string &filename) const;
   void SetConfigDir(const string &config_dir);
+
  private:
   string config_dir_;
 };
 
-#endif //TX1_DNN_COMMON_H
+#endif  // TX1_DNN_COMMON_H

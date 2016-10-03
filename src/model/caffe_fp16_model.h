@@ -19,14 +19,12 @@ class CaffeFp16Model : public Model {
   typedef CAFFE_FP16_MTYPE MType;
 
  public:
-  CaffeFp16Model(
-      const ModelDesc
-      &model_desc, Shape
-      input_shape);
+  CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape);
   virtual void Load();
   virtual void Evaluate();
+
  private:
-  std::shared_ptr<caffe::Net<DType, MType >> net_;
+  std::shared_ptr<caffe::Net<DType, MType>> net_;
 };
 
-#endif //TX1DNN_CAFFE_FP16_MODEL_H
+#endif  // TX1DNN_CAFFE_FP16_MODEL_H

@@ -136,5 +136,5 @@ foreach (f ${CONFIG_FILES})
 endforeach ()
 
 include(cmake/summary.cmake)
+include(cmake/clangformat.cmake)
 tx1dnn_print_configuration_summary()
-

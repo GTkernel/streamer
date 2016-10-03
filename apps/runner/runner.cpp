@@ -4,12 +4,12 @@
  * stats and video frames to local storage.
  */
 
-#include "common/common.h"
-#include "linenoise/linenoise.h"
 #include "camera/camera_manager.h"
+#include "common/common.h"
+#include "cxxopts/cxxopts.hpp"
+#include "linenoise/linenoise.h"
 #include "model/model_manager.h"
 #include "stream/stream.h"
-#include "cxxopts/cxxopts.hpp"
 #include "utils/string_utils.h"
 
 #include <boost/algorithm/string.hpp>
@@ -27,7 +27,7 @@ std::unordered_map<string, std::shared_ptr<Stream>> streams;
 #define CMD_HISTORY_PATH ".cmd_history"
 
 void ListCameras() {
-  for (auto &itr: camera_manager.GetCameras()) {
+  for (auto &itr : camera_manager.GetCameras()) {
     cout << "Camera: " << itr.second->GetName() << endl
          << "-- URI: " << itr.second->GetVideoURI() << endl;
   }
@@ -47,7 +47,7 @@ void ListModels() {
 struct Args {
  public:
   Args(const std::vector<string> &tokens) {
-    argc = (int) tokens.size();
+    argc = (int)tokens.size();
     argv = new char *[argc];
     for (int i = 0; i < argc; i++) {
       argv[i] = new char[tokens[i].size() + 1];
@@ -92,15 +92,12 @@ void ExecuteCamCommand(const string &subcommand, Args *args) {
 
 void ExecuteStreamCommand(const string &subcommand, Args *args) {
   cxxopts::Options options("", "");
-  options.add_options()
-      ("name", "name of the stream", cxxopts::value<string>());
+  options.add_options()("name", "name of the stream", cxxopts::value<string>());
 
   if (subcommand == "list") {
-
   } else if (subcommand == "open") {
     LOG(INFO) << "Open stream";
-    options.add_options()
-        ("camera", "camera name", cxxopts::value<string>());
+    options.add_options()("camera", "camera name", cxxopts::value<string>());
   } else if (subcommand == "preview") {
     options.parse(args->argc, args->argv);
     string name = options["name"].as<string>();
@@ -111,7 +108,7 @@ void ExecuteStreamCommand(const string &subcommand, Args *args) {
   }
 }
 
-//void ExecuteEvalCommand(const string &subcommand, Args *args) {
+// void ExecuteEvalCommand(const string &subcommand, Args *args) {
 //  cxxopts::Options options("", "");
 //  options.add_options()
 //      ("name", "evaluator name", cxxopts::value<string>())
@@ -133,8 +130,8 @@ void Execute(const string &line) {
     ExecuteCamCommand(subcommand, &args);
   } else if (command == "stream") {
     ExecuteStreamCommand(subcommand, &args);
-//  } else if (command == "eval") {
-//    ExecuteEvalCommand(subcommand, &args);
+    //  } else if (command == "eval") {
+    //    ExecuteEvalCommand(subcommand, &args);
   } else {
     LOG(ERROR) << "Command " << command << " is not recognized";
   }

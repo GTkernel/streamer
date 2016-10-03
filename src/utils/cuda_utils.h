@@ -22,4 +22,4 @@ inline void GetCUDAGpus(std::vector<int> &gpus) {
   }
 }
 
-#endif //TX1DNN_CUDA_UTILS_H
+#endif  // TX1DNN_CUDA_UTILS_H

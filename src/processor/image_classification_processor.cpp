@@ -7,19 +7,19 @@
 #include "utils/utils.h"
 
 ImageClassificationProcessor::ImageClassificationProcessor(
-    std::shared_ptr<Stream> input_stream,
-    const ModelDesc &model_desc,
-    Shape input_shape) : model_desc_(model_desc), input_shape_(input_shape) {
+    std::shared_ptr<Stream> input_stream, const ModelDesc &model_desc,
+    Shape input_shape)
+    : model_desc_(model_desc), input_shape_(input_shape) {
   sources_.push_back(input_stream);
 }
 
 bool ImageClassificationProcessor::Init() {
   // Load labels.
   CHECK(model_desc_.GetLabelFilePath() != "")
-  << "Model " << model_desc_.GetName() << " has an empty label file";
+      << "Model " << model_desc_.GetName() << " has an empty label file";
   std::ifstream labels(model_desc_.GetLabelFilePath());
-  CHECK(labels)
-  << "Unable to open labels file " << model_desc_.GetLabelFilePath();
+  CHECK(labels) << "Unable to open labels file "
+                << model_desc_.GetLabelFilePath();
   string line;
   while (std::getline(labels, line)) labels_.push_back(string(line));
 
@@ -31,8 +31,7 @@ bool ImageClassificationProcessor::Init() {
   // Create mean image
   auto mean_colors = manager.GetMeanColors();
   mean_image_ =
-      cv::Mat(cv::Size(input_shape_.width, input_shape_.height),
-              CV_32FC3,
+      cv::Mat(cv::Size(input_shape_.width, input_shape_.height), CV_32FC3,
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
 
   // Prepare data buffer
@@ -68,16 +67,15 @@ std::vector<Prediction> ImageClassificationProcessor::Classify(int N) {
   input_buffer.Clone(input_buffer_);
 
   model_->Evaluate();
-  CHECK(model_->GetOutputBuffers().size() == 1
-            && model_->GetOutputShapes().size()
-                == model_->GetOutputBuffers().size())
-  << "Classify model does not have one buffer";
-  float *scores = (float *) model_->GetOutputBuffers()[0].GetBuffer();
+  CHECK(model_->GetOutputBuffers().size() == 1 &&
+        model_->GetOutputShapes().size() == model_->GetOutputBuffers().size())
+      << "Classify model does not have one buffer";
+  float *scores = (float *)model_->GetOutputBuffers()[0].GetBuffer();
   LOG(INFO) << "Predict done in " << timer.ElapsedMSec() << " ms";
 
   N = std::min<int>(labels_.size(), N);
-  std::vector<int>
-      maxN = Argmax(scores, model_->GetOutputShapes()[0].GetSize(), N);
+  std::vector<int> maxN =
+      Argmax(scores, model_->GetOutputShapes()[0].GetSize(), N);
   std::vector<Prediction> predictions;
   for (int i = 0; i < N; ++i) {
     int idx = maxN[i];
@@ -108,8 +106,8 @@ cv::Mat ImageClassificationProcessor::TransformImage(const cv::Mat &img,
                                                      const cv::Mat &mean_img,
                                                      DataBuffer *buffer) {
   CHECK(mean_img.channels() == shape.channel &&
-      mean_img.size[0] == shape.width && mean_img.size[1] == shape.height)
-  << "Mean image shape does not match that of desired shape";
+        mean_img.size[0] == shape.width && mean_img.size[1] == shape.height)
+      << "Mean image shape does not match that of desired shape";
   int num_channel = shape.channel, width = shape.width, height = shape.height;
 
   // Convert channels
@@ -126,8 +124,8 @@ cv::Mat ImageClassificationProcessor::TransformImage(const cv::Mat &img,
     sample = img;
 
   // Crop according to scale
-  int desired_width = (int) ((float) shape.width / shape.height * img.size[1]);
-  int desired_height = (int) ((float) shape.height / shape.width * img.size[0]);
+  int desired_width = (int)((float)shape.width / shape.height * img.size[1]);
+  int desired_height = (int)((float)shape.height / shape.width * img.size[0]);
   int new_width = img.size[0], new_height = img.size[1];
   if (desired_width < img.size[0]) {
     new_width = desired_width;
@@ -159,10 +157,10 @@ cv::Mat ImageClassificationProcessor::TransformImage(const cv::Mat &img,
 
   if (buffer != nullptr) {
     CHECK(shape.GetSize() * sizeof(float) == buffer->GetSize())
-    << "Buffer size " << buffer->GetSize() << " does not match input size "
-    << shape.GetSize() * sizeof(float);
+        << "Buffer size " << buffer->GetSize() << " does not match input size "
+        << shape.GetSize() * sizeof(float);
     // Wrap buffer to channels to save memory copy.
-    float *data = (float *) buffer->GetBuffer();
+    float *data = (float *)buffer->GetBuffer();
     std::vector<cv::Mat> output_channels;
     for (int i = 0; i < num_channel; i++) {
       cv::Mat channel(height, width, CV_32FC1, data);
@@ -182,5 +180,3 @@ void ImageClassificationProcessor::Preprocess(const cv::Mat &img,
   TransformImage(img, input_shape_, mean_image_, &buffer);
   LOG(INFO) << "Preprocess takes " << timer.ElapsedMSec() << " ms";
 }
-
-

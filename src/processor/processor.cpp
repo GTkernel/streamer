@@ -4,7 +4,7 @@
 
 #include "processor.h"
 
-Processor::Processor(): stopped_(true) {}
+Processor::Processor() : stopped_(true) {}
 
 Processor::Processor(std::vector<std::shared_ptr<Stream>> sources)
     : sources_(sources), stopped_(true) {}
@@ -35,9 +35,5 @@ void Processor::ProcessorLoop() {
   }
 }
 
-bool Processor::Init() {
-  return true;
-}
-bool Processor::OnStop() {
-  return true;
-}
+bool Processor::Init() { return true; }
+bool Processor::OnStop() { return true; }

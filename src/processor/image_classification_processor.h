@@ -5,15 +5,15 @@
 #ifndef TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H
 #define TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H
 
-#include "processor.h"
 #include "common/common.h"
 #include "model/model.h"
+#include "processor.h"
 
 class ImageClassificationProcessor : public Processor {
  public:
   ImageClassificationProcessor(std::shared_ptr<Stream> input_stream,
-                               const ModelDesc &model_desc,
-                               Shape input_shape);
+                               const ModelDesc &model_desc, Shape input_shape);
+
  protected:
   virtual bool Init();
   virtual bool OnStop();
@@ -59,4 +59,4 @@ class ImageClassificationProcessor : public Processor {
   cv::Mat mean_image_;
 };
 
-#endif //TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H
+#endif  // TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H

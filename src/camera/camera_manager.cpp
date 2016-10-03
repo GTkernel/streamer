@@ -16,7 +16,8 @@ CameraManager &CameraManager::GetInstance() {
  * @brief Read from the configurations and initialize the list of cameras.
  */
 CameraManager::CameraManager() {
-  string camera_toml_path = Context::GetContext().GetConfigFile(CAMERA_TOML_FILENAME);
+  string camera_toml_path =
+      Context::GetContext().GetConfigFile(CAMERA_TOML_FILENAME);
   auto root_value = ParseTomlFromFile(camera_toml_path);
 
   auto cameras_value = root_value.find("camera")->as<toml::Array>();
@@ -25,13 +26,14 @@ CameraManager::CameraManager() {
     string name = camera_value.get<string>("name");
     string video_uri = camera_value.get<string>("video_uri");
     std::shared_ptr<Camera> camera(new Camera(name, video_uri));
-    LOG(INFO) << "Camera - name: " << name << " " << "uri: " << video_uri;
+    LOG(INFO) << "Camera - name: " << name << " "
+              << "uri: " << video_uri;
     cameras_.emplace(name, camera);
   }
 }
 
-std::unordered_map<string,
-                   std::shared_ptr<Camera>> CameraManager::GetCameras() {
+std::unordered_map<string, std::shared_ptr<Camera>>
+CameraManager::GetCameras() {
   return cameras_;
 }
 

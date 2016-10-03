@@ -5,9 +5,9 @@
 #ifndef TX1DNN_MXNET_MODEL_H
 #define TX1DNN_MXNET_MODEL_H
 
-#include "model.h"
 #include <mxnet/c_api.h>
 #include <mxnet/c_predict_api.h>
+#include "model.h"
 
 /**
  * @brief MXNet model
@@ -18,8 +18,9 @@ class MXNetModel : public Model {
   ~MXNetModel();
   virtual void Load();
   virtual void Evaluate();
+
  private:
   PredictorHandle predictor_;
 };
 
-#endif //TX1DNN_MXNET_MODEL_H
+#endif  // TX1DNN_MXNET_MODEL_H

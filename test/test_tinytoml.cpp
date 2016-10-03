@@ -11,7 +11,8 @@ TEST(TINYTOML_TEST, TINYTOML_TEST) {
       "arr1 = [ 1, 2, 3 ]\n"
       "arr2 = [ \"red\", \"yellow\", \"green\" ]\n"
       "arr3 = [ [ 1, 2 ], [3, 4, 5] ]\n"
-      "arr4 = [ \"all\", 'strings', \"\"\"are the same\"\"\", '''type'''] # this is ok\n"
+      "arr4 = [ \"all\", 'strings', \"\"\"are the same\"\"\", '''type'''] # "
+      "this is ok\n"
       "arr5 = [ [ 1, 2 ], [\"a\", \"b\", \"c\"] ] # this is ok\n"
       "# arr6 = [ 1, 2.0 ] # note: this is NOT ok\n"
       "arr7 = [\n"
@@ -26,7 +27,7 @@ TEST(TINYTOML_TEST, TINYTOML_TEST) {
   toml::ParseResult pr = toml::parse(ss);
 
   EXPECT_TRUE(pr.valid());
-  const toml::Value &v = pr.value;
+  const toml::Value& v = pr.value;
 
   const toml::Value* x = v.find("arr1");
   EXPECT_TRUE(x != nullptr);
