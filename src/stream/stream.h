@@ -1,5 +1,5 @@
 //
-// Created by xianran on 9/26/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 9/26/16.
 //
 
 #ifndef TX1DNN_STREAM_H

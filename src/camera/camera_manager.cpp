@@ -1,5 +1,5 @@
 //
-// Created by xianran on 9/23/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
 //
 
 #include "camera_manager.h"

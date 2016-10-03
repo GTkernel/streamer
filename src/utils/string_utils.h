@@ -1,5 +1,5 @@
 //
-// Created by xianran on 9/25/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 9/25/16.
 //
 
 #ifndef TX1DNN_STRINGUTILS_H

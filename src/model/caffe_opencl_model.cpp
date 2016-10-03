@@ -1,5 +1,5 @@
 //
-// Created by xianran on 10/1/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 10/1/16.
 //
 
 #include "caffe_opencl_model.h"

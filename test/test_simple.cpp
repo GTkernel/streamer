@@ -1,5 +1,5 @@
 //
-// Created by xianran on 9/19/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 9/19/16.
 //
 #include <gtest/gtest.h>
 

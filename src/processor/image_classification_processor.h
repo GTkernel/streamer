@@ -1,5 +1,5 @@
 //
-// Created by xianran on 10/2/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
 #ifndef TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H

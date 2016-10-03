@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(tx1dnn)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # See https://github.com/opencv/opencv/issues/6542
@@ -17,8 +17,8 @@ unset(Caffe_INCLUDE_DIRS CACHE)
 unset(Caffe_LIBRARIES CACHE)
 # Find libraries
 find_package(OpenCV REQUIRED)
-find_package(Glog REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
+find_package(Glog REQUIRED)
 find_package(GLIB REQUIRED gobject)
 find_package(Boost REQUIRED COMPONENTS system)
 
@@ -49,6 +49,7 @@ if (BACKEND STREQUAL "cuda")
   add_definitions("-D USE_CUDA")
 elseif (BACKEND STREQUAL "opencl")
   message("Build with OpenCL")
+  find_package(OpenCL REQUIRED)
   set(USE_OPENCL true)
   add_definitions("-D USE_OPENCL")
 elseif (BACKEND STREQUAL "cpu")
@@ -73,6 +74,7 @@ option(USE_CAFFE "Build with Caffe" ON)
 if (USE_CAFFE)
   find_package(Caffe REQUIRED)
   find_package(HDF5 REQUIRED)
+  find_package(Protobuf)
   include_directories(${HDF5_INCLUDE_DIRS})
   include_directories(${Caffe_INCLUDE_DIRS})
   add_definitions("-D USE_CAFFE")
@@ -132,4 +134,7 @@ file(GLOB CONFIG_FILES ${PROJECT_SOURCE_DIR}/config/*.toml)
 foreach (f ${CONFIG_FILES})
   file(COPY ${f} DESTINATION config)
 endforeach ()
+
+include(cmake/summary.cmake)
+tx1dnn_print_configuration_summary()
 

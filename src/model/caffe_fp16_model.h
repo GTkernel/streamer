@@ -1,5 +1,5 @@
 //
-// Created by xianran on 9/29/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 9/29/16.
 //
 
 #ifndef TX1DNN_CAFFE_FP16_MODEL_H

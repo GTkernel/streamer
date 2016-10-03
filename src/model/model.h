@@ -1,5 +1,5 @@
 //
-// Created by xianran on 9/24/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 9/24/16.
 //
 
 #ifndef TX1DNN_MODEL_H
