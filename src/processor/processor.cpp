@@ -31,9 +31,11 @@ bool Processor::Stop() {
 
 void Processor::ProcessorLoop() {
   while (!stopped_) {
-    Consume();
+    Process();
   }
 }
+
+std::vector<std::shared_ptr<Stream>> Processor::GetSinks() { return sinks_; }
 
 bool Processor::Init() { return true; }
 bool Processor::OnStop() { return true; }

@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  FLAGS_minloglevel = 0;
 
   // Get options
   string camera_name = argv[1];
@@ -50,18 +49,20 @@ int main(int argc, char *argv[]) {
     cv::namedWindow("camera");
   }
 
-  LOG(INFO) << "Opening camera " << camera->GetName();
-  CHECK(camera->Start()) << "Can't open camera, check camera and pipeline uri";
-
   auto camera_stream = camera->GetStream();
 
   // Processor
-  auto model_desc = model_manager.GetModelDesc(model_name);
   Shape input_shape(3, 227, 227);
-  ImageClassificationProcessor processor(camera_stream, model_desc,
-                                         input_shape);
+  ImageTransformProcessor transform_processor = ImageTransformProcessor(
+      camera_stream, input_shape, CROP_TYPE_CENTER, true /* subtract mean */);
 
-  processor.Start();
+  auto model_desc = model_manager.GetModelDesc(model_name);
+  ImageClassificationProcessor classification_processor(
+      transform_processor.GetSinks()[0], model_desc, input_shape);
+
+  camera->Start();
+  transform_processor.Start();
+  classification_processor.Start();
 
   string user_input;
   while (true) {
@@ -71,7 +72,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  processor.Stop();
+  classification_processor.Stop();
+  transform_processor.Stop();
   camera->Stop();
 
   return 0;

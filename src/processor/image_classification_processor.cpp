@@ -46,11 +46,24 @@ bool ImageClassificationProcessor::OnStop() {
   return true;
 }
 
-void ImageClassificationProcessor::Consume() {
+void ImageClassificationProcessor::Process() {
+  Timer timer;
   auto input_stream = sources_[0];
   cv::Mat frame = input_stream->PopFrame();
-  Preprocess(frame, input_buffer_);
+  CHECK(frame.channels() == input_shape_.channel &&
+        frame.size[0] == input_shape_.width &&
+        frame.size[1] == input_shape_.height);
+  timer.Start();
+  std::vector<cv::Mat> output_channels;
+  float *data = (float *)input_buffer_.GetBuffer();
+  for (int i = 0; i < input_shape_.channel; i++) {
+    cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
+    output_channels.push_back(channel);
+    data += input_shape_.width * input_shape_.height;
+  }
+  cv::split(frame, output_channels);
   auto predictions = Classify(1);
+  LOG(INFO) << "Classify done in " << timer.ElapsedMSec() << " ms";
   for (auto prediction : predictions) {
     LOG(INFO) << prediction.first << " " << prediction.second;
   }
@@ -84,99 +97,4 @@ std::vector<Prediction> ImageClassificationProcessor::Classify(int N) {
 
   LOG(INFO) << "Whole classify done in " << total_timer.ElapsedMSec() << " ms";
   return predictions;
-}
-
-/**
- * @brief Transform and normalize an image and flatten the bytes of the image to
- * a data buffer if provided
- * @details The image will first be resized to the given shape, and then
- * substract the mean image, finally flattend to a buffer.
- *
- * @param img The image to be transformed, can be either in RGB, RGBA, or gray
- * scale
- * @param shape The wanted shape of the transformed image.
- * @param mean_img Mean image. If don't want to substract mean image, provide a
- * *zero* image, (e.g. cv::Mat::zeros(channel, height, width)).
- * @param buffer The buffer to store the transformed image. No storage will
- * happen if \b buffer is nullptr.
- * @return The transformed image.
- */
-cv::Mat ImageClassificationProcessor::TransformImage(const cv::Mat &img,
-                                                     const Shape &shape,
-                                                     const cv::Mat &mean_img,
-                                                     DataBuffer *buffer) {
-  CHECK(mean_img.channels() == shape.channel &&
-        mean_img.size[0] == shape.width && mean_img.size[1] == shape.height)
-      << "Mean image shape does not match that of desired shape";
-  int num_channel = shape.channel, width = shape.width, height = shape.height;
-
-  // Convert channels
-  cv::Mat sample;
-  if (img.channels() == 3 && num_channel == 1)
-    cv::cvtColor(img, sample, cv::COLOR_BGR2GRAY);
-  else if (img.channels() == 4 && num_channel == 1)
-    cv::cvtColor(img, sample, cv::COLOR_BGRA2GRAY);
-  else if (img.channels() == 4 && num_channel == 3)
-    cv::cvtColor(img, sample, cv::COLOR_BGRA2BGR);
-  else if (img.channels() == 1 && num_channel == 3)
-    cv::cvtColor(img, sample, cv::COLOR_GRAY2BGR);
-  else
-    sample = img;
-
-  // Crop according to scale
-  int desired_width = (int)((float)shape.width / shape.height * img.size[1]);
-  int desired_height = (int)((float)shape.height / shape.width * img.size[0]);
-  int new_width = img.size[0], new_height = img.size[1];
-  if (desired_width < img.size[0]) {
-    new_width = desired_width;
-  } else {
-    new_height = desired_height;
-  }
-  cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2,
-               new_width, new_height);
-  cv::Mat sample_cropped = sample(roi);
-
-  // Resize
-  cv::Mat sample_resized;
-  cv::Size input_geometry(width, height);
-  if (sample_cropped.size() != input_geometry)
-    cv::resize(sample_cropped, sample_resized, input_geometry);
-  else
-    sample_resized = sample_cropped;
-
-  // Convert to float
-  cv::Mat sample_float;
-  if (num_channel == 3)
-    sample_resized.convertTo(sample_float, CV_32FC3);
-  else
-    sample_resized.convertTo(sample_float, CV_32FC1);
-
-  // Normalize
-  cv::Mat sample_normalized;
-  cv::subtract(sample_float, mean_img, sample_normalized);
-
-  if (buffer != nullptr) {
-    CHECK(shape.GetSize() * sizeof(float) == buffer->GetSize())
-        << "Buffer size " << buffer->GetSize() << " does not match input size "
-        << shape.GetSize() * sizeof(float);
-    // Wrap buffer to channels to save memory copy.
-    float *data = (float *)buffer->GetBuffer();
-    std::vector<cv::Mat> output_channels;
-    for (int i = 0; i < num_channel; i++) {
-      cv::Mat channel(height, width, CV_32FC1, data);
-      output_channels.push_back(channel);
-      data += width * height;
-    }
-    cv::split(sample_normalized, output_channels);
-  }
-
-  return sample_float;
-}
-
-void ImageClassificationProcessor::Preprocess(const cv::Mat &img,
-                                              DataBuffer &buffer) {
-  Timer timer;
-  timer.Start();
-  TransformImage(img, input_shape_, mean_image_, &buffer);
-  LOG(INFO) << "Preprocess takes " << timer.ElapsedMSec() << " ms";
 }

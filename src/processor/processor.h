@@ -29,6 +29,10 @@ class Processor {
    * @return True if stop sucsessfully, false otherwise.
    */
   bool Stop();
+  /**
+   * @brief Get sink streams of the prosessor.
+   */
+  std::vector<std::shared_ptr<Stream>> GetSinks();
 
  protected:
   /**
@@ -36,7 +40,7 @@ class Processor {
    */
   virtual bool Init();
   virtual bool OnStop();
-  virtual void Consume() = 0;
+  virtual void Process() = 0;
   void ProcessorLoop();
   std::vector<std::shared_ptr<Stream>> sources_;
   std::vector<std::shared_ptr<Stream>> sinks_;

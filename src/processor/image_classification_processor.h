@@ -17,23 +17,9 @@ class ImageClassificationProcessor : public Processor {
  protected:
   virtual bool Init();
   virtual bool OnStop();
-  virtual void Consume();
+  virtual void Process();
 
  private:
-  /**
-   * @brief Transform the image to a given shape, substract mean image, and
-   * store to a buffer.
-   * @details Specify buffer as nullptr if do not want to store it.
-   *
-   * @param img The image to be transformed;
-   * @param shape The shape of the desired image.
-   * @param mean_img Mean image.
-   * @param buffer The buffer to store the transformed image.
-   * @return The transformed image.
-   */
-  static cv::Mat TransformImage(const cv::Mat &src_img, const Shape &shape,
-                                const cv::Mat &mean_img, DataBuffer *buffer);
-
   /**
    * @brief Classify the image stored in the input_buffer_
    *
@@ -42,14 +28,6 @@ class ImageClassificationProcessor : public Processor {
    * @return An array of prediction results, sorted by confidence score.
    */
   std::vector<Prediction> Classify(int N = 5);
-
-  /**
-   * @brief Preprocess the image and store to a buffer.
-   *
-   * @param img The image to be preprocessed.
-   * @param buffer The buffer to store the preprocessed result.
-   */
-  void Preprocess(const cv::Mat &img, DataBuffer &buffer);
 
   DataBuffer input_buffer_;
   std::unique_ptr<Model> model_;
