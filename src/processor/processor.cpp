@@ -12,13 +12,9 @@ Processor::Processor(std::vector<std::shared_ptr<Stream>> sources)
 bool Processor::Start() {
   LOG(INFO) << "Start called";
   CHECK(stopped_) << "Processor has already started";
-  if (Init()) {
-    stopped_ = false;
-    process_thread_ = std::thread(&Processor::ProcessorLoop, this);
-    return true;
-  } else {
-    return false;
-  }
+  stopped_ = false;
+  process_thread_ = std::thread(&Processor::ProcessorLoop, this);
+  return true;
 }
 
 bool Processor::Stop() {
@@ -30,6 +26,7 @@ bool Processor::Stop() {
 }
 
 void Processor::ProcessorLoop() {
+  CHECK(Init()) << "Processor is not able to be initialized";
   while (!stopped_) {
     Process();
   }

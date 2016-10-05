@@ -8,6 +8,43 @@ CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape)
     : Model(model_desc, input_shape) {}
 
 void CaffeFp16Model::Load() {
+	// Set Caffe backend
+#ifdef USE_CAFFE
+#ifdef USE_CUDA
+  std::vector<int> gpus;
+  GetCUDAGpus(gpus);
+
+  if (gpus.size() != 0) {
+    LOG(INFO) << "Use GPU with device ID " << gpus[0];
+    caffe::Caffe::SetDevice(gpus[0]);
+    caffe::Caffe::set_mode(caffe::Caffe::GPU);
+  } else {
+    LOG(INFO) << "Use CPU.";
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  }
+#endif
+#ifdef USE_OPENCL
+  std::vector<int> gpus;
+  int count = caffe::Caffe::EnumerateDevices();
+  for (int i = 0; i < count; i++) {
+    gpus.push_back(i);
+  }
+
+  if (gpus.size() != 0) {
+    LOG(INFO) << "Use GPU with device ID " << 0;
+    caffe::Caffe::SetDevice(1);
+    caffe::Caffe::set_mode(caffe::Caffe::GPU);
+  } else {
+    LOG(INFO) << "Use CPU.";
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  }
+#endif
+#ifdef CPU_ONLY
+  caffe::Caffe::set_mode(caffe::Caffe::CPU);
+#else
+#endif
+#endif
+
   // Load the network.
   net_.reset(new caffe::Net<DType, MType>(model_desc_.GetModelDescPath(),
                                           caffe::TEST));
