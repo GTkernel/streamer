@@ -68,7 +68,7 @@ struct Args {
 static void PreviewStream(const string &name, std::shared_ptr<Stream> stream) {
   cv::namedWindow(name);
   while (true) {
-    cv::Mat frame = stream->PopFrame();
+    cv::Mat frame = stream->PopFrame().GetImage();
     cv::imshow(name, frame);
     int key = cv::waitKey(10);
     if (key == 'q') {

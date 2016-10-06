@@ -1,5 +1,5 @@
 //
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 10/6/16.
 //
 
 #include "image_classification_processor.h"
@@ -7,12 +7,22 @@
 #include "utils/utils.h"
 
 ImageClassificationProcessor::ImageClassificationProcessor(
-    std::shared_ptr<Stream> input_stream, std::shared_ptr<Stream> img_stream,
+    std::vector<std::shared_ptr<Stream>> input_streams,
+    std::vector<std::shared_ptr<Stream>> img_streams,
     const ModelDesc &model_desc, Shape input_shape)
     : model_desc_(model_desc), input_shape_(input_shape) {
-  sources_.push_back(input_stream);
-  sources_.push_back(img_stream);
-  sinks_.emplace_back(new Stream);
+  CHECK(input_streams.size() == img_streams.size());
+  batch_size_ = input_streams.size();
+  LOG(INFO) << "batch size of " << batch_size_;
+  for (auto stream : input_streams) {
+    sources_.push_back(stream);
+  }
+  for (auto stream : img_streams) {
+    sources_.push_back(stream);
+  }
+  for (int i = 0; i < img_streams.size(); i++) {
+    sinks_.emplace_back(new Stream);
+  }
 }
 
 bool ImageClassificationProcessor::Init() {
@@ -27,7 +37,7 @@ bool ImageClassificationProcessor::Init() {
 
   // Load model
   auto &manager = ModelManager::GetInstance();
-  model_ = manager.CreateModel(model_desc_, input_shape_);
+  model_ = manager.CreateModel(model_desc_, input_shape_, sinks_.size());
   model_->Load();
 
   // Create mean image
@@ -37,7 +47,8 @@ bool ImageClassificationProcessor::Init() {
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
 
   // Prepare data buffer
-  input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float));
+  input_buffer_ =
+      DataBuffer(batch_size_ * input_shape_.GetSize() * sizeof(float));
 
   LOG(INFO) << "Classifier initialized";
   return true;
@@ -50,38 +61,52 @@ bool ImageClassificationProcessor::OnStop() {
 
 void ImageClassificationProcessor::Process() {
   Timer timer;
-  auto input_stream = sources_[0];
-  cv::Mat frame = input_stream->PopFrame();
-  cv::Mat img = sources_[1]->PopFrame();
-  CHECK(frame.channels() == input_shape_.channel &&
-        frame.size[0] == input_shape_.width &&
-        frame.size[1] == input_shape_.height);
-  timer.Start();
-  std::vector<cv::Mat> output_channels;
   float *data = (float *)input_buffer_.GetBuffer();
-  for (int i = 0; i < input_shape_.channel; i++) {
-    cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
-    output_channels.push_back(channel);
-    data += input_shape_.width * input_shape_.height;
+  for (int i = 0; i < batch_size_; i++) {
+    auto input_stream = sources_[i];
+    cv::Mat frame = input_stream->PopFrame().GetImage();
+    CHECK(frame.channels() == input_shape_.channel &&
+          frame.size[0] == input_shape_.width &&
+          frame.size[1] == input_shape_.height);
+    std::vector<cv::Mat> output_channels;
+    for (int i = 0; i < input_shape_.channel; i++) {
+      cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
+      output_channels.push_back(channel);
+      data += input_shape_.width * input_shape_.height;
+    }
+    cv::split(frame, output_channels);
   }
-  cv::split(frame, output_channels);
+
+  timer.Start();
   auto predictions = Classify(1);
-  //  LOG(INFO) << "Classify done in " << timer.ElapsedMSec() << " ms";
+  double fps = 1000.0 / timer.ElapsedMSec();
 
-  int font_size = 1.3 * img.size[0] / 320;
-  cv::putText(img, predictions[0].first, cv::Point(30, 30),
-              CV_FONT_HERSHEY_COMPLEX, font_size, cvScalar(0, 0, 0), 5, CV_AA);
-  cv::putText(img, predictions[0].first, cv::Point(30, 30),
-              CV_FONT_HERSHEY_COMPLEX, font_size, cvScalar(200, 200, 250), 3, CV_AA);
+  for (int i = 0; i < batch_size_; i++) {
+    cv::Mat img = sources_[batch_size_ + i]->PopFrame().GetImage();
+    double font_size = 0.8 * img.size[0] / 320.0;
+     cv::putText(img, predictions[i][0].first.substr(10), cv::Point(img.rows / 3, img.cols / 3),
+                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(0, 0, 0), 12,
+                CV_AA);
+    cv::putText(img, predictions[i][0].first.substr(10), cv::Point(img.rows / 3, img.cols / 3),
+                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(200, 200, 250), 2,
+                CV_AA);
 
-  sinks_[0]->PushFrame(img);
-
-  for (auto prediction : predictions) {
-    LOG(INFO) << prediction.first << " " << prediction.second;
+    char fps_string[256];
+    sprintf(fps_string, "%.2lffps", fps);
+    cv::putText(img, fps_string, cv::Point(img.rows / 3, img.cols / 6),
+                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(0,0,0), 12,
+                CV_AA);
+    cv::putText(img, fps_string, cv::Point(img.rows / 3, img.cols / 6),
+                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(200, 200, 250), 2,
+                CV_AA);
+    sinks_[i]->PushFrame(img);
+    for (auto prediction : predictions[i]) {
+      LOG(INFO) << prediction.first << " " << prediction.second;
+    }
   }
 }
 
-std::vector<Prediction> ImageClassificationProcessor::Classify(int N) {
+std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(int N) {
   Timer total_timer;
   Timer timer;
 
@@ -96,17 +121,20 @@ std::vector<Prediction> ImageClassificationProcessor::Classify(int N) {
         model_->GetOutputShapes().size() == model_->GetOutputBuffers().size())
       << "Classify model does not have one buffer";
   float *scores = (float *)model_->GetOutputBuffers()[0].GetBuffer();
-  LOG(INFO) << "Predict done in " << timer.ElapsedMSec() << " ms";
-
   N = std::min<int>(labels_.size(), N);
-  std::vector<int> maxN =
-      Argmax(scores, model_->GetOutputShapes()[0].GetSize(), N);
-  std::vector<Prediction> predictions;
-  for (int i = 0; i < N; ++i) {
-    int idx = maxN[i];
-    predictions.push_back(std::make_pair(labels_[idx], scores[idx]));
+  std::vector<std::vector<Prediction>> results;
+  for (int i = 0; i < batch_size_; i++) {
+    std::vector<int> maxN =
+        Argmax(scores, model_->GetOutputShapes()[0].channel, N);
+    std::vector<Prediction> predictions;
+    for (int i = 0; i < N; ++i) {
+      int idx = maxN[i];
+      predictions.push_back(std::make_pair(labels_[idx], scores[idx]));
+    }
+    results.push_back(predictions);
+    scores += model_->GetOutputShapes()[0].channel;
   }
 
   LOG(INFO) << "Whole classify done in " << total_timer.ElapsedMSec() << " ms";
-  return predictions;
+  return results;
 }

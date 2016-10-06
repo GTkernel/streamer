@@ -75,8 +75,8 @@ void CaffeModel<DType>::Load() {
   input_layer = net_->input_blobs()[0];
   DType *input_data = input_layer->mutable_cpu_data();
 
-  input_buffer_ =
-      DataBuffer(input_data, batch_size_ * input_shape_.GetSize() * sizeof(DType));
+  input_buffer_ = DataBuffer(
+      input_data, batch_size_ * input_shape_.GetSize() * sizeof(DType));
 }
 
 template <typename DType>
@@ -96,10 +96,10 @@ void CaffeModel<DType>::Evaluate() {
     DType *output_data = output_blob->mutable_cpu_data();
     Shape shape(output_blob->channels(), output_blob->width(),
                 output_blob->height());
-    LOG(INFO) << output_blob->num();
     output_shapes_.push_back(shape);
     DataBuffer output_buffer(batch_size_ * shape.GetSize() * sizeof(DType));
-    output_buffer.Clone(output_data, batch_size_ * shape.GetSize() * sizeof(DType));
+    output_buffer.Clone(output_data,
+                        batch_size_ * shape.GetSize() * sizeof(DType));
     output_buffers_.push_back(output_buffer);
   }
 }

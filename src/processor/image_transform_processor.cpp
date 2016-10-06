@@ -25,7 +25,7 @@ ImageTransformProcessor::ImageTransformProcessor(
 void ImageTransformProcessor::Process() {
   Timer timer;
   auto input_stream = sources_[0];
-  cv::Mat img = input_stream->PopFrame();
+  cv::Mat img = input_stream->PopFrame().GetImage();
   timer.Start();
 
   int num_channel = target_shape_.channel, width = target_shape_.width,

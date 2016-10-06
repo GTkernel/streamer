@@ -6,6 +6,7 @@
 #define TX1DNN_STREAM_H
 
 #include "common/common.h"
+#include "frame.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -23,16 +24,16 @@ class Stream {
    * stream.
    * @return The first frame in the series.
    */
-  cv::Mat PopFrame();
+  Frame PopFrame();
   /**
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.
    */
-  void PushFrame(const cv::Mat &frame);
+  void PushFrame(const Frame &frame);
 
  private:
   int max_buffer_size_;
-  std::queue<cv::Mat> frame_buffer_;
+  std::queue<Frame> frame_buffer_;
   std::mutex stream_lock_;
   std::condition_variable stream_cv_;
 };

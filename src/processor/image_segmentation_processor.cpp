@@ -1,4 +1,7 @@
 #include "image_segmentation_processor.h"
+#include <opencv2/contrib/contrib.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "model/model_manager.h"
 
 ImageSegmentationProcessor::ImageSegmentationProcessor(
@@ -40,8 +43,8 @@ void ImageSegmentationProcessor::Process() {
   Timer timer;
   timer.Start();
   auto input_stream = sources_[0];
-  cv::Mat frame = input_stream->PopFrame();
-  cv::Mat original_img = sources_[1]->PopFrame();
+  cv::Mat frame = input_stream->PopFrame().GetImage();
+  cv::Mat original_img = sources_[1]->PopFrame().GetOriginalFrame();
   CHECK(frame.channels() == input_shape_.channel &&
         frame.size[0] == input_shape_.width &&
         frame.size[1] == input_shape_.height);
@@ -64,8 +67,10 @@ void ImageSegmentationProcessor::Process() {
             << output_shape.height;
 
   // Render the segmentation
-  cv::Mat output_img = cv::Mat::zeros(output_shape.height, output_shape.width, CV_8U);
-  cv::Mat output_score = cv::Mat::zeros(output_shape.height, output_shape.width, CV_32F);
+  cv::Mat output_img =
+      cv::Mat::zeros(output_shape.height, output_shape.width, CV_8U);
+  cv::Mat output_score =
+      cv::Mat::zeros(output_shape.height, output_shape.width, CV_32F);
   float *output_data = (float *)output_buffer.GetBuffer();
   for (int i = 0; i < output_shape.channel; i++) {
     cv::Mat wrapper(input_shape_.height, input_shape_.width, CV_32FC1,
@@ -82,11 +87,16 @@ void ImageSegmentationProcessor::Process() {
   }
 
   cv::Mat output_frame;
+  cv::Mat colored_output;
   output_img.convertTo(output_frame, CV_8U, 255.0 / 21);
+
+  cv::applyColorMap(output_frame, colored_output, 4);
+  cv::resize(colored_output, colored_output,
+             cv::Size(original_img.cols, original_img.rows));
 
   auto output_stream = sinks_[0];
   auto original_img_stream = sinks_[1];
-  output_stream->PushFrame(output_frame);
+  output_stream->PushFrame(colored_output);
   original_img_stream->PushFrame(original_img);
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }

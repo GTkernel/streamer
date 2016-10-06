@@ -1,9 +1,9 @@
 //
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
+// Created by Ran Xian (xranthoar@gmail.com) on 10/6/16.
 //
 
-#ifndef TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H
-#define TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H
+#ifndef TX1DNN_BATCH_CLASSIFIER_H
+#define TX1DNN_BATCH_CLASSIFIER_H
 
 #include "common/common.h"
 #include "model/model.h"
@@ -11,9 +11,9 @@
 
 class ImageClassificationProcessor : public Processor {
  public:
-  ImageClassificationProcessor(std::shared_ptr<Stream> input_stream,
-                               std::shared_ptr<Stream> img_stream,
-                               const ModelDesc &model_desc, Shape input_shape);
+  ImageClassificationProcessor(std::vector<std::shared_ptr<Stream>> input_streams,
+                  std::vector<std::shared_ptr<Stream>> img_streams,
+                  const ModelDesc &model_desc, Shape input_shape);
 
  protected:
   virtual bool Init();
@@ -28,7 +28,7 @@ class ImageClassificationProcessor : public Processor {
    *
    * @return An array of prediction results, sorted by confidence score.
    */
-  std::vector<Prediction> Classify(int N = 5);
+  std::vector<std::vector<Prediction>> Classify(int N = 5);
 
   DataBuffer input_buffer_;
   std::unique_ptr<Model> model_;
@@ -36,6 +36,7 @@ class ImageClassificationProcessor : public Processor {
   ModelDesc model_desc_;
   Shape input_shape_;
   cv::Mat mean_image_;
+  int batch_size_;
 };
 
-#endif  // TX1DNN_IMAGE_CLASSIFICATION_PROCESSOR_H
+#endif  // TX1DNN_BATCH_CLASSIFIER_H

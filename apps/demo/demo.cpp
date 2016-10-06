@@ -56,7 +56,6 @@ int main(int argc, char *argv[]) {
 
   // Processor
   cv::namedWindow("Camera");
-  cv::namedWindow("Result");
   camera->Start();
   if (task == "classification") {
     Shape input_shape(3, 227, 227);
@@ -65,26 +64,30 @@ int main(int argc, char *argv[]) {
 
     auto model_desc = model_manager.GetModelDesc(model_name);
     ImageClassificationProcessor classification_processor(
-        transform_processor.GetSinks()[0], transform_processor.GetSinks()[1],
-        model_desc, input_shape);
+        {transform_processor.GetSinks()[0]},
+        {transform_processor.GetSinks()[1]}, model_desc, input_shape);
 
     transform_processor.Start();
     classification_processor.Start();
 
     auto output_stream = classification_processor.GetSinks()[0];
-    string user_input;
     while (true) {
-      cv::Mat frame = output_stream->PopFrame();
-      cv::imshow("Camera", frame);
-      char k = cv::waitKey(10);
-      if (k == 'q') {
-        break;
+      cv::Mat frame = output_stream->PopFrame().GetImage();
+      if (display) {
+        cv::imshow("Camera", frame);
+        char k = cv::waitKey(10);
+        if (k == 'q') {
+          break;
+        }
       }
     }
 
     classification_processor.Stop();
     transform_processor.Stop();
   } else {
+    if (display) {
+      cv::namedWindow("Result");
+    }
     Shape input_shape(3, 250, 250);
     ImageTransformProcessor transform_processor = ImageTransformProcessor(
         camera_stream, input_shape, CROP_TYPE_CENTER, true /* subtract mean */);
@@ -102,16 +105,14 @@ int main(int argc, char *argv[]) {
 
     string user_input;
     while (true) {
-      cv::Mat result = seg_stream->PopFrame();
-      LOG(INFO) << "result " << result.size[0] << " " << result.size[1];
-      cv::Mat frame = img_stream->PopFrame();
-      LOG(INFO) << frame.size;
-      cv::imshow("Result", result);
-      cv::imshow("Camera", frame);
-      char k = cv::waitKey(10);
-      if (k == 'q') {
-        break;
-      }
+      cv::Mat result = seg_stream->PopFrame().GetImage();
+      cv::Mat frame = img_stream->PopFrame().GetImage();
+      if (display) {cv::imshow("Result", result);
+        cv::imshow("Camera", frame);
+        int k = cv::waitKey(10);
+        if (k == 'q') {
+          break;
+        }}
     }
 
     segmentation_processor.Stop();

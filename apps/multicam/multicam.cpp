@@ -79,7 +79,8 @@ int main(int argc, char *argv[]) {
   }
 
   auto model_desc = model_manager.GetModelDesc(model_name);
-  std::shared_ptr<BatchClassifier> batch_classifier(new BatchClassifier(input_streams, img_streams, model_desc, input_shape));
+  std::shared_ptr<ImageClassificationProcessor> batch_classifier(
+      new ImageClassificationProcessor(input_streams, img_streams, model_desc, input_shape));
   processors.push_back(batch_classifier);
 
   for (string camera_name : camera_names) {
@@ -97,14 +98,12 @@ int main(int argc, char *argv[]) {
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
       auto stream = batch_classifier->GetSinks()[i];
-      cv::Mat frame = stream->PopFrame();
+      cv::Mat frame = stream->PopFrame().GetImage();
       cv::imshow(camera_names[i], frame);
     }
     int q = cv::waitKey(10);
-    if (q == 'q')
-      break;
+    if (q == 'q') break;
   }
-
 
   // Not stopping the processors
   cv::destroyAllWindows();
