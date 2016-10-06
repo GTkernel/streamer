@@ -6,8 +6,9 @@
 #include "utils/utils.h"
 
 template <typename DType>
-CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape)
-    : Model(model_desc, input_shape) {}
+CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape,
+                              int batch_size)
+    : Model(model_desc, input_shape, batch_size) {}
 
 template <typename DType>
 void CaffeModel<DType>::Load() {
@@ -66,7 +67,7 @@ void CaffeModel<DType>::Load() {
 
   caffe::Blob<DType> *input_layer = net_->input_blobs()[0];
   // Adjust input dimensions
-  input_layer->Reshape(1, input_shape_.channel, input_shape_.height,
+  input_layer->Reshape(batch_size_, input_shape_.channel, input_shape_.height,
                        input_shape_.height);
   // Forward dimension change to all layers.
   net_->Reshape();
@@ -75,7 +76,7 @@ void CaffeModel<DType>::Load() {
   DType *input_data = input_layer->mutable_cpu_data();
 
   input_buffer_ =
-      DataBuffer(input_data, input_shape_.GetSize() * sizeof(DType));
+      DataBuffer(input_data, batch_size_ * input_shape_.GetSize() * sizeof(DType));
 }
 
 template <typename DType>
@@ -95,11 +96,11 @@ void CaffeModel<DType>::Evaluate() {
     DType *output_data = output_blob->mutable_cpu_data();
     Shape shape(output_blob->channels(), output_blob->width(),
                 output_blob->height());
+    LOG(INFO) << output_blob->num();
     output_shapes_.push_back(shape);
-    DataBuffer output_buffer(shape.GetSize() * sizeof(DType));
-    output_buffer.Clone(output_data, shape.GetSize() * sizeof(DType));
-    output_buffers_.push_back(
-        DataBuffer(output_data, shape.GetSize() * sizeof(DType)));
+    DataBuffer output_buffer(batch_size_ * shape.GetSize() * sizeof(DType));
+    output_buffer.Clone(output_data, batch_size_ * shape.GetSize() * sizeof(DType));
+    output_buffers_.push_back(output_buffer);
   }
 }
 

@@ -16,7 +16,7 @@
 template <typename DType>
 class CaffeModel : public Model {
  public:
-  CaffeModel(const ModelDesc &model_desc, Shape input_shape);
+  CaffeModel(const ModelDesc &model_desc, Shape input_shape, int batch_size);
   virtual void Load();
   virtual void Evaluate();
 

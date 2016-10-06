@@ -120,5 +120,7 @@ int main(int argc, char *argv[]) {
 
   camera->Stop();
 
+  cv::destroyAllWindows();
+
   return 0;
 }

@@ -57,7 +57,7 @@ class ModelDesc {
  */
 class Model {
  public:
-  Model(const ModelDesc &model_desc, Shape input_shape);
+  Model(const ModelDesc &model_desc, Shape input_shape, int batch_size = 1);
   ModelDesc GetModelDesc() const;
   virtual void Load() = 0;
   virtual void Evaluate() = 0;
@@ -71,6 +71,7 @@ class Model {
   DataBuffer input_buffer_;
   std::vector<DataBuffer> output_buffers_;
   std::vector<Shape> output_shapes_;
+  int batch_size_;
 };
 
 #endif  // TX1DNN_MODEL_H

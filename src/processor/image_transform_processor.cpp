@@ -75,6 +75,5 @@ void ImageTransformProcessor::Process() {
   //  LOG(INFO) << "Transform in " << timer.ElapsedMSec() << " ms";
   auto output_stream = sinks_[0];
   output_stream->PushFrame(sample_normalized_);
-  auto original_frame_stream = sinks_[1];
   sinks_[1]->PushFrame(img);
 }

@@ -5,6 +5,7 @@
 #ifndef TX1DNN_STRINGUTILS_H
 #define TX1DNN_STRINGUTILS_H
 #include "common/common.h"
+#include <boost/algorithm/string.hpp>
 
 /**
  * @brief Determine if a string ends with certain suffix.
@@ -36,6 +37,13 @@ inline string TrimSpaces(const string &str) {
   size_t first = str.find_first_not_of(' ');
   size_t last = str.find_last_not_of(' ');
   return str.substr(first, (last - first + 1));
+}
+
+inline std::vector<std::string> SplitString(const string &str,
+                                            const string &delim) {
+  std::vector<string> results;
+  boost::split(results, str, boost::is_any_of(delim));
+  return results;
 }
 
 #endif  // TX1DNN_STRINGUTILS_H

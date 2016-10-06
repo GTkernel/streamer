@@ -93,14 +93,15 @@ bool ModelManager::HasModel(const string &name) const {
 }
 
 std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
-                                                 Shape input_shape) {
+                                                 Shape input_shape,
+                                                 int batch_size) {
   std::unique_ptr<Model> result;
   if (model_desc.GetModelType() == MODEL_TYPE_CAFFE) {
 #ifdef USE_CAFFE
 #ifdef USE_FP16
     result.reset(new CaffeFp16Model(model_desc, input_shape));
 #else
-    result.reset(new CaffeModel<float>(model_desc, input_shape));
+    result.reset(new CaffeModel<float>(model_desc, input_shape, batch_size));
 #endif
 #else
     LOG(FATAL) << "Not build with Caffe, failed to initialize classifier";

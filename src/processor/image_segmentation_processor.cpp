@@ -38,6 +38,7 @@ bool ImageSegmentationProcessor::OnStop() {
 void ImageSegmentationProcessor::Process() {
   // Do image segmentation
   Timer timer;
+  timer.Start();
   auto input_stream = sources_[0];
   cv::Mat frame = input_stream->PopFrame();
   cv::Mat original_img = sources_[1]->PopFrame();
@@ -63,25 +64,29 @@ void ImageSegmentationProcessor::Process() {
             << output_shape.height;
 
   // Render the segmentation
-  cv::Mat wrapper(input_shape_.height, input_shape_.width, CV_32FC1,
-                  output_buffer.GetBuffer());
+  cv::Mat output_img = cv::Mat::zeros(output_shape.height, output_shape.width, CV_8U);
+  cv::Mat output_score = cv::Mat::zeros(output_shape.height, output_shape.width, CV_32F);
+  float *output_data = (float *)output_buffer.GetBuffer();
+  for (int i = 0; i < output_shape.channel; i++) {
+    cv::Mat wrapper(input_shape_.height, input_shape_.width, CV_32FC1,
+                    output_data);
+    for (int j = 0; j < input_shape_.height; j++) {
+      for (int k = 0; k < input_shape_.width; k++) {
+        if (wrapper.at<float>(j, k) > output_score.at<float>(j, k)) {
+          output_score.at<float>(j, k) = wrapper.at<float>(j, k);
+          output_img.at<uchar>(j, k) = (uchar)i;
+        }
+      }
+    }
+    output_data += input_shape_.width * input_shape_.height;
+  }
 
   cv::Mat output_frame;
-  wrapper.convertTo(output_frame, CV_8U, 255.0 / 21);
-  LOG(INFO) << output_frame.row(10).col(10);
-
-  double minVal;
-  double maxVal;
-  cv::Point minLoc;
-  cv::Point maxLoc;
-
-  cv::minMaxLoc(wrapper, &minVal, &maxVal, &minLoc, &maxLoc);
-
-  LOG(INFO) << "min val : " << minVal;
-  LOG(INFO) << "max val: " << maxVal;
+  output_img.convertTo(output_frame, CV_8U, 255.0 / 21);
 
   auto output_stream = sinks_[0];
   auto original_img_stream = sinks_[1];
   output_stream->PushFrame(output_frame);
   original_img_stream->PushFrame(original_img);
+  LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }

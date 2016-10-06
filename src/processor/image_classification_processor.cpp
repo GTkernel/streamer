@@ -68,8 +68,11 @@ void ImageClassificationProcessor::Process() {
   auto predictions = Classify(1);
   //  LOG(INFO) << "Classify done in " << timer.ElapsedMSec() << " ms";
 
+  int font_size = 1.3 * img.size[0] / 320;
   cv::putText(img, predictions[0].first, cv::Point(30, 30),
-              CV_FONT_HERSHEY_COMPLEX, 0.8, cvScalar(200, 200, 250), 1, CV_AA);
+              CV_FONT_HERSHEY_COMPLEX, font_size, cvScalar(0, 0, 0), 5, CV_AA);
+  cv::putText(img, predictions[0].first, cv::Point(30, 30),
+              CV_FONT_HERSHEY_COMPLEX, font_size, cvScalar(200, 200, 250), 3, CV_AA);
 
   sinks_[0]->PushFrame(img);
 
