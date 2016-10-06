@@ -13,7 +13,8 @@ ImageTransformProcessor::ImageTransformProcessor(
       crop_type_(crop_type),
       subtract_mean_(subtract_mean) {
   sources_.push_back(input_stream);
-  sinks_.emplace_back(new Stream());
+  sinks_.emplace_back(new Stream());  // Transformed frame
+  sinks_.emplace_back(new Stream());  // Original frame
 
   auto mean_colors = ModelManager::GetInstance().GetMeanColors();
   mean_image_ =
@@ -71,7 +72,9 @@ void ImageTransformProcessor::Process() {
   // Normalize
   cv::subtract(sample_float_, mean_image_, sample_normalized_);
 
-  LOG(INFO) << "Transform in " << timer.ElapsedMSec() << " ms";
+  //  LOG(INFO) << "Transform in " << timer.ElapsedMSec() << " ms";
   auto output_stream = sinks_[0];
   output_stream->PushFrame(sample_normalized_);
+  auto original_frame_stream = sinks_[1];
+  sinks_[1]->PushFrame(img);
 }

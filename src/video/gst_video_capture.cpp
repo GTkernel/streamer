@@ -143,7 +143,8 @@ cv::Mat GstVideoCapture::GetFrame(DataBuffer *data_bufferp) {
     return !connected_ || frames_.size() != 0;
   });
 
-  LOG(INFO) << "Waited " << timer.ElapsedMSec() << " ms until frame available";
+  //  LOG(INFO) << "Waited " << timer.ElapsedMSec() << " ms until frame
+  //  available";
 
   if (!connected_) return cv::Mat();
 

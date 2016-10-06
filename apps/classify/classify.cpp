@@ -58,7 +58,8 @@ int main(int argc, char *argv[]) {
 
   auto model_desc = model_manager.GetModelDesc(model_name);
   ImageClassificationProcessor classification_processor(
-      transform_processor.GetSinks()[0], model_desc, input_shape);
+      transform_processor.GetSinks()[0], transform_processor.GetSinks()[1],
+      model_desc, input_shape);
 
   camera->Start();
   transform_processor.Start();

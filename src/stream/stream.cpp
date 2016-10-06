@@ -13,8 +13,8 @@ cv::Mat Stream::PopFrame() {
   stream_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
   cv::Mat frame = frame_buffer_.front();
   frame_buffer_.pop();
-  LOG(INFO) << "Waited for " << timer.ElapsedMSec()
-            << " ms until frame available";
+  //  LOG(INFO) << "Waited for " << timer.ElapsedMSec()
+  //            << " ms until frame available";
 
   return frame;
 }

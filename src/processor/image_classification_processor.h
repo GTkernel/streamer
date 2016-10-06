@@ -12,6 +12,7 @@
 class ImageClassificationProcessor : public Processor {
  public:
   ImageClassificationProcessor(std::shared_ptr<Stream> input_stream,
+                               std::shared_ptr<Stream> img_stream,
                                const ModelDesc &model_desc, Shape input_shape);
 
  protected:

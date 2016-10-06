@@ -11,7 +11,7 @@ CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape)
 
 template <typename DType>
 void CaffeModel<DType>::Load() {
-	// Set Caffe backend
+// Set Caffe backend
 #ifdef USE_CAFFE
 #ifdef USE_CUDA
   std::vector<int> gpus;

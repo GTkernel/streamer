@@ -7,10 +7,12 @@
 #include "utils/utils.h"
 
 ImageClassificationProcessor::ImageClassificationProcessor(
-    std::shared_ptr<Stream> input_stream, const ModelDesc &model_desc,
-    Shape input_shape)
+    std::shared_ptr<Stream> input_stream, std::shared_ptr<Stream> img_stream,
+    const ModelDesc &model_desc, Shape input_shape)
     : model_desc_(model_desc), input_shape_(input_shape) {
   sources_.push_back(input_stream);
+  sources_.push_back(img_stream);
+  sinks_.emplace_back(new Stream);
 }
 
 bool ImageClassificationProcessor::Init() {
@@ -50,6 +52,7 @@ void ImageClassificationProcessor::Process() {
   Timer timer;
   auto input_stream = sources_[0];
   cv::Mat frame = input_stream->PopFrame();
+  cv::Mat img = sources_[1]->PopFrame();
   CHECK(frame.channels() == input_shape_.channel &&
         frame.size[0] == input_shape_.width &&
         frame.size[1] == input_shape_.height);
@@ -63,7 +66,13 @@ void ImageClassificationProcessor::Process() {
   }
   cv::split(frame, output_channels);
   auto predictions = Classify(1);
-  LOG(INFO) << "Classify done in " << timer.ElapsedMSec() << " ms";
+  //  LOG(INFO) << "Classify done in " << timer.ElapsedMSec() << " ms";
+
+  cv::putText(img, predictions[0].first, cv::Point(30, 30),
+              CV_FONT_HERSHEY_COMPLEX, 0.8, cvScalar(200, 200, 250), 1, CV_AA);
+
+  sinks_[0]->PushFrame(img);
+
   for (auto prediction : predictions) {
     LOG(INFO) << prediction.first << " " << prediction.second;
   }

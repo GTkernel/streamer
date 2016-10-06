@@ -8,7 +8,7 @@ CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape)
     : Model(model_desc, input_shape) {}
 
 void CaffeFp16Model::Load() {
-	// Set Caffe backend
+// Set Caffe backend
 #ifdef USE_CAFFE
 #ifdef USE_CUDA
   std::vector<int> gpus;
