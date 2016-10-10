@@ -6,6 +6,9 @@
 
 Stream::Stream(int max_buffer_size) : max_buffer_size_(max_buffer_size) {}
 
+Stream::Stream(string name, int max_buffer_size)
+    : name_(name), max_buffer_size_(max_buffer_size) {}
+
 std::shared_ptr<Frame> Stream::PopFrame() {
   Timer timer;
   timer.Start();
@@ -13,8 +16,8 @@ std::shared_ptr<Frame> Stream::PopFrame() {
   stream_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
   std::shared_ptr<Frame> frame = frame_buffer_.front();
   frame_buffer_.pop();
-  DLOG(INFO) << "Waited for " << timer.ElapsedMSec()
-             << " ms until frame available";
+  LOG(INFO) << "Stream[" << name_ << "] waited for " << timer.ElapsedMSec()
+            << " ms until frame available";
 
   return frame;
 }

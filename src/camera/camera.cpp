@@ -5,7 +5,10 @@
 #include "camera.h"
 
 Camera::Camera(const string &name, const string &video_uri)
-    : name_(name), video_uri_(video_uri), opened_(false), stream_(new Stream) {}
+    : name_(name),
+      video_uri_(video_uri),
+      opened_(false),
+      stream_(new Stream(name)) {}
 
 string Camera::GetName() const { return name_; }
 
@@ -32,7 +35,8 @@ void Camera::CaptureLoop() {
   CHECK(opened_) << "Camera is not open yet";
   while (opened_) {
     cv::Mat frame = capture_.GetFrame();
-    stream_->PushFrame(std::shared_ptr<ImageFrame>(new ImageFrame(frame, frame)));
+    stream_->PushFrame(
+        std::shared_ptr<ImageFrame>(new ImageFrame(frame, frame)));
   }
 }
 

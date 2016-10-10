@@ -1,6 +1,6 @@
 /**
- * @brief tx1_classify.cpp - An example showing the usage to run realtime
- * classification.
+ * @brief multicam.cpp - An example showing the usage to run realtime
+ * classification on multiple camera streams.
  */
 
 #include "tx1dnn.h"
@@ -11,7 +11,13 @@ ModelManager &model_manager = ModelManager::GetInstance();
 
 int main(int argc, char *argv[]) {
   // FIXME: Use more standard arg parse routine.
-  if (argc != 4) {
+  // Set up glog
+  gst_init(&argc, &argv);
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_alsologtostderr = 1;
+  FLAGS_colorlogtostderr = 1;
+
+  if (argc < 4) {
     std::cout << "Usage: "
               << " CAMERAS\n"
               << " MODEL\n"
@@ -24,12 +30,6 @@ int main(int argc, char *argv[]) {
            "display is enabled\n";
     exit(1);
   }
-
-  // Set up
-  gst_init(&argc, &argv);
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_alsologtostderr = 1;
-  FLAGS_colorlogtostderr = 1;
 
   // Get options
   auto camera_names = SplitString(argv[1], ",");
@@ -93,17 +93,61 @@ int main(int argc, char *argv[]) {
     processor->Start();
   }
 
+  int update_overlay = 0;
+  const int UPDATE_OVERLAY_INTERVAL = 10;
+  string label_to_show = "XXX";
+  double fps_to_show = 0.0;
+  Timer timer;
+  double fps = 0.0;
   while (true) {
+    timer.Start();
     for (int i = 0; i < camera_names.size(); i++) {
       auto stream = classifier->GetSinks()[i];
-      cv::Mat image = stream->PopImageFrame()->GetImage();
-      cv::imshow(camera_names[i], image);
+      auto md_frame = stream->PopMDFrame();
+      cv::Mat img = md_frame->GetOriginalImage();
+      string label = md_frame->GetTag();
+      if (update_overlay == 1) {
+        label_to_show = label;
+        fps_to_show = fps;
+      }
+
+      double font_size = 0.8 * img.size[0] / 320.0;
+      cv::Point label_point(img.rows / 6, img.cols / 3);
+      cv::Scalar outline_color(0, 0, 0);
+      cv::Scalar label_color(200, 200, 250);
+
+      cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+                  font_size, outline_color, 8, CV_AA);
+      cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+                  font_size, label_color, 2, CV_AA);
+
+      cv::Point fps_point(img.rows / 3, img.cols / 6);
+
+      char fps_string[256];
+      sprintf(fps_string, "%.2lffps", fps_to_show);
+      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
+                  outline_color, 8, CV_AA);
+      cv::putText(img, fps_string, fps_point,
+                  CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
+
+      cv::imshow(camera_names[i], img);
     }
     int q = cv::waitKey(10);
     if (q == 'q') break;
+    update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
+
+    double latency = timer.ElapsedMSec();
+    fps = 1000.0 / latency;
   }
 
-  // Not stopping the processors
+  for (auto camera : cameras) {
+    camera->Stop();
+  }
+
+  for (auto processor : processors) {
+    processor->Stop();
+  }
+
   cv::destroyAllWindows();
 
   return 0;

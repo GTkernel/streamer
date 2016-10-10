@@ -12,10 +12,14 @@ class Frame {
  public:
   Frame() = delete;
   Frame(FrameType frame_type);
+  Frame(FrameType frame_type, cv::Mat original_image);
   virtual ~Frame(){};
   FrameType GetType();
+  cv::Mat GetOriginalImage();
+  void SetOriginalImage(cv::Mat original_image);
  private:
   FrameType frame_type_;
+  cv::Mat original_image_;
 };
 
 class ImageFrame : public Frame {
@@ -24,13 +28,10 @@ class ImageFrame : public Frame {
   ImageFrame(cv::Mat image);
   Shape GetSize();
   cv::Mat GetImage();
-  cv::Mat GetOriginalImage();
-  void SetOriginalImage(cv::Mat original_image);
   void SetImage(cv::Mat image);
 
  private:
   cv::Mat image_;
-  cv::Mat original_image_;
   Shape shape_;
 };
 
@@ -39,6 +40,8 @@ class MetadataFrame : public Frame {
   MetadataFrame() = delete;
   MetadataFrame(string tag);
   MetadataFrame(float p1x, float p1y, float p2x, float p2y);
+  MetadataFrame(string tag, cv::Mat original_image);
+  MetadataFrame(float p1x, float p1y, float p2x, float p2y, cv::Mat original_image);
   string GetTag();
   const float *GetBbox();
  private:

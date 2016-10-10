@@ -12,7 +12,7 @@ ImageTransformProcessor::ImageTransformProcessor(
       crop_type_(crop_type),
       subtract_mean_(subtract_mean) {
   sources_.push_back(input_stream);
-  sinks_.emplace_back(new Stream());
+  sinks_.emplace_back(new Stream("ImageTransform"));
 
   auto mean_colors = ModelManager::GetInstance().GetMeanColors();
   mean_image_ =
