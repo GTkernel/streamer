@@ -18,14 +18,15 @@ int main(int argc, char *argv[]) {
   FLAGS_colorlogtostderr = 1;
 
   if (argc < 4) {
-    std::cout << "Usage: "
+    std::cout << argv[0] << " - multi-camera classification example\n"
+              << "Usage: \n"
               << " CAMERAS\n"
               << " MODEL\n"
               << " DISPLAY\n";
     std::cout << std::endl;
     std::cout
-        << "  CAMERA: the name of the camera in the config file\n"
-        << "  MODELS: comma separated names of the model in the config file\n"
+        << "  CAMERAS: comma separated names of the camera in the config file\n"
+        << "  MODEL: name of the model (in the config file) to use\n"
         << "  DISPLAY: display the frame or not, must have a X window if "
            "display is enabled\n";
     exit(1);
@@ -127,8 +128,8 @@ int main(int argc, char *argv[]) {
       sprintf(fps_string, "%.2lffps", fps_to_show);
       cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
                   outline_color, 8, CV_AA);
-      cv::putText(img, fps_string, fps_point,
-                  CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
+      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
+                  label_color, 2, CV_AA);
 
       cv::imshow(camera_names[i], img);
     }

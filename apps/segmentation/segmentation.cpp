@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
   FLAGS_colorlogtostderr = 1;
 
   if (argc != 5) {
+    std::cout << argv[0] << " - Image segmentation example\n";
     std::cout << "Usage:\n"
               << " CAMERA\n"
               << " MODEL\n"
@@ -46,17 +47,14 @@ int main(int argc, char *argv[]) {
   LOG(INFO) << "Do video stream segmentation on " + camera_name;
   if (display) {
     cv::namedWindow("camera");
+    cv::namedWindow("Result");
   }
+
+  // Processor
+  camera->Start();
 
   auto camera_stream = camera->GetStream();
 
-  // Processor
-  cv::namedWindow("Camera");
-  camera->Start();
-
-  if (display) {
-    cv::namedWindow("Result");
-  }
   Shape input_shape(3, 250, 250);
   ImageTransformProcessor transform_processor = ImageTransformProcessor(
       camera_stream, input_shape, CROP_TYPE_CENTER, true /* subtract mean */);

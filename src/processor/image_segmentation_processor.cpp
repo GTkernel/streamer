@@ -5,8 +5,8 @@
 #include "model/model_manager.h"
 
 ImageSegmentationProcessor::ImageSegmentationProcessor(
-    std::shared_ptr<Stream> input_stream,
-    const ModelDesc &model_desc, Shape input_shape)
+    std::shared_ptr<Stream> input_stream, const ModelDesc &model_desc,
+    Shape input_shape)
     : model_desc_(model_desc), input_shape_(input_shape) {
   sources_.push_back(input_stream);
   sinks_.emplace_back(new Stream);

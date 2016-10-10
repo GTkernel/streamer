@@ -105,10 +105,10 @@ First you need to config your cameras and models. In your build directory, there
 
 ```
 export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/classify CAMERA MODEL DISPLAY?
+apps/multicam CAMERA[,CAMERA2[,...]] MODEL DISPLAY?
 ```
 
-* `CAMERA` is the name of the camera.
+* `CAMERA...` are comma separated list of names of camera.
 * `MODEL` is the name of the model.
 * `DISPLAY?` is either true: enable preview, or false.
 

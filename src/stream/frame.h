@@ -5,8 +5,8 @@
 #ifndef TX1DNN_FRAME_H
 #define TX1DNN_FRAME_H
 
-#include "frame.h"
 #include "common/common.h"
+#include "frame.h"
 
 class Frame {
  public:
@@ -17,6 +17,7 @@ class Frame {
   FrameType GetType();
   cv::Mat GetOriginalImage();
   void SetOriginalImage(cv::Mat original_image);
+
  private:
   FrameType frame_type_;
   cv::Mat original_image_;
@@ -41,12 +42,14 @@ class MetadataFrame : public Frame {
   MetadataFrame(string tag);
   MetadataFrame(float p1x, float p1y, float p2x, float p2y);
   MetadataFrame(string tag, cv::Mat original_image);
-  MetadataFrame(float p1x, float p1y, float p2x, float p2y, cv::Mat original_image);
+  MetadataFrame(float p1x, float p1y, float p2x, float p2y,
+                cv::Mat original_image);
   string GetTag();
   const float *GetBbox();
+
  private:
   string tag_;
   float bbox_[4];
 };
 
-#endif //TX1DNN_FRAME_H
+#endif  // TX1DNN_FRAME_H

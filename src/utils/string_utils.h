@@ -4,8 +4,8 @@
 
 #ifndef TX1DNN_STRINGUTILS_H
 #define TX1DNN_STRINGUTILS_H
-#include "common/common.h"
 #include <boost/algorithm/string.hpp>
+#include "common/common.h"
 
 /**
  * @brief Determine if a string ends with certain suffix.

@@ -46,13 +46,8 @@ enum ModelType {
   MODEL_TYPE_TENSORFLOW
 };
 
-
 //// Frame types
-enum FrameType {
-  FRAME_TYPE_INVALID = 0,
-  FRAME_TYPE_IMAGE,
-  FRAME_TYPE_MD
-};
+enum FrameType { FRAME_TYPE_INVALID = 0, FRAME_TYPE_IMAGE, FRAME_TYPE_MD };
 
 #ifdef USE_FP16
 half Cpu_Float2Half(float f);
