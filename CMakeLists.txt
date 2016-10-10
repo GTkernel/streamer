@@ -21,6 +21,7 @@ find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(Glog REQUIRED)
 find_package(GLIB REQUIRED gobject)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(JeMalloc)
 
 # Determine if is on Tegra
 if (EXISTS /var/libopencv4tegra-repo)

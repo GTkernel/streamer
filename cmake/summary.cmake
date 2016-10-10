@@ -151,6 +151,7 @@ function(tx1dnn_print_configuration_summary)
   tx1dnn_status("  OpenCL            : " OPENCL_FOUND THEN "Yes (ver. ${OPENCL_VERSION_STRING})" ELSE "No")
   tx1dnn_status("  HDF5              : " HDF5_FOUND THEN "Yes" ELSE "No")
   tx1dnn_status("  Protobuf          : " PROTOBUF_FOUND THEN " Yes" ELSE "No")
+  tx1dnn_status("  JeMalloc          : " JEMALLOC_FOUND THEN " Yes" ELSE "No")
 
   tx1dnn_status("")
   tx1dnn_status("Install:")

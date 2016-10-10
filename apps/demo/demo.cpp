@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
       cv::Mat frame = output_stream->PopFrame().GetImage();
       if (display) {
         cv::imshow("Camera", frame);
-        char k = cv::waitKey(10);
+        int k = cv::waitKey(10);
         if (k == 'q') {
           break;
         }
@@ -103,16 +103,17 @@ int main(int argc, char *argv[]) {
     auto seg_stream = segmentation_processor.GetSinks()[0];
     auto img_stream = segmentation_processor.GetSinks()[1];
 
-    string user_input;
     while (true) {
       cv::Mat result = seg_stream->PopFrame().GetImage();
       cv::Mat frame = img_stream->PopFrame().GetImage();
-      if (display) {cv::imshow("Result", result);
+      if (display) {
+        cv::imshow("Result", result);
         cv::imshow("Camera", frame);
         int k = cv::waitKey(10);
         if (k == 'q') {
           break;
-        }}
+        }
+      }
     }
 
     segmentation_processor.Stop();
