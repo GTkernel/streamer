@@ -32,7 +32,7 @@ void Camera::CaptureLoop() {
   CHECK(opened_) << "Camera is not open yet";
   while (opened_) {
     cv::Mat frame = capture_.GetFrame();
-    stream_->PushFrame(std::shared_ptr<Frame>(new Frame(frame, frame)));
+    stream_->PushFrame(std::shared_ptr<ImageFrame>(new ImageFrame(frame, frame)));
   }
 }
 

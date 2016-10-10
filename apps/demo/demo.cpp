@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 
     auto output_stream = classification_processor.GetSinks()[0];
     while (true) {
-      cv::Mat image = output_stream->PopFrame()->GetImage();
+      cv::Mat image = output_stream->PopImageFrame()->GetImage();
       if (display) {
         cv::imshow("Camera", image);
         int k = cv::waitKey(10);
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     auto seg_stream = segmentation_processor.GetSinks()[0];
 
     while (true) {
-      auto frame = seg_stream->PopFrame();
+      auto frame = seg_stream->PopImageFrame();
       if (display) {
         cv::imshow("Result", frame->GetImage());
         cv::imshow("Camera", frame->GetOriginalImage());

@@ -59,7 +59,7 @@ void ImageClassificationProcessor::Process() {
   float *data = (float *)input_buffer_.GetBuffer();
   for (int i = 0; i < batch_size_; i++) {
     auto input_stream = sources_[i];
-    cv::Mat img = input_stream->PopFrame()->GetImage();
+    cv::Mat img = input_stream->PopImageFrame()->GetImage();
     CHECK(img.channels() == input_shape_.channel &&
           img.size[0] == input_shape_.width &&
           img.size[1] == input_shape_.height);
@@ -77,7 +77,7 @@ void ImageClassificationProcessor::Process() {
   double fps = 1000.0 / timer.ElapsedMSec();
 
   for (int i = 0; i < batch_size_; i++) {
-    auto frame = sources_[i]->PopFrame();
+    auto frame = sources_[i]->PopImageFrame();
     cv::Mat img = frame->GetOriginalImage().clone();
     double font_size = 0.8 * img.size[0] / 320.0;
     cv::putText(img, predictions[i][0].first.substr(10),
@@ -96,7 +96,7 @@ void ImageClassificationProcessor::Process() {
                 CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(200, 200, 250), 2,
                 CV_AA);
     frame->SetImage(img);
-    sinks_[i]->PushFrame(std::shared_ptr<Frame>(new Frame(img)));
+    sinks_[i]->PushFrame(frame);
     for (auto prediction : predictions[i]) {
       LOG(INFO) << prediction.first << " " << prediction.second;
     }

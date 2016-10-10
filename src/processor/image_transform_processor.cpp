@@ -12,8 +12,7 @@ ImageTransformProcessor::ImageTransformProcessor(
       crop_type_(crop_type),
       subtract_mean_(subtract_mean) {
   sources_.push_back(input_stream);
-  sinks_.emplace_back(new Stream());  // Transformed frame
-  sinks_.emplace_back(new Stream());  // Original frame
+  sinks_.emplace_back(new Stream());
 
   auto mean_colors = ModelManager::GetInstance().GetMeanColors();
   mean_image_ =
@@ -24,7 +23,7 @@ ImageTransformProcessor::ImageTransformProcessor(
 void ImageTransformProcessor::Process() {
   Timer timer;
   auto input_stream = sources_[0];
-  auto frame = input_stream->PopFrame();
+  auto frame = input_stream->PopImageFrame();
   cv::Mat img = frame->GetImage();
   timer.Start();
 
@@ -75,5 +74,4 @@ void ImageTransformProcessor::Process() {
   auto output_stream = sinks_[0];
   frame->SetImage(sample_normalized_);
   output_stream->PushFrame(frame);
-  sinks_[1]->PushFrame(std::shared_ptr<Frame>(new Frame(img)));
 }

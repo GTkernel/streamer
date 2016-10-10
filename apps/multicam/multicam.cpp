@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
       auto stream = classifier->GetSinks()[i];
-      cv::Mat image = stream->PopFrame()->GetImage();
+      cv::Mat image = stream->PopImageFrame()->GetImage();
       cv::imshow(camera_names[i], image);
     }
     int q = cv::waitKey(10);

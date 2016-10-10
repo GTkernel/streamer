@@ -25,6 +25,8 @@ class Stream {
    * @return The first frame in the series.
    */
   std::shared_ptr<Frame> PopFrame();
+  std::shared_ptr<ImageFrame> PopImageFrame();
+  std::shared_ptr<MetadataFrame> PopMDFrame();
   /**
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.

@@ -27,3 +27,12 @@ void Stream::PushFrame(std::shared_ptr<Frame> frame) {
   }
   stream_cv_.notify_all();
 }
+
+std::shared_ptr<ImageFrame> Stream::PopImageFrame() {
+  auto frame = PopFrame();
+  return std::dynamic_pointer_cast<ImageFrame>(frame);
+}
+std::shared_ptr<MetadataFrame> Stream::PopMDFrame() {
+  auto frame = PopFrame();
+  return std::dynamic_pointer_cast<MetadataFrame>(frame);
+}

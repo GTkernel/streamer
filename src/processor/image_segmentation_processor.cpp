@@ -41,7 +41,7 @@ void ImageSegmentationProcessor::Process() {
   Timer timer;
   timer.Start();
   auto input_stream = sources_[0];
-  auto frame = input_stream->PopFrame();
+  auto frame = input_stream->PopImageFrame();
   cv::Mat image = frame->GetImage();
   cv::Mat original_image = frame->GetOriginalImage();
 
