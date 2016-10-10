@@ -24,16 +24,16 @@ class Stream {
    * stream.
    * @return The first frame in the series.
    */
-  Frame PopFrame();
+  std::shared_ptr<Frame> PopFrame();
   /**
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.
    */
-  void PushFrame(const Frame &frame);
+  void PushFrame(std::shared_ptr<Frame> frame);
 
  private:
   int max_buffer_size_;
-  std::queue<Frame> frame_buffer_;
+  std::queue<std::shared_ptr<Frame>> frame_buffer_;
   std::mutex stream_lock_;
   std::condition_variable stream_cv_;
 };

@@ -14,7 +14,9 @@ class Frame {
   Frame(cv::Mat image);
   Shape GetSize();
   cv::Mat GetImage();
-  cv::Mat GetOriginalFrame();
+  cv::Mat GetOriginalImage();
+  void SetOriginalImage(cv::Mat original_image);
+  void SetImage(cv::Mat image);
  private:
   cv::Mat image_;
   cv::Mat original_image_;

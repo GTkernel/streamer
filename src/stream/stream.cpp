@@ -6,12 +6,12 @@
 
 Stream::Stream(int max_buffer_size) : max_buffer_size_(max_buffer_size) {}
 
-Frame Stream::PopFrame() {
+std::shared_ptr<Frame> Stream::PopFrame() {
   Timer timer;
   timer.Start();
   std::unique_lock<std::mutex> lk(stream_lock_);
   stream_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
-  Frame frame = frame_buffer_.front();
+  std::shared_ptr<Frame> frame = frame_buffer_.front();
   frame_buffer_.pop();
   DLOG(INFO) << "Waited for " << timer.ElapsedMSec()
              << " ms until frame available";
@@ -19,7 +19,7 @@ Frame Stream::PopFrame() {
   return frame;
 }
 
-void Stream::PushFrame(const Frame &frame) {
+void Stream::PushFrame(std::shared_ptr<Frame> frame) {
   std::lock_guard<std::mutex> lock(stream_lock_);
   frame_buffer_.push(frame);
   while (frame_buffer_.size() > max_buffer_size_) {

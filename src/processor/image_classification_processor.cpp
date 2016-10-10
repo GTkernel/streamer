@@ -8,19 +8,14 @@
 
 ImageClassificationProcessor::ImageClassificationProcessor(
     std::vector<std::shared_ptr<Stream>> input_streams,
-    std::vector<std::shared_ptr<Stream>> img_streams,
     const ModelDesc &model_desc, Shape input_shape)
     : model_desc_(model_desc), input_shape_(input_shape) {
-  CHECK(input_streams.size() == img_streams.size());
   batch_size_ = input_streams.size();
   LOG(INFO) << "batch size of " << batch_size_;
   for (auto stream : input_streams) {
     sources_.push_back(stream);
   }
-  for (auto stream : img_streams) {
-    sources_.push_back(stream);
-  }
-  for (int i = 0; i < img_streams.size(); i++) {
+  for (int i = 0; i < input_streams.size(); i++) {
     sinks_.emplace_back(new Stream);
   }
 }
@@ -64,17 +59,17 @@ void ImageClassificationProcessor::Process() {
   float *data = (float *)input_buffer_.GetBuffer();
   for (int i = 0; i < batch_size_; i++) {
     auto input_stream = sources_[i];
-    cv::Mat frame = input_stream->PopFrame().GetImage();
-    CHECK(frame.channels() == input_shape_.channel &&
-          frame.size[0] == input_shape_.width &&
-          frame.size[1] == input_shape_.height);
+    cv::Mat img = input_stream->PopFrame()->GetImage();
+    CHECK(img.channels() == input_shape_.channel &&
+          img.size[0] == input_shape_.width &&
+          img.size[1] == input_shape_.height);
     std::vector<cv::Mat> output_channels;
-    for (int i = 0; i < input_shape_.channel; i++) {
+    for (int j = 0; j < input_shape_.channel; j++) {
       cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
       output_channels.push_back(channel);
       data += input_shape_.width * input_shape_.height;
     }
-    cv::split(frame, output_channels);
+    cv::split(img, output_channels);
   }
 
   timer.Start();
@@ -82,31 +77,34 @@ void ImageClassificationProcessor::Process() {
   double fps = 1000.0 / timer.ElapsedMSec();
 
   for (int i = 0; i < batch_size_; i++) {
-    cv::Mat img = sources_[batch_size_ + i]->PopFrame().GetImage();
+    auto frame = sources_[i]->PopFrame();
+    cv::Mat img = frame->GetOriginalImage().clone();
     double font_size = 0.8 * img.size[0] / 320.0;
-     cv::putText(img, predictions[i][0].first.substr(10), cv::Point(img.rows / 3, img.cols / 3),
-                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(0, 0, 0), 12,
-                CV_AA);
-    cv::putText(img, predictions[i][0].first.substr(10), cv::Point(img.rows / 3, img.cols / 3),
-                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(200, 200, 250), 2,
-                CV_AA);
+    cv::putText(img, predictions[i][0].first.substr(10),
+                cv::Point(img.rows / 3, img.cols / 3), CV_FONT_HERSHEY_DUPLEX,
+                font_size, cvScalar(0, 0, 0), 12, CV_AA);
+    cv::putText(img, predictions[i][0].first.substr(10),
+                cv::Point(img.rows / 3, img.cols / 3), CV_FONT_HERSHEY_DUPLEX,
+                font_size, cvScalar(200, 200, 250), 2, CV_AA);
 
     char fps_string[256];
     sprintf(fps_string, "%.2lffps", fps);
     cv::putText(img, fps_string, cv::Point(img.rows / 3, img.cols / 6),
-                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(0,0,0), 12,
+                CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(0, 0, 0), 12,
                 CV_AA);
     cv::putText(img, fps_string, cv::Point(img.rows / 3, img.cols / 6),
                 CV_FONT_HERSHEY_DUPLEX, font_size, cvScalar(200, 200, 250), 2,
                 CV_AA);
-    sinks_[i]->PushFrame(img);
+    frame->SetImage(img);
+    sinks_[i]->PushFrame(std::shared_ptr<Frame>(new Frame(img)));
     for (auto prediction : predictions[i]) {
       LOG(INFO) << prediction.first << " " << prediction.second;
     }
   }
 }
 
-std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(int N) {
+std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(
+    int N) {
   Timer total_timer;
   Timer timer;
 

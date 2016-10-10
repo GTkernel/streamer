@@ -64,17 +64,16 @@ int main(int argc, char *argv[]) {
 
     auto model_desc = model_manager.GetModelDesc(model_name);
     ImageClassificationProcessor classification_processor(
-        {transform_processor.GetSinks()[0]},
-        {transform_processor.GetSinks()[1]}, model_desc, input_shape);
+        {transform_processor.GetSinks()[0]}, model_desc, input_shape);
 
     transform_processor.Start();
     classification_processor.Start();
 
     auto output_stream = classification_processor.GetSinks()[0];
     while (true) {
-      cv::Mat frame = output_stream->PopFrame().GetImage();
+      cv::Mat image = output_stream->PopFrame()->GetImage();
       if (display) {
-        cv::imshow("Camera", frame);
+        cv::imshow("Camera", image);
         int k = cv::waitKey(10);
         if (k == 'q') {
           break;
@@ -94,21 +93,18 @@ int main(int argc, char *argv[]) {
 
     auto model_desc = model_manager.GetModelDesc(model_name);
     ImageSegmentationProcessor segmentation_processor(
-        transform_processor.GetSinks()[0], transform_processor.GetSinks()[1],
-        model_desc, input_shape);
+        transform_processor.GetSinks()[0], model_desc, input_shape);
 
     transform_processor.Start();
     segmentation_processor.Start();
 
     auto seg_stream = segmentation_processor.GetSinks()[0];
-    auto img_stream = segmentation_processor.GetSinks()[1];
 
     while (true) {
-      cv::Mat result = seg_stream->PopFrame().GetImage();
-      cv::Mat frame = img_stream->PopFrame().GetImage();
+      auto frame = seg_stream->PopFrame();
       if (display) {
-        cv::imshow("Result", result);
-        cv::imshow("Camera", frame);
+        cv::imshow("Result", frame->GetImage());
+        cv::imshow("Camera", frame->GetOriginalImage());
         int k = cv::waitKey(10);
         if (k == 'q') {
           break;

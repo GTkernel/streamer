@@ -66,7 +66,6 @@ int main(int argc, char *argv[]) {
   // Processor
   Shape input_shape(3, 227, 227);
   std::vector<std::shared_ptr<Stream>> input_streams;
-  std::vector<std::shared_ptr<Stream>> img_streams;
   std::vector<std::shared_ptr<Processor>> processors;
 
   for (auto camera_stream : camera_streams) {
@@ -75,13 +74,12 @@ int main(int argc, char *argv[]) {
         true /* subtract mean */));
     processors.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSinks()[0]);
-    img_streams.push_back(transform_processor->GetSinks()[1]);
   }
 
   auto model_desc = model_manager.GetModelDesc(model_name);
-  std::shared_ptr<ImageClassificationProcessor> batch_classifier(
-      new ImageClassificationProcessor(input_streams, img_streams, model_desc, input_shape));
-  processors.push_back(batch_classifier);
+  std::shared_ptr<ImageClassificationProcessor> classifier(
+      new ImageClassificationProcessor(input_streams, model_desc, input_shape));
+  processors.push_back(classifier);
 
   for (string camera_name : camera_names) {
     cv::namedWindow(camera_name);
@@ -97,9 +95,9 @@ int main(int argc, char *argv[]) {
 
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
-      auto stream = batch_classifier->GetSinks()[i];
-      cv::Mat frame = stream->PopFrame().GetImage();
-      cv::imshow(camera_names[i], frame);
+      auto stream = classifier->GetSinks()[i];
+      cv::Mat image = stream->PopFrame()->GetImage();
+      cv::imshow(camera_names[i], image);
     }
     int q = cv::waitKey(10);
     if (q == 'q') break;

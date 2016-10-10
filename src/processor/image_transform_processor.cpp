@@ -4,7 +4,6 @@
 
 #include "image_transform_processor.h"
 #include <tx1dnn.h>
-#include "image_classification_processor.h"
 
 ImageTransformProcessor::ImageTransformProcessor(
     std::shared_ptr<Stream> input_stream, const Shape &target_shape,
@@ -25,7 +24,8 @@ ImageTransformProcessor::ImageTransformProcessor(
 void ImageTransformProcessor::Process() {
   Timer timer;
   auto input_stream = sources_[0];
-  cv::Mat img = input_stream->PopFrame().GetImage();
+  auto frame = input_stream->PopFrame();
+  cv::Mat img = frame->GetImage();
   timer.Start();
 
   int num_channel = target_shape_.channel, width = target_shape_.width,
@@ -72,8 +72,8 @@ void ImageTransformProcessor::Process() {
   // Normalize
   cv::subtract(sample_float_, mean_image_, sample_normalized_);
 
-  //  LOG(INFO) << "Transform in " << timer.ElapsedMSec() << " ms";
   auto output_stream = sinks_[0];
-  output_stream->PushFrame(sample_normalized_);
-  sinks_[1]->PushFrame(img);
+  frame->SetImage(sample_normalized_);
+  output_stream->PushFrame(frame);
+  sinks_[1]->PushFrame(std::shared_ptr<Frame>(new Frame(img)));
 }

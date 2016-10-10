@@ -3,6 +3,7 @@
 //
 
 #include "frame.h"
+#include <opencv2/core/core.hpp>
 
 Frame::Frame(cv::Mat image, cv::Mat original_image)
     : image_(image),
@@ -15,4 +16,12 @@ Frame::Frame(cv::Mat image)
 Shape Frame::GetSize() { return shape_; }
 
 cv::Mat Frame::GetImage() { return image_; }
-cv::Mat Frame::GetOriginalFrame() { return original_image_; }
+cv::Mat Frame::GetOriginalImage() { return original_image_; }
+
+void Frame::SetOriginalImage(cv::Mat original_image) {
+  original_image_ = original_image;
+}
+
+void Frame::SetImage(cv::Mat image) {
+  image_ = image;
+}
