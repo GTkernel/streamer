@@ -67,7 +67,6 @@ void CaffeModel<DType>::Load() {
 
   caffe::Blob<DType> *input_layer = net_->input_blobs()[0];
   // Adjust input dimensions
-  LOG(INFO) << input_shape_.width;
   input_layer->Reshape(batch_size_, input_shape_.channel, input_shape_.height,
                        input_shape_.width);
   // Forward dimension change to all layers.

@@ -82,8 +82,10 @@ int main(int argc, char *argv[]) {
       new ImageClassificationProcessor(input_streams, model_desc, input_shape));
   processors.push_back(classifier);
 
-  for (string camera_name : camera_names) {
-    cv::namedWindow(camera_name);
+  if (display) {
+    for (string camera_name : camera_names) {
+      cv::namedWindow(camera_name);
+    }
   }
 
   for (auto camera : cameras) {
@@ -105,33 +107,35 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < camera_names.size(); i++) {
       auto stream = classifier->GetSinks()[i];
       auto md_frame = stream->PopMDFrame();
-      cv::Mat img = md_frame->GetOriginalImage();
-      string label = md_frame->GetTag();
-      if (update_overlay == 1) {
-        label_to_show = label;
-        fps_to_show = fps;
+      if (display) {
+        cv::Mat img = md_frame->GetOriginalImage();
+        string label = md_frame->GetTag();
+        if (update_overlay == 1) {
+          label_to_show = label;
+          fps_to_show = fps;
+        }
+
+        double font_size = 0.8 * img.size[0] / 320.0;
+        cv::Point label_point(img.rows / 6, img.cols / 3);
+        cv::Scalar outline_color(0, 0, 0);
+        cv::Scalar label_color(200, 200, 250);
+
+        cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+                    font_size, outline_color, 8, CV_AA);
+        cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+                    font_size, label_color, 2, CV_AA);
+
+        cv::Point fps_point(img.rows / 3, img.cols / 6);
+
+        char fps_string[256];
+        sprintf(fps_string, "%.2lffps", fps_to_show);
+        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
+                    font_size, outline_color, 8, CV_AA);
+        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
+                    font_size, label_color, 2, CV_AA);
+
+        cv::imshow(camera_names[i], img);
       }
-
-      double font_size = 0.8 * img.size[0] / 320.0;
-      cv::Point label_point(img.rows / 6, img.cols / 3);
-      cv::Scalar outline_color(0, 0, 0);
-      cv::Scalar label_color(200, 200, 250);
-
-      cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
-                  font_size, outline_color, 8, CV_AA);
-      cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
-                  font_size, label_color, 2, CV_AA);
-
-      cv::Point fps_point(img.rows / 3, img.cols / 6);
-
-      char fps_string[256];
-      sprintf(fps_string, "%.2lffps", fps_to_show);
-      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
-                  outline_color, 8, CV_AA);
-      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
-                  label_color, 2, CV_AA);
-
-      cv::imshow(camera_names[i], img);
     }
     int q = cv::waitKey(10);
     if (q == 'q') break;

@@ -115,7 +115,7 @@ std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(
         Argmax(scores, model_->GetOutputShapes()[0].channel, N);
     std::vector<Prediction> predictions;
     for (int j = 0; j < N; ++j) {
-      int idx = maxN[i];
+      int idx = maxN[j];
       predictions.push_back(std::make_pair(labels_[idx], scores[idx]));
     }
     results.push_back(predictions);
