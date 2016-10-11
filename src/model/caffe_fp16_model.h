@@ -19,7 +19,7 @@ class CaffeFp16Model : public Model {
   typedef CAFFE_FP16_MTYPE MType;
 
  public:
-  CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape);
+  CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape, int batch_size);
   virtual void Load();
   virtual void Evaluate();
 

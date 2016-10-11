@@ -3,9 +3,10 @@
 //
 
 #include "caffe_fp16_model.h"
+#include "utils/utils.h"
 
-CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape)
-    : Model(model_desc, input_shape) {}
+CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape, int batch_size)
+    : Model(model_desc, input_shape, batch_size) {}
 
 void CaffeFp16Model::Load() {
 // Set Caffe backend
@@ -56,28 +57,31 @@ void CaffeFp16Model::Load() {
   caffe::Blob<DType, MType> *input_layer = net_->input_blobs()[0];
 
   // Adjust input dimensions
-  input_layer->Reshape(1, input_shape_.channel, input_shape_.height,
+  input_layer->Reshape(batch_size_, input_shape_.channel, input_shape_.height,
                        input_shape_.width);
 
   // Forward dimension change to all layers.
   net_->Reshape();
 
   // Prepare input buffer
-  input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float));
+  input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float) * batch_size_);
 }
 
 void CaffeFp16Model::Evaluate() {
   // Copy the input to half bit input
+  Timer timer;
+  timer.Start();
   if (sizeof(DType) == 2) {
     float *fp32data = (float *)input_buffer_.GetBuffer();
     caffe::Blob<DType, MType> *input_layer = net_->input_blobs()[0];
     DType *fp16data = (DType *)(input_layer->mutable_cpu_data());
 
-    size_t image_size = input_shape_.GetSize();
+    size_t image_size = input_shape_.GetSize() * batch_size_;
     for (size_t i = 0; i < image_size; i++) {
       fp16data[i] = caffe::Get<DType>(fp32data[i]);
     }
   }
+  LOG(INFO) << "transform input took " << timer.ElapsedMSec() << " ms";
 
   // Evaluate
   output_shapes_.clear();
@@ -91,18 +95,20 @@ void CaffeFp16Model::Evaluate() {
     Shape shape(output_blob->channels(), output_blob->width(),
                 output_blob->height());
     DataBuffer output_buffer;
+    timer.Start();
     if (sizeof(DType) == 2) {
-      output_buffer = DataBuffer(shape.GetSize() * sizeof(float));
+      output_buffer = DataBuffer(shape.GetSize() * sizeof(float) * batch_size_);
       float *fp32data = (float *)output_buffer.GetBuffer();
       DType *fp16data = output_blob->mutable_cpu_data();
-      size_t len = shape.GetSize();
+      size_t len = shape.GetSize() * batch_size_;
       for (size_t i = 0; i < len; i++) {
         fp32data[i] = caffe::Get<float>(fp16data[i]);
       }
     } else {
       output_buffer = DataBuffer(output_blob->mutable_cpu_data(),
-                                 shape.GetSize() * sizeof(float));
+                                 shape.GetSize() * sizeof(float) * batch_size_);
     }
+    LOG(INFO) << "transform output took " << timer.ElapsedMSec() << " ms";
 
     output_shapes_.push_back(shape);
     output_buffers_.push_back(output_buffer);
