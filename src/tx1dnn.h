@@ -5,4 +5,5 @@
 #include "processor/image_classification_processor.h"
 #include "processor/image_segmentation_processor.h"
 #include "processor/image_transform_processor.h"
+#include "processor/opencv_face_detector.h"
 #include "processor/processor.h"

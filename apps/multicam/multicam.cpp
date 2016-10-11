@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
       auto md_frame = stream->PopMDFrame();
       if (display) {
         cv::Mat img = md_frame->GetOriginalImage();
-        string label = md_frame->GetTag();
+        string label = md_frame->GetTags()[0];
         if (update_overlay == 1) {
           label_to_show = label;
           fps_to_show = fps;

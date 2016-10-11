@@ -32,24 +32,10 @@ cv::Mat ImageFrame::GetImage() { return image_; }
 void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
 FrameType Frame::GetType() { return frame_type_; }
 
-MetadataFrame::MetadataFrame(string tag) : Frame(FRAME_TYPE_MD), tag_(tag) {}
-MetadataFrame::MetadataFrame(float p1x, float p1y, float p2x, float p2y)
-    : Frame(FRAME_TYPE_MD) {
-  bbox_[0] = p1x;
-  bbox_[1] = p1y;
-  bbox_[2] = p2x;
-  bbox_[3] = p2y;
-}
+MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image)
+    : Frame(FRAME_TYPE_IMAGE, original_image), tags_(tags) {}
+MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
+    : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {}
 
-MetadataFrame::MetadataFrame(string tag, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), tag_(tag) {}
-MetadataFrame::MetadataFrame(float p1x, float p1y, float p2x, float p2y,
-                             cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image) {
-  bbox_[0] = p1x;
-  bbox_[1] = p1y;
-  bbox_[2] = p2x;
-  bbox_[3] = p2y;
-}
-string MetadataFrame::GetTag() { return tag_; }
-const float *MetadataFrame::GetBbox() { return bbox_; }
+std::vector<string> MetadataFrame::GetTags() { return tags_; }
+std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }

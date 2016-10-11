@@ -84,7 +84,7 @@ void ImageClassificationProcessor::Process() {
     cv::Mat img = frame->GetOriginalImage();
     string predict_label = predictions[i][0].first;
     std::shared_ptr<MetadataFrame> output_frame(
-        new MetadataFrame(predict_label, img));
+        new MetadataFrame({predict_label}, img));
     sinks_[i]->PushFrame(output_frame);
     for (auto prediction : predictions[i]) {
       LOG(INFO) << prediction.first << " " << prediction.second;

@@ -39,17 +39,14 @@ class ImageFrame : public Frame {
 class MetadataFrame : public Frame {
  public:
   MetadataFrame() = delete;
-  MetadataFrame(string tag);
-  MetadataFrame(float p1x, float p1y, float p2x, float p2y);
-  MetadataFrame(string tag, cv::Mat original_image);
-  MetadataFrame(float p1x, float p1y, float p2x, float p2y,
-                cv::Mat original_image);
-  string GetTag();
-  const float *GetBbox();
+  MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
+  MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
+  std::vector<string> GetTags();
+  std::vector<Rect> GetBboxes();
 
  private:
-  string tag_;
-  float bbox_[4];
+  std::vector<string> tags_;
+  std::vector<Rect> bboxes_;
 };
 
 #endif  // TX1DNN_FRAME_H

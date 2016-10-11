@@ -33,6 +33,7 @@ class Stream {
    * @param frwame The frame to be pushed into the stream.
    */
   void PushFrame(std::shared_ptr<Frame> frame);
+  void PushFrame(Frame *frame);
   void SetName(const string &name) { name_ = name; }
   string GetName() { return name_; }
 

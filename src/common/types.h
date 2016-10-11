@@ -33,6 +33,19 @@ struct Shape {
 };
 
 /**
+ * @brief Rectangle
+ */
+struct Rect {
+  Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
+  // The top left point of the rectangle
+  int px;
+  int py;
+  // The width and height of the rectangle
+  int width;
+  int height;
+};
+
+/**
  * @brief Prediction result, a string label and a confidence score
  */
 typedef std::pair<std::string, float> Prediction;

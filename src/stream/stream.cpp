@@ -39,3 +39,6 @@ std::shared_ptr<MetadataFrame> Stream::PopMDFrame() {
   auto frame = PopFrame();
   return std::dynamic_pointer_cast<MetadataFrame>(frame);
 }
+void Stream::PushFrame(Frame *frame) {
+  PushFrame(std::shared_ptr<Frame>(frame));
+}
