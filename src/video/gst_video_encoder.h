@@ -44,6 +44,7 @@ class GstVideoEncoder : public Processor {
   GstPipeline *gst_pipeline_;
   GstAppSrc *gst_appsrc_;
   GstCaps *gst_caps_;
+  GMainLoop *g_main_loop_;
 
   // States
   bool need_data_;

@@ -10,7 +10,7 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
                                  const string &output_filename)
     : width_(width),
       height_(height),
-      frame_size_bytes_(width * height * 12),
+      frame_size_bytes_(width * height * 3),
       output_filename_(output_filename),
       need_data_(false) {
   sources_.push_back(input_stream);
@@ -18,7 +18,6 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
 
 void GstVideoEncoder::NeedDataCB(GstAppSrc *appsrc, guint size,
                                  gpointer user_data) {
-  DLOG(INFO) << "Received need data signal";
   if (user_data == nullptr) return;
 
   GstVideoEncoder *encoder = (GstVideoEncoder *)user_data;
@@ -36,12 +35,11 @@ void GstVideoEncoder::EnoughDataCB(GstAppSrc *appsrc, gpointer user_data) {
 string GstVideoEncoder::BuildPipelineString() {
   std::ostringstream ss;
   ss << "appsrc name=" << ENCODER_SRC_NAME << " ! "
-     //     << "videoconvert ! x264enc ! "
-     << "videoconvert ! vtenc_h264 ! "
-     //          << "omxh264enc quality-level=2 ! "
-     //     << "fakesink  ";
+     // << "videoconvert ! x264enc ! " => ubuntu
+     << "videoconvert ! capsfilter caps=video/x-raw,framerate=30/1 ! "
+        "vtenc_h264 ! "
+     // << "omxh264enc quality-level=2 ! " => tegra
      << "qtmux ! filesink location=" << output_filename_;
-  //     << "videoconvert ! autovideosink";
 
   DLOG(INFO) << "Encoder pipeline is " << ss.str();
 
@@ -51,7 +49,7 @@ string GstVideoEncoder::BuildPipelineString() {
 string GstVideoEncoder::BuildCapsString() {
   std::ostringstream ss;
   ss << "video/x-raw,format=(string)BGR,width=" << width_
-     << ",height=" << height_ << ",framerate=30/1";
+     << ",height=" << height_ << ",framerate=(fraction)30/1";
 
   DLOG(INFO) << "Encoder caps string is " << ss.str();
 
@@ -65,6 +63,8 @@ bool GstVideoEncoder::Init() {
     return false;
   }
 
+  g_main_loop_ = g_main_loop_new(NULL, FALSE);
+
   // Build Gst pipeline
   GError *err = nullptr;
   string pipeline_str = BuildPipelineString();
@@ -75,8 +75,6 @@ bool GstVideoEncoder::Init() {
     LOG(ERROR) << err->message;
     g_error_free(err);
     return false;
-  } else {
-    LOG(INFO) << "Pipeline launched";
   }
 
   if (gst_pipeline_ == nullptr) {
@@ -112,13 +110,17 @@ bool GstVideoEncoder::Init() {
     return false;
   }
 
-  gst_app_src_set_caps(gst_appsrc_, gst_caps_);
+  gst_app_src_set_caps(
+      gst_appsrc_,
+      gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "BGR",
+                          "width", G_TYPE_INT, 640, "height", G_TYPE_INT, 480,
+                          "framerate", GST_TYPE_FRACTION, 30, 1, NULL));
 
-  //  gst_app_src_set_size(gst_appsrc_, G_MAXINT64);
-  gst_app_src_set_max_bytes(gst_appsrc_, (size_t)(width_ * height_ * 48));
-  gst_app_src_set_stream_type(gst_appsrc_, GST_APP_STREAM_TYPE_STREAM);
-  //  g_object_set(G_OBJECT(gst_appsrc_), "stream-type", 0, "format",
-  //               GST_FORMAT_TIME, NULL);
+  g_object_set(G_OBJECT(gst_appsrc_), "stream-type", 0, "format",
+               GST_FORMAT_TIME, NULL);
+
+  //  gst_app_src_set_max_bytes(gst_appsrc_, G_MAXINT64);
+  //  gst_app_src_set_stream_type(gst_appsrc_, GST_APP_STREAM_TYPE_STREAM);
   GstAppSrcCallbacks callbacks;
   callbacks.enough_data = GstVideoEncoder::EnoughDataCB;
   callbacks.need_data = GstVideoEncoder::NeedDataCB;
@@ -144,20 +146,18 @@ bool GstVideoEncoder::OnStop() {
 
   need_data_ = false;
   LOG(INFO) << "Stopping gstreamer pipeline";
-  GstFlowReturn flow_ret = gst_app_src_end_of_stream(gst_appsrc_);
-
-  LOG(INFO) << "Flow ret is " << flow_ret;
+  gst_app_src_end_of_stream(gst_appsrc_);
 
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   GstStateChangeReturn ret =
       gst_element_set_state(GST_ELEMENT(gst_pipeline_), GST_STATE_NULL);
 
-  LOG(INFO) << "Gst state change return " << ret;
-
   if (ret != GST_STATE_CHANGE_SUCCESS) {
     LOG(ERROR) << "GStreamer failed to stop the pipeline";
   }
+
+  LOG(INFO) << "Pipeline stopped";
 
   return true;
 }
@@ -171,12 +171,27 @@ void GstVideoEncoder::Process() {
     return;
   }
 
-  DLOG(INFO) << "Push buffer of size " << frame_size_bytes_;
-  GstBuffer *buffer = gst_buffer_new_wrapped(
-      input_frame->GetOriginalImage().data, (size_t)frame_size_bytes_);
+  DLOG(INFO) << "Send buffer";
+
+  static int frame_no = 125;
+  static GstClockTime timestamp = 0;
+  cv::Mat fake_data(480, 640, CV_8UC3, cv::Scalar(frame_no % 255));
+  frame_no += 1;
+
+  size_t image_size = fake_data.rows * fake_data.cols * 3;
+  GstBuffer *buffer = gst_buffer_new_allocate(NULL, image_size, NULL);
+
+  gst_buffer_fill(buffer, 0, fake_data.data, image_size);
+  buffer = gst_buffer_new_wrapped(input_frame->GetOriginalImage().data, image_size);
+  GST_BUFFER_PTS(buffer) = timestamp;
+  GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 30);
+  timestamp += GST_BUFFER_DURATION(buffer);
+
+
 
   GstFlowReturn ret;
   g_signal_emit_by_name(gst_appsrc_, "push-buffer", buffer, &ret);
+  //  gst_buffer_unref(buffer);
 
   if (ret != 0) {
     LOG(INFO) << "gstreamer -- appsrc pushed buffer (" << ret << ")";
