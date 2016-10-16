@@ -86,7 +86,7 @@ First you need to config your cameras and models. In your build directory, there
 2. Edit `config/cameras.toml`, you need to fill the `name` of the camera, and the `video_uri` of the camera. `video_uri` could be
     * `rtsp://xxx`: An rtsp endpoint.
     * `facetime`: The iSight camera available on Mac.
-    * `gst://xxx`: xxx could be any raw GStreamer video pipeline, as long as the pipleine emits valid video frames. For example `videotestsrc`
+    * `gst://xxx`: xxx could be any raw GStreamer video pipeline, as long as the pipleine emits valid video frames. For example `gst://videotestsrc`. streamer uses GStreamer heavily for video ingestion, please refer to https://gstreamer.freedesktop.org/ for more information.
     
     
 #### Configure models

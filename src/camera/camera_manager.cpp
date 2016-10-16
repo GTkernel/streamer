@@ -26,8 +26,6 @@ CameraManager::CameraManager() {
     string name = camera_value.get<string>("name");
     string video_uri = camera_value.get<string>("video_uri");
     std::shared_ptr<Camera> camera(new Camera(name, video_uri));
-    LOG(INFO) << "Camera - name: " << name << " "
-              << "uri: " << video_uri;
     cameras_.emplace(name, camera);
   }
 }

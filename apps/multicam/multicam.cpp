@@ -111,6 +111,7 @@ int main(int argc, char *argv[]) {
           fps_to_show = fps;
         }
 
+        // Overlay FPS label and classification label
         double font_size = 0.8 * img.size[0] / 320.0;
         cv::Point label_point(img.rows / 6, img.cols / 3);
         cv::Scalar outline_color(0, 0, 0);

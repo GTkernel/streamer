@@ -12,5 +12,5 @@ input_width = 227
 input_height = 227
 label_file = "/path/to/caffe/data/ilsvrc12/synset_words.txt" # Optional
 
-[[model]]
+# [[model]]
 # Your other models

@@ -12,7 +12,8 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
       height_(height),
       frame_size_bytes_(width * height * 3),
       output_filename_(output_filename),
-      need_data_(false) {
+      need_data_(false),
+      timestamp_(0) {
   sources_.push_back(input_stream);
 }
 
@@ -35,10 +36,8 @@ void GstVideoEncoder::EnoughDataCB(GstAppSrc *appsrc, gpointer user_data) {
 string GstVideoEncoder::BuildPipelineString() {
   std::ostringstream ss;
   ss << "appsrc name=" << ENCODER_SRC_NAME << " ! "
-     // << "videoconvert ! x264enc ! " => ubuntu
-     << "videoconvert ! capsfilter caps=video/x-raw,framerate=30/1 ! "
-        "vtenc_h264 ! "
-     // << "omxh264enc quality-level=2 ! " => tegra
+     << "videoconvert ! "
+     << "vtenc_h264 ! "  // x264enc => ubuntu, omxh264enc => Tegra
      << "qtmux ! filesink location=" << output_filename_;
 
   DLOG(INFO) << "Encoder pipeline is " << ss.str();
@@ -110,17 +109,11 @@ bool GstVideoEncoder::Init() {
     return false;
   }
 
-  gst_app_src_set_caps(
-      gst_appsrc_,
-      gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "BGR",
-                          "width", G_TYPE_INT, 640, "height", G_TYPE_INT, 480,
-                          "framerate", GST_TYPE_FRACTION, 30, 1, NULL));
-
+  gst_app_src_set_caps(gst_appsrc_,
+                       gst_caps_from_string(BuildCapsString().c_str()));
   g_object_set(G_OBJECT(gst_appsrc_), "stream-type", 0, "format",
                GST_FORMAT_TIME, NULL);
 
-  //  gst_app_src_set_max_bytes(gst_appsrc_, G_MAXINT64);
-  //  gst_app_src_set_stream_type(gst_appsrc_, GST_APP_STREAM_TYPE_STREAM);
   GstAppSrcCallbacks callbacks;
   callbacks.enough_data = GstVideoEncoder::EnoughDataCB;
   callbacks.need_data = GstVideoEncoder::NeedDataCB;
@@ -142,13 +135,16 @@ bool GstVideoEncoder::Init() {
 }
 
 bool GstVideoEncoder::OnStop() {
+  // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);
 
   need_data_ = false;
   LOG(INFO) << "Stopping gstreamer pipeline";
   gst_app_src_end_of_stream(gst_appsrc_);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  const int WAIT_UNTIL_EOS_SENT_MS = 200;
+  std::this_thread::sleep_for(
+      std::chrono::milliseconds(WAIT_UNTIL_EOS_SENT_MS));
 
   GstStateChangeReturn ret =
       gst_element_set_state(GST_ELEMENT(gst_pipeline_), GST_STATE_NULL);
@@ -165,44 +161,31 @@ bool GstVideoEncoder::OnStop() {
 void GstVideoEncoder::Process() {
   auto input_frame = sources_[0]->PopImageFrame();
 
+  // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);
 
-  if (!need_data_) {
-    return;
-  }
+  if (!need_data_) return;
 
-  DLOG(INFO) << "Send buffer";
-
-  static int frame_no = 125;
-  static GstClockTime timestamp = 0;
-  cv::Mat fake_data(480, 640, CV_8UC3, cv::Scalar(frame_no % 255));
-  frame_no += 1;
-
-  size_t image_size = fake_data.rows * fake_data.cols * 3;
-  GstBuffer *buffer = gst_buffer_new_allocate(NULL, image_size, NULL);
-
-  gst_buffer_fill(buffer, 0, fake_data.data, image_size);
-  buffer = gst_buffer_new_wrapped(input_frame->GetOriginalImage().data, image_size);
-  GST_BUFFER_PTS(buffer) = timestamp;
+  // Give PTS to the buffer
+  GstBuffer *buffer = gst_buffer_new_wrapped(
+      input_frame->GetOriginalImage().data, frame_size_bytes_);
+  GST_BUFFER_PTS(buffer) = timestamp_;
   GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 30);
-  timestamp += GST_BUFFER_DURATION(buffer);
-
-
+  timestamp_ += GST_BUFFER_DURATION(buffer);
 
   GstFlowReturn ret;
   g_signal_emit_by_name(gst_appsrc_, "push-buffer", buffer, &ret);
-  //  gst_buffer_unref(buffer);
 
   if (ret != 0) {
-    LOG(INFO) << "gstreamer -- appsrc pushed buffer (" << ret << ")";
+    LOG(INFO) << "Encoder -- appsrc can't push buffer, ret code (" << ret
+              << ")";
   }
 
+  // Poll messages from the bus
   while (true) {
     GstMessage *msg = gst_bus_pop(gst_bus_);
 
-    if (!msg) {
-      break;
-    }
+    if (!msg) break;
 
     DLOG(INFO) << "Get message, type=" << GST_MESSAGE_TYPE_NAME(msg);
 
@@ -217,7 +200,7 @@ void GstVideoEncoder::Process() {
         gst_message_parse_error(msg, &error, &debug);
         g_free(debug);
 
-        g_printerr("GST error: %s\n", error->message);
+        DLOG(INFO) << "GST error: %s\n", error->message;
         g_error_free(error);
         break;
       }
@@ -235,10 +218,10 @@ void GstVideoEncoder::Process() {
         GstState old_state, new_state;
 
         gst_message_parse_state_changed(msg, &old_state, &new_state, NULL);
-        g_print("Element %s changed state from %s to %s.\n",
-                GST_OBJECT_NAME(msg->src),
-                gst_element_state_get_name(old_state),
-                gst_element_state_get_name(new_state));
+        DLOG(INFO) << "Element " << GST_OBJECT_NAME(msg->src)
+                   << " changed state from "
+                   << gst_element_state_get_name(old_state) << " to "
+                   << gst_element_state_get_name(new_state);
         break;
       }
       case GST_MESSAGE_STREAM_STATUS:

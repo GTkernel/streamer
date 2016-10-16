@@ -36,6 +36,7 @@ class GstVideoEncoder : public Processor {
   // Video attributes
   int width_;
   int height_;
+  // Frame size in bytes
   int frame_size_bytes_;
   string output_filename_;
 
@@ -48,6 +49,8 @@ class GstVideoEncoder : public Processor {
 
   // States
   bool need_data_;
+  // Timestamp used to generate frame presentation timestamp, PTS.
+  GstClockTime timestamp_;
 
   // Lock
   std::mutex encoder_lock_;
