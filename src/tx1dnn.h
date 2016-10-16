@@ -7,3 +7,4 @@
 #include "processor/image_transform_processor.h"
 #include "processor/opencv_face_detector.h"
 #include "processor/processor.h"
+#include "video/gst_video_encoder.h"

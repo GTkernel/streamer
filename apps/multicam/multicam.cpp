@@ -69,18 +69,24 @@ int main(int argc, char *argv[]) {
   std::vector<std::shared_ptr<Stream>> input_streams;
   std::vector<std::shared_ptr<Processor>> processors;
 
-  for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformProcessor(
-        camera_stream, input_shape, CROP_TYPE_CENTER,
-        true /* subtract mean */));
-    processors.push_back(transform_processor);
-    input_streams.push_back(transform_processor->GetSinks()[0]);
-  }
+//  for (auto camera_stream : camera_streams) {
+//    std::shared_ptr<Processor> transform_processor(new ImageTransformProcessor(
+//        camera_stream, input_shape, CROP_TYPE_CENTER,
+//        true /* subtract mean */));
+//    processors.push_back(transform_processor);
+//    input_streams.push_back(transform_processor->GetSinks()[0]);
+//  }
 
-  auto model_desc = model_manager.GetModelDesc(model_name);
-  std::shared_ptr<ImageClassificationProcessor> classifier(
-      new ImageClassificationProcessor(input_streams, model_desc, input_shape));
-  processors.push_back(classifier);
+  // auto model_desc = model_manager.GetModelDesc(model_name);
+  // std::shared_ptr<ImageClassificationProcessor> classifier(
+  //     new ImageClassificationProcessor(input_streams, model_desc,
+  //     input_shape));
+  // processors.push_back(classifier);
+
+  // Encoder
+  std::shared_ptr<GstVideoEncoder> encoder(
+      new GstVideoEncoder(cameras[0]->GetStream(), 640, 480, "test.mp4"));
+  processors.push_back(encoder);
 
   if (display) {
     for (string camera_name : camera_names) {
@@ -103,54 +109,58 @@ int main(int argc, char *argv[]) {
   Timer timer;
   double fps = 0.0;
   while (true) {
-    timer.Start();
-    for (int i = 0; i < camera_names.size(); i++) {
-      auto stream = classifier->GetSinks()[i];
-      auto md_frame = stream->PopMDFrame();
-      if (display) {
-        cv::Mat img = md_frame->GetOriginalImage();
-        string label = md_frame->GetTags()[0];
-        if (update_overlay == 1) {
-          label_to_show = label;
-          fps_to_show = fps;
-        }
+    std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+    break;
+    // timer.Start();
+    // for (int i = 0; i < camera_names.size(); i++) {
+    //   auto stream = classifier->GetSinks()[i];
+    //   auto md_frame = stream->PopMDFrame();
+    //   if (display) {
+    //     cv::Mat img = md_frame->GetOriginalImage();
+    //     string label = md_frame->GetTags()[0];
+    //     if (update_overlay == 1) {
+    //       label_to_show = label;
+    //       fps_to_show = fps;
+    //     }
 
-        double font_size = 0.8 * img.size[0] / 320.0;
-        cv::Point label_point(img.rows / 6, img.cols / 3);
-        cv::Scalar outline_color(0, 0, 0);
-        cv::Scalar label_color(200, 200, 250);
+    //     double font_size = 0.8 * img.size[0] / 320.0;
+    //     cv::Point label_point(img.rows / 6, img.cols / 3);
+    //     cv::Scalar outline_color(0, 0, 0);
+    //     cv::Scalar label_color(200, 200, 250);
 
-        cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, outline_color, 8, CV_AA);
-        cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, label_color, 2, CV_AA);
+    //     cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+    //                 font_size, outline_color, 8, CV_AA);
+    //     cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+    //                 font_size, label_color, 2, CV_AA);
 
-        cv::Point fps_point(img.rows / 3, img.cols / 6);
+    //     cv::Point fps_point(img.rows / 3, img.cols / 6);
 
-        char fps_string[256];
-        sprintf(fps_string, "%.2lffps", fps_to_show);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, outline_color, 8, CV_AA);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, label_color, 2, CV_AA);
+    //     char fps_string[256];
+    //     sprintf(fps_string, "%.2lffps", fps_to_show);
+    //     cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
+    //                 font_size, outline_color, 8, CV_AA);
+    //     cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
+    //                 font_size, label_color, 2, CV_AA);
 
-        cv::imshow(camera_names[i], img);
-      }
-    }
-    int q = cv::waitKey(10);
-    if (q == 'q') break;
-    update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
+    //     cv::imshow(camera_names[i], img);
+    //   }
+    // }
+    // int q = cv::waitKey(10);
+    // if (q == 'q') break;
+    // update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
 
-    double latency = timer.ElapsedMSec();
-    fps = 1000.0 / latency;
+    // double latency = timer.ElapsedMSec();
+    // fps = 1000.0 / latency;
+  }
+
+  LOG(INFO) << "Done";
+
+  for (auto processor : processors) {
+    processor->Stop();
   }
 
   for (auto camera : cameras) {
     camera->Stop();
-  }
-
-  for (auto processor : processors) {
-    processor->Stop();
   }
 
   cv::destroyAllWindows();

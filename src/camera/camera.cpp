@@ -27,6 +27,7 @@ bool Camera::Start() {
 bool Camera::Stop() {
   opened_ = false;
   capture_thread_->join();
+  capture_.DestroyPipeline();
 
   return true;
 }

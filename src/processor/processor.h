@@ -17,7 +17,7 @@
 class Processor {
  public:
   Processor();
-  Processor(std::vector<std::shared_ptr<Stream>> sources);
+  Processor(std::vector<StreamPtr> sources, std::vector<StreamPtr> sinks);
   /**
    * @brief Start processing, drain frames from sources and send output to
    * sinks.
@@ -34,19 +34,19 @@ class Processor {
    */
   std::vector<std::shared_ptr<Stream>> GetSinks();
 
+  bool IsStarted();
+
  protected:
   /**
    * @brief Initialize the processor.
    */
-  virtual bool Init();
-  virtual bool OnStop();
+  virtual bool Init() = 0;
+  virtual bool OnStop() = 0;
   virtual void Process() = 0;
   void ProcessorLoop();
   std::vector<std::shared_ptr<Stream>> sources_;
   std::vector<std::shared_ptr<Stream>> sinks_;
   std::thread process_thread_;
-
- private:
   bool stopped_;
 };
 

@@ -5,6 +5,7 @@
 #include "gst_video_capture.h"
 #include <gst/app/gstappsink.h>
 #include <thread>
+#include <gst/gstmemory.h>
 #include "utils/string_utils.h"
 /************************
 * GStreamer callbacks ***
@@ -61,6 +62,14 @@ void GstVideoCapture::CheckBuffer() {
   CHECK_NE(original_size_.area(), 0)
       << "Capture should have got frame size information but not";
   cv::Mat frame(original_size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
+  char *mat_data = (char *)frame.data;
+  for (int i = 0; i < original_size_.area(); i++) {
+    CHECK(mat_data[i] == ((char *)map.data)[i]);
+  }
+
+  CHECK(frame.size[1] == original_size_.width);
+  CHECK(frame.size[0] == original_size_.height);
+
 
   // Push the frame
   {

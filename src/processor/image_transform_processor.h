@@ -17,7 +17,10 @@ class ImageTransformProcessor : public Processor {
                           const Shape &target_shape, CropType crop_type,
                           bool subtract_mean = true);
 
-  virtual void Process();
+  virtual void Process() override;
+ protected:
+  virtual bool Init() override;
+  virtual bool OnStop() override;
 
  private:
   Shape target_shape_;

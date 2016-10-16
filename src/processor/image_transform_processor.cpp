@@ -75,3 +75,10 @@ void ImageTransformProcessor::Process() {
   frame->SetImage(sample_normalized_);
   output_stream->PushFrame(frame);
 }
+
+bool ImageTransformProcessor::Init() {
+  return true;
+}
+bool ImageTransformProcessor::OnStop() {
+  return true;
+}

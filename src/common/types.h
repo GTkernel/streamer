@@ -7,6 +7,8 @@
 
 #include <cstdlib>
 #include <string>
+#include <memory>
+
 
 #ifdef USE_FP16
 #include <driver_types.h>
@@ -49,6 +51,9 @@ struct Rect {
  * @brief Prediction result, a string label and a confidence score
  */
 typedef std::pair<std::string, float> Prediction;
+
+class Stream;
+typedef std::shared_ptr<Stream> StreamPtr;
 
 //// Model types
 enum ModelType {

@@ -6,8 +6,8 @@
 
 Processor::Processor() : stopped_(true) {}
 
-Processor::Processor(std::vector<std::shared_ptr<Stream>> sources)
-    : sources_(sources), stopped_(true) {}
+Processor::Processor(std::vector<std::shared_ptr<Stream>> sources, std::vector<StreamPtr> sinks)
+    : sources_(sources), sinks_(sinks), stopped_(true) {}
 
 bool Processor::Start() {
   LOG(INFO) << "Start called";
@@ -20,9 +20,10 @@ bool Processor::Start() {
 bool Processor::Stop() {
   CHECK(!stopped_) << "Processor not started yet";
   stopped_ = true;
+  bool result = OnStop();
   process_thread_.join();
 
-  return OnStop();
+  return result;
 }
 
 void Processor::ProcessorLoop() {
@@ -34,5 +35,6 @@ void Processor::ProcessorLoop() {
 
 std::vector<std::shared_ptr<Stream>> Processor::GetSinks() { return sinks_; }
 
-bool Processor::Init() { return true; }
-bool Processor::OnStop() { return true; }
+bool Processor::IsStarted() {
+  return !stopped_;
+}

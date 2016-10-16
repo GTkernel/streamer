@@ -16,8 +16,8 @@ std::shared_ptr<Frame> Stream::PopFrame() {
   stream_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
   std::shared_ptr<Frame> frame = frame_buffer_.front();
   frame_buffer_.pop();
-  LOG(INFO) << "Stream[" << name_ << "] waited for " << timer.ElapsedMSec()
-            << " ms until frame available";
+  // LOG(INFO) << "Stream[" << name_ << "] waited for " << timer.ElapsedMSec()
+  //           << " ms until frame available";
 
   return frame;
 }
