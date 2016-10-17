@@ -14,6 +14,8 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
+  // Init streamer context
+  Context::GetContext().Init();
 
   if (argc != 5) {
     std::cout << argv[0] << " - Image segmentation example\n";

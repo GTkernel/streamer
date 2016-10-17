@@ -15,6 +15,8 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
+  // Init streamer context
+  Context::GetContext().Init();
 
   if (string(argv[1]) == "-h" || argc < 2) {
     std::cerr << "THIS IS WORK IN PROGRESS\n";

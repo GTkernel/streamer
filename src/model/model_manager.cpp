@@ -4,6 +4,7 @@
 
 #include "model_manager.h"
 #include "common/common.h"
+#include "common/context.h"
 #include "utils/utils.h"
 
 #ifdef USE_CAFFE

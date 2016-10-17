@@ -99,6 +99,9 @@ First you need to config your cameras and models. In your build directory, there
     * `input_width`: The suggested width of the input image.
     * `input_height`: The suggested height of the input image.
     * `label_file`: this is optional. For classification network or other network that requires a label file to produce a string label, you may add the path to that file here.
+
+#### Configure encoders and decoders
+The default configuration uses software encoder and decoder, to specify other decoders and encoders available on the system, edit `config/config.toml.example`.
     
     
 #### Run the classification demo    

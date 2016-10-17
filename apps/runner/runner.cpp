@@ -4,13 +4,9 @@
  * stats and video frames to local storage.
  */
 
-#include "camera/camera_manager.h"
-#include "common/common.h"
 #include "cxxopts/cxxopts.hpp"
 #include "linenoise/linenoise.h"
-#include "model/model_manager.h"
-#include "stream/stream.h"
-#include "utils/string_utils.h"
+#include "tx1dnn.h"
 
 #include <boost/algorithm/string.hpp>
 #include <thread>
@@ -144,6 +140,8 @@ int main(int argc, char *argv[]) {
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
   FLAGS_minloglevel = 0;
+  // Init streamer context
+  Context::GetContext().Init();
   // Set up linenoise to read command
   char *charline;
   linenoiseSetMultiLine(1);

@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
+  // Init streamer context
+  Context::GetContext().Init();
 
   if (argc < 4) {
     std::cout << argv[0] << " - multi-camera classification example\n"
