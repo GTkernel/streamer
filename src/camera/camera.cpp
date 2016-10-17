@@ -4,10 +4,13 @@
 
 #include "camera.h"
 
-Camera::Camera(const string &name, const string &video_uri)
+Camera::Camera(const string &name, const string &video_uri, int width,
+               int height)
     : name_(name),
       video_uri_(video_uri),
       opened_(false),
+      width_(width),
+      height_(height),
       stream_(new Stream(name)) {}
 
 string Camera::GetName() const { return name_; }
@@ -16,8 +19,11 @@ string Camera::GetVideoURI() const { return video_uri_; }
 
 bool Camera::Start() {
   if (opened_) return true;
+
   opened_ = capture_.CreatePipeline(video_uri_);
+
   if (!opened_) {
+    LOG(INFO) << "can't open camera";
     return false;
   }
 
@@ -40,5 +46,8 @@ void Camera::CaptureLoop() {
         std::shared_ptr<ImageFrame>(new ImageFrame(frame, frame)));
   }
 }
+
+int Camera::GetWidth() { return width_; }
+int Camera::GetHeight() { return height_; }
 
 std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }

@@ -15,20 +15,27 @@
 class Camera {
  public:
   Camera(){};
-  Camera(const string &name, const string &video_uri);
+  Camera(const string &name, const string &video_uri, int width = -1,
+         int height = -1);  // Just a nonsense default value
   string GetName() const;
   string GetVideoURI() const;
   std::shared_ptr<Stream> GetStream() const;
   bool Start();
   bool Stop();
+  int GetWidth();
+  int GetHeight();
 
  private:
   void CaptureLoop();
   string name_;
   string video_uri_;
+  int width_;
+  int height_;
   bool opened_;
+  // The thread that is always fetching data from the capture
   std::unique_ptr<std::thread> capture_thread_;
   GstVideoCapture capture_;
+  // Camera outout stream
   std::shared_ptr<Stream> stream_;
 };
 

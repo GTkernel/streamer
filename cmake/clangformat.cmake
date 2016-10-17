@@ -7,7 +7,6 @@ foreach (SOURCE_FILE ${ALL_SOURCE_FILES})
   endif ()
 endforeach ()
 
-message(-style=${PROJECT_SOURCE_DIR}/.clang-format)
 add_custom_target(clangformat
   COMMAND
   clang-format

@@ -26,7 +26,15 @@ CameraManager::CameraManager() {
   for (const auto &camera_value : cameras_value) {
     string name = camera_value.get<string>("name");
     string video_uri = camera_value.get<string>("video_uri");
-    std::shared_ptr<Camera> camera(new Camera(name, video_uri));
+    int width = -1;
+    int height = -1;
+    if (camera_value.find("width") != nullptr) {
+      width = camera_value.get<int>("width");
+    }
+    if (camera_value.find("height") != nullptr) {
+      height = camera_value.get<int>("height");
+    }
+    std::shared_ptr<Camera> camera(new Camera(name, video_uri, width, height));
     cameras_.emplace(name, camera);
   }
 }

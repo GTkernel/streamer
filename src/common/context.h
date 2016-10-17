@@ -69,8 +69,8 @@ class Context {
       return encoder;
     } else if (IsGstElementExists("vtenc_h264")) {
       return "vtenc_h264";
-    } else if (IsGstElementExists("omxh264dec")) {
-      return "omxh264dec";
+    } else if (IsGstElementExists("omxh264enc")) {
+      return "omxh264enc";
     } else if (IsGstElementExists("x264enc")) {
       return "x264enc";
     } else if (IsGstElementExists("vaapih264enc")) {
@@ -129,8 +129,6 @@ class Context {
 
     string_values_.insert({H264_ENCODER_GST_ELEMENT, encoder_element});
     string_values_.insert({H264_DECODER_GST_ELEMENT, decoder_element});
-
-    LOG(INFO) << "Here";
   }
 
  private:

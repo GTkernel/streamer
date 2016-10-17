@@ -51,6 +51,9 @@ int main(int argc, char *argv[]) {
   camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
 
+  LOG(INFO) << "Camera image size: " << camera->GetWidth() << "x"
+            << camera->GetHeight();
+
   // Encoder
   encoder = std::shared_ptr<Processor>(
       new GstVideoEncoder(camera_stream, 640, 480, dst_file));

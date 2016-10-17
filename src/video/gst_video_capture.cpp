@@ -273,6 +273,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   }
 
   GstCaps *caps = gst_sample_get_caps(sample);
+  gst_sample_unref(sample);
   gchar *caps_str = gst_caps_to_string(caps);
   GstStructure *structure = gst_caps_get_structure(caps, 0);
   int width, height;
@@ -288,11 +289,10 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
 
   this->original_size_ = cv::Size(width, height);
   this->caps_string_ = std::string(caps_str);
+  g_free(caps_str);
   this->pipeline_ = (GstPipeline *)pipeline;
   this->appsink_ = sink;
   this->connected_ = true;
-  g_free(caps_str);
-  gst_sample_unref(sample);
 
   // Set callbacks
   if (gst_element_change_state(pipeline, GST_STATE_CHANGE_PLAYING_TO_PAUSED) ==

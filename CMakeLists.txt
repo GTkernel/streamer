@@ -134,7 +134,6 @@ endif ()
 # Copy config.example files, if corresponding config file is not there, cp toml.example to .toml
 file(GLOB EXAMPLE_CONFIG_FILES ${PROJECT_SOURCE_DIR}/config/*.toml.example)
 foreach (f ${EXAMPLE_CONFIG_FILES})
-  message(${f})
   get_filename_component(basename ${f} NAME_WE)
   get_filename_component(dir ${f} DIRECTORY)
   file(COPY ${f} DESTINATION config)
