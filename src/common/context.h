@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 #include "common.h"
-using std::string;
+#include "utils/utils.h"
 
 const string H264_ENCODER_GST_ELEMENT = "h264_encoder_gst_element";
 const string H264_DECODER_GST_ELEMENT = "h264_decoder_gst_element";
@@ -64,20 +64,73 @@ class Context {
   }
 
  private:
+  string ValidateEncoderElement(const string &encoder) {
+    if (IsGstElementExists(encoder)) {
+      return encoder;
+    } else if (IsGstElementExists("vtenc_h264")) {
+      return "vtenc_h264";
+    } else if (IsGstElementExists("omxh264dec")) {
+      return "omxh264dec";
+    } else if (IsGstElementExists("x264enc")) {
+      return "x264enc";
+    } else if (IsGstElementExists("vaapih264enc")) {
+      return "vaapih264enc";
+    }
+
+    LOG(WARNING) << "No known gst encoder element exists on the system";
+
+    return "INVALID_ENCODER";
+  }
+
+  string ValidateDecoderElement(const string &decoder) {
+    if (IsGstElementExists(decoder)) {
+      return decoder;
+    } else if (IsGstElementExists("avdec_h264")) {
+      return "avdec_h264";
+    } else if (IsGstElementExists("omxh264dec")) {
+      return "omxh264dec";
+    }
+
+    LOG(WARNING) << "No known gst decoder element exists on the system";
+
+    return "INVALID_DECODER";
+  }
   /**
    * @brief Helper to initialze the context
    */
   void GetEncoderDecoderInformation() {
-    auto root_value = ParseTomlFromFile(GetConfigFile("config.toml"));
+    string config_file = GetConfigFile("config.toml");
+
+    auto root_value = ParseTomlFromFile(config_file);
     auto encoder_value = root_value.find("encoder");
     auto decoder_value = root_value.find("decoder");
 
-    string_values_.insert(
-        {H264_ENCODER_GST_ELEMENT,
-         encoder_value->get<string>(H264_ENCODER_GST_ELEMENT)});
-    string_values_.insert(
-        {H264_DECODER_GST_ELEMENT,
-         decoder_value->get<string>(H264_DECODER_GST_ELEMENT)});
+    string encoder_element =
+        encoder_value->get<string>(H264_ENCODER_GST_ELEMENT);
+    string decoder_element =
+        decoder_value->get<string>(H264_DECODER_GST_ELEMENT);
+
+    string validated_encoder_element = ValidateEncoderElement(encoder_element);
+    string validated_decoder_element = ValidateDecoderElement(decoder_element);
+
+    if (validated_encoder_element != encoder_element) {
+      LOG(WARNING) << "Using encoder " << validated_encoder_element
+                   << " instead of " << encoder_element
+                   << " from configuration";
+      encoder_element = validated_encoder_element;
+    }
+
+    if (validated_decoder_element != decoder_element) {
+      LOG(WARNING) << "using decoder " << validated_decoder_element
+                   << " instead of " << decoder_element
+                   << " from configuration";
+      decoder_element = validated_decoder_element;
+    }
+
+    string_values_.insert({H264_ENCODER_GST_ELEMENT, encoder_element});
+    string_values_.insert({H264_DECODER_GST_ELEMENT, decoder_element});
+
+    LOG(INFO) << "Here";
   }
 
  private:

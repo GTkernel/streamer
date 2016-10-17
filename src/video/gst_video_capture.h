@@ -48,6 +48,8 @@ class GstVideoCapture {
   std::condition_variable capture_cv_;
   std::deque<cv::Mat> frames_;
   bool connected_;
+
+  string decoder_element_;
 };
 
 #endif  // TX1_DNN_GSTVIDEOCAPTURE_H

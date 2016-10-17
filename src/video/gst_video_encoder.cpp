@@ -3,6 +3,7 @@
 //
 
 #include "gst_video_encoder.h"
+#include "common/context.h"
 
 const static char *ENCODER_SRC_NAME = "encoder_src";
 
@@ -15,6 +16,8 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
       need_data_(false),
       timestamp_(0) {
   sources_.push_back(input_stream);
+  // Encoder
+  encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }
 
 void GstVideoEncoder::NeedDataCB(GstAppSrc *appsrc, guint size,
@@ -36,8 +39,7 @@ void GstVideoEncoder::EnoughDataCB(GstAppSrc *appsrc, gpointer user_data) {
 string GstVideoEncoder::BuildPipelineString() {
   std::ostringstream ss;
   ss << "appsrc name=" << ENCODER_SRC_NAME << " ! "
-     << "videoconvert ! "
-     << "vtenc_h264 ! "  // x264enc => ubuntu, omxh264enc => Tegra
+     << "videoconvert ! " << encoder_element_ << " ! "
      << "qtmux ! filesink location=" << output_filename_;
 
   DLOG(INFO) << "Encoder pipeline is " << ss.str();

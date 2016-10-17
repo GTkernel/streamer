@@ -4,9 +4,6 @@
 
 #include "tx1dnn.h"
 
-CameraManager &camera_manager = CameraManager::GetInstance();
-ModelManager &model_manager = ModelManager::GetInstance();
-
 int main(int argc, char *argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
@@ -14,8 +11,11 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Init streamer context
+  // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
+
+  CameraManager &camera_manager = CameraManager::GetInstance();
+  ModelManager &model_manager = ModelManager::GetInstance();
 
   if (argc != 5) {
     std::cout << argv[0] << " - Image segmentation example\n";

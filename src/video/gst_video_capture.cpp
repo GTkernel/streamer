@@ -4,9 +4,10 @@
 
 #include "gst_video_capture.h"
 #include <gst/app/gstappsink.h>
-#include <thread>
 #include <gst/gstmemory.h>
-#include "utils/string_utils.h"
+#include <thread>
+#include "common/context.h"
+#include "utils/utils.h"
 /************************
 * GStreamer callbacks ***
 ************************/
@@ -70,7 +71,6 @@ void GstVideoCapture::CheckBuffer() {
   CHECK(frame.size[1] == original_size_.width);
   CHECK(frame.size[0] == original_size_.height);
 
-
   // Push the frame
   {
     std::lock_guard<std::mutex> guard(capture_lock_);
@@ -104,7 +104,10 @@ void GstVideoCapture::CheckBus() {
  * @brief Initialize the capture with a uri. Only supports rtsp protocol now.
  */
 GstVideoCapture::GstVideoCapture()
-    : appsink_(nullptr), pipeline_(nullptr), connected_(false) {}
+    : appsink_(nullptr), pipeline_(nullptr), connected_(false) {
+  // Get decoder element
+  decoder_element_ = Context::GetContext().GetString(H264_DECODER_GST_ELEMENT);
+}
 
 GstVideoCapture::~GstVideoCapture() {
   if (connected_) {
@@ -205,9 +208,8 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
         "caps=video/"
         "x-raw,width=(int)640,height=(int)480,framerate=(fraction)30/1 ";
   } else if (video_uri.substr(0, 7) == "rtsp://") {
-    video_pipeline = "rtspsrc location=\"" + video_uri +
-                     "\""
-                     " ! rtph264depay ! h264parse ! omxh264dec";
+    video_pipeline = "rtspsrc location=\"" + video_uri + "\"" +
+                     " ! rtph264depay ! h264parse ! " + decoder_element_;
   } else if (StartsWith(video_uri, "gst://")) {
     LOG(WARNING) << "Directly use gst pipeline as video pipeline";
     video_pipeline = video_uri.substr(6);
@@ -222,7 +224,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
                              "! capsfilter caps=video/x-raw,format=(string)BGR "
                              "! appsink name=sink sync=true")
                                 .c_str());
-  LOG(INFO) << "Video pipeline: " << descr;
+  LOG(INFO) << "Capture video pipeline: " << descr;
 
   GError *error = NULL;
 

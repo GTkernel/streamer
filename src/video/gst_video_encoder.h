@@ -54,6 +54,9 @@ class GstVideoEncoder : public Processor {
 
   // Lock
   std::mutex encoder_lock_;
+
+  // Encoder to use
+  string encoder_element_;
 };
 
 #endif  // TX1DNN_GST_VIDEO_ENCODER_H

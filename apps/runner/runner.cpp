@@ -15,14 +15,13 @@ using std::cout;
 using std::endl;
 
 //// Global vars
-CameraManager &camera_manager = CameraManager::GetInstance();
-ModelManager &model_manager = ModelManager::GetInstance();
 std::unordered_map<string, std::shared_ptr<Stream>> streams;
 
 //// Macros
 #define CMD_HISTORY_PATH ".cmd_history"
 
 void ListCameras() {
+  CameraManager &camera_manager = CameraManager::GetInstance();
   for (auto &itr : camera_manager.GetCameras()) {
     cout << "Camera: " << itr.second->GetName() << endl
          << "-- URI: " << itr.second->GetVideoURI() << endl;
@@ -30,6 +29,7 @@ void ListCameras() {
 }
 
 void ListModels() {
+  ModelManager &model_manager = ModelManager::GetInstance();
   for (auto &itr : model_manager.GetModelDescs()) {
     cout << "Model: " << itr.first << endl
          << "-- desc_path: " << itr.second.GetModelDescPath() << endl
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
   FLAGS_minloglevel = 0;
-  // Init streamer context
+  // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
   // Set up linenoise to read command
   char *charline;

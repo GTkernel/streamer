@@ -8,15 +8,15 @@
 using std::cout;
 using std::endl;
 
-CameraManager &camera_manager = CameraManager::GetInstance();
-
 int main(int argc, char *argv[]) {
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Init streamer context
+  // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
+
+  CameraManager &camera_manager = CameraManager::GetInstance();
 
   if (string(argv[1]) == "-h" || argc < 2) {
     std::cerr << "THIS IS WORK IN PROGRESS\n";
