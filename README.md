@@ -1,17 +1,17 @@
-## tx1dnn
+## streamer
 
 [![GitHub license](https://img.shields.io/badge/license-apache-green.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Build Status](https://travis-ci.com/ranxian/tx1dnn.svg?token=QaYrj2g7p1xx7VjDqDzv&branch=master)](https://travis-ci.com/ranxian/tx1dnn)
+[![Build Status](https://travis-ci.com/ranxian/streamer.svg?token=QaYrj2g7p1xx7VjDqDzv&branch=master)](https://travis-ci.com/ranxian/streamer)
 
-This is a playground for running DNN on NVIDIA's TX1 platform. The simplest thing it can do right now is to consume live video frames from a camera and run your favorite neural network on the frames.
+This is a playground for running DNN on nowdays powerful heterogeneous embedded platform. The simplest thing it can do right now is to consume live video frames from a camera and run your favorite neural network on the frames.
 
-tx1dnn currently supports Caffe, Caffe FP16 (NVIDIA's fork), MXNet, TensorFlow, TensorRT (former GIE). I'm trying hard to compile TensorFlow on TX1.
+tx1dnn currently supports Caffe, Caffe FP16 (NVIDIA's fork), Caffe OpenCL, MXNet, TensorRT (former GIE from NVIDIA).
 
 ## Get Started
 
 ### Dependencies
 
-You may want to install various deep learning frameworks (Caffe, TensorFlow, etc.). You can refer to their documentation on how to install them on your platform. Here I will only include minimal requirements to successfully build the project.
+You may want to install various deep learning frameworks (Caffe, MXNet, etc.). You can refer to their documentation on how to install them on your platform. Here I will only include minimal requirements to successfully build the project.
 
 #### 1. Mac
 
@@ -65,7 +65,7 @@ sudo make install
 
 ### Compile
 
-* `git clone https://github.com/ranxian/tx1dnn`
+* `git clone https://github.com/ranxian/streamer`
 * `mkdir build`
 * `cd build`
 * `cmake -DCMAKE_BUILD_TYPE=Release -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true -DBACKEND=cuda ..` (this is an example of building with Caffe)
@@ -77,9 +77,9 @@ To run unit tests:
 
 ### Run demo
 
-This is an example of running classification network in Caffe.
+This is an example of running classification network in Caffe with multiple camera streams.
 
-First you need to config your cameras and models. In your build directory, there should be a `config` directory.
+First you need to configure your cameras and models. In your build directory, there should be a `config` directory.
 
 #### Configure cameras
 1. `cp config/cameras.toml.example config/cameras.toml`
@@ -115,7 +115,7 @@ apps/multicam CAMERA[,CAMERA2[,...]] MODEL DISPLAY?
 * `MODEL` is the name of the model.
 * `DISPLAY?` is either true: enable preview, or false.
 
-Use `apps/classify -h` to show helps.
+Use `apps/multicam` to show helps.
 
 ## Run with different frameworks
 
