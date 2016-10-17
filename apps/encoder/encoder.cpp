@@ -2,7 +2,19 @@
  * @brief encoder.cpp - An example application showing the usage of encoder.
  */
 
+#include <csignal>
 #include "tx1dnn.h"
+
+std::shared_ptr<Camera> camera;
+std::shared_ptr<Processor> encoder;
+
+void singal_handler(int signal) {
+  std::cout << "Received SIGINT, stop encoder" << std::endl;
+  encoder->Stop();
+  camera->Stop();
+
+  exit(0);
+}
 
 int main(int argc, char *argv[]) {
   // FIXME: Use more standard arg parse routine.
@@ -13,6 +25,8 @@ int main(int argc, char *argv[]) {
   FLAGS_colorlogtostderr = 1;
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
+
+  std::signal(SIGINT, singal_handler);
 
   CameraManager &camera_manager = CameraManager::GetInstance();
 
@@ -34,20 +48,20 @@ int main(int argc, char *argv[]) {
   CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
                                                << " does not exist";
 
-  auto camera = camera_manager.GetCamera(camera_name);
+  camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
 
   // Encoder
-  GstVideoEncoder encoder(camera_stream, 640, 480, dst_file);
+  encoder = std::shared_ptr<Processor>(
+      new GstVideoEncoder(camera_stream, 640, 480, dst_file));
 
   camera->Start();
-
-  encoder.Start();
+  encoder->Start();
 
   std::cout << "Press any key to stop" << std::endl;
   getchar();
 
-  encoder.Stop();
+  encoder->Stop();
   camera->Stop();
 
   return 0;
