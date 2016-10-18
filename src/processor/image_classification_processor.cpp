@@ -61,8 +61,7 @@ void ImageClassificationProcessor::Process() {
   std::vector<std::shared_ptr<ImageFrame>> image_frames;
   float *data = (float *)input_buffer_.GetBuffer();
   for (int i = 0; i < batch_size_; i++) {
-    auto input_stream = sources_[i];
-    auto image_frame = input_stream->PopImageFrame();
+    auto image_frame = PopImageFrame(i);
     image_frames.push_back(image_frame);
     cv::Mat img = image_frame->GetImage();
     CHECK(img.channels() == input_shape_.channel &&
@@ -83,9 +82,7 @@ void ImageClassificationProcessor::Process() {
     auto frame = image_frames[i];
     cv::Mat img = frame->GetOriginalImage();
     string predict_label = predictions[i][0].first;
-    std::shared_ptr<MetadataFrame> output_frame(
-        new MetadataFrame({predict_label}, img));
-    sinks_[i]->PushFrame(output_frame);
+    PushFrame(i, new MetadataFrame({predict_label}, img));
     for (auto prediction : predictions[i]) {
       LOG(INFO) << prediction.first << " " << prediction.second;
     }

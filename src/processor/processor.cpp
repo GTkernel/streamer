@@ -37,17 +37,26 @@ void Processor::ProcessorLoop() {
   CHECK(Init()) << "Processor is not able to be initialized";
   Timer timer;
   while (!stopped_) {
+    // Cache source freames
+    source_frame_cache_.clear();
+    for (auto &stream : sources_) {
+      source_frame_cache_.push_back(stream->PopFrame());
+    }
+
     timer.Start();
     Process();
     double latency = timer.ElapsedMSec();
-    latencies_.push(latency);
-    latency_sum_ += latency;
-    while (latencies_.size() > SLIDING_WINDOW_SIZE) {
-      double oldest_latency = latencies_.front();
-      latency_sum_ -= oldest_latency;
-      latencies_.pop();
+    {
+      // Calculate latency
+      latencies_.push(latency);
+      latency_sum_ += latency;
+      while (latencies_.size() > SLIDING_WINDOW_SIZE) {
+        double oldest_latency = latencies_.front();
+        latency_sum_ -= oldest_latency;
+        latencies_.pop();
+      }
+      latency_ = latency_sum_ / SLIDING_WINDOW_SIZE;
     }
-    latency_ = latency_sum_ / SLIDING_WINDOW_SIZE;
   }
 }
 
@@ -58,3 +67,23 @@ bool Processor::IsStarted() { return !stopped_; }
 double Processor::GetLatencyMs() { return latency_; }
 
 double Processor::GetFps() { return 1000.0 / latency_; }
+
+std::shared_ptr<ImageFrame> Processor::PopImageFrame(int src_id) {
+  CHECK(src_id < sources_.size());
+  return std::dynamic_pointer_cast<ImageFrame>(source_frame_cache_[src_id]);
+}
+
+std::shared_ptr<MetadataFrame> Processor::PopMDFrame(int src_id) {
+  CHECK(src_id < sources_.size());
+  return std::dynamic_pointer_cast<MetadataFrame>(source_frame_cache_[src_id]);
+}
+
+std::shared_ptr<Frame> Processor::PopFrame(int src_id) {
+  CHECK(src_id < sources_.size());
+  return source_frame_cache_[src_id];
+}
+
+void Processor::PushFrame(int sink_id, Frame *frame) {
+  CHECK(sink_id < sinks_.size());
+  sinks_[sink_id]->PushFrame(frame);
+}

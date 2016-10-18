@@ -10,9 +10,9 @@ class ImageSegmentationProcessor : public Processor {
                              const ModelDesc &model_desc, Shape input_shape);
 
  protected:
-  virtual bool Init();
-  virtual bool OnStop();
-  virtual void Process();
+  virtual bool Init() override;
+  virtual bool OnStop() override;
+  virtual void Process() override;
 
  private:
   DataBuffer input_buffer_;

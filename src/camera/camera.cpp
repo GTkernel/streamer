@@ -36,7 +36,7 @@ bool Camera::OnStop() {
 
 void Camera::Process() {
   cv::Mat frame = capture_.GetFrame();
-  stream_->PushFrame(std::shared_ptr<ImageFrame>(new ImageFrame(frame, frame)));
+  PushFrame(0, new ImageFrame(frame, frame));
 }
 
 int Camera::GetWidth() { return width_; }

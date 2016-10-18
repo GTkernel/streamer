@@ -59,11 +59,29 @@ class Processor {
    * @brief Initialize the processor.
    */
   virtual bool Init() = 0;
+  /**
+   * @brief Called after Prcessor#Stop() is called, do any clean up in this
+   * method.
+   * @return [description]
+   */
   virtual bool OnStop() = 0;
+  /**
+   * @brief Fetch one frame from sources_ and process them.
+   *
+   * @input_frames A list of input frames feteched from sources_.
+   * @return A list of output frames.
+   */
   virtual void Process() = 0;
+
+  std::shared_ptr<ImageFrame> PopImageFrame(int src_id);
+  std::shared_ptr<MetadataFrame> PopMDFrame(int src_id);
+  std::shared_ptr<Frame> PopFrame(int src_id);
+  void PushFrame(int sink_id, Frame *frame);
+
   void ProcessorLoop();
-  std::vector<std::shared_ptr<Stream>> sources_;
-  std::vector<std::shared_ptr<Stream>> sinks_;
+  std::vector<std::shared_ptr<Frame>> source_frame_cache_;
+  std::vector<StreamPtr> sources_;
+  std::vector<StreamPtr> sinks_;
   std::thread process_thread_;
   bool stopped_;
 

@@ -40,8 +40,7 @@ void ImageSegmentationProcessor::Process() {
   // Do image segmentation
   Timer timer;
   timer.Start();
-  auto input_stream = sources_[0];
-  auto frame = input_stream->PopImageFrame();
+  auto frame = PopImageFrame(0);
   cv::Mat image = frame->GetImage();
   cv::Mat original_image = frame->GetOriginalImage();
 
@@ -94,8 +93,6 @@ void ImageSegmentationProcessor::Process() {
   cv::resize(colored_output, colored_output,
              cv::Size(original_image.cols, original_image.rows));
 
-  auto output_stream = sinks_[0];
-  frame->SetImage(colored_output);
-  output_stream->PushFrame(frame);
+  PushFrame(0, new ImageFrame(colored_output, frame->GetOriginalImage()));
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }

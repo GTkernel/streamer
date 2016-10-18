@@ -22,8 +22,7 @@ ImageTransformProcessor::ImageTransformProcessor(
 
 void ImageTransformProcessor::Process() {
   Timer timer;
-  auto input_stream = sources_[0];
-  auto frame = input_stream->PopImageFrame();
+  auto frame = PopImageFrame(0);
   cv::Mat img = frame->GetImage();
   timer.Start();
 
@@ -71,14 +70,8 @@ void ImageTransformProcessor::Process() {
   // Normalize
   cv::subtract(sample_float_, mean_image_, sample_normalized_);
 
-  auto output_stream = sinks_[0];
-  frame->SetImage(sample_normalized_);
-  output_stream->PushFrame(frame);
+  PushFrame(0, new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
 }
 
-bool ImageTransformProcessor::Init() {
-  return true;
-}
-bool ImageTransformProcessor::OnStop() {
-  return true;
-}
+bool ImageTransformProcessor::Init() { return true; }
+bool ImageTransformProcessor::OnStop() { return true; }

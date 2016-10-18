@@ -58,6 +58,13 @@ void RunClassificationExperiment() {
       new ImageClassificationProcessor(input_streams, model_desc, input_shape));
   processors.push_back(classifier);
 
+  // encoder, encode the first stream
+  std::shared_ptr<GstVideoEncoder> encoder(
+      new GstVideoEncoder(classifier->GetSinks()[0], cameras[0]->GetWidth(),
+                          cameras[0]->GetHeight(), "test.mp4"));
+
+  processors.push_back(encoder);
+
   for (auto camera : cameras) {
     camera->Start();
   }
@@ -79,18 +86,21 @@ void RunClassificationExperiment() {
     }
   }
 
-  for (auto processor : processors) {
-    processor->Stop();
+  for (int i = processors.size(); i-- > 0;) {
+    processors[i]->Stop();
   }
 
   for (auto camera : cameras) {
     camera->Stop();
   }
 
+  std::remove("test.mp4");
+
   /////////////// PRINT STATS
   cout << "-- camera fps is " << cameras[0]->GetFps() << endl;
   cout << "-- transformer fps is " << processors[0]->GetFps() << endl;
   cout << "-- classifier fps is " << classifier->GetFps() << endl;
+  cout << "-- encoder fps is " << encoder->GetFps() << endl;
 }
 
 int main(int argc, char *argv[]) {

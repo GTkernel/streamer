@@ -111,8 +111,7 @@ bool GstVideoEncoder::Init() {
     return false;
   }
 
-  gst_app_src_set_caps(gst_appsrc_,
-                       gst_caps_from_string(BuildCapsString().c_str()));
+  gst_app_src_set_caps(gst_appsrc_, gst_caps_);
   g_object_set(G_OBJECT(gst_appsrc_), "stream-type", 0, "format",
                GST_FORMAT_TIME, NULL);
 
@@ -161,7 +160,7 @@ bool GstVideoEncoder::OnStop() {
 }
 
 void GstVideoEncoder::Process() {
-  auto input_frame = sources_[0]->PopImageFrame();
+  auto input_frame = PopFrame(0);
 
   // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);
