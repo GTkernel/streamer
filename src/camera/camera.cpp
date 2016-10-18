@@ -8,43 +8,35 @@ Camera::Camera(const string &name, const string &video_uri, int width,
                int height)
     : name_(name),
       video_uri_(video_uri),
-      opened_(false),
       width_(width),
       height_(height),
-      stream_(new Stream(name)) {}
+      stream_(new Stream(name)) {
+  sinks_.push_back(stream_);
+}
 
 string Camera::GetName() const { return name_; }
 
 string Camera::GetVideoURI() const { return video_uri_; }
 
-bool Camera::Start() {
-  if (opened_) return true;
+bool Camera::Init() {
+  bool opened = capture_.CreatePipeline(video_uri_);
 
-  opened_ = capture_.CreatePipeline(video_uri_);
-
-  if (!opened_) {
+  if (!opened) {
     LOG(INFO) << "can't open camera";
     return false;
   }
 
-  capture_thread_.reset(new std::thread(&Camera::CaptureLoop, this));
   return true;
 }
-bool Camera::Stop() {
-  opened_ = false;
-  capture_thread_->join();
+
+bool Camera::OnStop() {
   capture_.DestroyPipeline();
-
   return true;
 }
 
-void Camera::CaptureLoop() {
-  CHECK(opened_) << "Camera is not open yet";
-  while (opened_) {
-    cv::Mat frame = capture_.GetFrame();
-    stream_->PushFrame(
-        std::shared_ptr<ImageFrame>(new ImageFrame(frame, frame)));
-  }
+void Camera::Process() {
+  cv::Mat frame = capture_.GetFrame();
+  stream_->PushFrame(std::shared_ptr<ImageFrame>(new ImageFrame(frame, frame)));
 }
 
 int Camera::GetWidth() { return width_; }

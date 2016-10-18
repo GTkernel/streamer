@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   auto camera_stream = camera->GetStream();
 
   Shape input_shape(3, 250, 250);
-  ImageTransformProcessor transform_processor = ImageTransformProcessor(
+  ImageTransformProcessor transform_processor(
       camera_stream, input_shape, CROP_TYPE_CENTER, true /* subtract mean */);
 
   auto model_desc = model_manager.GetModelDesc(model_name);

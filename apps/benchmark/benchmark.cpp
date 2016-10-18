@@ -86,6 +86,11 @@ void RunClassificationExperiment() {
   for (auto camera : cameras) {
     camera->Stop();
   }
+
+  /////////////// PRINT STATS
+  cout << "-- camera fps is " << cameras[0]->GetFps() << endl;
+  cout << "-- transformer fps is " << processors[0]->GetFps() << endl;
+  cout << "-- classifier fps is " << classifier->GetFps() << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -134,7 +139,6 @@ int main(int argc, char *argv[]) {
   }
 
   if (vm.count("verbose")) {
-    cout << "verbose" << endl;
     verbose = true;
   }
 

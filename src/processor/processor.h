@@ -5,6 +5,7 @@
 #ifndef TX1DNN_PROCESSOR_H
 #define TX1DNN_PROCESSOR_H
 
+#include <atomic>
 #include <thread>
 #include "common/common.h"
 #include "stream/stream.h"
@@ -34,7 +35,24 @@ class Processor {
    */
   std::vector<std::shared_ptr<Stream>> GetSinks();
 
+  /**
+   * @brief Check if the processor has started.
+   * @return True if processor has started.
+   */
   bool IsStarted();
+
+  /**
+   * @brief Get sliding window average latency of the processor.
+   * @return Latency in ms
+   */
+  double GetLatencyMs();
+
+  /**
+   * @brief Get processing speed of the processor, measured in frames / sec. It
+   * is simply computed as 1000.0 / GetLatencyMs().
+   * @return FPS of the processor.
+   */
+  double GetFps();
 
  protected:
   /**
@@ -48,6 +66,11 @@ class Processor {
   std::vector<std::shared_ptr<Stream>> sinks_;
   std::thread process_thread_;
   bool stopped_;
+
+  // Process latency, sliding window average of 10 samples;
+  std::queue<double> latencies_;
+  double latency_sum_;
+  std::atomic<double> latency_;
 };
 
 #endif  // TX1DNN_PROCESSOR_H
