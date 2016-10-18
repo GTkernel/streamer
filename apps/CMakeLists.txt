@@ -1,4 +1,7 @@
 # Macro to get sub directories
+
+# find_package(Boost)
+
 MACRO(SUBDIRLIST result curdir)
   FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
   SET(dirlist "")
@@ -20,7 +23,7 @@ foreach (app_dir ${APP_DIRS})
   if (JEMALLOC_FOUND)
     target_link_libraries(${basename} ${JAMALLOC_LIBRARIES})
   endif ()
-  target_link_libraries(${basename} tx1dnn)
+  target_link_libraries(${basename} tx1dnn ${Boost_PROGRAM_OPTIONS_LIBRARY})
   install(TARGETS ${basename} DESTINATION apps)
 endforeach ()
 
