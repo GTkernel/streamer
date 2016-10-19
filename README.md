@@ -5,7 +5,7 @@
 
 This is a playground for running DNN on nowdays powerful heterogeneous embedded platform. The simplest thing it can do right now is to consume live video frames from a camera and run your favorite neural network on the frames.
 
-tx1dnn currently supports Caffe, Caffe FP16 (NVIDIA's fork), Caffe OpenCL, MXNet, TensorRT (former GIE from NVIDIA).
+streamer currently supports Caffe, Caffe FP16 (NVIDIA's fork), Caffe OpenCL, MXNet, TensorRT (former GIE from NVIDIA).
 
 ## Get Started
 
@@ -133,10 +133,10 @@ Currently we support BVLC caffe, Caffe's OpenCL branch, NVIDIA caffe (including 
     * `mkdir build`
     * `cmake ..`, check that `-DCPU_ONLY=off` if you want to use OpenCL
     * `make -j && make install`, built targets should be in `build/install`
-    * Then build `tx1dnn` with `cmake -DCAFFE_HOME=/path/to/opencl-caffe -DBACKEND=opencl`
+    * Then build `streamer` with `cmake -DCAFFE_HOME=/path/to/opencl-caffe -DBACKEND=opencl`
 * NVDIA fp16 Caffe
 	* Installation: install from https://github.com/NVIDIA/caffe/tree/experimental/fp16
-	* Build with: `cmake -DCAFFE_HOME=/path/to/fp16caffe -DUSE_CAFFE=true -DUSE_FP16=true ..`
+	* Build with: `cmake -DCAFFE_HOME=/path/to/fp16caffe -DUSE_CAFFE=true -DUSE_FP16=true -DBACKEND=cuda ..`
 * GIE
 	* Installation: Apply through NVIDIA developer program: https://developer.nvidia.com/tensorrt
 	* Build with: `cmake -DGIE_HOME=/path/to/gie -DUSE_GIE=true -DBACKEND=cuda ..`
