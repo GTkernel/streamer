@@ -44,6 +44,8 @@ sudo apt-get install cmake
 sudo apt-get upgrade
 ```
 
+If the above does not work, you can [compile cmake 3 from source](http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04)
+
 #### 3. Tegra X1
 
 * gstreamer and opencv is already installed on TX1
