@@ -98,10 +98,7 @@ int main(int argc, char *argv[]) {
   const int UPDATE_OVERLAY_INTERVAL = 10;
   string label_to_show = "XXX";
   double fps_to_show = 0.0;
-  Timer timer;
-  double fps = 0.0;
   while (true) {
-    timer.Start();
     for (int i = 0; i < camera_names.size(); i++) {
       auto stream = classifier->GetSinks()[i];
       auto md_frame = stream->PopMDFrame();
@@ -110,7 +107,7 @@ int main(int argc, char *argv[]) {
         string label = md_frame->GetTags()[0];
         if (update_overlay == 1) {
           label_to_show = label;
-          fps_to_show = fps;
+          fps_to_show = classifier->GetFps();
         }
 
         // Overlay FPS label and classification label
@@ -139,9 +136,6 @@ int main(int argc, char *argv[]) {
     int q = cv::waitKey(10);
     if (q == 'q') break;
     update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
-
-    double latency = timer.ElapsedMSec();
-    fps = 1000.0 / latency;
   }
 
   LOG(INFO) << "Done";

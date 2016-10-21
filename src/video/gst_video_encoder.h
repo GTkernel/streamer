@@ -20,6 +20,14 @@ class GstVideoEncoder : public Processor {
   GstVideoEncoder(StreamPtr stream, int width, int height,
                   const string &output_filename);
 
+  /**
+   * @brief Set Gstreamer encoder element direclty. The caller should make sure
+   * that encoder element can work on the running system.
+   *
+   * @param encoder The name of the deocder gstreamer element.
+   */
+  void SetEncoderElement(const string &encoder);
+
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;

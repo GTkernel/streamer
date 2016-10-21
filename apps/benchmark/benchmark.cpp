@@ -10,24 +10,43 @@ using std::cout;
 using std::endl;
 
 // Global arguments
-bool verbose = false;
-std::vector<string> processor_names;
-std::vector<string> camera_names;
-string experiment;
-string net;
-string framework;
-int ITERATION;
+struct Configurations {
+  // Enable verbose logging or not
+  bool verbose;
+  // The name of processors to use
+  std::vector<string> processor_names;
+  // The name of cameras to use
+  std::vector<string> camera_names;
+  // The encoder to use
+  string encoder;
+  // The decoder to use
+  string decoder;
+  // The name of the experiment to run
+  string experiment;
+  // The network model to use
+  string net;
+  // The DL framework to use
+  string framework;
+  // Number of iterations for a test
+  int ITERATION;
+  // Device number
+  int device_number;
+} CONFIG;
 
 void RunClassificationExperiment() {
   cout << "Run classification experiment" << endl;
+  // Check argument
+  CHECK(CONFIG.camera_names.size() != 0) << "You must give at least one camera";
+  CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
+
   auto &model_manager = ModelManager::GetInstance();
   auto &camera_manager = CameraManager::GetInstance();
 
-  int batch_size = camera_names.size();
+  int batch_size = CONFIG.camera_names.size();
 
   // Camera streams
   std::vector<std::shared_ptr<Camera>> cameras;
-  for (auto camera_name : camera_names) {
+  for (auto camera_name : CONFIG.camera_names) {
     auto camera = camera_manager.GetCamera(camera_name);
     cameras.push_back(camera);
   }
@@ -53,7 +72,7 @@ void RunClassificationExperiment() {
   }
 
   // classifier
-  auto model_desc = model_manager.GetModelDesc(net);
+  auto model_desc = model_manager.GetModelDesc(CONFIG.net);
   std::shared_ptr<ImageClassificationProcessor> classifier(
       new ImageClassificationProcessor(input_streams, model_desc, input_shape));
   processors.push_back(classifier);
@@ -74,13 +93,13 @@ void RunClassificationExperiment() {
   }
 
   /////////////// RUN
-  for (int itr = 1; itr <= ITERATION; itr++) {
+  for (int itr = 1; itr <= CONFIG.ITERATION; itr++) {
     for (int i = 0; i < batch_size; i++) {
       auto stream = classifier->GetSinks()[i];
       auto md_frame = stream->PopMDFrame();
     }
     if (itr % 50 == 0) {
-      if (verbose) {
+      if (CONFIG.verbose) {
         cout << "Run for " << itr << " iterations" << endl;
       }
     }
@@ -94,11 +113,17 @@ void RunClassificationExperiment() {
     camera->Stop();
   }
 
-  std::remove("test.mp4");
+//  std::remove("test.mp4");
 
   /////////////// PRINT STATS
-  cout << "-- camera fps is " << cameras[0]->GetFps() << endl;
-  cout << "-- transformer fps is " << processors[0]->GetFps() << endl;
+  for (int i = 0; i < cameras.size(); i++) {
+    cout << "-- camera[" << i << "] fps is " << cameras[0]->GetFps() << endl;
+  }
+  for (int i = 0; i < processors.size(); i++) {
+    cout << "-- transformer[" << i << "] fps is " << processors[0]->GetFps()
+         << endl;
+  }
+
   cout << "-- classifier fps is " << classifier->GetFps() << endl;
   cout << "-- encoder fps is " << encoder->GetFps() << endl;
 }
@@ -109,8 +134,6 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Init streamer context, this must be called before using streamer.
-  Context::GetContext().Init();
 
   po::options_description desc("Benchmark for streamer");
   desc.add_options()("help,h", "print the help message");
@@ -123,12 +146,21 @@ int main(int argc, char *argv[]) {
   desc.add_options()("camera,c", po::value<string>()->value_name("CAMERAS"),
                      "The name of the camera to use, if there are multiple "
                      "cameras to be used, separate with ,");
-  desc.add_options()("experiment,e", po::value<string>()->value_name("EXP"),
-                     "Experriment to run");
-  desc.add_options()("verbose,v", "Verbose logging or not");
+  desc.add_options()("config_dir,C",
+                     po::value<string>()->value_name("CONFIG_DIR"),
+                     "The directory to find streamer's configuations");
+  desc.add_options()("experiment,e",
+                     po::value<string>()->value_name("EXP")->required(),
+                     "Experiment to run");
+  desc.add_options()("verbose,v", po::value<bool>()->default_value(false),
+                     "Verbose logging or not");
+  desc.add_options()("encoder", po::value<string>(), "Encoder to use");
+  desc.add_options()("decoder", po::value<string>(), "Decoder to use");
   desc.add_options()("iter,i",
                      po::value<int>()->default_value(1000)->value_name("ITER"),
                      "Number of iterations to run");
+  desc.add_options()("device", po::value<int>()->default_value(-1),
+                     "which device to use, -1 for CPU, > 0 for GPU device");
   desc.add_options()(
       "pipeline,p", po::value<string>()->value_name("pipeline"),
       "The processor pipeline to run, separate processor with ,");
@@ -149,36 +181,60 @@ int main(int argc, char *argv[]) {
   }
 
   if (vm.count("verbose")) {
-    verbose = true;
+    CONFIG.verbose = true;
   }
 
   //// Argument parsed
 
+  if (vm.count("config_dir")) {
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+  }
+  // Init streamer context, this must be called before using streamer.
+  Context::GetContext().Init();
+
   if (vm.count("pipeline")) {
     auto pipeline = vm["pipeline"].as<string>();
-    processor_names = SplitString(pipeline, ",");
+    CONFIG.processor_names = SplitString(pipeline, ",");
   }
 
   if (vm.count("camera")) {
     auto camera = vm["camera"].as<string>();
-    camera_names = SplitString(camera, ",");
+    CONFIG.camera_names = SplitString(camera, ",");
   }
 
   if (vm.count("experiment")) {
-    experiment = vm["experiment"].as<string>();
+    CONFIG.experiment = vm["experiment"].as<string>();
   }
 
   if (vm.count("net")) {
-    net = vm["net"].as<string>();
+    CONFIG.net = vm["net"].as<string>();
   }
 
   if (vm.count("framework")) {
-    framework = vm["framework"].as<string>();
+    CONFIG.framework = vm["framework"].as<string>();
   }
 
-  ITERATION = vm["iter"].as<int>();
+  if (vm.count("iter")) {
+    CONFIG.ITERATION = vm["iter"].as<int>();
+  }
 
-  if (experiment == "classification") {
+  if (vm.count("encoder")) {
+    CONFIG.encoder = vm["encoder"].as<string>();
+    Context::GetContext().SetString(H264_ENCODER_GST_ELEMENT, CONFIG.encoder);
+  }
+
+  if (vm.count("decoder")) {
+    CONFIG.decoder = vm["decoder"].as<string>();
+    Context::GetContext().SetString(H264_DECODER_GST_ELEMENT, CONFIG.decoder);
+  }
+
+  CONFIG.verbose = vm["verbose"].as<bool>();
+  CONFIG.ITERATION = vm["iter"].as<int>();
+  CONFIG.device_number = vm["device"].as<int>();
+
+  if (CONFIG.experiment == "classification") {
     RunClassificationExperiment();
+  } else {
+    LOG(ERROR) << "Unkown experiment: " << CONFIG.experiment;
   }
 }

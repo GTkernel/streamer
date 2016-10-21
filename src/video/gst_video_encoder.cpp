@@ -15,6 +15,7 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
       output_filename_(output_filename),
       need_data_(false),
       timestamp_(0) {
+  CHECK(width > 0 && height > 0) << "Width or height is invalid";
   sources_.push_back(input_stream);
   // Encoder
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
@@ -161,6 +162,9 @@ bool GstVideoEncoder::OnStop() {
 
 void GstVideoEncoder::Process() {
   auto input_frame = PopFrame(0);
+  CHECK(input_frame->GetOriginalImage().rows == height_);
+  CHECK(input_frame->GetOriginalImage().cols == width_);
+  CHECK(!input_frame->GetOriginalImage().empty());
 
   // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);
@@ -201,7 +205,7 @@ void GstVideoEncoder::Process() {
         gst_message_parse_error(msg, &error, &debug);
         g_free(debug);
 
-        DLOG(INFO) << "GST error: %s\n", error->message;
+        DLOG(WARNING) << "GST error: " << error->message;
         g_error_free(error);
         break;
       }
@@ -211,7 +215,7 @@ void GstVideoEncoder::Process() {
         gst_message_parse_warning(msg, &error, &debug);
         g_free(debug);
 
-        g_printerr("GST warning: %s\n", error->message);
+        DLOG(WARNING) << "GST warning: " << error->message;
         g_error_free(error);
         break;
       }
@@ -247,4 +251,8 @@ void GstVideoEncoder::Process() {
   }
 
   return;
+}
+
+void GstVideoEncoder::SetEncoderElement(const string &encoder) {
+  encoder_element_ = encoder;
 }

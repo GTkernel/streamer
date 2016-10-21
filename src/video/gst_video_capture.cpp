@@ -322,3 +322,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
 
   return true;
 }
+
+void GstVideoCapture::SetDecoderElement(const string &decoder) {
+  decoder_element_ = decoder;
+}

@@ -7,6 +7,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # See https://github.com/opencv/opencv/issues/6542
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 
+# If you want to make clion faster, uncomment this following line
+# See https://intellij-support.jetbrains.com/hc/en-us/community/posts/207110289-Best-practices-for-CMake-files-for-use-in-CLion
+set(CMAKE_CONFIGURATION_TYPES "Debug")
+
+
 if (APPLE)
   set(CMAKE_MACOSX_RPATH 1)
 endif ()

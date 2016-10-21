@@ -81,6 +81,7 @@ void ImageClassificationProcessor::Process() {
   for (int i = 0; i < batch_size_; i++) {
     auto frame = image_frames[i];
     cv::Mat img = frame->GetOriginalImage();
+    CHECK(img.empty() == false);
     string predict_label = predictions[i][0].first;
     PushFrame(i, new MetadataFrame({predict_label}, img));
     for (auto prediction : predictions[i]) {
@@ -94,9 +95,6 @@ void ImageClassificationProcessor::Process() {
 std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(
     int N) {
   std::vector<std::vector<Prediction>> results;
-
-  Timer total_timer;
-  total_timer.Start();
 
   auto input_buffer = model_->GetInputBuffer();
   input_buffer.Clone(input_buffer_);
@@ -119,6 +117,5 @@ std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(
     scores += model_->GetOutputShapes()[0].channel;
   }
 
-  LOG(INFO) << "Whole classify done in " << total_timer.ElapsedMSec() << " ms";
   return results;
 }

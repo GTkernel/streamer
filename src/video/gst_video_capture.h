@@ -31,6 +31,14 @@ class GstVideoCapture {
   void DestroyPipeline();
   bool IsConnected();
 
+  /**
+   * @brief Set Gstreamer decoder element direclty. The caller should make sure
+   * that decoder element can work on the running system.
+   *
+   * @param decoder The name of the deocder gstreamer element.
+   */
+  void SetDecoderElement(const string &decoder);
+
  private:
   static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);
 

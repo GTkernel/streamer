@@ -51,11 +51,10 @@ class Context {
     string_values_[key] = value;
   }
 
-  void SetConfigDir(const string &config_dir) {
-    config_dir_ = config_dir;
-    // Reload the config
-    Init();
-  }
+  /**
+   * @brief Reload the config dir, MUST call Init() after this.
+   */
+  void SetConfigDir(const string &config_dir) { config_dir_ = config_dir; }
 
   string GetConfigDir() { return config_dir_; }
 

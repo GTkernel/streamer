@@ -4,9 +4,10 @@
 
 #include "processor.h"
 
-static const size_t SLIDING_WINDOW_SIZE = 10;
+static const size_t SLIDING_WINDOW_SIZE = 25;
 
-Processor::Processor() : stopped_(true) {}
+Processor::Processor()
+    : stopped_(true), latency_sum_(0.0), latency_(999999.0) {}
 
 Processor::Processor(std::vector<std::shared_ptr<Stream>> sources,
                      std::vector<StreamPtr> sinks)
@@ -37,7 +38,7 @@ void Processor::ProcessorLoop() {
   CHECK(Init()) << "Processor is not able to be initialized";
   Timer timer;
   while (!stopped_) {
-    // Cache source freames
+    // Cache source frames
     source_frame_cache_.clear();
     for (auto &stream : sources_) {
       source_frame_cache_.push_back(stream->PopFrame());
@@ -46,6 +47,7 @@ void Processor::ProcessorLoop() {
     timer.Start();
     Process();
     double latency = timer.ElapsedMSec();
+    LOG(INFO) << latency;
     {
       // Calculate latency
       latencies_.push(latency);
@@ -55,7 +57,8 @@ void Processor::ProcessorLoop() {
         latency_sum_ -= oldest_latency;
         latencies_.pop();
       }
-      latency_ = latency_sum_ / SLIDING_WINDOW_SIZE;
+
+      latency_ = latency_sum_ / latencies_.size();
     }
   }
 }
