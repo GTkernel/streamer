@@ -30,7 +30,8 @@ class GIEInferer {
 
  public:
   GIEInferer(const string &deploy_file, const string &model_file,
-             const string &input_blob_name_, const string &output_blob_name_);
+             const string &input_blob_name_, const string &output_blob_name_,
+             bool fp16_mode = false);
   void CreateEngine();
   void DestroyEngine();
   void DoInference(DType *input, DType *output);
@@ -58,6 +59,8 @@ class GIEInferer {
   GIEModelStreamType gie_model_stream_;
   DType *d_input_buffer;
   DType *d_output_buffer;
+
+  bool fp16_mode_;
 };
 
 #endif  // TX1DNN_GIEINFERER_H

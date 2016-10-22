@@ -60,7 +60,12 @@ class Model {
   Model(const ModelDesc &model_desc, Shape input_shape, int batch_size = 1);
   ModelDesc GetModelDesc() const;
   virtual void Load() = 0;
+  // Feed the input to the network, run forward, then copy the output from the
+  // network
   virtual void Evaluate() = 0;
+  // Run pure forward pass, copy no input or ouput, this is only supposed to be
+  // used by experiment.
+  virtual void Forward() = 0;
   DataBuffer GetInputBuffer();
   std::vector<DataBuffer> GetOutputBuffers();
   std::vector<Shape> GetOutputShapes();

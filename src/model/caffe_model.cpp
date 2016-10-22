@@ -3,7 +3,7 @@
 //
 
 #include "caffe_model.h"
-#include "utils/utils.h"
+#include <tx1dnn.h>
 
 template <typename DType>
 CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape,
@@ -12,42 +12,41 @@ CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape,
 
 template <typename DType>
 void CaffeModel<DType>::Load() {
-// Set Caffe backend
-#ifdef USE_CAFFE
+  // Set Caffe backend
+  int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
+
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  } else {
 #ifdef USE_CUDA
-  std::vector<int> gpus;
-  GetCUDAGpus(gpus);
+    std::vector<int> gpus;
+    GetCUDAGpus(gpus);
 
-  if (gpus.size() != 0) {
-    LOG(INFO) << "Use GPU with device ID " << gpus[0];
-    caffe::Caffe::SetDevice(gpus[0]);
-    caffe::Caffe::set_mode(caffe::Caffe::GPU);
-  } else {
-    LOG(INFO) << "Use CPU.";
-    caffe::Caffe::set_mode(caffe::Caffe::CPU);
-  }
-#endif
-#ifdef USE_OPENCL
-  std::vector<int> gpus;
-  int count = caffe::Caffe::EnumerateDevices();
-  for (int i = 0; i < count; i++) {
-    gpus.push_back(i);
-  }
+    if (desired_device_number < gpus.size()) {
+      // Device exists
+      LOG(INFO) << "Use GPU with device ID " << desired_device_number;
+      caffe::Caffe::SetDevice(desired_device_number);
+      caffe::Caffe::set_mode(caffe::Caffe::GPU);
+    } else {
+      LOG(FATAL) << "No GPU device: " << desired_device_number;
+    }
+#elif USE_OPENCL
+    std::vector<int> gpus;
+    int count = caffe::Caffe::EnumerateDevices();
 
-  if (gpus.size() != 0) {
-    LOG(INFO) << "Use GPU with device ID " << 0;
-    caffe::Caffe::SetDevice(1);
-    caffe::Caffe::set_mode(caffe::Caffe::GPU);
-  } else {
-    LOG(INFO) << "Use CPU.";
-    caffe::Caffe::set_mode(caffe::Caffe::CPU);
-  }
-#endif
-#ifdef CPU_ONLY
-  caffe::Caffe::set_mode(caffe::Caffe::CPU);
+    if (desired_device_number < count) {
+      // Device exists
+      LOG(INFO) << "Use GPU with device ID " << desired_device_number;
+      caffe::Caffe::SetDevice(desired_device_number);
+      caffe::Caffe::set_mode(caffe::Caffe::GPU);
+    } else {
+      LOG(FATAL) << "No GPU device: " << desired_device_number;
+    }
 #else
+    LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
+                  "configured rather than -1";
 #endif
-#endif
+  }
 
 // Load the network.
 #ifdef USE_OPENCL
@@ -77,6 +76,11 @@ void CaffeModel<DType>::Load() {
 
   input_buffer_ = DataBuffer(
       input_data, batch_size_ * input_shape_.GetSize() * sizeof(DType));
+}
+
+template <typename DType>
+void CaffeModel<DType>::Forward() {
+  net_->Forward();
 }
 
 template <typename DType>

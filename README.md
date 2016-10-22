@@ -21,7 +21,7 @@ With homebrew:
 ```
 brew install cmake glog glib gstreamer gst-plugins-base \
 	gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-ffmpeg \
-	boost opencv
+	boost opencv jemalloc
 ```
 
 #### 2. Linux x86 (Ubuntu)
@@ -31,7 +31,7 @@ sudo apt-get update
 sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
     libboost-all-dev libopencv-dev gstreamer1.0 libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
-    libgstreamer-plugins-bad1.0-dev
+    libgstreamer-plugins-bad1.0-dev libjemalloc-dev
 ```
 
 For Ubuntu <= 14.04, also need to install cmake 3. 
@@ -53,7 +53,7 @@ If the above does not work, you can [compile cmake 3 from source](http://askubun
 ```
 sudo apt-get update
 sudo apt-get install -y cmake libglib2.0-dev \
-	libgoogle-glog-dev libboost-all-dev
+	libgoogle-glog-dev libboost-all-dev libjemalloc-dev
 # Optinal: install cnmem
 git clone https://github.com/NVIDIA/cnmem
 cd cnmem

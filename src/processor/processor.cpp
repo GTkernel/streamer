@@ -47,7 +47,6 @@ void Processor::ProcessorLoop() {
     timer.Start();
     Process();
     double latency = timer.ElapsedMSec();
-    LOG(INFO) << latency;
     {
       // Calculate latency
       latencies_.push(latency);

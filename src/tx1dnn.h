@@ -2,6 +2,7 @@
 #include "common/common.h"
 #include "common/context.h"
 #include "model/model_manager.h"
+#include "processor/dummy_nn_processor.h"
 #include "processor/image_classification_processor.h"
 #include "processor/image_classification_processor.h"
 #include "processor/image_segmentation_processor.h"

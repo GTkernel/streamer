@@ -19,6 +19,7 @@ class CaffeModel : public Model {
   CaffeModel(const ModelDesc &model_desc, Shape input_shape, int batch_size);
   virtual void Load();
   virtual void Evaluate();
+  virtual void Forward();
 
  private:
   std::unique_ptr<caffe::Net<DType>> net_;

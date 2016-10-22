@@ -27,14 +27,30 @@ struct Configurations {
   string net;
   // The DL framework to use
   string framework;
-  // Number of iterations for a test
-  int ITERATION;
+  // Duration of a test
+  int time;
   // Device number
   int device_number;
+  // Store the video or not
+  bool store;
+  // Batch size for NN inference experiment
+  int batch;
 } CONFIG;
 
-void RunClassificationExperiment() {
-  cout << "Run classification experiment" << endl;
+void SLEEP(int sleep_time_in_s) {
+  while (sleep_time_in_s >= 10) {
+    cout << sleep_time_in_s << " to sleep" << endl;
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    sleep_time_in_s -= 10;
+  }
+  std::this_thread::sleep_for(std::chrono::seconds(sleep_time_in_s));
+}
+
+/**
+ * @brief Run end-to-end camera(s)->classifier(NN)->store pipeline.
+ */
+void RunEndToEndExperiment() {
+  cout << "Run End To End Experiment" << endl;
   // Check argument
   CHECK(CONFIG.camera_names.size() != 0) << "You must give at least one camera";
   CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
@@ -78,11 +94,13 @@ void RunClassificationExperiment() {
   processors.push_back(classifier);
 
   // encoder, encode the first stream
-  std::shared_ptr<GstVideoEncoder> encoder(
-      new GstVideoEncoder(classifier->GetSinks()[0], cameras[0]->GetWidth(),
-                          cameras[0]->GetHeight(), "test.mp4"));
-
-  processors.push_back(encoder);
+  std::shared_ptr<GstVideoEncoder> encoder;
+  if (CONFIG.store) {
+    encoder.reset(new GstVideoEncoder(classifier->GetSinks()[0],
+                                      cameras[0]->GetWidth(),
+                                      cameras[0]->GetHeight(), "test.mp4"));
+    processors.push_back(encoder);
+  }
 
   for (auto camera : cameras) {
     camera->Start();
@@ -93,17 +111,7 @@ void RunClassificationExperiment() {
   }
 
   /////////////// RUN
-  for (int itr = 1; itr <= CONFIG.ITERATION; itr++) {
-    for (int i = 0; i < batch_size; i++) {
-      auto stream = classifier->GetSinks()[i];
-      auto md_frame = stream->PopMDFrame();
-    }
-    if (itr % 50 == 0) {
-      if (CONFIG.verbose) {
-        cout << "Run for " << itr << " iterations" << endl;
-      }
-    }
-  }
+  SLEEP(CONFIG.time);
 
   for (int i = processors.size(); i-- > 0;) {
     processors[i]->Stop();
@@ -113,7 +121,7 @@ void RunClassificationExperiment() {
     camera->Stop();
   }
 
-//  std::remove("test.mp4");
+  std::remove("test.mp4");
 
   /////////////// PRINT STATS
   for (int i = 0; i < cameras.size(); i++) {
@@ -125,7 +133,29 @@ void RunClassificationExperiment() {
   }
 
   cout << "-- classifier fps is " << classifier->GetFps() << endl;
-  cout << "-- encoder fps is " << encoder->GetFps() << endl;
+  if (CONFIG.store) cout << "-- encoder fps is " << encoder->GetFps() << endl;
+}
+
+/**
+ * @brief Benchmark the time to take the forward pass or a neural network
+ */
+void RunNNInferenceExperiment() {
+  cout << "Run NN Inference Experiment" << endl;
+  // Check argument
+  CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
+
+  auto &model_manager = ModelManager::GetInstance();
+
+  auto model_desc = model_manager.GetModelDesc(CONFIG.net);
+  std::shared_ptr<DummyNNProcessor> dummy_processor(
+      new DummyNNProcessor(model_desc, CONFIG.batch));
+
+  dummy_processor->Start();
+
+  SLEEP(CONFIG.time);
+
+  dummy_processor->Stop();
+  cout << "-- processor fps is " << dummy_processor->GetFps() << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -156,14 +186,18 @@ int main(int argc, char *argv[]) {
                      "Verbose logging or not");
   desc.add_options()("encoder", po::value<string>(), "Encoder to use");
   desc.add_options()("decoder", po::value<string>(), "Decoder to use");
-  desc.add_options()("iter,i",
-                     po::value<int>()->default_value(1000)->value_name("ITER"),
-                     "Number of iterations to run");
+  desc.add_options()("time,t", po::value<int>()->default_value(10),
+                     "Duration of the experiment");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
   desc.add_options()(
       "pipeline,p", po::value<string>()->value_name("pipeline"),
       "The processor pipeline to run, separate processor with ,");
+  desc.add_options()(
+      "batch", po::value<int>()->value_name("BATCH_SIZE")->default_value(1),
+      "The batch used to benchmark a network");
+  desc.add_options()("store", po::value<bool>()->default_value(false),
+                     "Write video at the end of the pipeline or not");
 
   po::variables_map vm;
   try {
@@ -214,10 +248,6 @@ int main(int argc, char *argv[]) {
     CONFIG.framework = vm["framework"].as<string>();
   }
 
-  if (vm.count("iter")) {
-    CONFIG.ITERATION = vm["iter"].as<int>();
-  }
-
   if (vm.count("encoder")) {
     CONFIG.encoder = vm["encoder"].as<string>();
     Context::GetContext().SetString(H264_ENCODER_GST_ELEMENT, CONFIG.encoder);
@@ -228,12 +258,20 @@ int main(int argc, char *argv[]) {
     Context::GetContext().SetString(H264_DECODER_GST_ELEMENT, CONFIG.decoder);
   }
 
-  CONFIG.verbose = vm["verbose"].as<bool>();
-  CONFIG.ITERATION = vm["iter"].as<int>();
-  CONFIG.device_number = vm["device"].as<int>();
+  if (vm.count("store")) {
+    CONFIG.store = vm["store"].as<bool>();
+  }
 
-  if (CONFIG.experiment == "classification") {
-    RunClassificationExperiment();
+  CONFIG.verbose = vm["verbose"].as<bool>();
+  CONFIG.time = vm["time"].as<int>();
+  CONFIG.device_number = vm["device"].as<int>();
+  CONFIG.batch = vm["batch"].as<int>();
+  Context::GetContext().SetInt(DEVICE_NUMBER, CONFIG.device_number);
+
+  if (CONFIG.experiment == "endtoend") {
+    RunEndToEndExperiment();
+  } else if (CONFIG.experiment == "nninfer") {
+    RunNNInferenceExperiment();
   } else {
     LOG(ERROR) << "Unkown experiment: " << CONFIG.experiment;
   }

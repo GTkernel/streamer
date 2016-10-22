@@ -9,11 +9,18 @@ GIEModel::GIEModel(const ModelDesc &model_desc, Shape input_shape)
 
 void GIEModel::Load() {
   // FIXME: the input and output blob name is fixed.
-  inferer_.reset(new GIEInferer<DType>(model_desc_.GetModelDescPath(),
+  inferer_.reset(new GIEInferer<float>(model_desc_.GetModelDescPath(),
                                        model_desc_.GetModelParamsPath(), "data",
                                        "prob"));
   inferer_->CreateEngine();
   input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float));
+}
+
+void GIEModel::Forward() {
+  DataBuffer output_buffer =
+      DataBuffer(inferer_->GetOutputShape().GetSize() * sizeof(float));
+  inferer_->DoInference((float *)input_buffer_.GetBuffer(),
+                        (float *)output_buffer.GetBuffer());
 }
 
 void GIEModel::Evaluate() {
@@ -22,8 +29,8 @@ void GIEModel::Evaluate() {
 
   DataBuffer output_buffer =
       DataBuffer(inferer_->GetOutputShape().GetSize() * sizeof(float));
-  inferer_->DoInference((DType *)input_buffer_.GetBuffer(),
-                        (DType *)output_buffer.GetBuffer());
+  inferer_->DoInference((float *)input_buffer_.GetBuffer(),
+                        (float *)output_buffer.GetBuffer());
 
   output_shapes_.push_back(inferer_->GetOutputShape());
   output_buffers_.push_back(output_buffer);

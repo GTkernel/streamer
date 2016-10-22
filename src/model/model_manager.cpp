@@ -100,7 +100,7 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
   if (model_desc.GetModelType() == MODEL_TYPE_CAFFE) {
 #ifdef USE_CAFFE
 #ifdef USE_FP16
-    result.reset(new CaffeFp16Model(model_desc, input_shape, batch_size));
+    result.reset(new CaffeFp16Model(model_desc, input_shape, batch_size, false));
 #else
     result.reset(new CaffeModel<float>(model_desc, input_shape, batch_size));
 #endif

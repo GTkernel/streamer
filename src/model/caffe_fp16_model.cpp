@@ -3,49 +3,38 @@
 //
 
 #include "caffe_fp16_model.h"
+#include "common/context.h"
 #include "utils/utils.h"
 
-CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape, int batch_size)
-    : Model(model_desc, input_shape, batch_size) {}
+CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape,
+                               int batch_size, bool need_transform)
+    : Model(model_desc, input_shape, batch_size),
+      need_transform_(need_transform) {}
 
 void CaffeFp16Model::Load() {
-// Set Caffe backend
-#ifdef USE_CAFFE
+  // Set Caffe backend
+  int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
+
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  } else {
 #ifdef USE_CUDA
-  std::vector<int> gpus;
-  GetCUDAGpus(gpus);
+    std::vector<int> gpus;
+    GetCUDAGpus(gpus);
 
-  if (gpus.size() != 0) {
-    LOG(INFO) << "Use GPU with device ID " << gpus[0];
-    caffe::Caffe::SetDevice(gpus[0]);
-    caffe::Caffe::set_mode(caffe::Caffe::GPU);
-  } else {
-    LOG(INFO) << "Use CPU.";
-    caffe::Caffe::set_mode(caffe::Caffe::CPU);
-  }
-#endif
-#ifdef USE_OPENCL
-  std::vector<int> gpus;
-  int count = caffe::Caffe::EnumerateDevices();
-  for (int i = 0; i < count; i++) {
-    gpus.push_back(i);
-  }
-
-  if (gpus.size() != 0) {
-    LOG(INFO) << "Use GPU with device ID " << 0;
-    caffe::Caffe::SetDevice(1);
-    caffe::Caffe::set_mode(caffe::Caffe::GPU);
-  } else {
-    LOG(INFO) << "Use CPU.";
-    caffe::Caffe::set_mode(caffe::Caffe::CPU);
-  }
-#endif
-#ifdef CPU_ONLY
-  caffe::Caffe::set_mode(caffe::Caffe::CPU);
+    if (desired_device_number < gpus.size()) {
+      // Device exists
+      LOG(INFO) << "Use GPU with device ID " << desired_device_number;
+      caffe::Caffe::SetDevice(desired_device_number);
+      caffe::Caffe::set_mode(caffe::Caffe::GPU);
+    } else {
+      LOG(FATAL) << "No GPU device: " << desired_device_number;
+    }
 #else
+    LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
+                  "configured rather than -1";
 #endif
-#endif
-
+  }
   // Load the network.
   net_.reset(new caffe::Net<DType, MType>(model_desc_.GetModelDescPath(),
                                           caffe::TEST));
@@ -64,23 +53,37 @@ void CaffeFp16Model::Load() {
   net_->Reshape();
 
   // Prepare input buffer
-  input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float) * batch_size_);
+  input_buffer_ =
+      DataBuffer(input_shape_.GetSize() * sizeof(float) * batch_size_);
+
+  DType *input_data = input_layer->mutable_cpu_data();
+  network_input_buffer_ =
+      DataBuffer(input_data, input_shape_.GetSize() * sizeof(DType) * batch_size_);
 }
+
+void CaffeFp16Model::Forward() {
+  net_->ForwardPrefilled();
+}
+
 
 void CaffeFp16Model::Evaluate() {
   // Copy the input to half bit input
   Timer timer;
   timer.Start();
-  if (sizeof(DType) == 2) {
+  if (sizeof(DType) == 2 && need_transform_) {
     float *fp32data = (float *)input_buffer_.GetBuffer();
-    caffe::Blob<DType, MType> *input_layer = net_->input_blobs()[0];
-    DType *fp16data = (DType *)(input_layer->mutable_cpu_data());
+    DType *fp16data = (DType *)(network_input_buffer_.GetBuffer());
 
     size_t image_size = input_shape_.GetSize() * batch_size_;
     for (size_t i = 0; i < image_size; i++) {
       fp16data[i] = caffe::Get<DType>(fp32data[i]);
     }
+  } else {
+    LOG(WARNING) << "Clone partial buffer data";
+    DataBuffer temp_buffer(input_buffer_.GetBuffer(), network_input_buffer_.GetSize());
+    network_input_buffer_.Clone(temp_buffer);
   }
+
   LOG(INFO) << "transform input took " << timer.ElapsedMSec() << " ms";
 
   // Evaluate

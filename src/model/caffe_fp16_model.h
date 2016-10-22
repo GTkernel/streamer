@@ -19,12 +19,18 @@ class CaffeFp16Model : public Model {
   typedef CAFFE_FP16_MTYPE MType;
 
  public:
-  CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape, int batch_size);
+  CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape,
+                 int batch_size, bool need_transform = true);
   virtual void Load();
   virtual void Evaluate();
+  virtual void Forward();
 
  private:
   std::shared_ptr<caffe::Net<DType, MType>> net_;
+  // Need to transform the input buffer or not
+  bool need_transform_;
+  // Network input buffer wrapper
+  DataBuffer network_input_buffer_;
 };
 
 #endif  // TX1DNN_CAFFE_FP16_MODEL_H

@@ -12,16 +12,15 @@
  * @brief A GIE model
  */
 class GIEModel : public Model {
-  typedef float DType;
-
  public:
   GIEModel(const ModelDesc &model_desc, Shape input_shape);
   ~GIEModel();
   virtual void Load();
   virtual void Evaluate();
+  virtual void Forward();
 
  private:
-  std::unique_ptr<GIEInferer<DType>> inferer_;
+  std::unique_ptr<GIEInferer<float>> inferer_;
 };
 
 #endif  // TX1DNN_GIE_MODEL_H

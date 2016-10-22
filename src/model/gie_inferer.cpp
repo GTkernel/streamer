@@ -9,7 +9,7 @@ template <typename DType>
 GIEInferer<DType>::GIEInferer(const string &deploy_file,
                               const string &model_file,
                               const string &input_blob_name,
-                              const string &output_blob_name)
+                              const string &output_blob_name, bool fp16_mode)
     : deploy_file_(deploy_file),
       model_file_(model_file),
       input_blob_name_(input_blob_name),
@@ -17,8 +17,9 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file,
       infer_runtime_(nullptr),
       engine_(nullptr),
       d_input_buffer(nullptr),
-      d_output_buffer(nullptr) {
-  if (sizeof(DType) == 16) {
+      d_output_buffer(nullptr),
+      fp16_mode_(fp16_mode) {
+  if (fp16_mode) {
     IBuilder *builder = createInferBuilder(logger_);
     bool supportFp16 = builder->platformHasFastFp16();
     builder->destroy();
@@ -73,11 +74,10 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
   ICaffeParser *parser = createCaffeParser();
 
   // Determine data type
-  bool useFp16 = (builder->platformHasFastFp16() && sizeof(DType) == 4);
-  LOG(INFO) << "GIE use FP16: " << (useFp16 ? "YES" : "NO");
+  LOG(INFO) << "GIE use FP16: " << (fp16_mode_ ? "YES" : "NO");
 
   // Get blob:tensor name mappings
-  DataType model_data_type = useFp16 ? DataType::kHALF : DataType::kFLOAT;
+  DataType model_data_type = fp16_mode_ ? DataType::kHALF : DataType::kFLOAT;
   const IBlobNameToTensor *blob_name_to_tensor = parser->parse(
       deploy_file.c_str(), model_file.c_str(), *network, model_data_type);
   CHECK(blob_name_to_tensor != nullptr)
@@ -93,7 +93,7 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
   builder->setMaxWorkspaceSize(MAX_WORKSPACE_SIZE);
 
   // Set up the network for paired-fp16 format.
-  if (useFp16) builder->setHalf2Mode(true);
+  if (fp16_mode_) builder->setHalf2Mode(true);
 
   ICudaEngine *engine = builder->buildCudaEngine(*network);
   CHECK(engine != nullptr) << "GIE can't build engine";

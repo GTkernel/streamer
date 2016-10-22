@@ -44,7 +44,7 @@ endif ()
 
 # Set Caffe compile flags
 function(add_caffe_cflags TARGET)
-  SET(CAFFE_CFLAGS "-MMD -MP -pthread -fPIC -O2 -DUSE_OPENCV")
+  SET(CAFFE_CFLAGS "-MMD -MP -pthread -fPIC -DUSE_OPENCV")
 
   if (USE_CUDA)
     SET(CAFFE_CFLAGS "${CAFFE_CFLAGS} -DUSE_CUDNN")

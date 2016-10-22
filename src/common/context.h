@@ -11,6 +11,8 @@
 
 const string H264_ENCODER_GST_ELEMENT = "h264_encoder_gst_element";
 const string H264_DECODER_GST_ELEMENT = "h264_decoder_gst_element";
+const string DEVICE_NUMBER = "device_number";
+const int DEVICE_NUMBER_CPU_ONLY = -1;
 /**
  * @brief Global single context, used to store and access various global
  * information.
@@ -27,7 +29,7 @@ class Context {
 
  public:
   Context() : config_dir_("./config") {}
-  void Init() { GetEncoderDecoderInformation(); }
+  void Init() { SetEncoderDecoderInformation(); }
 
   int GetInt(const string &key) {
     CHECK(int_values_.count(key) != 0) << "No integer value with key  " << key;
@@ -97,7 +99,7 @@ class Context {
   /**
    * @brief Helper to initialze the context
    */
-  void GetEncoderDecoderInformation() {
+  void SetEncoderDecoderInformation() {
     string config_file = GetConfigFile("config.toml");
 
     auto root_value = ParseTomlFromFile(config_file);
@@ -128,6 +130,11 @@ class Context {
 
     string_values_.insert({H264_ENCODER_GST_ELEMENT, encoder_element});
     string_values_.insert({H264_DECODER_GST_ELEMENT, decoder_element});
+  }
+
+  void SetDefaultDeviceInformation() {
+    // Default, CPU only mode
+    SetInt(DEVICE_NUMBER, DEVICE_NUMBER_CPU_ONLY);
   }
 
  private:

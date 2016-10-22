@@ -37,8 +37,15 @@ void MXNetModel::Load() {
     LOG(FATAL) << "Can't initialize MXNet model " << MXGetLastError();
   }
 
+  LOG(INFO) << "MXNet model initialized";
+
   input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(mx_float));
 }
+
+void MXNetModel::Forward() {
+  Evaluate();
+}
+
 void MXNetModel::Evaluate() {
   output_shapes_.clear();
   output_buffers_.clear();
