@@ -4,7 +4,8 @@
 
 #include "gie_model.h"
 
-GIEModel::GIEModel(const ModelDesc &model_desc, Shape input_shape)
+GIEModel::GIEModel(const ModelDesc &model_desc, Shape input_shape,
+                   int batch_size)
     : Model(model_desc, input_shape) {}
 
 void GIEModel::Load() {

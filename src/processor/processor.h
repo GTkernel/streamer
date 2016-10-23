@@ -45,14 +45,16 @@ class Processor {
    * @brief Get sliding window average latency of the processor.
    * @return Latency in ms
    */
-  double GetLatencyMs();
+  double GetSlidingLatencyMs();
+
+  double GetAvgLatencyMs();
 
   /**
    * @brief Get processing speed of the processor, measured in frames / sec. It
    * is simply computed as 1000.0 / GetLatencyMs().
    * @return FPS of the processor.
    */
-  double GetFps();
+  double GetAvgFps();
 
  protected:
   /**
@@ -77,6 +79,7 @@ class Processor {
   std::shared_ptr<MetadataFrame> PopMDFrame(int src_id);
   std::shared_ptr<Frame> PopFrame(int src_id);
   void PushFrame(int sink_id, Frame *frame);
+  void Init_();
 
   void ProcessorLoop();
   std::vector<std::shared_ptr<Frame>> source_frame_cache_;
@@ -88,7 +91,12 @@ class Processor {
   // Process latency, sliding window average of 10 samples;
   std::queue<double> latencies_;
   double latency_sum_;
-  std::atomic<double> latency_;
+  std::atomic<double> sliding_latency_;
+  std::atomic<double> avg_latency_;
+
+  // Processor stats
+  // Number of processed frames
+  size_t n_processed_;
 };
 
 #endif  // TX1DNN_PROCESSOR_H

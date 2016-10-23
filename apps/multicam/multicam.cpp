@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
         string label = md_frame->GetTags()[0];
         if (update_overlay == 1) {
           label_to_show = label;
-          fps_to_show = classifier->GetFps();
+          fps_to_show = classifier->GetAvgFps();
         }
 
         // Overlay FPS label and classification label

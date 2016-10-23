@@ -76,14 +76,15 @@ void RunEndToEndExperiment() {
   // Input shape
   Shape input_shape(3, 227, 227);
   std::vector<std::shared_ptr<Stream>> input_streams;
-  std::vector<std::shared_ptr<Processor>> processors;
+  std::vector<std::shared_ptr<Processor>> transformers;
+  std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
   // transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformProcessor(
         camera_stream, input_shape, CROP_TYPE_CENTER,
         true /* subtract mean */));
-    processors.push_back(transform_processor);
+    transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSinks()[0]);
   }
 
@@ -91,49 +92,67 @@ void RunEndToEndExperiment() {
   auto model_desc = model_manager.GetModelDesc(CONFIG.net);
   std::shared_ptr<ImageClassificationProcessor> classifier(
       new ImageClassificationProcessor(input_streams, model_desc, input_shape));
-  processors.push_back(classifier);
 
-  // encoder, encode the first stream
-  std::shared_ptr<GstVideoEncoder> encoder;
+  // encoders, encode the first stream
   if (CONFIG.store) {
-    encoder.reset(new GstVideoEncoder(classifier->GetSinks()[0],
-                                      cameras[0]->GetWidth(),
-                                      cameras[0]->GetHeight(), "test.mp4"));
-    processors.push_back(encoder);
+    for (int i = 0; i < batch_size; i++) {
+      string output_filename = CONFIG.camera_names[i] + ".mp4";
+
+      std::shared_ptr<GstVideoEncoder> encoder(
+          new GstVideoEncoder(classifier->GetSinks()[i], cameras[i]->GetWidth(),
+                              cameras[i]->GetHeight(), output_filename));
+      encoders.push_back(encoder);
+    }
   }
 
   for (auto camera : cameras) {
     camera->Start();
   }
 
-  for (auto processor : processors) {
-    processor->Start();
+  for (auto transformer : transformers) {
+    transformer->Start();
+  }
+
+  classifier->Start();
+
+  for (auto encoder : encoders) {
+    encoder->Start();
   }
 
   /////////////// RUN
   SLEEP(CONFIG.time);
 
-  for (int i = processors.size(); i-- > 0;) {
-    processors[i]->Stop();
+  for (auto encoder : encoders) {
+    encoder->Stop();
+  }
+
+  classifier->Stop();
+
+  for (auto transformer : transformers) {
+    transformer->Stop();
   }
 
   for (auto camera : cameras) {
     camera->Stop();
   }
 
-  std::remove("test.mp4");
-
   /////////////// PRINT STATS
   for (int i = 0; i < cameras.size(); i++) {
-    cout << "-- camera[" << i << "] fps is " << cameras[0]->GetFps() << endl;
+    cout << "-- camera[" << i << "] fps is " << cameras[i]->GetAvgFps() << endl;
   }
-  for (int i = 0; i < processors.size(); i++) {
-    cout << "-- transformer[" << i << "] fps is " << processors[0]->GetFps()
+  for (int i = 0; i < transformers.size(); i++) {
+    cout << "-- transformer[" << i << "] fps is " << transformers[i]->GetAvgFps()
          << endl;
   }
 
-  cout << "-- classifier fps is " << classifier->GetFps() << endl;
-  if (CONFIG.store) cout << "-- encoder fps is " << encoder->GetFps() << endl;
+  cout << "-- classifier fps is " << classifier->GetAvgFps() << endl;
+
+  if (CONFIG.store) {
+    for (int i = 0; i < encoders.size(); i++) {
+      cout << "-- encoder[" << i << "] fps is " << encoders[i]->GetAvgFps()
+           << endl;
+    }
+  }
 }
 
 /**
@@ -155,7 +174,7 @@ void RunNNInferenceExperiment() {
   SLEEP(CONFIG.time);
 
   dummy_processor->Stop();
-  cout << "-- processor fps is " << dummy_processor->GetFps() << endl;
+  cout << "-- processor fps is " << dummy_processor->GetAvgFps() << endl;
 }
 
 int main(int argc, char *argv[]) {

@@ -3,7 +3,8 @@
 //
 
 #include "mxnet_model.h"
-MXNetModel::MXNetModel(const ModelDesc &model_desc, Shape input_shape)
+MXNetModel::MXNetModel(const ModelDesc &model_desc, Shape input_shape,
+                       int batch_size)
     : Model(model_desc, input_shape) {}
 
 void MXNetModel::Load() {
@@ -42,9 +43,7 @@ void MXNetModel::Load() {
   input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(mx_float));
 }
 
-void MXNetModel::Forward() {
-  Evaluate();
-}
+void MXNetModel::Forward() { Evaluate(); }
 
 void MXNetModel::Evaluate() {
   output_shapes_.clear();

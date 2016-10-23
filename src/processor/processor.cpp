@@ -6,16 +6,21 @@
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
 
-Processor::Processor()
-    : stopped_(true), latency_sum_(0.0), latency_(999999.0) {}
+Processor::Processor() { Init_(); }
 
 Processor::Processor(std::vector<std::shared_ptr<Stream>> sources,
                      std::vector<StreamPtr> sinks)
-    : sources_(sources),
-      sinks_(sinks),
-      stopped_(true),
-      latency_sum_(0.0),
-      latency_(999999.0) {}
+    : sources_(sources), sinks_(sinks) {
+  Init_();
+}
+
+void Processor::Init_() {
+  stopped_ = true;
+  latency_sum_ = 0.0;
+  sliding_latency_ = 99999.0;
+  avg_latency_ = 0.0;
+  n_processed_ = 0;
+}
 
 bool Processor::Start() {
   LOG(INFO) << "Start called";
@@ -46,6 +51,7 @@ void Processor::ProcessorLoop() {
 
     timer.Start();
     Process();
+    n_processed_ += 1;
     double latency = timer.ElapsedMSec();
     {
       // Calculate latency
@@ -57,8 +63,9 @@ void Processor::ProcessorLoop() {
         latencies_.pop();
       }
 
-      latency_ = latency_sum_ / latencies_.size();
+      sliding_latency_ = latency_sum_ / latencies_.size();
     }
+    avg_latency_ = (avg_latency_ * (n_processed_ - 1) + latency) / n_processed_;
   }
 }
 
@@ -66,9 +73,11 @@ std::vector<std::shared_ptr<Stream>> Processor::GetSinks() { return sinks_; }
 
 bool Processor::IsStarted() { return !stopped_; }
 
-double Processor::GetLatencyMs() { return latency_; }
+double Processor::GetSlidingLatencyMs() { return sliding_latency_; }
 
-double Processor::GetFps() { return 1000.0 / latency_; }
+double Processor::GetAvgLatencyMs() { return avg_latency_; }
+
+double Processor::GetAvgFps() { return 1000.0 / avg_latency_; }
 
 std::shared_ptr<ImageFrame> Processor::PopImageFrame(int src_id) {
   CHECK(src_id < sources_.size());
