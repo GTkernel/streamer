@@ -100,7 +100,7 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
   if (model_desc.GetModelType() == MODEL_TYPE_CAFFE) {
 #ifdef USE_CAFFE
 #ifdef USE_FP16
-    result.reset(new CaffeFp16Model(model_desc, input_shape, batch_size, false));
+    result.reset(new CaffeFp16Model(model_desc, input_shape, batch_size));
 #else
     result.reset(new CaffeModel<float>(model_desc, input_shape, batch_size));
 #endif
@@ -111,7 +111,7 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
 
   if (model_desc.GetModelType() == MODEL_TYPE_GIE) {
 #ifdef USE_GIE
-    result.reset(new GIEModel(model_desc, input_shape));
+    result.reset(new GIEModel(model_desc, input_shape, batch_size));
 #else
     LOG(FATAL) << "Not build with GIE, failed to initialize classifier";
 #endif
@@ -119,7 +119,7 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
 
   if (model_desc.GetModelType() == MODEL_TYPE_MXNET) {
 #ifdef USE_MXNET
-    result.reset(new MXNetModel(model_desc, input_shape));
+    result.reset(new MXNetModel(model_desc, input_shape, batch_size));
 #else
     LOG(FATAL) << "Not build with MXNet, failed to initialize classifier";
 #endif

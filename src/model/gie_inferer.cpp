@@ -9,15 +9,17 @@ template <typename DType>
 GIEInferer<DType>::GIEInferer(const string &deploy_file,
                               const string &model_file,
                               const string &input_blob_name,
-                              const string &output_blob_name, bool fp16_mode)
+                              const string &output_blob_name, int batch_size,
+                              bool fp16_mode)
     : deploy_file_(deploy_file),
       model_file_(model_file),
       input_blob_name_(input_blob_name),
       output_blob_name_(output_blob_name),
       infer_runtime_(nullptr),
       engine_(nullptr),
-      d_input_buffer(nullptr),
-      d_output_buffer(nullptr),
+      d_input_buffer_(nullptr),
+      d_output_buffer_(nullptr),
+      batch_size_(batch_size),
       fp16_mode_(fp16_mode) {
   if (fp16_mode) {
     IBuilder *builder = createInferBuilder(logger_);
@@ -112,7 +114,7 @@ template <typename DType>
 void GIEInferer<DType>::CreateEngine() {
   gie_model_stream_.seekg(0, gie_model_stream_.beg);
 
-  CaffeToGIEModel(deploy_file_, model_file_, {output_blob_name_}, BATCH_SIZE,
+  CaffeToGIEModel(deploy_file_, model_file_, {output_blob_name_}, batch_size_,
                   gie_model_stream_);
 
   // Create an engine
@@ -130,12 +132,12 @@ void GIEInferer<DType>::CreateEngine() {
   input_shape_ = Shape(input_dims.c, input_dims.w, input_dims.h);
   output_shape_ = Shape(output_dims.c, output_dims.w, output_dims.h);
 
-  input_size_ = BATCH_SIZE * input_shape_.GetSize() * sizeof(DType);
-  output_size_ = BATCH_SIZE * output_shape_.GetSize() * sizeof(DType);
+  input_size_ = batch_size_ * input_shape_.GetSize() * sizeof(DType);
+  output_size_ = batch_size_ * output_shape_.GetSize() * sizeof(DType);
 
-  CHECK_EQ(cudaMalloc((void **)(&d_input_buffer), input_size_), cudaSuccess)
+  CHECK_EQ(cudaMalloc((void **)(&d_input_buffer_), input_size_), cudaSuccess)
       << "Can't malloc device input buffer";
-  CHECK_EQ(cudaMalloc((void **)(&d_output_buffer), output_size_), cudaSuccess)
+  CHECK_EQ(cudaMalloc((void **)(&d_output_buffer_), output_size_), cudaSuccess)
       << "Can't malloc device output buffer";
 }
 
@@ -145,8 +147,8 @@ void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   CHECK(context != nullptr) << "GIE error, can't create context";
   CHECK(input != nullptr) << "Input is invalid: nullptr";
   CHECK(output != nullptr) << "Output is invalid, nullptr";
-  CHECK(d_input_buffer != nullptr) << "Device input buffer is not allocated";
-  CHECK(d_output_buffer != nullptr) << "Device output buffer is not allocated";
+  CHECK(d_input_buffer_ != nullptr) << "Device input buffer is not allocated";
+  CHECK(d_output_buffer_ != nullptr) << "Device output buffer is not allocated";
   CHECK(engine_->getNbBindings() == 2);
 
   void *buffers[2];
@@ -154,25 +156,23 @@ void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   int inputIndex = engine_->getBindingIndex(input_blob_name_.c_str()),
       outputIndex = engine_->getBindingIndex(output_blob_name_.c_str());
 
-  CHECK_EQ(cudaMalloc(&buffers[inputIndex], BATCH_SIZE * input_size_),
-           cudaSuccess);
-  CHECK_EQ(cudaMalloc(&buffers[outputIndex], BATCH_SIZE * output_size_),
-           cudaSuccess);
+  CHECK_EQ(cudaMalloc(&buffers[inputIndex], input_size_), cudaSuccess);
+  CHECK_EQ(cudaMalloc(&buffers[outputIndex], output_size_), cudaSuccess);
 
   cudaStream_t stream;
   CHECK_EQ(cudaStreamCreate(&stream), cudaSuccess)
       << "CUDA error, can't create cuda stream";
 
   // DMA the input to the GPU, execute the batch asynchronously, and DMA it back
-  CHECK_EQ(cudaMemcpyAsync(buffers[inputIndex], input, input_size_ * BATCH_SIZE,
+  CHECK_EQ(cudaMemcpyAsync(buffers[inputIndex], input, input_size_,
                            cudaMemcpyHostToDevice, stream),
            cudaSuccess)
       << "CUDA error, can't async memcpy input to device";
-  context->enqueue(BATCH_SIZE, buffers, stream, nullptr);
-  CHECK_EQ(
-      cudaMemcpyAsync(output, buffers[outputIndex], output_size_ * BATCH_SIZE,
-                      cudaMemcpyDeviceToHost, stream),
-      cudaSuccess)
+  context->execute(batch_size_, buffers);
+  context->enqueue(batch_size_, buffers, stream, nullptr);
+  CHECK_EQ(cudaMemcpyAsync(output, buffers[outputIndex], output_size_,
+                           cudaMemcpyDeviceToHost, stream),
+           cudaSuccess)
       << "CUDA error, can't async memcpy to output from device";
   cudaStreamSynchronize(stream);
 
@@ -188,9 +188,9 @@ void GIEInferer<DType>::DestroyEngine() {
   engine_ = nullptr;
   infer_runtime_->destroy();
   infer_runtime_ = nullptr;
-  CHECK_EQ(cudaFree(d_input_buffer), cudaSuccess)
+  CHECK_EQ(cudaFree(d_input_buffer_), cudaSuccess)
       << "Can't free device input buffer";
-  CHECK_EQ(cudaFree(d_output_buffer), cudaSuccess)
+  CHECK_EQ(cudaFree(d_output_buffer_), cudaSuccess)
       << "Can't free device output buffer";
 }
 

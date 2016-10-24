@@ -26,12 +26,11 @@ class GIEInferer {
   };
 
   static const size_t MAX_WORKSPACE_SIZE = 16 << 20;
-  static const size_t BATCH_SIZE = 1;
 
  public:
   GIEInferer(const string &deploy_file, const string &model_file,
              const string &input_blob_name_, const string &output_blob_name_,
-             bool fp16_mode = false);
+             int batch_size = 1, bool fp16_mode = false);
   void CreateEngine();
   void DestroyEngine();
   void DoInference(DType *input, DType *output);
@@ -57,9 +56,10 @@ class GIEInferer {
   IRuntime *infer_runtime_;
   ICudaEngine *engine_;
   GIEModelStreamType gie_model_stream_;
-  DType *d_input_buffer;
-  DType *d_output_buffer;
+  DType *d_input_buffer_;
+  DType *d_output_buffer_;
 
+  int batch_size_;
   bool fp16_mode_;
 };
 

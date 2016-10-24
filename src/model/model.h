@@ -11,8 +11,7 @@
 
 /**
  * @brief A decription of a DNN model, created from models.toml file. A
- * ModelDesc
- * can be used to initialize a model.
+ * ModelDesc can be used to initialize a model.
  */
 class ModelDesc {
  public:
@@ -51,9 +50,7 @@ class ModelDesc {
 };
 
 /**
- * @brief A class representing a DNN model. Currently only Caffe model is
- * supported.
- * // TODO: Implement CaffeModel
+ * @brief A class representing a DNN model.
  */
 class Model {
  public:

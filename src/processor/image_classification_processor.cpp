@@ -106,15 +106,16 @@ std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(
   float *scores = (float *)model_->GetOutputBuffers()[0].GetBuffer();
   N = std::min<int>(labels_.size(), N);
   for (int i = 0; i < batch_size_; i++) {
+    CHECK(model_->GetOutputShapes()[0].GetSize() == 1000);
     std::vector<int> maxN =
-        Argmax(scores, model_->GetOutputShapes()[0].channel, N);
+        Argmax(scores, model_->GetOutputShapes()[0].GetSize(), N);
     std::vector<Prediction> predictions;
     for (int j = 0; j < N; ++j) {
       int idx = maxN[j];
       predictions.push_back(std::make_pair(labels_[idx], scores[idx]));
     }
     results.push_back(predictions);
-    scores += model_->GetOutputShapes()[0].channel;
+    scores += model_->GetOutputShapes()[0].GetSize();
   }
 
   return results;

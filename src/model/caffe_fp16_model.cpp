@@ -7,9 +7,8 @@
 #include "utils/utils.h"
 
 CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape,
-                               int batch_size, bool need_transform)
-    : Model(model_desc, input_shape, batch_size),
-      need_transform_(need_transform) {}
+                               int batch_size)
+    : Model(model_desc, input_shape, batch_size) {}
 
 void CaffeFp16Model::Load() {
   // Set Caffe backend
@@ -57,20 +56,17 @@ void CaffeFp16Model::Load() {
       DataBuffer(input_shape_.GetSize() * sizeof(float) * batch_size_);
 
   DType *input_data = input_layer->mutable_cpu_data();
-  network_input_buffer_ =
-      DataBuffer(input_data, input_shape_.GetSize() * sizeof(DType) * batch_size_);
+  network_input_buffer_ = DataBuffer(
+      input_data, input_shape_.GetSize() * sizeof(DType) * batch_size_);
 }
 
-void CaffeFp16Model::Forward() {
-  net_->ForwardPrefilled();
-}
-
+void CaffeFp16Model::Forward() { net_->ForwardPrefilled(); }
 
 void CaffeFp16Model::Evaluate() {
-  // Copy the input to half bit input
+  // Copy the input to half precision  input
   Timer timer;
   timer.Start();
-  if (sizeof(DType) == 2 && need_transform_) {
+  if (sizeof(DType) == 2) {
     float *fp32data = (float *)input_buffer_.GetBuffer();
     DType *fp16data = (DType *)(network_input_buffer_.GetBuffer());
 
@@ -80,7 +76,8 @@ void CaffeFp16Model::Evaluate() {
     }
   } else {
     LOG(WARNING) << "Clone partial buffer data";
-    DataBuffer temp_buffer(input_buffer_.GetBuffer(), network_input_buffer_.GetSize());
+    DataBuffer temp_buffer(input_buffer_.GetBuffer(),
+                           network_input_buffer_.GetSize());
     network_input_buffer_.Clone(temp_buffer);
   }
 

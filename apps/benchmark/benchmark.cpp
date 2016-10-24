@@ -141,8 +141,8 @@ void RunEndToEndExperiment() {
     cout << "-- camera[" << i << "] fps is " << cameras[i]->GetAvgFps() << endl;
   }
   for (int i = 0; i < transformers.size(); i++) {
-    cout << "-- transformer[" << i << "] fps is " << transformers[i]->GetAvgFps()
-         << endl;
+    cout << "-- transformer[" << i << "] fps is "
+         << transformers[i]->GetAvgFps() << endl;
   }
 
   cout << "-- classifier fps is " << classifier->GetAvgFps() << endl;

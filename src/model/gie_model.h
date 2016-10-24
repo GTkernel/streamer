@@ -13,7 +13,7 @@
  */
 class GIEModel : public Model {
  public:
-  GIEModel(const ModelDesc &model_desc, Shape input_shape);
+  GIEModel(const ModelDesc &model_desc, Shape input_shape, int batch_size);
   ~GIEModel();
   virtual void Load();
   virtual void Evaluate();

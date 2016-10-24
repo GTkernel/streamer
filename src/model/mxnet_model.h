@@ -5,9 +5,11 @@
 #ifndef TX1DNN_MXNET_MODEL_H
 #define TX1DNN_MXNET_MODEL_H
 
-#include "common/common.h"
+#include <stdlib.h>
+
 #include <mxnet/c_api.h>
 #include <mxnet/c_predict_api.h>
+#include "common/common.h"
 #include "model.h"
 
 /**
@@ -15,7 +17,7 @@
  */
 class MXNetModel : public Model {
  public:
-  MXNetModel(const ModelDesc &model_desc, Shape input_shape);
+  MXNetModel(const ModelDesc &model_desc, Shape input_shape, int batch_size);
   ~MXNetModel();
   virtual void Load() override;
   virtual void Evaluate() override;

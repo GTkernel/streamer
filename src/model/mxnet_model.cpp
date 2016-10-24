@@ -3,29 +3,35 @@
 //
 
 #include "mxnet_model.h"
+#include "common/context.h"
 MXNetModel::MXNetModel(const ModelDesc &model_desc, Shape input_shape,
                        int batch_size)
-    : Model(model_desc, input_shape) {}
+    : Model(model_desc, input_shape, batch_size) {}
 
 void MXNetModel::Load() {
   // Load the model desc and weights
   DataBuffer json_data(model_desc_.GetModelDescPath());
   DataBuffer param_data(model_desc_.GetModelParamsPath());
 
-#ifdef CPU_ONLY
-  int dev_type = 1;  // CPU
-#else
-  int dev_type = 2;  // GPU
-#endif
+  int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
+  int dev_type, dev_id;
 
-  int dev_id = 0;
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    dev_type = 1;  // CPU
+    dev_id = 0;
+  } else {
+    dev_type = 2;  // GPU
+    dev_id = desired_device_number;
+  }
+
   mx_uint num_input_nodes = 1;
+  LOG(WARNING) << "Only one input named `data' is supported";
   const char *input_key[1] = {"data"};
   const char **input_keys = input_key;
 
   const mx_uint input_shape_indptr[2] = {0, 4};
   const mx_uint input_shape_data[4] = {
-      1, static_cast<mx_uint>(input_shape_.channel),
+      batch_size_, static_cast<mx_uint>(input_shape_.channel),
       static_cast<mx_uint>(input_shape_.width),
       static_cast<mx_uint>(input_shape_.height)};
 
@@ -40,7 +46,8 @@ void MXNetModel::Load() {
 
   LOG(INFO) << "MXNet model initialized";
 
-  input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(mx_float));
+  input_buffer_ =
+      DataBuffer(input_shape_.GetSize() * sizeof(mx_float) * batch_size_);
 }
 
 void MXNetModel::Forward() { Evaluate(); }
@@ -49,9 +56,8 @@ void MXNetModel::Evaluate() {
   output_shapes_.clear();
   output_buffers_.clear();
 
-  size_t image_size = input_shape_.GetSize();
   MXPredSetInput(predictor_, "data", (mx_float *)input_buffer_.GetBuffer(),
-                 image_size);
+                 input_buffer_.GetSize() / sizeof(mx_float));
   MXPredForward(predictor_);
 
   // Don't know how to get multiple output..
@@ -64,18 +70,26 @@ void MXNetModel::Evaluate() {
                        &mx_output_shape_len);
 
   // THE FOLLOWING ASSUMES THAT OUTPUT SHAPE WILL NEVER EXCEEDS 3-D
-  CHECK(mx_output_shape_len <= 3);
+  CHECK(mx_output_shape_len <= 4 && mx_output_shape_len >= 1);
   Shape output_shape(1, 1, 1);
-  if (mx_output_shape_len > 0) output_shape.channel = mx_output_shape[0];
-  if (mx_output_shape_len > 1) output_shape.height = mx_output_shape[1];
-  if (mx_output_shape_len > 2) output_shape.width = mx_output_shape[2];
 
+  int batch_size;
+
+  if (mx_output_shape_len > 0) batch_size = mx_output_shape[0];
+  if (mx_output_shape_len > 1) output_shape.channel = mx_output_shape[1];
+  if (mx_output_shape_len > 2) output_shape.width = mx_output_shape[2];
+  if (mx_output_shape_len > 3) output_shape.height = mx_output_shape[3];
+
+  DLOG(INFO) << "Output shape is " << output_shape.channel << " "
+             << output_shape.width << " " << output_shape.height;
+  DLOG(INFO) << "Batch size is " << batch_size;
   output_shapes_.push_back(output_shape);
 
-  DataBuffer output_buffer(output_shape.GetSize() * sizeof(float));
+  DataBuffer output_buffer(output_shape.GetSize() * sizeof(mx_float) *
+                           batch_size_);
   MXPredGetOutput(predictor_, mx_output_index,
                   (mx_float *)output_buffer.GetBuffer(),
-                  output_shape.GetSize());
+                  output_buffer.GetSize() / sizeof(mx_float));
   output_buffers_.push_back(output_buffer);
 }
 

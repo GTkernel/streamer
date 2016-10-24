@@ -20,7 +20,7 @@ class CaffeFp16Model : public Model {
 
  public:
   CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape,
-                 int batch_size, bool need_transform = true);
+                 int batch_size);
   virtual void Load();
   virtual void Evaluate();
   virtual void Forward();
