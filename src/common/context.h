@@ -29,7 +29,10 @@ class Context {
 
  public:
   Context() : config_dir_("./config") {}
-  void Init() { SetEncoderDecoderInformation(); }
+  void Init() {
+    SetEncoderDecoderInformation();
+    SetDefaultDeviceInformation();
+  }
 
   int GetInt(const string &key) {
     CHECK(int_values_.count(key) != 0) << "No integer value with key  " << key;

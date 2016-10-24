@@ -8,7 +8,7 @@
 std::shared_ptr<Camera> camera;
 std::shared_ptr<Processor> encoder;
 
-void singal_handler(int signal) {
+void SignalHandler(int signal) {
   std::cout << "Received SIGINT, stop encoder" << std::endl;
   encoder->Stop();
   camera->Stop();
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  std::signal(SIGINT, singal_handler);
+  std::signal(SIGINT, SignalHandler);
 
   CameraManager &camera_manager = CameraManager::GetInstance();
 

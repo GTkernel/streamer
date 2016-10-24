@@ -25,8 +25,6 @@ struct Configurations {
   string experiment;
   // The network model to use
   string net;
-  // The DL framework to use
-  string framework;
   // Duration of a test
   int time;
   // Device number
@@ -93,7 +91,7 @@ void RunEndToEndExperiment() {
   std::shared_ptr<ImageClassificationProcessor> classifier(
       new ImageClassificationProcessor(input_streams, model_desc, input_shape));
 
-  // encoders, encode the first stream
+  // encoders, encode each camera stream
   if (CONFIG.store) {
     for (int i = 0; i < batch_size; i++) {
       string output_filename = CONFIG.camera_names[i] + ".mp4";
@@ -188,16 +186,12 @@ int main(int argc, char *argv[]) {
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("net,n", po::value<string>()->value_name("NET"),
                      "The name of the neural net to run");
-  desc.add_options()("framework,f",
-                     po::value<string>()->value_name("FRAMEWORK"),
-                     "The framework to run the neural net, either caffe, "
-                     "caffefp16, gie, or mxnet");
   desc.add_options()("camera,c", po::value<string>()->value_name("CAMERAS"),
                      "The name of the camera to use, if there are multiple "
                      "cameras to be used, separate with ,");
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
-                     "The directory to find streamer's configuations");
+                     "The directory to find streamer's configuration");
   desc.add_options()("experiment,e",
                      po::value<string>()->value_name("EXP")->required(),
                      "Experiment to run");
@@ -237,7 +231,7 @@ int main(int argc, char *argv[]) {
     CONFIG.verbose = true;
   }
 
-  //// Argument parsed
+  //// Prase arguments
 
   if (vm.count("config_dir")) {
     Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
@@ -261,10 +255,6 @@ int main(int argc, char *argv[]) {
 
   if (vm.count("net")) {
     CONFIG.net = vm["net"].as<string>();
-  }
-
-  if (vm.count("framework")) {
-    CONFIG.framework = vm["framework"].as<string>();
   }
 
   if (vm.count("encoder")) {

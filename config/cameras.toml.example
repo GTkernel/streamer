@@ -6,5 +6,7 @@ width = 640
 height = 480
 
 [[camera]]
-name = "YOUR CAMERA"
+name = "YOUR IP CAMERA"
 video_uri = "rtsp://username:password@camera_url"
+width = 640
+height = 480

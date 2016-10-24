@@ -89,6 +89,8 @@ First you need to configure your cameras and models. In your build directory, th
     * `rtsp://xxx`: An rtsp endpoint.
     * `facetime`: The iSight camera available on Mac.
     * `gst://xxx`: xxx could be any raw GStreamer video pipeline, as long as the pipleine emits valid video frames. For example `gst://videotestsrc`. streamer uses GStreamer heavily for video ingestion, please refer to https://gstreamer.freedesktop.org/ for more information.
+    * `height`: Height of the camera.
+    * `width`: Width of the camera.
     
     
 #### Configure models
@@ -110,14 +112,22 @@ The default configuration uses software encoder and decoder, to specify other de
 
 ```
 export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/multicam CAMERA[,CAMERA2[,...]] MODEL DISPLAY?
+apps/multicam -h
+Multi-camera end to end video ingestion demo:
+  -h [ --help ]                  print the help message
+  -m [ --model ] MODEL           The name of the model to run
+  -c [ --camera ] CAMERAS        The name of the camera to use, if there are
+                                 multiple cameras to be used, separate with ,
+  -d [ --display ]               Enable display or not
+  -C [ --config_dir ] CONFIG_DIR The directory to find streamer's configuations
 ```
 
-* `CAMERA...` are comma separated list of names of camera.
-* `MODEL` is the name of the model.
-* `DISPLAY?` is either true: enable preview, or false.
+Use `apps/multicam -h` to show helps. For example to run AlexNet on Mac's iSight built-in camera:
 
-Use `apps/multicam` to show helps.
+```
+export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
+apps/multicam -m AlexNet -c Facetime -d
+```
 
 ## Run with different frameworks
 

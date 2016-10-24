@@ -1,43 +1,56 @@
 /**
  * @brief multicam.cpp - An example showing the usage to run realtime
- * classification on multiple camera streams.
+ * classification on multiple camera streams. This example reads frames from
+ * multiple cameras, overlays labels with each camera input, filter
+ * `unimportant' videos and store the video and classification results locally.
  */
 
+#include <boost/program_options.hpp>
+#include <csignal>
 #include "tx1dnn.h"
-#include "utils/utils.h"
 
-int main(int argc, char *argv[]) {
-  // FIXME: Use more standard arg parse routine.
-  // Set up glog
-  gst_init(&argc, &argv);
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_alsologtostderr = 1;
-  FLAGS_colorlogtostderr = 1;
-  // Init streamer context, this must be called before using streamer.
-  Context::GetContext().Init();
+namespace po = boost::program_options;
+using std::cout;
+using std::endl;
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  ModelManager &model_manager = ModelManager::GetInstance();
+/////// Global vars
+std::vector<std::shared_ptr<Camera>> cameras;
+std::vector<std::shared_ptr<Processor>> transformers;
+std::shared_ptr<ImageClassificationProcessor> classifier;
+std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
-  if (argc < 4) {
-    std::cout << argv[0] << " - multi-camera classification example\n"
-              << "Usage: \n"
-              << " CAMERAS\n"
-              << " MODEL\n"
-              << " DISPLAY\n";
-    std::cout << std::endl;
-    std::cout
-        << "  CAMERAS: comma separated names of the camera in the config file\n"
-        << "  MODEL: name of the model (in the config file) to use\n"
-        << "  DISPLAY: display the frame or not, must have a X window if "
-           "display is enabled\n";
-    exit(1);
+void CleanUp() {
+  for (auto encoder : encoders) {
+    if (encoder->IsStarted()) encoder->Stop();
   }
 
-  // Get options
-  auto camera_names = SplitString(argv[1], ",");
-  string model_name = argv[2];
-  string display_on = argv[3];
+  if (classifier != nullptr && classifier->IsStarted()) classifier->Stop();
+
+  for (auto transformer : transformers) {
+    if (transformer->IsStarted()) transformer->Stop();
+  }
+
+  for (auto camera : cameras) {
+    if (camera->IsStarted()) camera->Stop();
+  }
+}
+
+void SignalHandler(int signal) {
+  std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
+  CleanUp();
+
+  exit(0);
+}
+
+void Run(const std::vector<string> &camera_names, const string &model_name,
+         bool display) {
+  cout << "Run multicam demo" << endl;
+
+  std::signal(SIGINT, SignalHandler);
+
+  int batch_size = camera_names.size();
+  CameraManager &camera_manager = CameraManager::GetInstance();
+  ModelManager &model_manager = ModelManager::GetInstance();
 
   // Check options
   CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
@@ -47,13 +60,12 @@ int main(int argc, char *argv[]) {
                                                  << " does not exist";
   }
 
-  std::vector<std::shared_ptr<Camera>> cameras;
+  ////// Start cameras, processors
+
   for (auto camera_name : camera_names) {
     auto camera = camera_manager.GetCamera(camera_name);
     cameras.push_back(camera);
   }
-
-  bool display = (display_on == "true");
 
   // Do video stream classification
   std::vector<std::shared_ptr<Stream>> camera_streams;
@@ -62,36 +74,54 @@ int main(int argc, char *argv[]) {
     camera_streams.push_back(camera_stream);
   }
 
-  // Processor
+  // Transformers
   Shape input_shape(3, 227, 227);
   std::vector<std::shared_ptr<Stream>> input_streams;
-  std::vector<std::shared_ptr<Processor>> processors;
 
+  // transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformProcessor(
         camera_stream, input_shape, CROP_TYPE_CENTER,
         true /* subtract mean */));
-    processors.push_back(transform_processor);
+    transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSinks()[0]);
   }
 
+  // classifier
   auto model_desc = model_manager.GetModelDesc(model_name);
-  std::shared_ptr<ImageClassificationProcessor> classifier(
+  classifier.reset(
       new ImageClassificationProcessor(input_streams, model_desc, input_shape));
-  processors.push_back(classifier);
 
-  if (display) {
-    for (string camera_name : camera_names) {
-      cv::namedWindow(camera_name);
-    }
+  // encoders, encode each camera stream
+  for (int i = 0; i < batch_size; i++) {
+    string output_filename = camera_names[i] + ".mp4";
+
+    std::shared_ptr<GstVideoEncoder> encoder(
+        new GstVideoEncoder(classifier->GetSinks()[i], cameras[i]->GetWidth(),
+                            cameras[i]->GetHeight(), output_filename));
+    encoders.push_back(encoder);
   }
 
   for (auto camera : cameras) {
     camera->Start();
   }
 
-  for (auto processor : processors) {
-    processor->Start();
+  for (auto transformer : transformers) {
+    transformer->Start();
+  }
+
+  classifier->Start();
+
+  for (auto encoder : encoders) {
+    encoder->Start();
+  }
+
+  //////// Processor started, display the results
+
+  if (display) {
+    for (string camera_name : camera_names) {
+      cv::namedWindow(camera_name);
+    }
   }
 
   int update_overlay = 0;
@@ -140,15 +170,60 @@ int main(int argc, char *argv[]) {
 
   LOG(INFO) << "Done";
 
-  for (auto processor : processors) {
-    processor->Stop();
-  }
+  //////// Clean up
 
-  for (auto camera : cameras) {
-    camera->Stop();
-  }
-
+  CleanUp();
   cv::destroyAllWindows();
+}
+
+int main(int argc, char *argv[]) {
+  // FIXME: Use more standard arg parse routine.
+  // Set up glog
+  gst_init(&argc, &argv);
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_alsologtostderr = 1;
+  FLAGS_colorlogtostderr = 1;
+
+  po::options_description desc("Multi-camera end to end video ingestion demo");
+  desc.add_options()("help,h", "print the help message");
+  desc.add_options()("model,m",
+                     po::value<string>()->value_name("MODEL")->required(),
+                     "The name of the model to run");
+  desc.add_options()("camera,c",
+                     po::value<string>()->value_name("CAMERAS")->required(),
+                     "The name of the camera to use, if there are multiple "
+                     "cameras to be used, separate with ,");
+  desc.add_options()("display,d", "Enable display or not");
+  desc.add_options()("config_dir,C",
+                     po::value<string>()->value_name("CONFIG_DIR"),
+                     "The directory to find streamer's configuations");
+
+  po::variables_map vm;
+  try {
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+  } catch (const po::error &e) {
+    std::cerr << e.what() << endl;
+    cout << desc << endl;
+    return 1;
+  }
+
+  if (vm.count("help")) {
+    std::cout << desc << std::endl;
+    return 1;
+  }
+
+  ///////// Parse arguments
+  if (vm.count("config_dir")) {
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+  }
+  // Init streamer context, this must be called before using streamer.
+  Context::GetContext().Init();
+
+  auto camera_names = SplitString(vm["camera"].as<string>(), ",");
+  auto model = vm["model"].as<string>();
+  bool display = vm.count("display") != 0;
+  Run(camera_names, model, display);
 
   return 0;
 }
