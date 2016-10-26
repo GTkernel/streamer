@@ -160,9 +160,13 @@ Currently we support BVLC caffe, Caffe's OpenCL branch, NVIDIA caffe (including 
 Apart from various configuations for different frameworks:
 
 * Control the backend
-    1. Use cpu. `-DBACKEND=cpu`
+    1. Use CPU. `-DBACKEND=cpu`
     2. Use CUDA device. `-DBACKEND=cuda`
     3. Use OpenCL device. `-DBACKEND=opencl`
+    
+* Build with different framework: See above sections
+
+* Build with PtGray SDK for their GigE cameras: `-DUSE_PTGRAY=on`
 
 ## TODO
 

@@ -15,7 +15,7 @@ TEST(GST_VIDEO_ENCODER_TEST, TEST_BASIC) {
   encoder.Start();
 
   STREAMER_SLEEP(10);
-  
+
   encoder.Stop();
   camera->Stop();
 

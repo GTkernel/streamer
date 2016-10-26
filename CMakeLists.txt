@@ -106,6 +106,14 @@ if (USE_MXNET)
   message("Build with MXNet")
 endif ()
 
+option(USE_PTGRAY "Build with PtGray GigE SDK or not." OFF)
+if (USE_PTGRAY)
+  find_package(PtGray REQUIRED)
+  include_directories(${PtGray_FC_INCLUDE_DIRS})
+  add_definitions("-D USE_PTGRAY")
+  message("Build with PtGray")
+endif()
+
 # Common include paths
 include_directories(
   src

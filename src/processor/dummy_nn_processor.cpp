@@ -33,6 +33,9 @@ bool DummyNNProcessor::Init() {
   return true;
 }
 
-bool DummyNNProcessor::OnStop() { this->model_ = nullptr; }
+bool DummyNNProcessor::OnStop() {
+  this->model_ = nullptr;
+  return true;
+}
 
 void DummyNNProcessor::Process() { model_->Forward(); }
