@@ -46,4 +46,16 @@ inline std::vector<std::string> SplitString(const string &str,
   return results;
 }
 
+/**
+ * @brief Get protocol name and path from an uri
+ * @param uri An uri in the form protocol://path
+ * @param protocol The reference to store the protocol.
+ * @param path The reference to store the path.
+ */
+inline void ParseProtocolAndPath(const string &uri, string &protocol, string &path) {
+  std::vector<string> results = SplitString(uri, ":");
+  protocol = results[0];
+  path = results[1].substr(2);
+}
+
 #endif  // TX1DNN_STRINGUTILS_H

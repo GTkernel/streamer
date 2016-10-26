@@ -6,7 +6,19 @@ width = 640
 height = 480
 
 [[camera]]
+name = "Facetime"
+video_uri = "gst://avfvideosrc ! capsfilter caps=video/x-raw,width=(int)640,height=(int)480,framerate=(fraction)30/1"
+width = 640
+height = 480
+
+[[camera]]
 name = "YOUR IP CAMERA"
 video_uri = "rtsp://username:password@camera_url"
 width = 640
 height = 480
+
+[[camera]]
+name = "PtGray Camera"
+video_uri = "pgr://CAMERA_IP"
+width = 1600
+height = 1200

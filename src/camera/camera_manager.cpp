@@ -4,6 +4,8 @@
 
 #include "camera_manager.h"
 #include "common/context.h"
+#include "gst_camera.h"
+#include "pgr_camera.h"
 
 // The path to the camera config file
 static const string CAMERA_TOML_FILENAME = "cameras.toml";
@@ -24,8 +26,12 @@ CameraManager::CameraManager() {
   auto cameras_value = root_value.find("camera")->as<toml::Array>();
 
   for (const auto &camera_value : cameras_value) {
+    CHECK(camera_value.find("name") != nullptr);
+    CHECK(camera_value.find("video_uri") != nullptr);
+
     string name = camera_value.get<string>("name");
     string video_uri = camera_value.get<string>("video_uri");
+
     int width = -1;
     int height = -1;
     if (camera_value.find("width") != nullptr) {
@@ -34,7 +40,18 @@ CameraManager::CameraManager() {
     if (camera_value.find("height") != nullptr) {
       height = camera_value.get<int>("height");
     }
-    std::shared_ptr<Camera> camera(new Camera(name, video_uri, width, height));
+
+    std::shared_ptr<Camera> camera;
+    string video_protocol = SplitString(video_uri, ":")[0];
+    if (video_protocol == "gst" || video_protocol == "rtsp" ||
+        video_protocol == "file") {
+      camera.reset(new GSTCamera(name, video_uri, width, height));
+    } else if (video_protocol == "pgr") {
+      camera.reset(new PGRCamera(name, video_uri, width, height));
+    } else {
+      LOG(FATAL) << "Unknown video protocol: " << video_protocol;
+    }
+
     cameras_.emplace(name, camera);
   }
 }

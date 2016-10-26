@@ -155,9 +155,6 @@ cv::Mat GstVideoCapture::GetFrame(DataBuffer *data_bufferp) {
     return !connected_ || frames_.size() != 0;
   });
 
-  //  LOG(INFO) << "Waited " << timer.ElapsedMSec() << " ms until frame
-  //  available";
-
   if (!connected_) return cv::Mat();
 
   cv::Mat frame = frames_.front();
@@ -200,19 +197,16 @@ cv::Size GstVideoCapture::GetOriginalFrameSize() { return original_size_; }
 bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   // The pipeline that emits video frames
   string video_pipeline = "";
-  if (video_uri == "facetime") {
-    // Facetime camera, hardcode the video pipeline
-    video_pipeline =
-        "avfvideosrc "
-        "! capsfilter "
-        "caps=video/"
-        "x-raw,width=(int)640,height=(int)480,framerate=(fraction)30/1 ";
-  } else if (video_uri.substr(0, 7) == "rtsp://") {
+
+  string video_protocol, video_path;
+  ParseProtocolAndPath(video_uri, video_protocol, video_path);
+
+  if (video_protocol == "rtsp") {
     video_pipeline = "rtspsrc location=\"" + video_uri + "\"" +
                      " ! rtph264depay ! h264parse ! " + decoder_element_;
-  } else if (StartsWith(video_uri, "gst://")) {
+  } else if (video_protocol == "gst") {
     LOG(WARNING) << "Directly use gst pipeline as video pipeline";
-    video_pipeline = video_uri.substr(6);
+    video_pipeline = video_path;
     LOG(INFO) << video_pipeline;
   } else {
     LOG(FATAL) << "Video uri: " << video_uri << " is not valid";

@@ -10,8 +10,9 @@
 #include <string>
 
 #ifdef USE_FP16
-#include <cuda_fp16.h>
 #include <driver_types.h>
+
+#include <cuda_fp16.h>
 #endif
 
 /**

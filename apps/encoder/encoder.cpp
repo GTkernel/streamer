@@ -26,10 +26,6 @@ int main(int argc, char *argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  std::signal(SIGINT, SignalHandler);
-
-  CameraManager &camera_manager = CameraManager::GetInstance();
-
   if (argc < 3) {
     std::cout << argv[0]
               << " - Encode live streams from camera to a video file\n"
@@ -40,6 +36,10 @@ int main(int argc, char *argv[]) {
               << "  FILE: The file to store the encoded result\n";
     exit(1);
   }
+
+  std::signal(SIGINT, SignalHandler);
+
+  CameraManager &camera_manager = CameraManager::GetInstance();
 
   // Get options
   string camera_name = argv[1];

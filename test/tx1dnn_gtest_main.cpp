@@ -21,7 +21,16 @@ GTEST_API_ int main(int argc, char **argv) {
     string config_dir = argv[1];
     LOG(INFO) << config_dir;
     Context::GetContext().SetConfigDir(config_dir);
-    Context::GetContext().Init();
+
+  } else {
+    // Try to guess the test config file
+    if (FileExists("./config/cameras.toml")) {
+      Context::GetContext().SetConfigDir("./config");
+    } else if (FileExists("test/config/cameras.toml")) {
+      Context::GetContext().SetConfigDir("test/config");
+    }
   }
+
+  Context::GetContext().Init();
   return RUN_ALL_TESTS();
 }

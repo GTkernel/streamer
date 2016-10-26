@@ -18,27 +18,6 @@ string Camera::GetName() const { return name_; }
 
 string Camera::GetVideoURI() const { return video_uri_; }
 
-bool Camera::Init() {
-  bool opened = capture_.CreatePipeline(video_uri_);
-
-  if (!opened) {
-    LOG(INFO) << "can't open camera";
-    return false;
-  }
-
-  return true;
-}
-
-bool Camera::OnStop() {
-  capture_.DestroyPipeline();
-  return true;
-}
-
-void Camera::Process() {
-  cv::Mat frame = capture_.GetFrame();
-  PushFrame(0, new ImageFrame(frame, frame));
-}
-
 int Camera::GetWidth() { return width_; }
 int Camera::GetHeight() { return height_; }
 

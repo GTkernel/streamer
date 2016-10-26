@@ -33,6 +33,8 @@ struct Configurations {
   bool store;
   // Batch size for NN inference experiment
   int batch;
+  // Try to use fp16 or not
+  bool usefp16;
 } CONFIG;
 
 void SLEEP(int sleep_time_in_s) {
@@ -203,6 +205,8 @@ int main(int argc, char *argv[]) {
                      "Duration of the experiment");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
+  desc.add_options()("fp16", po::value<bool>()->default_value(false),
+                     "Try to use fp16 when possible");
   desc.add_options()(
       "pipeline,p", po::value<string>()->value_name("pipeline"),
       "The processor pipeline to run, separate processor with ,");
@@ -275,7 +279,9 @@ int main(int argc, char *argv[]) {
   CONFIG.time = vm["time"].as<int>();
   CONFIG.device_number = vm["device"].as<int>();
   CONFIG.batch = vm["batch"].as<int>();
+  CONFIG.usefp16 = vm["fp16"].as<bool>();
   Context::GetContext().SetInt(DEVICE_NUMBER, CONFIG.device_number);
+  Context::GetContext().SetBool(USEFP16, CONFIG.usefp16);
 
   if (CONFIG.experiment == "endtoend") {
     RunEndToEndExperiment();

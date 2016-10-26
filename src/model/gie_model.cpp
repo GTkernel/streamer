@@ -3,22 +3,23 @@
 //
 
 #include "gie_model.h"
-
-#define USE_FP16 true
+#include "common/context.h"
 
 GIEModel::GIEModel(const ModelDesc &model_desc, Shape input_shape,
                    int batch_size)
     : Model(model_desc, input_shape, batch_size) {}
 
 void GIEModel::Load() {
-  if (USE_FP16 && batch_size_ > 1 && batch_size_ % 2 != 0) {
+  bool use_fp16 = Context::GetContext().GetBool(USE_FP16);
+  if (use_fp16 && batch_size_ > 1 && batch_size_ % 2 != 0) {
     LOG(FATAL) << "GIE half precision only supports even batch size";
   }
 
   // FIXME: the input and output blob name is fixed.
+
   inferer_.reset(new GIEInferer<float>(model_desc_.GetModelDescPath(),
                                        model_desc_.GetModelParamsPath(), "data",
-                                       "prob", batch_size_, USE_FP16));
+                                       "prob", batch_size_, use_fp16));
   inferer_->CreateEngine();
   input_buffer_ =
       DataBuffer(input_shape_.GetSize() * sizeof(float) * batch_size_);

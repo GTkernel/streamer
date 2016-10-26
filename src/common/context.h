@@ -12,6 +12,7 @@
 const string H264_ENCODER_GST_ELEMENT = "h264_encoder_gst_element";
 const string H264_DECODER_GST_ELEMENT = "h264_decoder_gst_element";
 const string DEVICE_NUMBER = "device_number";
+const string USEFP16 = "use_fp16";
 const int DEVICE_NUMBER_CPU_ONLY = -1;
 /**
  * @brief Global single context, used to store and access various global
@@ -32,6 +33,7 @@ class Context {
   void Init() {
     SetEncoderDecoderInformation();
     SetDefaultDeviceInformation();
+    bool_values_.insert({USEFP16, false});
   }
 
   int GetInt(const string &key) {
@@ -46,6 +48,10 @@ class Context {
     CHECK(string_values_.count(key) != 0) << "No string value with key " << key;
     return string_values_[key];
   }
+  bool GetBool(const string &key) {
+    CHECK(bool_values_.count(key) != 0) << "No bool value with key " << key;
+    return bool_values_[key];
+  }
 
   void SetInt(const string &key, int value) { int_values_[key] = value; }
 
@@ -54,6 +60,9 @@ class Context {
   }
   void SetString(const string &key, const string &value) {
     string_values_[key] = value;
+  }
+  void SetBool(const string &key, bool value) {
+    bool_values_[key] = value;
   }
 
   /**
@@ -145,6 +154,7 @@ class Context {
   std::unordered_map<string, int> int_values_;
   std::unordered_map<string, string> string_values_;
   std::unordered_map<string, double> double_values_;
+  std::unordered_map<string, bool> bool_values_;
 };
 
 #endif

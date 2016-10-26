@@ -8,7 +8,6 @@
 #include "common/common.h"
 #include "processor/processor.h"
 #include "stream/stream.h"
-#include "video/gst_video_capture.h"
 
 /**
  * @brief This class represents a camera available on the device.
@@ -25,16 +24,15 @@ class Camera : public Processor {
   int GetHeight();
 
  protected:
-  virtual bool Init() override;
-  virtual bool OnStop() override;
-  virtual void Process() override;
+  virtual bool Init() = 0;
+  virtual bool OnStop() = 0;
+  virtual void Process() = 0;
 
- private:
+ protected:
   string name_;
   string video_uri_;
   int width_;
   int height_;
-  GstVideoCapture capture_;
   // Camera outout stream
   std::shared_ptr<Stream> stream_;
 };
