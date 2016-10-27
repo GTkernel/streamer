@@ -1,7 +1,7 @@
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
-# Common libraries to be linked against
+#Common libraries to be linked against
 
-# Pick source files
+#Pick source files
 set(SRC_ROOT ${PROJECT_SOURCE_DIR}/src)
 file(GLOB_RECURSE TX1DNN_SOURCE_FILES ${SRC_ROOT}/*.cpp ${SRC_ROOT}/*.h)
 file(GLOB_RECURSE CAFFE_SOURCE_FILES ${SRC_ROOT}/caffe_*.cpp ${SRC_ROOT}/caffe_*.h)
@@ -10,12 +10,14 @@ file(GLOB_RECURSE CAFFE_OPENCL_SOURCE_FILES ${SRC_ROOT}/caffe_opencl*.cpp ${SRC_
 list(REMOVE_ITEM CAFFE_SOURCE_FILES ${CAFFE_FP16_SOURCE_FILES} ${CAFFE_OPENCL_SOURCE_FILES})
 file(GLOB_RECURSE MXNET_SOURCE_FILES ${SRC_ROOT}/mxnet_*.cpp ${SRC_ROOT}/mxnet_*.h)
 file(GLOB_RECURSE GIE_SOURCE_FILES ${SRC_ROOT}/gie_*.cpp ${SRC_ROOT}/gie_*.h)
+file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/camera/pgr_*.h)
 list(REMOVE_ITEM TX1DNN_SOURCE_FILES
   ${CAFFE_SOURCE_FILES}
   ${CAFFE_FP16_SOURCE_FILES}
   ${CAFFE_OPENCL_SOURCE_FILES}
   ${MXNET_SOURCE_FILES}
-  ${GIE_SOURCE_FILES})
+  ${GIE_SOURCE_FILES}
+  ${PTGRAY_SOURCE_FILES})
 
 # Pick libraries
 set(TX1DNN_LIBRARIES
@@ -74,6 +76,12 @@ endif ()
 if (USE_MXNET)
   list(APPEND TX1DNN_SOURCE_FILES ${MXNET_SOURCE_FILES})
   list(APPEND TX1DNN_LIBRARIES ${MXNet_LIBRARIES})
+endif ()
+
+# Build with PtGray SDK
+if (USE_PTGRAY)
+  list(APPEND TX1DNN_SOURCE_FILES ${PTGRAY_SOURCE_FILES})
+  list(APPEND TX1DNN_LIBRARIES ${PtGray_LIBRARIES})
 endif ()
 
 add_library(tx1dnn SHARED ${TX1DNN_SOURCE_FILES} utils/math_utils.h)

@@ -52,10 +52,29 @@ inline std::vector<std::string> SplitString(const string &str,
  * @param protocol The reference to store the protocol.
  * @param path The reference to store the path.
  */
-inline void ParseProtocolAndPath(const string &uri, string &protocol, string &path) {
+inline void ParseProtocolAndPath(const string &uri, string &protocol,
+                                 string &path) {
   std::vector<string> results = SplitString(uri, ":");
   protocol = results[0];
   path = results[1].substr(2);
+}
+
+/**
+ * @brief Get a numeric value for ip address from a string. 1.2.3.4 will be
+ * converted to 0x01020304.
+ * @param ip_str The ip address in a string
+ * @return The ip address in integer
+ */
+inline unsigned int GetIPAddrFromString(const string &ip_str) {
+  std::vector<string> sp = SplitString(ip_str, ".");
+  unsigned int ip_val;
+  CHECK(sp.size() == 4) << ip_str << " is not a valid ip address";
+
+  for (int i = 0; i < 4; i++) {
+    ip_val += atoi(sp[i].c_str()) << ((3 - i) * 8);
+  }
+
+  return ip_val;
 }
 
 #endif  // TX1DNN_STRINGUTILS_H
