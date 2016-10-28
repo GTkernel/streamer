@@ -74,11 +74,10 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     camera_streams.push_back(camera_stream);
   }
 
-  // Transformers
   Shape input_shape(3, 227, 227);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
-  // transformers
+  // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformProcessor(
         camera_stream, input_shape, CROP_TYPE_CENTER,
@@ -163,8 +162,12 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
         cv::imshow(camera_names[i], img);
       }
     }
-    int q = cv::waitKey(10);
-    if (q == 'q') break;
+
+    if (display) {
+      int q = cv::waitKey(10);
+      if (q == 'q') break;
+    }
+
     update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
   }
 

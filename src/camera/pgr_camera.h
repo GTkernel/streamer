@@ -18,15 +18,15 @@ class PGRCamera : public Camera {
             int height = -1, FlyCapture2::Mode mode = FlyCapture2::MODE_0,
             FlyCapture2::PixelFormat pixel_format =
                 FlyCapture2::PIXEL_FORMAT_411YUV8);
+  virtual CameraType GetType() const override;
 
   float GetExposure();
   void SetExposure(float exposure);
   float GetSharpness();
   void SetSharpness(float sharpness);
   Shape GetImageSize();
-  void SetImageSize(Shape shape);
   FlyCapture2::VideoMode GetVideoMode();
-  void SetVideoMode(FlyCapture2::Mode mode);
+  void SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode);
 
  protected:
   virtual bool Init() override;
@@ -49,6 +49,8 @@ class PGRCamera : public Camera {
   FlyCapture2::Camera camera_;
   FlyCapture2::Mode mode_;
   FlyCapture2::PixelFormat pixel_format_;
+
+  std::mutex camera_lock_;
 };
 
 #endif  // TX1DNN_PGR_CAMERA_H

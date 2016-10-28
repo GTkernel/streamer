@@ -1,7 +1,4 @@
 # Macro to get sub directories
-
-# find_package(Boost)
-
 MACRO(SUBDIRLIST result curdir)
   FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
   SET(dirlist "")
@@ -13,10 +10,7 @@ MACRO(SUBDIRLIST result curdir)
   SET(${result} ${dirlist})
 ENDMACRO()
 
-set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
-SUBDIRLIST(APP_DIRS ${APPS_ROOT})
-
-foreach (app_dir ${APP_DIRS})
+MACRO(BUILD_APP app_dir)
   get_filename_component(basename ${app_dir} NAME_WE)
   FILE(GLOB app_srcs ${app_dir}/*.cpp ${app_dir}/*.h ${app_dir}/*.c)
   add_executable(${basename} ${app_srcs})
@@ -25,6 +19,22 @@ foreach (app_dir ${APP_DIRS})
   endif ()
   target_link_libraries(${basename} tx1dnn ${Boost_PROGRAM_OPTIONS_LIBRARY})
   install(TARGETS ${basename} DESTINATION apps)
+ENDMACRO()
+
+set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
+SUBDIRLIST(APP_DIRS ${APPS_ROOT})
+
+set(GIGE_APP_DIRS gige)
+list(REMOVE_ITEM APP_DIRS ${GIGE_APP_DIRS})
+
+foreach (app_dir ${APP_DIRS})
+  BUILD_APP(${app_dir})
 endforeach ()
+
+if (USE_PTGRAY)
+  foreach (app_dir ${GIGE_APP_DIRS})
+    BUILD_APP(${app_dir})
+  endforeach ()
+endif ()
 
 target_link_libraries(runner linenoise)

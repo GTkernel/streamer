@@ -22,6 +22,7 @@ class Camera : public Processor {
   std::shared_ptr<Stream> GetStream() const;
   int GetWidth();
   int GetHeight();
+  virtual CameraType GetType() const = 0;
 
  protected:
   virtual bool Init() = 0;

@@ -5,7 +5,10 @@
 #include "camera_manager.h"
 #include "common/context.h"
 #include "gst_camera.h"
+
+#ifdef USE_PTGRAY
 #include "pgr_camera.h"
+#endif
 
 // The path to the camera config file
 static const string CAMERA_TOML_FILENAME = "cameras.toml";
@@ -47,7 +50,11 @@ CameraManager::CameraManager() {
         video_protocol == "file") {
       camera.reset(new GSTCamera(name, video_uri, width, height));
     } else if (video_protocol == "pgr") {
+#ifdef USE_PTGRAY
       camera.reset(new PGRCamera(name, video_uri, width, height));
+#else
+      LOG(FATAL) << "Not built with PtGray FlyCapture SDK";
+#endif
     } else {
       LOG(FATAL) << "Unknown video protocol: " << video_protocol;
     }

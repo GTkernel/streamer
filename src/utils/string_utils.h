@@ -67,7 +67,7 @@ inline void ParseProtocolAndPath(const string &uri, string &protocol,
  */
 inline unsigned int GetIPAddrFromString(const string &ip_str) {
   std::vector<string> sp = SplitString(ip_str, ".");
-  unsigned int ip_val;
+  unsigned int ip_val = 0;
   CHECK(sp.size() == 4) << ip_str << " is not a valid ip address";
 
   for (int i = 0; i < 4; i++) {

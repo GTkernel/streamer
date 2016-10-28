@@ -64,6 +64,12 @@ enum ModelType {
   MODEL_TYPE_TENSORFLOW
 };
 
+//// Camera types
+enum CameraType {
+  CAMERA_TYPE_GST = 0,
+  CAMERA_TYPE_PTGRAY
+};
+
 //// Frame types
 enum FrameType {
   FRAME_TYPE_INVALID = 0,

@@ -11,6 +11,7 @@
     error = (cmd);                           \
     if (error != FlyCapture2::PGRERROR_OK) { \
       error.PrintErrorTrace();               \
+      LOG(FATAL) << "PGR Error happend";     \
     }                                        \
   } while (0)
 
@@ -51,6 +52,10 @@ bool PGRCamera::Init() {
       &fmt7ImageSettings, fmt7PacketInfo.recommendedBytesPerPacket));
 
   camera_.StartCapture();
+
+  LOG(INFO) << "Camera initialized";
+
+  return true;
 }
 
 bool PGRCamera::OnStop() {
@@ -60,6 +65,8 @@ bool PGRCamera::OnStop() {
 }
 
 void PGRCamera::Process() {
+  std::lock_guard<std::mutex> guard(camera_lock_);
+
   FlyCapture2::Image raw_image;
   FlyCapture2::Image converted_image;
   FlyCapture2::Error error;
@@ -70,6 +77,8 @@ void PGRCamera::Process() {
     error.PrintErrorTrace();
     return;
   }
+
+  raw_image.Convert(FlyCapture2::PIXEL_FORMAT_BGR, &converted_image);
 
   unsigned int rowBytes =
       static_cast<unsigned>((double)converted_image.GetReceivedDataSize() /
@@ -99,21 +108,6 @@ Shape PGRCamera::GetImageSize() {
   return Shape(image_settings.width, image_settings.height);
 }
 
-void PGRCamera::SetImageSize(Shape shape) {
-  FlyCapture2::Format7ImageSettings image_settings;
-  CHECK_PGR(camera_.GetFormat7Configuration(&image_settings, nullptr, nullptr));
-  image_settings.height = (unsigned)shape.height;
-  image_settings.width = (unsigned)shape.width;
-  bool valid;
-  FlyCapture2::Format7PacketInfo fmt7_packet_info;
-
-  camera_.ValidateFormat7Settings(&image_settings, &valid, &fmt7_packet_info);
-  CHECK(valid) << "fmt7 image settings are not valid";
-
-  CHECK_PGR(camera_.SetFormat7Configuration(
-      &image_settings, fmt7_packet_info.recommendedBytesPerPacket));
-}
-
 FlyCapture2::VideoMode PGRCamera::GetVideoMode() {
   FlyCapture2::VideoMode video_mode;
   FlyCapture2::FrameRate frame_rate;
@@ -121,21 +115,33 @@ FlyCapture2::VideoMode PGRCamera::GetVideoMode() {
 
   return video_mode;
 }
-void PGRCamera::SetVideoMode(FlyCapture2::Mode mode) {
+
+void PGRCamera::SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode) {
+  std::lock_guard<std::mutex> guard(camera_lock_);
+  CHECK_PGR(camera_.StopCapture());
+
   // Get fmt7 image settings
   FlyCapture2::Format7ImageSettings image_settings;
-  CHECK_PGR(camera_.GetFormat7Configuration(&image_settings, nullptr, nullptr));
+  unsigned int current_packet_size;
+  float current_percentage;
+  CHECK_PGR(camera_.GetFormat7Configuration(
+      &image_settings, &current_packet_size, &current_percentage));
 
   image_settings.mode = mode;
+  image_settings.height = (unsigned)shape.height;
+  image_settings.width = (unsigned)shape.width;
   bool valid;
   FlyCapture2::Format7PacketInfo fmt7_packet_info;
 
-  camera_.ValidateFormat7Settings(&image_settings, &valid, &fmt7_packet_info);
+  CHECK_PGR(camera_.ValidateFormat7Settings(&image_settings, &valid,
+                                            &fmt7_packet_info));
   CHECK(valid) << "fmt7 image settings are not valid";
 
   CHECK_PGR(camera_.SetFormat7Configuration(
       &image_settings, fmt7_packet_info.recommendedBytesPerPacket));
+  CHECK_PGR(camera_.StartCapture());
 }
+
 
 void PGRCamera::SetProperty(FlyCapture2::PropertyType property_type,
                             float value, bool abs, bool value_a) {
@@ -161,6 +167,7 @@ void PGRCamera::SetProperty(FlyCapture2::PropertyType property_type,
 
 float PGRCamera::GetProperty(FlyCapture2::PropertyType property_type, bool abs,
                              bool value_a) {
+  LOG(INFO) << "Get property called";
   FlyCapture2::Property prop;
   prop.type = property_type;
   CHECK_PGR(camera_.GetProperty(&prop));
@@ -175,3 +182,4 @@ float PGRCamera::GetProperty(FlyCapture2::PropertyType property_type, bool abs,
     }
   }
 }
+CameraType PGRCamera::GetType() const { return CAMERA_TYPE_PTGRAY; }

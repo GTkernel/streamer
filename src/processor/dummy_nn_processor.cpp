@@ -16,7 +16,6 @@ bool DummyNNProcessor::Init() {
   // Load the model
   model_ = ModelManager::GetInstance().CreateModel(model_desc_, input_shape_,
                                                    batch_size_);
-
   model_->Load();
 
   // Prepare fake input
