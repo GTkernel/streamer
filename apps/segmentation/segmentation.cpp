@@ -2,7 +2,7 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/5/16.
 //
 
-#include "tx1dnn.h"
+#include "streamer.h"
 
 int main(int argc, char *argv[]) {
   // FIXME: Use more standard arg parse routine.

@@ -3,7 +3,7 @@
  */
 
 #include <csignal>
-#include "tx1dnn.h"
+#include "streamer.h"
 
 std::shared_ptr<Camera> camera;
 std::shared_ptr<Processor> encoder;

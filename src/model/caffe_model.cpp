@@ -3,7 +3,7 @@
 //
 
 #include "caffe_model.h"
-#include <tx1dnn.h>
+#include <streamer.h>
 
 template <typename DType>
 CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape,

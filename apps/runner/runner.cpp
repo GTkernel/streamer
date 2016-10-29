@@ -6,7 +6,7 @@
 
 #include "cxxopts/cxxopts.hpp"
 #include "linenoise/linenoise.h"
-#include "tx1dnn.h"
+#include "streamer.h"
 
 #include <boost/algorithm/string.hpp>
 #include <thread>

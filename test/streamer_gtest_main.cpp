@@ -10,7 +10,7 @@
 #include "common/context.h"
 
 GTEST_API_ int main(int argc, char **argv) {
-  printf("Running main() from tx1dnn_gtest_main.cc\n");
+  printf("Running main() from streamer_gtest_main.cc\n");
   testing::InitGoogleTest(&argc, argv);
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);

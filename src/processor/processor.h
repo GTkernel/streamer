@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef TX1DNN_PROCESSOR_H
-#define TX1DNN_PROCESSOR_H
+#ifndef STREAMER_PROCESSOR_H
+#define STREAMER_PROCESSOR_H
 
 #include <atomic>
 #include <thread>
@@ -98,4 +98,4 @@ class Processor {
   size_t n_processed_;
 };
 
-#endif  // TX1DNN_PROCESSOR_H
+#endif  // STREAMER_PROCESSOR_H

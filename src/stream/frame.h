@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
 
-#ifndef TX1DNN_FRAME_H
-#define TX1DNN_FRAME_H
+#ifndef STREAMER_FRAME_H
+#define STREAMER_FRAME_H
 
 #include "common/common.h"
 #include "frame.h"
@@ -57,4 +57,4 @@ class BytesFrame : public Frame {
   DataBuffer data_buffer_;
 };
 
-#endif  // TX1DNN_FRAME_H
+#endif  // STREAMER_FRAME_H

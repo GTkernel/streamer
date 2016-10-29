@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/24/16.
 //
 
-#ifndef TX1DNN_MODEL_H
-#define TX1DNN_MODEL_H
+#ifndef STREAMER_MODEL_H
+#define STREAMER_MODEL_H
 
 #include <common/data_buffer.h>
 #include "common/common.h"
@@ -76,4 +76,4 @@ class Model {
   int batch_size_;
 };
 
-#endif  // TX1DNN_MODEL_H
+#endif  // STREAMER_MODEL_H

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(tx1dnn)
+project(streamer)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -160,4 +160,4 @@ endforeach ()
 
 include(cmake/summary.cmake)
 include(cmake/clangformat.cmake)
-tx1dnn_print_configuration_summary()
+streamer_print_configuration_summary()

@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/26/16.
 //
 
-#ifndef TX1DNN_STREAM_H
-#define TX1DNN_STREAM_H
+#ifndef STREAMER_STREAM_H
+#define STREAMER_STREAM_H
 
 #include "common/common.h"
 #include "frame.h"
@@ -44,4 +44,4 @@ class Stream {
   string name_;
 };
 
-#endif  // TX1DNN_STREAM_H
+#endif  // STREAMER_STREAM_H

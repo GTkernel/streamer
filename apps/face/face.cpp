@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "tx1dnn.h"
+#include "streamer.h"
 
 using std::cout;
 using std::endl;

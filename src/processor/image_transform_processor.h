@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef TX1DNN_IMAGETRANSFORMPROCESSOR_H
-#define TX1DNN_IMAGETRANSFORMPROCESSOR_H
+#ifndef STREAMER_IMAGETRANSFORMPROCESSOR_H
+#define STREAMER_IMAGETRANSFORMPROCESSOR_H
 
 #include "common/types.h"
 #include "processor.h"
@@ -36,4 +36,4 @@ class ImageTransformProcessor : public Processor {
   cv::Mat sample_normalized_;
 };
 
-#endif  // TX1DNN_IMAGETRANSFORMPROCESSOR_H
+#endif  // STREAMER_IMAGETRANSFORMPROCESSOR_H

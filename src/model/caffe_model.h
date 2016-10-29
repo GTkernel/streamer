@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/29/16.
 //
 
-#ifndef TX1DNN_CAFFE_MODEL_H
-#define TX1DNN_CAFFE_MODEL_H
+#ifndef STREAMER_CAFFE_MODEL_H
+#define STREAMER_CAFFE_MODEL_H
 
 #include <caffe/caffe.hpp>
 #include "model.h"
@@ -25,4 +25,4 @@ class CaffeModel : public Model {
   std::unique_ptr<caffe::Net<DType>> net_;
 };
 
-#endif  // TX1DNN_CAFFE_MODEL_H
+#endif  // STREAMER_CAFFE_MODEL_H

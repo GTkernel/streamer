@@ -1,8 +1,8 @@
 #include "model/model.h"
 #include "processor.h"
 
-#ifndef TX1DNN_IMAGE_SEGMENTATION_PROCESSOR_H
-#define TX1DNN_IMAGE_SEGMENTATION_PROCESSOR_H
+#ifndef STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
+#define STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
 
 class ImageSegmentationProcessor : public Processor {
  public:

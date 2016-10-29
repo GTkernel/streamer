@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/29/16.
 //
 
-#ifndef TX1DNN_CAFFE_FP16_MODEL_H
-#define TX1DNN_CAFFE_FP16_MODEL_H
+#ifndef STREAMER_CAFFE_FP16_MODEL_H
+#define STREAMER_CAFFE_FP16_MODEL_H
 
 #include <caffe/caffe.hpp>
 #include "model.h"
@@ -33,4 +33,4 @@ class CaffeFp16Model : public Model {
   DataBuffer network_input_buffer_;
 };
 
-#endif  // TX1DNN_CAFFE_FP16_MODEL_H
+#endif  // STREAMER_CAFFE_FP16_MODEL_H

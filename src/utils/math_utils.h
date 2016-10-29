@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef TX1DNN_MATH_UTILS_H_H
-#define TX1DNN_MATH_UTILS_H_H
+#ifndef STREAMER_MATH_UTILS_H_H
+#define STREAMER_MATH_UTILS_H_H
 #include "common/common.h"
 
 inline bool PairCompare(const std::pair<float, int> &lhs,
@@ -28,4 +28,4 @@ inline std::vector<int> Argmax(float *scores, int N, int K) {
   return result;
 }
 
-#endif  // TX1DNN_MATH_UTILS_H_H
+#endif  // STREAMER_MATH_UTILS_H_H

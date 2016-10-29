@@ -17,7 +17,7 @@ MACRO(BUILD_APP app_dir)
   if (JEMALLOC_FOUND)
     target_link_libraries(${basename} ${JAMALLOC_LIBRARIES})
   endif ()
-  target_link_libraries(${basename} tx1dnn ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  target_link_libraries(${basename} streamer ${Boost_PROGRAM_OPTIONS_LIBRARY})
   install(TARGETS ${basename} DESTINATION apps)
 ENDMACRO()
 

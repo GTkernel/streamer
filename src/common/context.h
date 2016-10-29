@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/16/16.
 //
 
-#ifndef TX1DNN_CONTEXT_H
-#define TX1DNN_CONTEXT_H
+#ifndef STREAMER_CONTEXT_H
+#define STREAMER_CONTEXT_H
 
 #include <unordered_map>
 #include "common.h"

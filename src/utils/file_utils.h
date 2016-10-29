@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/16/16.
 //
 
-#ifndef TX1DNN_FILE_UTILS_H
-#define TX1DNN_FILE_UTILS_H
+#ifndef STREAMER_FILE_UTILS_H
+#define STREAMER_FILE_UTILS_H
 #include "common/common.h"
 
 inline bool FileExists(const string &filename) {
@@ -11,4 +11,4 @@ inline bool FileExists(const string &filename) {
   return f.good();
 }
 
-#endif  // TX1DNN_FILE_UTILS_H
+#endif  // STREAMER_FILE_UTILS_H

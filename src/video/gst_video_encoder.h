@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/13/16.
 //
 
-#ifndef TX1DNN_GST_VIDEO_ENCODER_H
-#define TX1DNN_GST_VIDEO_ENCODER_H
+#ifndef STREAMER_GST_VIDEO_ENCODER_H
+#define STREAMER_GST_VIDEO_ENCODER_H
 
 #include "common/common.h"
 #include "gst/app/gstappsrc.h"
@@ -67,4 +67,4 @@ class GstVideoEncoder : public Processor {
   string encoder_element_;
 };
 
-#endif  // TX1DNN_GST_VIDEO_ENCODER_H
+#endif  // STREAMER_GST_VIDEO_ENCODER_H

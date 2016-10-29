@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include "tx1dnn.h"
+#include "streamer.h"
 
 TEST(CONTEXT_TEST, TEST_BASIC) {
   Context &context = Context::GetContext();

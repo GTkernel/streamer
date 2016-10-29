@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/29/16.
 //
 
-#ifndef TX1DNN_GIE_MODEL_H
-#define TX1DNN_GIE_MODEL_H
+#ifndef STREAMER_GIE_MODEL_H
+#define STREAMER_GIE_MODEL_H
 
 #include "gie_inferer.h"
 #include "model.h"
@@ -23,4 +23,4 @@ class GIEModel : public Model {
   std::unique_ptr<GIEInferer<float>> inferer_;
 };
 
-#endif  // TX1DNN_GIE_MODEL_H
+#endif  // STREAMER_GIE_MODEL_H

@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
 //
 
-#ifndef TX1DNN_CAMERA_H
-#define TX1DNN_CAMERA_H
+#ifndef STREAMER_CAMERA_H
+#define STREAMER_CAMERA_H
 
 #include "common/common.h"
 #include "processor/processor.h"
@@ -38,4 +38,4 @@ class Camera : public Processor {
   std::shared_ptr<Stream> stream_;
 };
 
-#endif  // TX1DNN_CAMERA_H
+#endif  // STREAMER_CAMERA_H

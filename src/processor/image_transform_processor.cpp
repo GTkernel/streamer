@@ -3,7 +3,7 @@
 //
 
 #include "image_transform_processor.h"
-#include <tx1dnn.h>
+#include <streamer.h>
 
 ImageTransformProcessor::ImageTransformProcessor(
     std::shared_ptr<Stream> input_stream, const Shape &target_shape,

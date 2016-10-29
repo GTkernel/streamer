@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/29/16.
 //
 
-#ifndef TX1DNN_MXNET_MODEL_H
-#define TX1DNN_MXNET_MODEL_H
+#ifndef STREAMER_MXNET_MODEL_H
+#define STREAMER_MXNET_MODEL_H
 
 #include <stdlib.h>
 
@@ -27,4 +27,4 @@ class MXNetModel : public Model {
   PredictorHandle predictor_;
 };
 
-#endif  // TX1DNN_MXNET_MODEL_H
+#endif  // STREAMER_MXNET_MODEL_H

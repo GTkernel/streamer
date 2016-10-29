@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/23/16.
 //
 
-#ifndef TX1DNN_TIMER_H
-#define TX1DNN_TIMER_H
+#ifndef STREAMER_TIMER_H
+#define STREAMER_TIMER_H
 
 #include <chrono>
 
@@ -45,4 +45,4 @@ class Timer {
   TimerTimePoint start_time_;
 };
 
-#endif  // TX1DNN_TIMER_H
+#endif  // STREAMER_TIMER_H

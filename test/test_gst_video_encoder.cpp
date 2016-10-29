@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include <tx1dnn.h>
+#include <streamer.h>
 
 TEST(GST_VIDEO_ENCODER_TEST, TEST_BASIC) {
   CameraManager &camera_manager = CameraManager::GetInstance();

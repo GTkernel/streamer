@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/26/16.
 //
 
-#ifndef TX1DNN_GIEINFERER_H
-#define TX1DNN_GIEINFERER_H
+#ifndef STREAMER_GIEINFERER_H
+#define STREAMER_GIEINFERER_H
 
 #include <NvCaffeParser.h>
 #include <NvInfer.h>
@@ -63,4 +63,4 @@ class GIEInferer {
   bool fp16_mode_;
 };
 
-#endif  // TX1DNN_GIEINFERER_H
+#endif  // STREAMER_GIEINFERER_H

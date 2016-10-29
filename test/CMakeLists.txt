@@ -4,14 +4,14 @@ include_directories(${PROJECT_SOURCE_DIR}/test/include)
 
 file(GLOB_RECURSE TEST_SRCS ${PROJECT_SOURCE_DIR}/test/test*.cpp)
 
-add_library(tx1dnn_gtest_main tx1dnn_gtest_main.cpp)
-target_link_libraries(tx1dnn_gtest_main tx1dnn gtest)
+add_library(streamer_gtest_main streamer_gtest_main.cpp)
+target_link_libraries(streamer_gtest_main streamer gtest)
 
 set(TEST_CONFIG_DIR ${PROJECT_BINARY_DIR}/test/config)
 foreach (f ${TEST_SRCS})
   get_filename_component(basename ${f} NAME_WE)
   add_executable(${basename} ${f})
-  target_link_libraries(${basename} tx1dnn gtest tx1dnn_gtest_main gmock gmock_main)
+  target_link_libraries(${basename} streamer gtest streamer_gtest_main gmock gmock_main)
   add_test(${basename} ${basename} ${TEST_CONFIG_DIR})
 endforeach ()
 

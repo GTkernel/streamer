@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/6/16.
 //
 
-#ifndef TX1DNN_BATCH_CLASSIFIER_H
-#define TX1DNN_BATCH_CLASSIFIER_H
+#ifndef STREAMER_BATCH_CLASSIFIER_H
+#define STREAMER_BATCH_CLASSIFIER_H
 
 #include "common/common.h"
 #include "model/model.h"
@@ -39,4 +39,4 @@ class ImageClassificationProcessor : public Processor {
   int batch_size_;
 };
 
-#endif  // TX1DNN_BATCH_CLASSIFIER_H
+#endif  // STREAMER_BATCH_CLASSIFIER_H

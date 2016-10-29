@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/11/16.
 //
 
-#ifndef TX1DNN_OPENCV_FACE_DETECTOR_H
-#define TX1DNN_OPENCV_FACE_DETECTOR_H
+#ifndef STREAMER_OPENCV_FACE_DETECTOR_H
+#define STREAMER_OPENCV_FACE_DETECTOR_H
 
 #include <opencv2/gpu/gpu.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
@@ -32,4 +32,4 @@ class OpenCVFaceDetector : public Processor {
 #endif
 };
 
-#endif  // TX1DNN_OPENCV_FACE_DETECTOR_H
+#endif  // STREAMER_OPENCV_FACE_DETECTOR_H

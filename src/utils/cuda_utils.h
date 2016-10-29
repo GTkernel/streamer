@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef TX1DNN_CUDA_UTILS_H
-#define TX1DNN_CUDA_UTILS_H
+#ifndef STREAMER_CUDA_UTILS_H
+#define STREAMER_CUDA_UTILS_H
 
 #include "common/common.h"
 
@@ -22,4 +22,4 @@ inline void GetCUDAGpus(std::vector<int> &gpus) {
   }
 }
 
-#endif  // TX1DNN_CUDA_UTILS_H
+#endif  // STREAMER_CUDA_UTILS_H

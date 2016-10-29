@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
 //
 
-#ifndef TX1DNN_CAMERA_MANAGER_H
-#define TX1DNN_CAMERA_MANAGER_H
+#ifndef STREAMER_CAMERA_MANAGER_H
+#define STREAMER_CAMERA_MANAGER_H
 
 #include <unordered_map>
 #include "camera/camera.h"
@@ -27,4 +27,4 @@ class CameraManager {
   std::unordered_map<string, std::shared_ptr<Camera>> cameras_;
 };
 
-#endif  // TX1DNN_CAMERA_MANAGER_H
+#endif  // STREAMER_CAMERA_MANAGER_H

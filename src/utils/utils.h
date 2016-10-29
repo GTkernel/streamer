@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef TX1DNN_UTILS_H
-#define TX1DNN_UTILS_H
+#ifndef STREAMER_UTILS_H
+#define STREAMER_UTILS_H
 
 #include "cuda_utils.h"
 #include "file_utils.h"
@@ -15,4 +15,4 @@ inline void STREAMER_SLEEP(int secs) {
   std::this_thread::sleep_for(std::chrono::seconds(secs));
 }
 
-#endif  // TX1DNN_UTILS_H
+#endif  // STREAMER_UTILS_H

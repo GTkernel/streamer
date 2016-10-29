@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/26/16.
 //
 
-#ifndef TX1DNN_TYPE_H
-#define TX1DNN_TYPE_H
+#ifndef STREAMER_TYPE_H
+#define STREAMER_TYPE_H
 
 #include <cstdlib>
 #include <memory>
@@ -96,4 +96,4 @@ struct float16 {
 };
 #endif
 
-#endif  // TX1DNN_TYPE_H
+#endif  // STREAMER_TYPE_H

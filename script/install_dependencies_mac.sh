@@ -3,7 +3,7 @@ brew update
 brew tap homebrew/science
 brew install cmake glog glib gstreamer gst-plugins-base \
     gst-plugins-good gst-plugins-bad gst-plugins-ugly \
-    boost opencv
+    boost opencv jemalloc
 
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 # Install Caffe

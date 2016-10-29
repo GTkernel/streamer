@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/21/16.
 //
 
-#ifndef TX1DNN_DUMMY_NN_PROCESSOR_H
-#define TX1DNN_DUMMY_NN_PROCESSOR_H
+#ifndef STREAMER_DUMMY_NN_PROCESSOR_H
+#define STREAMER_DUMMY_NN_PROCESSOR_H
 
 #include "model/model.h"
 #include "processor.h"
@@ -31,4 +31,4 @@ class DummyNNProcessor : public Processor {
   DataBuffer fake_input_;
 };
 
-#endif  // TX1DNN_DUMMY_NN_PROCESSOR_H
+#endif  // STREAMER_DUMMY_NN_PROCESSOR_H

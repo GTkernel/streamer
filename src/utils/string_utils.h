@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/25/16.
 //
 
-#ifndef TX1DNN_STRINGUTILS_H
-#define TX1DNN_STRINGUTILS_H
+#ifndef STREAMER_STRINGUTILS_H
+#define STREAMER_STRINGUTILS_H
 #include <boost/algorithm/string.hpp>
 #include "common/common.h"
 
@@ -77,4 +77,4 @@ inline unsigned int GetIPAddrFromString(const string &ip_str) {
   return ip_val;
 }
 
-#endif  // TX1DNN_STRINGUTILS_H
+#endif  // STREAMER_STRINGUTILS_H

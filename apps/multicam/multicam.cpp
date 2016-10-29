@@ -7,7 +7,7 @@
 
 #include <boost/program_options.hpp>
 #include <csignal>
-#include "tx1dnn.h"
+#include "streamer.h"
 
 namespace po = boost::program_options;
 using std::cout;
