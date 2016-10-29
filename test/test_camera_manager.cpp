@@ -8,6 +8,6 @@
 TEST(CAMERA_MANAGER_TEST, TEST_BASIC) {
   CameraManager &manager = CameraManager::GetInstance();
 
-  EXPECT_EQ(manager.GetCameras().size(), 4);
+  EXPECT_EQ(manager.GetCameras().size(), 3);
   EXPECT_EQ(manager.GetCamera("GST_TEST")->GetWidth(), 640);
 }

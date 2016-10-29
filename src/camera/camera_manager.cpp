@@ -53,7 +53,9 @@ CameraManager::CameraManager() {
 #ifdef USE_PTGRAY
       camera.reset(new PGRCamera(name, video_uri, width, height));
 #else
-      LOG(FATAL) << "Not built with PtGray FlyCapture SDK";
+      LOG(WARNING) << "Not built with PtGray FlyCapture SDK, camera: " << name
+                   << " is not loaded";
+      continue;
 #endif
     } else {
       LOG(FATAL) << "Unknown video protocol: " << video_protocol;

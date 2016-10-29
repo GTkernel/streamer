@@ -16,9 +16,3 @@ name = "YOUR IP CAMERA"
 video_uri = "rtsp://username:password@camera_url"
 width = 640
 height = 480
-
-[[camera]]
-name = "PtGray Camera"
-video_uri = "pgr://CAMERA_IP"
-width = 1600
-height = 1200
