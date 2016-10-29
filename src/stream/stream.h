@@ -21,13 +21,11 @@ class Stream {
   Stream(int max_buffer_size = 5);
   Stream(string name, int max_buffer_size = 5);
   /**
-   * @brief Pop a frame from the stream, the frame will be removed from the
-   * stream.
-   * @return The first frame in the series.
+   * @brief Pop a frame of type FT from the stream.
+   * @return  The head frame in the stream.
    */
-  std::shared_ptr<Frame> PopFrame();
-  std::shared_ptr<ImageFrame> PopImageFrame();
-  std::shared_ptr<MetadataFrame> PopMDFrame();
+  template <typename FT = Frame>
+  std::shared_ptr<FT> PopFrame();
   /**
    * @brief Push a frame into the stream.
    * @param frwame The frame to be pushed into the stream.

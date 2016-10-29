@@ -14,10 +14,10 @@ TEST(GST_VIDEO_ENCODER_TEST, TEST_BASIC) {
   camera->Start();
   encoder.Start();
 
-  STREAMER_SLEEP(10);
+  STREAMER_SLEEP(0.1);
 
   encoder.Stop();
   camera->Stop();
 
-//  std::remove("test.mp4");
+  std::remove("test.mp4");
 }

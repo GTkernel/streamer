@@ -11,8 +11,7 @@
 class Frame {
  public:
   Frame() = delete;
-  Frame(FrameType frame_type);
-  Frame(FrameType frame_type, cv::Mat original_image);
+  Frame(FrameType frame_type, cv::Mat original_image = cv::Mat());
   virtual ~Frame(){};
   FrameType GetType();
   cv::Mat GetOriginalImage();
@@ -25,8 +24,7 @@ class Frame {
 
 class ImageFrame : public Frame {
  public:
-  ImageFrame(cv::Mat image, cv::Mat original_image);
-  ImageFrame(cv::Mat image);
+  ImageFrame(cv::Mat image, cv::Mat original_image = cv::Mat());
   Shape GetSize();
   cv::Mat GetImage();
   void SetImage(cv::Mat image);
@@ -47,6 +45,16 @@ class MetadataFrame : public Frame {
  private:
   std::vector<string> tags_;
   std::vector<Rect> bboxes_;
+};
+
+class BytesFrame : public Frame {
+ public:
+  BytesFrame() = delete;
+  BytesFrame(DataBuffer data_buffer, cv::Mat original_image = cv::Mat());
+  DataBuffer GetDataBuffer();
+
+ private:
+  DataBuffer data_buffer_;
 };
 
 #endif  // TX1DNN_FRAME_H

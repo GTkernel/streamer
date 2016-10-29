@@ -21,7 +21,7 @@ bool OpenCVFaceDetector::OnStop() {
 }
 
 void OpenCVFaceDetector::Process() {
-  auto frame = PopImageFrame(0);
+  auto frame = GetFrame<ImageFrame>(0);
   cv::Mat image = frame->GetImage();
 
   std::vector<cv::Rect> results;

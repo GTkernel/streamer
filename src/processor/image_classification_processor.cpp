@@ -61,7 +61,7 @@ void ImageClassificationProcessor::Process() {
   std::vector<std::shared_ptr<ImageFrame>> image_frames;
   float *data = (float *)input_buffer_.GetBuffer();
   for (int i = 0; i < batch_size_; i++) {
-    auto image_frame = PopImageFrame(i);
+    auto image_frame = GetFrame<ImageFrame>(i);
     image_frames.push_back(image_frame);
     cv::Mat img = image_frame->GetImage();
     CHECK(img.channels() == input_shape_.channel &&

@@ -75,9 +75,8 @@ class Processor {
    */
   virtual void Process() = 0;
 
-  std::shared_ptr<ImageFrame> PopImageFrame(int src_id);
-  std::shared_ptr<MetadataFrame> PopMDFrame(int src_id);
-  std::shared_ptr<Frame> PopFrame(int src_id);
+  template <typename FT = Frame>
+  std::shared_ptr<FT> GetFrame(int src_id);
   void PushFrame(int sink_id, Frame *frame);
   void Init_();
 

@@ -5,7 +5,6 @@
 #include "frame.h"
 #include <opencv2/core/core.hpp>
 
-Frame::Frame(FrameType frame_type) : frame_type_(frame_type) {}
 Frame::Frame(FrameType frame_type, cv::Mat original_image)
     : frame_type_(frame_type), original_image_(original_image) {}
 
@@ -17,11 +16,6 @@ void Frame::SetOriginalImage(cv::Mat original_image) {
 
 ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image)
     : Frame(FRAME_TYPE_IMAGE, original_image),
-      image_(image),
-      shape_(image.channels(), image.cols, image.rows) {}
-
-ImageFrame::ImageFrame(cv::Mat image)
-    : Frame(FRAME_TYPE_IMAGE),
       image_(image),
       shape_(image.channels(), image.cols, image.rows) {}
 
@@ -39,3 +33,8 @@ MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
 
 std::vector<string> MetadataFrame::GetTags() { return tags_; }
 std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }
+
+BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image)
+    : Frame(FRAME_TYPE_BYTES, original_image), data_buffer_(data_buffer) {}
+
+DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }

@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   auto seg_stream = segmentation_processor.GetSinks()[0];
 
   while (true) {
-    auto frame = seg_stream->PopImageFrame();
+    auto frame = seg_stream->PopFrame<ImageFrame>();
     if (display) {
       cv::imshow("Result", frame->GetImage());
       cv::imshow("Camera", frame->GetOriginalImage());

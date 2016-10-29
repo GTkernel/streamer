@@ -9,7 +9,8 @@ Stream::Stream(int max_buffer_size) : max_buffer_size_(max_buffer_size) {}
 Stream::Stream(string name, int max_buffer_size)
     : name_(name), max_buffer_size_(max_buffer_size) {}
 
-std::shared_ptr<Frame> Stream::PopFrame() {
+template <typename FT>
+std::shared_ptr<FT> Stream::PopFrame() {
   Timer timer;
   timer.Start();
   std::unique_lock<std::mutex> lk(stream_lock_);
@@ -17,7 +18,7 @@ std::shared_ptr<Frame> Stream::PopFrame() {
   std::shared_ptr<Frame> frame = frame_buffer_.front();
   frame_buffer_.pop();
 
-  return frame;
+  return std::dynamic_pointer_cast<FT>(frame);
 }
 
 void Stream::PushFrame(std::shared_ptr<Frame> frame) {
@@ -29,14 +30,11 @@ void Stream::PushFrame(std::shared_ptr<Frame> frame) {
   stream_cv_.notify_all();
 }
 
-std::shared_ptr<ImageFrame> Stream::PopImageFrame() {
-  auto frame = PopFrame();
-  return std::dynamic_pointer_cast<ImageFrame>(frame);
-}
-std::shared_ptr<MetadataFrame> Stream::PopMDFrame() {
-  auto frame = PopFrame();
-  return std::dynamic_pointer_cast<MetadataFrame>(frame);
-}
 void Stream::PushFrame(Frame *frame) {
   PushFrame(std::shared_ptr<Frame>(frame));
 }
+
+template std::shared_ptr<Frame> Stream::PopFrame();
+template std::shared_ptr<ImageFrame> Stream::PopFrame();
+template std::shared_ptr<MetadataFrame> Stream::PopFrame();
+template std::shared_ptr<BytesFrame> Stream::PopFrame();

@@ -161,7 +161,7 @@ bool GstVideoEncoder::OnStop() {
 }
 
 void GstVideoEncoder::Process() {
-  auto input_frame = PopFrame(0);
+  auto input_frame = GetFrame(0);
   CHECK(input_frame->GetOriginalImage().rows == height_);
   CHECK(input_frame->GetOriginalImage().cols == width_);
   CHECK(!input_frame->GetOriginalImage().empty());

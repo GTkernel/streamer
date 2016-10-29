@@ -22,7 +22,7 @@ ImageTransformProcessor::ImageTransformProcessor(
 
 void ImageTransformProcessor::Process() {
   Timer timer;
-  auto frame = PopImageFrame(0);
+  auto frame = GetFrame<ImageFrame>(0);
   cv::Mat img = frame->GetImage();
   timer.Start();
 

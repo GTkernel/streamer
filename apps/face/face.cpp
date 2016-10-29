@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   auto output_stream = face_detector.GetSinks()[0];
   if (display_on) cv::namedWindow("Image");
   while (true) {
-    auto frame = output_stream->PopMDFrame();
+    auto frame = output_stream->PopFrame<MetadataFrame>();
     cv::Mat image = frame->GetOriginalImage();
     auto results = frame->GetBboxes();
     cv::Scalar box_color(255, 0, 0);

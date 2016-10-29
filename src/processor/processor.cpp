@@ -79,22 +79,18 @@ double Processor::GetAvgLatencyMs() { return avg_latency_; }
 
 double Processor::GetAvgFps() { return 1000.0 / avg_latency_; }
 
-std::shared_ptr<ImageFrame> Processor::PopImageFrame(int src_id) {
+template <typename FT>
+std::shared_ptr<FT> Processor::GetFrame(int src_id) {
   CHECK(src_id < sources_.size());
-  return std::dynamic_pointer_cast<ImageFrame>(source_frame_cache_[src_id]);
-}
-
-std::shared_ptr<MetadataFrame> Processor::PopMDFrame(int src_id) {
-  CHECK(src_id < sources_.size());
-  return std::dynamic_pointer_cast<MetadataFrame>(source_frame_cache_[src_id]);
-}
-
-std::shared_ptr<Frame> Processor::PopFrame(int src_id) {
-  CHECK(src_id < sources_.size());
-  return source_frame_cache_[src_id];
+  return std::dynamic_pointer_cast<FT>(source_frame_cache_[src_id]);
 }
 
 void Processor::PushFrame(int sink_id, Frame *frame) {
   CHECK(sink_id < sinks_.size());
   sinks_[sink_id]->PushFrame(frame);
 }
+
+template std::shared_ptr<Frame> Processor::GetFrame(int src_id);
+template std::shared_ptr<ImageFrame> Processor::GetFrame(int src_id);
+template std::shared_ptr<MetadataFrame> Processor::GetFrame(int src_id);
+template std::shared_ptr<BytesFrame> Processor::GetFrame(int src_id);

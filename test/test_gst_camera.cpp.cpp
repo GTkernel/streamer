@@ -15,7 +15,7 @@ TEST(GST_CAMERA_TEST, TEST_BASIC) {
   auto stream = camera.GetStream();
   camera.Start();
 
-  cv::Mat image = stream->PopImageFrame()->GetImage();
+  cv::Mat image = stream->PopFrame<ImageFrame>()->GetImage();
   camera.Stop();
   EXPECT_EQ(image.rows, height);
   EXPECT_EQ(image.cols, width);

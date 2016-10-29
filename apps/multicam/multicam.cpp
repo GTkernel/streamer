@@ -131,7 +131,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
       auto stream = classifier->GetSinks()[i];
-      auto md_frame = stream->PopMDFrame();
+      auto md_frame = stream->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat img = md_frame->GetOriginalImage();
         string label = md_frame->GetTags()[0];
