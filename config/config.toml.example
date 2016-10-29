@@ -6,7 +6,7 @@ h264_decoder_gst_element = 'avdec_h264' # Mac
 # h264_decoder_gst_element = 'omxh264dec' # Tegra
 
 [encoder]
-h264_encoder_gst_element = 'b' # Mac
+h264_encoder_gst_element = 'vtenc_h264' # Mac
 # h264_encoder_gst_element = 'omxh264enc' # Tegra
 # h264_encoder_gst_element = 'x264enc`  `1  `' # Ubuntu
 # h264_encoder_gst_element = 'vaapih264enc' # NUC

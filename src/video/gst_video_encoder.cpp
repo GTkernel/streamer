@@ -12,7 +12,22 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
     : width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),
+      port_(-1),  // Not in streaming mode
       output_filename_(output_filename),
+      need_data_(false),
+      timestamp_(0) {
+  CHECK(width > 0 && height > 0) << "Width or height is invalid";
+  sources_.push_back(input_stream);
+  // Encoder
+  encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
+}
+
+GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
+                                 int port)
+    : width_(width),
+      height_(height),
+      frame_size_bytes_(width * height * 3),
+      port_(port),
       need_data_(false),
       timestamp_(0) {
   CHECK(width > 0 && height > 0) << "Width or height is invalid";
@@ -37,11 +52,30 @@ void GstVideoEncoder::EnoughDataCB(GstAppSrc *appsrc, gpointer user_data) {
   encoder->need_data_ = false;
 }
 
+/**
+ * @brief Build the encoder pipeline. We will create a pipeline to store to a
+ * file if ouput_filename_ is not empty, or a pipeline to stream the video
+ * through a udp port if port_ is not empty.
+ */
 string GstVideoEncoder::BuildPipelineString() {
   std::ostringstream ss;
+
   ss << "appsrc name=" << ENCODER_SRC_NAME << " ! "
-     << "videoconvert ! " << encoder_element_ << " ! "
-     << "qtmux ! filesink location=" << output_filename_;
+     << "videoconvert ! " << encoder_element_ << " ! ";
+
+  if (output_filename_ != "" && port_ != -1) {
+    ss << "tee name=t ! ";
+  }
+
+  if (output_filename_ != "") {
+    ss << "qtmux ! filesink location=" << output_filename_;
+    if (port_ != -1) ss << "t. ! ";
+  }
+
+  if (port_ != -1) {
+    ss << "rtph264pay config-interval=1 ! udpsink host=127.0.0.1 port=" << port_
+       << " auto-multicast=true";
+  }
 
   DLOG(INFO) << "Encoder pipeline is " << ss.str();
 

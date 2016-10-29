@@ -15,9 +15,9 @@ class GSTCamera : public Camera {
   virtual CameraType GetType() const override;
 
  protected:
-  virtual bool Init();
-  virtual bool OnStop();
-  virtual void Process();
+  virtual bool Init() override;
+  virtual bool OnStop() override;
+  virtual void Process() override;
 
  private:
   GstVideoCapture capture_;

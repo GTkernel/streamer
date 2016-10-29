@@ -6,7 +6,7 @@
  * @brief A demo showing how to stream, control and record from a GigE camera.
  */
 
-#include "tx1dnn.h"
+#include "streamer.h"
 
 #include <camera/pgr_camera.h>
 #include <boost/program_options.hpp>
@@ -26,14 +26,14 @@ void Run(const string &camera_name, const string &output_filename,
 
   auto ptgray_camera = dynamic_cast<PGRCamera *>(camera.get());
   ptgray_camera->Start();
-  STREAMER_SLEEP(0.01);
+  STREAMER_SLEEP(10);
 
   if (display) {
     cv::namedWindow("Image");
   }
   while (true) {
     cv::Mat image =
-        ptgray_camera->GetSinks()[0]->PopImageFrame()->GetOriginalImage();
+        ptgray_camera->GetSinks()[0]->PopFrame<ImageFrame>()->GetOriginalImage();
     if (display) {
       cv::imshow("Image", image);
       int k = cv::waitKey(10);

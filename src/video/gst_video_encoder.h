@@ -19,6 +19,7 @@ class GstVideoEncoder : public Processor {
  public:
   GstVideoEncoder(StreamPtr stream, int width, int height,
                   const string &output_filename);
+  GstVideoEncoder(StreamPtr stream, int width, int height, int port);
 
   /**
    * @brief Set Gstreamer encoder element direclty. The caller should make sure
@@ -47,6 +48,7 @@ class GstVideoEncoder : public Processor {
   // Frame size in bytes
   int frame_size_bytes_;
   string output_filename_;
+  int port_;
 
   // Gst elements
   GstBus *gst_bus_;
