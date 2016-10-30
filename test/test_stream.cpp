@@ -21,3 +21,22 @@ TEST(STREAM_TEST, BASIC_TEST) {
 
   reader->UnSubscribe();
 }
+
+TEST(STREAM_TEST, SUBSCRIBE_TEST) {
+  std::shared_ptr<Stream> stream(new Stream);
+  auto reader1 = stream->Subscribe();
+  auto reader2 = stream->Subscribe();
+
+  stream->PushFrame(new BytesFrame(DataBuffer()));
+  stream->PushFrame(new ImageFrame(cv::Mat()));
+
+  // Both readers can pop twice
+  reader1->PopFrame();
+  reader1->PopFrame();
+
+  reader2->PopFrame();
+  reader2->PopFrame();
+
+  reader1->UnSubscribe();
+  reader2->UnSubscribe();
+}
