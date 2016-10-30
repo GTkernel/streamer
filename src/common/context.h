@@ -61,9 +61,7 @@ class Context {
   void SetString(const string &key, const string &value) {
     string_values_[key] = value;
   }
-  void SetBool(const string &key, bool value) {
-    bool_values_[key] = value;
-  }
+  void SetBool(const string &key, bool value) { bool_values_[key] = value; }
 
   /**
    * @brief Reload the config dir, MUST call Init() after this.

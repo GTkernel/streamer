@@ -4,10 +4,10 @@
 #ifndef STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
 #define STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
 
-class ImageSegmentationProcessor : public Processor {
+class ImageSegmenter : public Processor {
  public:
-  ImageSegmentationProcessor(std::shared_ptr<Stream> input_stream,
-                             const ModelDesc &model_desc, Shape input_shape);
+  ImageSegmenter(std::shared_ptr<Stream> input_stream,
+                 const ModelDesc &model_desc, Shape input_shape);
 
  protected:
   virtual bool Init() override;

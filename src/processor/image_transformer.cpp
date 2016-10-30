@@ -2,12 +2,12 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#include "image_transform_processor.h"
+#include "image_transformer.h"
 #include <streamer.h>
 
-ImageTransformProcessor::ImageTransformProcessor(
-    std::shared_ptr<Stream> input_stream, const Shape &target_shape,
-    CropType crop_type, bool subtract_mean)
+ImageTransformer::ImageTransformer(std::shared_ptr<Stream> input_stream,
+                                   const Shape &target_shape,
+                                   CropType crop_type, bool subtract_mean)
     : Processor({input_stream}, 1),
       target_shape_(target_shape),
       crop_type_(crop_type),
@@ -18,7 +18,7 @@ ImageTransformProcessor::ImageTransformProcessor(
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
 }
 
-void ImageTransformProcessor::Process() {
+void ImageTransformer::Process() {
   Timer timer;
   auto frame = GetFrame<ImageFrame>(0);
   cv::Mat img = frame->GetImage();
@@ -71,5 +71,5 @@ void ImageTransformProcessor::Process() {
   PushFrame(0, new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
 }
 
-bool ImageTransformProcessor::Init() { return true; }
-bool ImageTransformProcessor::OnStop() { return true; }
+bool ImageTransformer::Init() { return true; }
+bool ImageTransformer::OnStop() { return true; }

@@ -26,6 +26,4 @@ void GSTCamera::Process() {
   cv::Mat frame = capture_.GetFrame();
   PushFrame(0, new ImageFrame(frame, frame));
 }
-CameraType GSTCamera::GetType() const {
-  return CAMERA_TYPE_GST;
-}
+CameraType GSTCamera::GetType() const { return CAMERA_TYPE_GST; }

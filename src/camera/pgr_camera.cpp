@@ -142,7 +142,6 @@ void PGRCamera::SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode) {
   CHECK_PGR(camera_.StartCapture());
 }
 
-
 void PGRCamera::SetProperty(FlyCapture2::PropertyType property_type,
                             float value, bool abs, bool value_a) {
   FlyCapture2::Property prop;

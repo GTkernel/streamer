@@ -10,5 +10,3 @@ TEST(STRING_UTILS_TEST, GET_IP_ADDR_FROM_STRING_TEST) {
   unsigned ip_val = GetIPAddrFromString(ip_addr);
   EXPECT_EQ(ip_val, 0x01020304);
 }
-
-

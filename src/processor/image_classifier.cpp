@@ -2,11 +2,11 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/6/16.
 //
 
-#include "image_classification_processor.h"
+#include "image_classifier.h"
 #include "model/model_manager.h"
 #include "utils/utils.h"
 
-ImageClassificationProcessor::ImageClassificationProcessor(
+ImageClassifier::ImageClassifier(
     std::vector<std::shared_ptr<Stream>> input_streams,
     const ModelDesc &model_desc, Shape input_shape)
     : Processor(input_streams, input_streams.size()),
@@ -16,7 +16,7 @@ ImageClassificationProcessor::ImageClassificationProcessor(
   LOG(INFO) << "batch size of " << batch_size_;
 }
 
-bool ImageClassificationProcessor::Init() {
+bool ImageClassifier::Init() {
   // Load labels.
   CHECK(model_desc_.GetLabelFilePath() != "")
       << "Model " << model_desc_.GetName() << " has an empty label file";
@@ -45,12 +45,12 @@ bool ImageClassificationProcessor::Init() {
   return true;
 }
 
-bool ImageClassificationProcessor::OnStop() {
+bool ImageClassifier::OnStop() {
   model_.reset(nullptr);
   return true;
 }
 
-void ImageClassificationProcessor::Process() {
+void ImageClassifier::Process() {
   Timer timer;
   timer.Start();
 
@@ -88,8 +88,7 @@ void ImageClassificationProcessor::Process() {
   LOG(INFO) << "Classification took " << timer.ElapsedMSec() << " ms";
 }
 
-std::vector<std::vector<Prediction>> ImageClassificationProcessor::Classify(
-    int N) {
+std::vector<std::vector<Prediction>> ImageClassifier::Classify(int N) {
   std::vector<std::vector<Prediction>> results;
 
   auto input_buffer = model_->GetInputBuffer();

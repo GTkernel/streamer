@@ -16,7 +16,7 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
-std::shared_ptr<ImageClassificationProcessor> classifier;
+std::shared_ptr<ImageClassifier> classifier;
 std::vector<StreamReader *> classifier_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
@@ -84,17 +84,16 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   // Transformers
   for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformProcessor(
-        camera_stream, input_shape, CROP_TYPE_CENTER,
-        true /* subtract mean */));
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(camera_stream, input_shape, CROP_TYPE_CENTER,
+                             true /* subtract mean */));
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSinks()[0]);
   }
 
   // classifier
   auto model_desc = model_manager.GetModelDesc(model_name);
-  classifier.reset(
-      new ImageClassificationProcessor(input_streams, model_desc, input_shape));
+  classifier.reset(new ImageClassifier(input_streams, model_desc, input_shape));
 
   // classifier readers
   for (auto stream : classifier->GetSinks()) {

@@ -9,11 +9,10 @@
 #include "model/model.h"
 #include "processor.h"
 
-class ImageClassificationProcessor : public Processor {
+class ImageClassifier : public Processor {
  public:
-  ImageClassificationProcessor(
-      std::vector<std::shared_ptr<Stream>> input_streams,
-      const ModelDesc &model_desc, Shape input_shape);
+  ImageClassifier(std::vector<std::shared_ptr<Stream>> input_streams,
+                  const ModelDesc &model_desc, Shape input_shape);
 
  protected:
   virtual bool Init() override;

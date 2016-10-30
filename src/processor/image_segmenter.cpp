@@ -1,14 +1,13 @@
-#include "image_segmentation_processor.h"
+#include "image_segmenter.h"
 #include "model/model_manager.h"
 
-ImageSegmentationProcessor::ImageSegmentationProcessor(
-    std::shared_ptr<Stream> input_stream, const ModelDesc &model_desc,
-    Shape input_shape)
+ImageSegmenter::ImageSegmenter(std::shared_ptr<Stream> input_stream,
+                               const ModelDesc &model_desc, Shape input_shape)
     : Processor({input_stream}, 1),
       model_desc_(model_desc),
       input_shape_(input_shape) {}
 
-bool ImageSegmentationProcessor::Init() {
+bool ImageSegmenter::Init() {
   // Load model
   auto &manager = ModelManager::GetInstance();
   model_ = manager.CreateModel(model_desc_, input_shape_);
@@ -27,12 +26,12 @@ bool ImageSegmentationProcessor::Init() {
   return true;
 }
 
-bool ImageSegmentationProcessor::OnStop() {
+bool ImageSegmenter::OnStop() {
   model_.reset(nullptr);
   return true;
 }
 
-void ImageSegmentationProcessor::Process() {
+void ImageSegmenter::Process() {
   // Do image segmentation
   Timer timer;
   timer.Start();

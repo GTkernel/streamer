@@ -81,17 +81,17 @@ void RunEndToEndExperiment() {
 
   // transformers
   for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformProcessor(
-        camera_stream, input_shape, CROP_TYPE_CENTER,
-        true /* subtract mean */));
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(camera_stream, input_shape, CROP_TYPE_CENTER,
+                             true /* subtract mean */));
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSinks()[0]);
   }
 
   // classifier
   auto model_desc = model_manager.GetModelDesc(CONFIG.net);
-  std::shared_ptr<ImageClassificationProcessor> classifier(
-      new ImageClassificationProcessor(input_streams, model_desc, input_shape));
+  std::shared_ptr<ImageClassifier> classifier(
+      new ImageClassifier(input_streams, model_desc, input_shape));
 
   // encoders, encode each camera stream
   if (CONFIG.store) {

@@ -58,12 +58,12 @@ int main(int argc, char *argv[]) {
   auto camera_stream = camera->GetStream();
 
   Shape input_shape(3, 250, 250);
-  ImageTransformProcessor transform_processor(
+  ImageTransformer transform_processor(
       camera_stream, input_shape, CROP_TYPE_CENTER, true /* subtract mean */);
 
   auto model_desc = model_manager.GetModelDesc(model_name);
-  ImageSegmentationProcessor segmentation_processor(
-      transform_processor.GetSinks()[0], model_desc, input_shape);
+  ImageSegmenter segmentation_processor(transform_processor.GetSinks()[0],
+                                        model_desc, input_shape);
 
   transform_processor.Start();
   segmentation_processor.Start();
