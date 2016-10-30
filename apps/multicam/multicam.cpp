@@ -17,11 +17,16 @@ using std::endl;
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
 std::shared_ptr<ImageClassificationProcessor> classifier;
+std::vector<StreamReader *> classifier_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
   for (auto encoder : encoders) {
     if (encoder->IsStarted()) encoder->Stop();
+  }
+
+  for (auto reader : classifier_output_readers) {
+    reader->UnSubscribe();
   }
 
   if (classifier != nullptr && classifier->IsStarted()) classifier->Stop();
@@ -91,6 +96,11 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   classifier.reset(
       new ImageClassificationProcessor(input_streams, model_desc, input_shape));
 
+  // classifier readers
+  for (auto stream : classifier->GetSinks()) {
+    classifier_output_readers.push_back(stream->Subscribe());
+  }
+
   // encoders, encode each camera stream
   for (int i = 0; i < batch_size; i++) {
     string output_filename = camera_names[i] + ".mp4";
@@ -129,8 +139,8 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   double fps_to_show = 0.0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
-      auto stream = classifier->GetSinks()[i];
-      auto md_frame = stream->PopFrame<MetadataFrame>();
+      auto reader = classifier_output_readers[i];
+      auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat img = md_frame->GetOriginalImage();
         string label = md_frame->GetTags()[0];

@@ -8,12 +8,10 @@
 ImageTransformProcessor::ImageTransformProcessor(
     std::shared_ptr<Stream> input_stream, const Shape &target_shape,
     CropType crop_type, bool subtract_mean)
-    : target_shape_(target_shape),
+    : Processor({input_stream}, 1),
+      target_shape_(target_shape),
       crop_type_(crop_type),
       subtract_mean_(subtract_mean) {
-  sources_.push_back(input_stream);
-  sinks_.emplace_back(new Stream("ImageTransform"));
-
   auto mean_colors = ModelManager::GetInstance().GetMeanColors();
   mean_image_ =
       cv::Mat(cv::Size(target_shape.width, target_shape.height), CV_32FC3,

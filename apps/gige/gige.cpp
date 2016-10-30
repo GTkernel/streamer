@@ -25,6 +25,7 @@ void Run(const string &camera_name, const string &output_filename,
       << "Not running with GigE camera";
 
   auto ptgray_camera = dynamic_cast<PGRCamera *>(camera.get());
+  auto camera_reader = ptgray_camera->GetSinks()[0]->Subscribe();
   ptgray_camera->Start();
   STREAMER_SLEEP(10);
 
@@ -32,8 +33,7 @@ void Run(const string &camera_name, const string &output_filename,
     cv::namedWindow("Image");
   }
   while (true) {
-    cv::Mat image =
-        ptgray_camera->GetSinks()[0]->PopFrame<ImageFrame>()->GetOriginalImage();
+    cv::Mat image = camera_reader->PopFrame<ImageFrame>()->GetOriginalImage();
     if (display) {
       cv::imshow("Image", image);
       int k = cv::waitKey(10);
@@ -57,6 +57,7 @@ void Run(const string &camera_name, const string &output_filename,
     }
   }
 
+  camera_reader->UnSubscribe();
   ptgray_camera->Stop();
 }
 

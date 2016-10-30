@@ -13,10 +13,14 @@ TEST(GST_CAMERA_TEST, TEST_BASIC) {
   GSTCamera camera(camera_name, video_uri, 640, 480);
 
   auto stream = camera.GetStream();
+  auto reader = stream->Subscribe();
   camera.Start();
 
-  cv::Mat image = stream->PopFrame<ImageFrame>()->GetImage();
-  camera.Stop();
+  cv::Mat image = reader->PopFrame<ImageFrame>()->GetImage();
+
   EXPECT_EQ(image.rows, height);
   EXPECT_EQ(image.cols, width);
+
+  reader->UnSubscribe();
+  camera.Stop();
 }

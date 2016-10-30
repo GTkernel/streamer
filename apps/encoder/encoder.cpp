@@ -48,7 +48,7 @@ void Run(const string &camera_name, string &dst_file, int port) {
     encoder = std::shared_ptr<Processor>(
         new GstVideoEncoder(camera_stream, 640, 480, port));
     // Receive pipeline
-    // st-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
+    // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
     // avdec_h264 ! videoconvert ! autovideosink sync=false
     //
   }

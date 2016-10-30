@@ -69,9 +69,10 @@ int main(int argc, char *argv[]) {
   segmentation_processor.Start();
 
   auto seg_stream = segmentation_processor.GetSinks()[0];
+  auto reader = seg_stream->Subscribe();
 
   while (true) {
-    auto frame = seg_stream->PopFrame<ImageFrame>();
+    auto frame = reader->PopFrame<ImageFrame>();
     if (display) {
       cv::imshow("Result", frame->GetImage());
       cv::imshow("Camera", frame->GetOriginalImage());
@@ -81,6 +82,8 @@ int main(int argc, char *argv[]) {
       }
     }
   }
+
+  reader->UnSubscribe();
 
   segmentation_processor.Stop();
   transform_processor.Stop();

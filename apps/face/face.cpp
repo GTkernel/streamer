@@ -38,9 +38,10 @@ int main(int argc, char *argv[]) {
   face_detector.Start();
 
   auto output_stream = face_detector.GetSinks()[0];
+  auto output_reader = output_stream->Subscribe();
   if (display_on) cv::namedWindow("Image");
   while (true) {
-    auto frame = output_stream->PopFrame<MetadataFrame>();
+    auto frame = output_reader->PopFrame<MetadataFrame>();
     cv::Mat image = frame->GetOriginalImage();
     auto results = frame->GetBboxes();
     cv::Scalar box_color(255, 0, 0);
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  output_reader->UnSubscribe();
   face_detector.Stop();
   camera->Stop();
 }

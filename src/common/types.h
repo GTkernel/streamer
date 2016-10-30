@@ -10,6 +10,7 @@
 #include <string>
 
 #ifdef USE_FP16
+// THIS ORDER MATTERS!
 #include <driver_types.h>
 
 #include <cuda_fp16.h>
@@ -65,10 +66,7 @@ enum ModelType {
 };
 
 //// Camera types
-enum CameraType {
-  CAMERA_TYPE_GST = 0,
-  CAMERA_TYPE_PTGRAY
-};
+enum CameraType { CAMERA_TYPE_GST = 0, CAMERA_TYPE_PTGRAY };
 
 //// Frame types
 enum FrameType {

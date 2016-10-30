@@ -6,12 +6,20 @@
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
 
-Processor::Processor() { Init_(); }
-
 Processor::Processor(std::vector<std::shared_ptr<Stream>> sources,
-                     std::vector<StreamPtr> sinks)
-    : sources_(sources), sinks_(sinks) {
+                     size_t n_sinks)
+    : sources_(sources) {
+  for (size_t i = 0; i < n_sinks; i++) {
+    sinks_.emplace_back(new Stream);
+  }
+
   Init_();
+}
+
+Processor::~Processor() {
+  for (size_t i = 0; i < sources_.size(); i++) {
+    sources_[i]->UnSubscribe(readers_[i]);
+  }
 }
 
 void Processor::Init_() {
@@ -20,6 +28,11 @@ void Processor::Init_() {
   sliding_latency_ = 99999.0;
   avg_latency_ = 0.0;
   n_processed_ = 0;
+
+  // Initialize readers
+  for (auto stream : sources_) {
+    readers_.push_back(stream->Subscribe());
+  }
 }
 
 bool Processor::Start() {
@@ -45,8 +58,8 @@ void Processor::ProcessorLoop() {
   while (!stopped_) {
     // Cache source frames
     source_frame_cache_.clear();
-    for (auto &stream : sources_) {
-      source_frame_cache_.push_back(stream->PopFrame());
+    for (auto reader : readers_) {
+      source_frame_cache_.push_back(reader->PopFrame());
     }
 
     timer.Start();

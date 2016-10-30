@@ -37,4 +37,4 @@ if (USE_PTGRAY)
   endforeach ()
 endif ()
 
-target_link_libraries(runner linenoise)
+target_link_libraries(server linenoise)

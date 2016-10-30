@@ -17,8 +17,8 @@
  */
 class Processor {
  public:
-  Processor();
-  Processor(std::vector<StreamPtr> sources, std::vector<StreamPtr> sinks);
+  Processor(std::vector<StreamPtr> sources, size_t n_sinks);
+  virtual ~Processor();
   /**
    * @brief Start processing, drain frames from sources and send output to
    * sinks.
@@ -30,6 +30,7 @@ class Processor {
    * @return True if stop sucsessfully, false otherwise.
    */
   bool Stop();
+
   /**
    * @brief Get sink streams of the prosessor.
    */
@@ -43,10 +44,14 @@ class Processor {
 
   /**
    * @brief Get sliding window average latency of the processor.
-   * @return Latency in ms
+   * @return Latency in ms.
    */
   double GetSlidingLatencyMs();
 
+  /**
+   * @brief Get overall average latency.
+   * @return Latency in ms.
+   */
   double GetAvgLatencyMs();
 
   /**
@@ -83,6 +88,7 @@ class Processor {
   void ProcessorLoop();
   std::vector<std::shared_ptr<Frame>> source_frame_cache_;
   std::vector<StreamPtr> sources_;
+  std::vector<StreamReader *> readers_;
   std::vector<StreamPtr> sinks_;
   std::thread process_thread_;
   bool stopped_;

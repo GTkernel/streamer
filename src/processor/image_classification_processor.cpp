@@ -9,15 +9,11 @@
 ImageClassificationProcessor::ImageClassificationProcessor(
     std::vector<std::shared_ptr<Stream>> input_streams,
     const ModelDesc &model_desc, Shape input_shape)
-    : model_desc_(model_desc), input_shape_(input_shape) {
+    : Processor(input_streams, input_streams.size()),
+      model_desc_(model_desc),
+      input_shape_(input_shape) {
   batch_size_ = input_streams.size();
   LOG(INFO) << "batch size of " << batch_size_;
-  for (auto stream : input_streams) {
-    sources_.push_back(stream);
-  }
-  for (int i = 0; i < input_streams.size(); i++) {
-    sinks_.emplace_back(new Stream("ImageClassifier"));
-  }
 }
 
 bool ImageClassificationProcessor::Init() {

@@ -36,7 +36,7 @@ class ImageClassificationProcessor : public Processor {
   ModelDesc model_desc_;
   Shape input_shape_;
   cv::Mat mean_image_;
-  int batch_size_;
+  size_t batch_size_;
 };
 
 #endif  // STREAMER_BATCH_CLASSIFIER_H

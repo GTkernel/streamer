@@ -6,10 +6,7 @@
 
 OpenCVFaceDetector::OpenCVFaceDetector(std::shared_ptr<Stream> input_stream,
                                        string classifier_xml_path)
-    : classifier_xml_path_(classifier_xml_path) {
-  sources_.push_back(input_stream);
-  sinks_.emplace_back(new Stream("OpenCVFaceDetector"));
-}
+    : Processor({input_stream}, 1), classifier_xml_path_(classifier_xml_path) {}
 
 bool OpenCVFaceDetector::Init() {
   return classifier_.load(classifier_xml_path_);

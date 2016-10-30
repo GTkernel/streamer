@@ -1,16 +1,12 @@
 #include "image_segmentation_processor.h"
-#include <opencv2/contrib/contrib.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include "model/model_manager.h"
 
 ImageSegmentationProcessor::ImageSegmentationProcessor(
     std::shared_ptr<Stream> input_stream, const ModelDesc &model_desc,
     Shape input_shape)
-    : model_desc_(model_desc), input_shape_(input_shape) {
-  sources_.push_back(input_stream);
-  sinks_.emplace_back(new Stream);
-}
+    : Processor({input_stream}, 1),
+      model_desc_(model_desc),
+      input_shape_(input_shape) {}
 
 bool ImageSegmentationProcessor::Init() {
   // Load model

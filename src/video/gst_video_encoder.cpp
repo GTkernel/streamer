@@ -9,7 +9,8 @@ const static char *ENCODER_SRC_NAME = "encoder_src";
 
 GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
                                  const string &output_filename)
-    : width_(width),
+    : Processor({input_stream}, 0),
+      width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),
       port_(-1),  // Not in streaming mode
@@ -17,21 +18,20 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
       need_data_(false),
       timestamp_(0) {
   CHECK(width > 0 && height > 0) << "Width or height is invalid";
-  sources_.push_back(input_stream);
   // Encoder
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }
 
 GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
                                  int port)
-    : width_(width),
+    : Processor({input_stream}, 0),
+      width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),
       port_(port),
       need_data_(false),
       timestamp_(0) {
   CHECK(width > 0 && height > 0) << "Width or height is invalid";
-  sources_.push_back(input_stream);
   // Encoder
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }

@@ -11,6 +11,41 @@
 #include <condition_variable>
 #include <mutex>
 #include <queue>
+#include <unordered_set>
+
+/**
+ * @brief A reader that reads from a stream. There could be multiple readers
+ * reading from the same stream.
+ */
+class StreamReader {
+  friend class Stream;
+
+ public:
+  StreamReader(Stream *stream, size_t max_buffer_size = 5);
+  /**
+   * @brief Pop a frame of type FT from the stream.
+   * @return  The head frame in the stream.
+   */
+  template <typename FT = Frame>
+  std::shared_ptr<FT> PopFrame();
+
+  void UnSubscribe();
+
+ private:
+  /**
+   * @brief Push a frame into the stream.
+   * @param frame The frame to be pushed into the stream.
+   */
+  void PushFrame(std::shared_ptr<Frame> frame);
+  // Max size of the buffer to hold frames in the stream
+  size_t max_buffer_size_;
+  // The frame buffer
+  std::queue<std::shared_ptr<Frame>> frame_buffer_;
+  // Stream synchronization
+  std::mutex buffer_lock_;
+  std::condition_variable buffer_cv_;
+  Stream *stream_;
+};
 
 /**
  * @brief A stream is a serious of data, the data itself could be stats, images,
@@ -18,30 +53,41 @@
  */
 class Stream {
  public:
-  Stream(int max_buffer_size = 5);
-  Stream(string name, int max_buffer_size = 5);
-  /**
-   * @brief Pop a frame of type FT from the stream.
-   * @return  The head frame in the stream.
-   */
-  template <typename FT = Frame>
-  std::shared_ptr<FT> PopFrame();
+  Stream();
+  Stream(string name);
   /**
    * @brief Push a frame into the stream.
-   * @param frwame The frame to be pushed into the stream.
+   * @param frame The frame to be pushed into the stream.
    */
   void PushFrame(std::shared_ptr<Frame> frame);
+  /**
+   * @brief Push a raw pointer of the frame into the stream.
+   * @param frame The frame to be pushed into the stream.
+   */
   void PushFrame(Frame *frame);
-  void SetName(const string &name) { name_ = name; }
+  /**
+   * @brief Get the name of the stream.
+   */
   string GetName() { return name_; }
 
+  /**
+   * @brief Get a reader from the stream.
+   * @param max_buffer_size The buffer size limit of the reader.
+   */
+  StreamReader *Subscribe(size_t max_buffer_size = 5);
+
+  /**
+   * @brief Unsubscribe from the stream
+   */
+  void UnSubscribe(StreamReader *reader);
+
  private:
-  int max_buffer_size_;
-  std::queue<std::shared_ptr<Frame>> frame_buffer_;
-  std::mutex stream_lock_;
-  std::condition_variable stream_cv_;
-  // For profiling and debugging
+  // Stream name for profiling and debugging
   string name_;
+  // The readers of the stream
+  std::vector<std::shared_ptr<StreamReader>> readers_;
+  // Stream lock
+  std::mutex stream_lock_;
 };
 
 #endif  // STREAMER_STREAM_H

@@ -6,12 +6,12 @@
 
 Camera::Camera(const string &name, const string &video_uri, int width,
                int height)
-    : name_(name),
+    : Processor({}, 1),
+      name_(name),
       video_uri_(video_uri),
       width_(width),
-      height_(height),
-      stream_(new Stream(name)) {
-  sinks_.push_back(stream_);
+      height_(height) {
+  stream_ = sinks_[0];
 }
 
 string Camera::GetName() const { return name_; }

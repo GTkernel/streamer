@@ -18,7 +18,7 @@ class Timer {
   Timer() {}
 
   /**
-   * @brief Start the timer.
+   * @brief Start the timer, this will clear the start time.
    */
   void Start() { start_time_ = std::chrono::system_clock::now(); }
 
