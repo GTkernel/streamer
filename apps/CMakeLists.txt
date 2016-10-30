@@ -1,3 +1,6 @@
+find_package(Threads REQUIRED)
+find_package(Boost COMPONENTS regex system thread filesystem date_time REQUIRED)
+
 # Macro to get sub directories
 MACRO(SUBDIRLIST result curdir)
   FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
@@ -38,5 +41,4 @@ if (USE_PTGRAY)
   target_link_libraries(gige ${Boost_FILESYSTEM_LIBRARY})
 endif ()
 
-target_link_libraries(server linenoise)
-
+target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

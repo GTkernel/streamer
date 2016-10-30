@@ -121,7 +121,6 @@ include_directories(
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
   ${GSTREAMER_APP_INCLUDE_DIRS}
-  ${GSTREAMER_}
 )
 
 # Include cblas libraries

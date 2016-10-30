@@ -4,160 +4,41 @@
  * stats and video frames to local storage.
  */
 
-#include "cxxopts/cxxopts.hpp"
-#include "linenoise/linenoise.h"
 #include "streamer.h"
 
-#include <boost/algorithm/string.hpp>
-#include <thread>
+#define BOOST_SPIRIT_THREADSAFE
+
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <simplewebserver/client_http.hpp>
+#include <simplewebserver/server_http.hpp>
+
+typedef SimpleWeb::Server<SimpleWeb::HTTP> HttpServer;
+typedef SimpleWeb::Client<SimpleWeb::HTTP> HttpClient;
+typedef std::shared_ptr<HttpServer::Response> HttpServerResponse;
+typedef std::shared_ptr<HttpServer::Request> HttpServerRequest;
 
 using std::cout;
 using std::endl;
 
-//// Global vars
-std::unordered_map<string, std::shared_ptr<Stream>> streams;
-
-//// Macros
-#define CMD_HISTORY_PATH ".cmd_history"
-
-void ListCameras() {
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  for (auto &itr : camera_manager.GetCameras()) {
-    cout << "Camera: " << itr.second->GetName() << endl
-         << "-- URI: " << itr.second->GetVideoURI() << endl;
-  }
-}
-
-void ListModels() {
-  ModelManager &model_manager = ModelManager::GetInstance();
-  for (auto &itr : model_manager.GetModelDescs()) {
-    cout << "Model: " << itr.first << endl
-         << "-- desc_path: " << itr.second.GetModelDescPath() << endl
-         << "-- param_path: " << itr.second.GetModelParamsPath() << endl;
-  }
-}
-
-/**
- * @brief Args to imitate command line arguments.
- */
-struct Args {
- public:
-  Args(const std::vector<string> &tokens) {
-    argc = (int)tokens.size();
-    argv = new char *[argc];
-    for (int i = 0; i < argc; i++) {
-      argv[i] = new char[tokens[i].size() + 1];
-      strcpy(argv[i], tokens[i].c_str());
-    }
-  }
-  Args(const Args &other) = delete;
-  ~Args() {
-    for (int i = 0; i < argc; i++) {
-      delete argv[i];
-    }
-    delete[] argv;
-  }
-  char **argv;
-  int argc;
-};
-
-static void PreviewStream(const string &name, std::shared_ptr<Stream> stream) {
-  cv::namedWindow(name);
-  //  while (true) {
-  //    cv::Mat frame = stream->GetFrame().GetImage();
-  //    cv::imshow(name, frame);
-  //    int key = cv::waitKey(10);
-  //    if (key == 'q') {
-  //      break;
-  //    }
-  //  }
-  cv::destroyWindow(name);
-}
-
-void ExecuteCamCommand(const string &subcommand, Args *args) {
-  cxxopts::Options options("", "");
-
-  options.parse(args->argc, args->argv);
-  // List
-  if (subcommand == "list") {
-    ListCameras();
-  } else {
-    LOG(ERROR) << "cam command not recognized";
-  }
-}
-
-void ExecuteStreamCommand(const string &subcommand, Args *args) {
-  cxxopts::Options options("", "");
-  options.add_options()("name", "name of the stream", cxxopts::value<string>());
-
-  if (subcommand == "list") {
-  } else if (subcommand == "open") {
-    LOG(INFO) << "Open stream";
-    options.add_options()("camera", "camera name", cxxopts::value<string>());
-  } else if (subcommand == "preview") {
-    options.parse(args->argc, args->argv);
-    string name = options["name"].as<string>();
-    auto stream = streams[name];
-    PreviewStream(name, stream);
-  } else {
-    LOG(ERROR) << "stream command not recognized";
-  }
-}
-
-// void ExecuteEvalCommand(const string &subcommand, Args *args) {
-//  cxxopts::Options options("", "");
-//  options.add_options()
-//      ("name", "evaluator name", cxxopts::value<string>())
-//      ("type", "the type of evaluator", cxxopts::value<string>());
-//
-//  if (subcommand == "create") {
-//
-//  }
-//}
-
-void Execute(const string &line) {
-  std::vector<string> tokens;
-  boost::split(tokens, line, boost::is_any_of(" \t"), boost::token_compress_on);
-
-  string command = tokens[0];
-  string subcommand = tokens[1];
-  Args args(tokens);
-  if (command == "cam") {
-    ExecuteCamCommand(subcommand, &args);
-  } else if (command == "stream") {
-    ExecuteStreamCommand(subcommand, &args);
-    //  } else if (command == "eval") {
-    //    ExecuteEvalCommand(subcommand, &args);
-  } else {
-    LOG(ERROR) << "Command " << command << " is not recognized";
-  }
-}
-
 int main(int argc, char *argv[]) {
-  // Set up evironment
-  gst_init(&argc, &argv);
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_alsologtostderr = 1;
-  FLAGS_colorlogtostderr = 1;
-  FLAGS_minloglevel = 0;
-  // Init streamer context, this must be called before using streamer.
-  Context::GetContext().Init();
-  // Set up linenoise to read command
-  char *charline;
-  linenoiseSetMultiLine(1);
-  if (std::fstream(CMD_HISTORY_PATH)) {
-    linenoiseHistoryLoad(CMD_HISTORY_PATH);
-  }
-  //// Main loop
-  while ((charline = linenoise("camnet> ")) != NULL) {
-    string line(charline);
-    line = TrimSpaces(line);
-    linenoiseHistoryAdd(charline);
-    linenoiseHistorySave(CMD_HISTORY_PATH);
-    Execute(line);
+  size_t server_thread_num = 1;
+  size_t server_port = 15213;
+  HttpServer server(server_port, server_thread_num);
+  server.resource["^/hello$"]["GET"] = [](HttpServerResponse response,
+                                          HttpServerRequest request) {
+    cout << "access /hello" << endl;
+    string content = "Hello from streamer\n";
+    *response << "HTTP/1.1 200 OK\r\nContent-Length: " << content.length()
+              << "\r\n\r\n"
+              << content;
+  };
 
-    free(charline);
-  }
+  std::thread server_thread([&server]() {
+    server.start();
+  });
 
-  return 0;
+  STREAMER_SLEEP(1000);
+  cout << "Streamer server started at " << server_port << endl;
+  server_thread.join();
 }
