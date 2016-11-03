@@ -7,6 +7,7 @@
 
 #include <flycapture/FlyCapture2.h>
 #include "camera.h"
+#include "utils/utils.h"
 
 /**
  * @brief A class for ptgray camera, in order to use this class, you have to
@@ -14,10 +15,10 @@
  */
 class PGRCamera : public Camera {
  public:
-  PGRCamera(const string &name, const string &video_uri, int width = -1,
-            int height = -1, FlyCapture2::Mode mode = FlyCapture2::MODE_0,
-            FlyCapture2::PixelFormat pixel_format =
-                FlyCapture2::PIXEL_FORMAT_411YUV8);
+  PGRCamera(
+      const string &name, const string &video_uri, int width = -1,
+      int height = -1, FlyCapture2::Mode mode = FlyCapture2::MODE_2,
+      FlyCapture2::PixelFormat pixel_format = FlyCapture2::PIXEL_FORMAT_RAW8);
   virtual CameraType GetType() const override;
 
   float GetExposure();
@@ -25,13 +26,35 @@ class PGRCamera : public Camera {
   float GetSharpness();
   void SetSharpness(float sharpness);
   Shape GetImageSize();
+  void SetBrightness(float brightness);
+  float GetBrightness();
+  void SetShutterSpeed(float shutter_speed);
+  float GetShutterSpeed();
+  void SetSaturation(float saturation);
+  float GetSaturation();
+  void SetHue(float hue);
+  float GetHue();
+  void SetGain(float gain);
+  float GetGain();
+  void SetGamma(float gamma);
+  float GetGamma();
+  void SetWBRed(float wb_red);
+  float GetWBRed();
+  void SetWBBlue(float wb_blue);
+  float GetWBBlue();
+
   FlyCapture2::VideoMode GetVideoMode();
   void SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode);
+
+  FlyCapture2::PixelFormat GetPixelFormat();
+  void SetPixelFormat(FlyCapture2::PixelFormat pixel_format);
 
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
   virtual void Process() override;
+  void Reset();
+  void PreProcess();
 
  private:
   /**
@@ -49,8 +72,9 @@ class PGRCamera : public Camera {
   FlyCapture2::Camera camera_;
   FlyCapture2::Mode mode_;
   FlyCapture2::PixelFormat pixel_format_;
-
   std::mutex camera_lock_;
+  std::thread preprocess_thread_;
+  TaskQueue<FlyCapture2::Image> preprocess_queue_;
 };
 
 #endif  // STREAMER_PGR_CAMERA_H

@@ -38,3 +38,4 @@ if (USE_PTGRAY)
 endif ()
 
 target_link_libraries(server linenoise)
+target_link_libraries(gige ${Boost_FILESYSTEM_LIBRARY})

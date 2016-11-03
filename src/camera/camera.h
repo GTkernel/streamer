@@ -15,7 +15,7 @@
 class Camera : public Processor {
  public:
   Camera(const string &name, const string &video_uri, int width = -1,
-         int height = -1);  // Just a nonsense default value
+         int height = -1, int nsink = 1);  // Just a nonsense default value
   string GetName() const;
   string GetVideoURI() const;
   std::shared_ptr<Stream> GetStream() const;

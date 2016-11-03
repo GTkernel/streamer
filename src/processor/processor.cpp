@@ -3,6 +3,7 @@
 //
 
 #include "processor.h"
+#include "utils/utils.h"
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
 

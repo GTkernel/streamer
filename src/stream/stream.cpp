@@ -44,8 +44,6 @@ StreamReader::StreamReader(Stream *stream, size_t max_buffer_size)
 
 template <typename FT>
 std::shared_ptr<FT> StreamReader::PopFrame() {
-  Timer timer;
-  timer.Start();
   std::unique_lock<std::mutex> lk(buffer_lock_);
   buffer_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
   std::shared_ptr<Frame> frame = frame_buffer_.front();

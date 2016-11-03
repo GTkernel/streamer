@@ -5,8 +5,8 @@
 #include "camera.h"
 
 Camera::Camera(const string &name, const string &video_uri, int width,
-               int height)
-    : Processor({}, 1),
+               int height, int nsink)
+    : Processor({}, nsink),
       name_(name),
       video_uri_(video_uri),
       width_(width),
