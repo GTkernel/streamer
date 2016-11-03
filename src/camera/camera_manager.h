@@ -8,6 +8,11 @@
 #include <unordered_map>
 #include "camera/camera.h"
 #include "common/common.h"
+#include "gst_camera.h"
+
+#ifdef USE_PTGRAY
+#include "pgr_camera.h"
+#endif
 
 /**
  * @brief The class that manages and controls all cameras on the device.

@@ -33,7 +33,7 @@ class Camera : public Processor {
   string video_uri_;
   int width_;
   int height_;
-  // Camera outout stream
+  // Camera output stream
   std::shared_ptr<Stream> stream_;
 };
 

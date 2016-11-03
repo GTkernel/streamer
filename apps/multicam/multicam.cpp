@@ -217,8 +217,8 @@ int main(int argc, char *argv[]) {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
   } catch (const po::error &e) {
-    std::cerr << e.what() << endl;
-    cout << desc << endl;
+    std::cerr << e.what() << std::endl;
+    std::cout << desc << std::endl;
     return 1;
   }
 
