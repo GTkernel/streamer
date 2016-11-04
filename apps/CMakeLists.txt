@@ -35,7 +35,8 @@ if (USE_PTGRAY)
   foreach (app_dir ${GIGE_APP_DIRS})
     BUILD_APP(${app_dir})
   endforeach ()
+  target_link_libraries(gige ${Boost_FILESYSTEM_LIBRARY})
 endif ()
 
 target_link_libraries(server linenoise)
-target_link_libraries(gige ${Boost_FILESYSTEM_LIBRARY})
+
