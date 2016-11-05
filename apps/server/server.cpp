@@ -28,13 +28,15 @@ static void SetUpEndpoints(HttpServer &server) {
                                            HttpServerRequest request) {
     CameraManager &camera_manager = CameraManager::GetInstance();
     ModelManager &model_manager = ModelManager::GetInstance();
-    std::vector<string> cameras_json;
+    std::vector<pt::ptree> cameras_node;
     auto cameras = camera_manager.GetCameras();
     for (auto itr = cameras.begin(); itr != cameras.end(); itr++) {
-      cameras_json.push_back(CameraToJson(itr->second.get()));
+      pt::ptree node;
+      CameraToJson(itr->second.get(), node);
+      cameras_node.push_back(node);
     }
 
-    Send200Response(response, ListToJson("cameras", cameras_json));
+    Send200Response(response, ListToJson("cameras", cameras_node));
   };
 
   // POST /cameras/:cam_name/configure

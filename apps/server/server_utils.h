@@ -7,9 +7,9 @@
 
 #include "streamer.h"
 
-#include <simplewebserver/server_http.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <simplewebserver/server_http.hpp>
 
 #define BOOST_SPIRIT_THREADSAFE
 
@@ -19,8 +19,7 @@ typedef std::shared_ptr<HttpServer::Request> HttpServerRequest;
 
 namespace pt = boost::property_tree;
 
-string CameraToJson(Camera *camera) {
-  pt::ptree root;
+string CameraToJson(Camera *camera, pt::ptree &root) {
   std::ostringstream ss;
 
   root.put("name", camera->GetName());
@@ -42,16 +41,16 @@ string CameraToJson(Camera *camera) {
   return ss.str();
 }
 
-string ListToJson(const string &list_name, const std::vector<string> &string_list) {
+string ListToJson(const string &list_name,
+                  const std::vector<pt::ptree> &pt_list) {
   pt::ptree root;
   std::ostringstream ss;
 
   pt::ptree list_node;
 
-  for (auto &str : string_list) {
-    pt::ptree str_node;
-    str_node.put("", str);
-    list_node.push_back({"", str_node});
+  for (auto &child : pt_list) {
+
+    list_node.push_back({"", child});
   }
 
   root.add_child(list_name, list_node);
@@ -72,5 +71,4 @@ void Send400Response(HttpServerResponse res, const string &content) {
        << content;
 }
 
-
-#endif //STREAMER_SERVER_UTILS_H
+#endif  // STREAMER_SERVER_UTILS_H

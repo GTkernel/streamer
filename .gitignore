@@ -148,3 +148,4 @@ ENV/
 .ycm_extra_conf.py
 sftp-config.json
 /config/*.toml
+/python/streamer.cfg
