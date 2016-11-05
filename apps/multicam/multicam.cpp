@@ -206,9 +206,11 @@ int main(int argc, char *argv[]) {
                      "The name of the camera to use, if there are multiple "
                      "cameras to be used, separate with ,");
   desc.add_options()("display,d", "Enable display or not");
+  desc.add_options()("device", po::value<int>()->default_value(-1),
+                     "which device to use, -1 for CPU, > 0 for GPU device");
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
-                     "The directory to find streamer's configuations");
+                     "The directory to find streamer's configurations");
 
   po::variables_map vm;
   try {
@@ -229,6 +231,8 @@ int main(int argc, char *argv[]) {
   if (vm.count("config_dir")) {
     Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
   }
+  int device_number = vm["device"].as<int>();
+  Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
