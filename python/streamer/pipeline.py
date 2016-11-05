@@ -29,3 +29,11 @@ class Pipeline:
         :return: A dictionary of processor_name => processor
         """
         pass
+
+def get_pipelines():
+    """
+    Get pipelines running on streamer device.
+    :return: A list of pipelines
+    """
+    pass
+

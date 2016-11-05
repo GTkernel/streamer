@@ -1,5 +1,20 @@
 import core
 
+class Video:
+    def __init__(self, filename, size, created_time):
+        self.filename = filename
+        self.size = size
+        self.created_time = created_time
+        pass
+
+    def download(self, location):
+        """
+        Download a video from a streamer device. The method will block until video is downloaded.
+        :param location: Location to store the video.
+        :return:
+        """
+        pass
+
 class Camera:
     def __init__(self, attributes):
         self.name = attributes['name']
@@ -42,6 +57,12 @@ class Camera:
                  until the camera has actually finished recording.
         """
         pass
+
+    def videos(self):
+        """
+        Get the list of recorded videos on the camera.
+        :return: A list of videos, each video
+        """
 
     def control(self, params):
         """

@@ -20,3 +20,19 @@ class Processor:
         :return: The stream
         """
         pass
+
+
+class ImageTransformer(Processor):
+    pass
+
+class ImageClassifier(Processor):
+    pass
+
+class DummyNNProcessor(Processor):
+    pass
+
+class OpenCVFaceDetector(Processor):
+    pass
+
+class VideoEncoder(Processor):
+    pass
