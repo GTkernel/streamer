@@ -7,6 +7,19 @@
 
 #include "common/common.h"
 
+#ifdef USE_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+
+#define CUDA_CHECK(condition)                                         \
+  /* Code block avoids redefinition of cudaError_t error */           \
+  do {                                                                \
+    cudaError_t error = condition;                                    \
+    CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
+  } while (0)
+
+#endif
+
 /**
  * @brief Get a list of GPUs in machine.
  */
@@ -21,18 +34,5 @@ inline void GetCUDAGpus(std::vector<int> &gpus) {
     gpus.push_back(i);
   }
 }
-
-#ifdef USE_CUDA
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-
-#define CUDA_CHECK(condition)                                         \
-  /* Code block avoids redefinition of cudaError_t error */           \
-  do {                                                                \
-    cudaError_t error = condition;                                    \
-    CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
-  } while (0)
-
-#endif
 
 #endif  // STREAMER_CUDA_UTILS_H

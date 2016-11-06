@@ -62,7 +62,9 @@ void GstVideoCapture::CheckBuffer() {
 
   CHECK_NE(original_size_.area(), 0)
       << "Capture should have got frame size information but not";
-  cv::Mat frame(original_size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
+  cv::Mat frame_(original_size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
+  // Copy the data out
+  cv::Mat frame = frame_.clone();
 
   CHECK(frame.size[1] == original_size_.width);
   CHECK(frame.size[0] == original_size_.height);

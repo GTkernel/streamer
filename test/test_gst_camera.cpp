@@ -30,23 +30,21 @@ TEST(GST_CAMERA_TEST, TEST_CAPTURE) {
   string video_uri = "gst://videotestsrc ! video/x-raw,width=640,height=480";
   int width = 640;
   int height = 480;
-  GSTCamera camera(camera_name, video_uri, 640, 480);
+  std::shared_ptr<Camera> camera(
+      new GSTCamera(camera_name, video_uri, 640, 480));
 
   // Can capture image when camera is not started
   cv::Mat image;
-  bool result = camera.Capture(image);
+  bool result = camera->Capture(image);
   EXPECT_EQ(true, result);
   EXPECT_EQ(height, image.rows);
   EXPECT_EQ(width, image.cols);
 
   // Can also capture image when camera is started
-  camera.Start();
-  result = camera.Capture(image);
+  camera->Start();
+  result = camera->Capture(image);
   EXPECT_EQ(true, result);
   EXPECT_EQ(height, image.rows);
   EXPECT_EQ(width, image.cols);
-  camera.Stop();
-
-
-  LOG(INFO) << image.data[0];
+  camera->Stop();
 }

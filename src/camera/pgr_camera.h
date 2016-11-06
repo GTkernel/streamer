@@ -19,7 +19,7 @@ class PGRCamera : public Camera {
       const string &name, const string &video_uri, int width = -1,
       int height = -1, FlyCapture2::Mode mode = FlyCapture2::MODE_2,
       FlyCapture2::PixelFormat pixel_format = FlyCapture2::PIXEL_FORMAT_RAW8);
-  virtual CameraType GetType() const override;
+  virtual CameraType GetCameraType() const override;
 
   float GetExposure();
   void SetExposure(float exposure);

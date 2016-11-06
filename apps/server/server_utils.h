@@ -29,8 +29,8 @@ string CameraToJson(Camera *camera, pt::ptree &root) {
   root.put("height", camera->GetHeight());
 
 #ifdef USE_PTGRAY
-  if (camera->GetType() == CAMERA_TYPE_PTGRAY) {
-    auto ptgray_camera = std::dynamic_pointer_cast<PGRCamera>(camera);
+  if (camera->GetCameraType() == CAMERA_TYPE_PTGRAY) {
+    auto ptgray_camera = dynamic_cast<PGRCamera *>(camera);
     root.put("exposure", ptgray_camera->GetExposure());
     root.put("sharpness", ptgray_camera->GetSharpness());
     root.put("video_mode", (int)ptgray_camera->GetVideoMode());

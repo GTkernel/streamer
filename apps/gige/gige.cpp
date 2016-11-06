@@ -62,7 +62,7 @@ void Run(const string &camera_name, const string &output_filename,
   auto &camera_manager = CameraManager::GetInstance();
   auto camera = camera_manager.GetCamera(camera_name);
 
-  CHECK(camera->GetType() == CAMERA_TYPE_PTGRAY)
+  CHECK(camera->GetCameraType() == CAMERA_TYPE_PTGRAY)
       << "Not running with GigE camera";
 
   auto ptgray_camera = dynamic_cast<PGRCamera *>(camera.get());

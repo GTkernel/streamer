@@ -23,7 +23,7 @@ class Camera : public Processor {
   int GetHeight();
 
   virtual bool Capture(cv::Mat &image);
-  virtual CameraType GetType() const = 0;
+  virtual CameraType GetCameraType() const = 0;
   virtual ProcessorType GetType() override;
 
  protected:

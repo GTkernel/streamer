@@ -307,7 +307,7 @@ float PGRCamera::GetProperty(FlyCapture2::PropertyType property_type, bool abs,
     }
   }
 }
-CameraType PGRCamera::GetType() const { return CAMERA_TYPE_PTGRAY; }
+CameraType PGRCamera::GetCameraType() const { return CAMERA_TYPE_PTGRAY; }
 
 void PGRCamera::Reset() {
   FlyCapture2::Property prop;
