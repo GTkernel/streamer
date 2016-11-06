@@ -15,6 +15,8 @@ namespace po = boost::program_options;
 #define STRING_PATTERN "([a-zA-Z0-9_]+)"
 
 static void SetUpEndpoints(HttpServer &server) {
+  auto &camera_manager = CameraManager::GetInstance();
+
   // GET /hello
   server.resource["^/hello$"]["GET"] = [](HttpServerResponse response,
                                           HttpServerRequest request) {
@@ -91,11 +93,30 @@ static void SetUpEndpoints(HttpServer &server) {
 #endif
   };
 
-  // GET /cameras/:cam_name/stream
-  server.resource["^/cameras/" STRING_PATTERN "/stream$"]["GET"] = [](
-      HttpServerResponse response, HttpServerRequest request) {
+  // GET /cameras/:cam_name/capture
+  server.resource["^/cameras/" STRING_PATTERN "/capture$"]["GET"] =
+      [&camera_manager, &server](HttpServerResponse response,
+                                        HttpServerRequest request) {
+        string camera_name = request->path_match[1];
+        LOG(INFO) << "Received " << request->path;
+        if (camera_manager.HasCamera(camera_name)) {
+          auto camera = camera_manager.GetCamera(camera_name);
+          cv::Mat image;
+          if (!camera->Capture(image)) {
+            Send400Response(response, "Failed to capture image");
+          } else {
+            // Compress image to JPEG
+            std::vector<uchar> buf;
+            cv::imencode(".jpeg", image, buf);
+            SendBytes(server, response, (char *)buf.data(), buf.size(),
+                      "image/jpeg");
+          }
+        } else {
+          Send400Response(response, "Camera not found: " + camera_name);
+        }
+      };
 
-  };
+  // GET /cameras/:cam_name/
 
   // GET /pipelines => List all pipelines
 
@@ -104,7 +125,7 @@ static void SetUpEndpoints(HttpServer &server) {
 
   // DELETE /pipelines/stop => Kill an existing pipeline
 
-  // Get /pipelines/:pipeline_name/stream => Stream a pipeline                                                              
+  // Get /pipelines/:pipeline_name/stream => Stream a pipeline
 }
 
 int main(int argc, char *argv[]) {
@@ -121,7 +142,7 @@ int main(int argc, char *argv[]) {
       "The directory to find streamer's configurations");
   desc.add_options()("port,p",
                      po::value<int>()->value_name("PORT")->default_value(15213),
-                     "The port to bind streamer serveer");
+                     "The port to bind streamer server");
 
   po::variables_map vm;
   try {

@@ -5,7 +5,7 @@
 #include "camera.h"
 
 Camera::Camera(const string &name, const string &video_uri, int width,
-               int height, int nsink)
+               int height, size_t nsink)
     : Processor({}, nsink),
       name_(name),
       video_uri_(video_uri),
@@ -25,4 +25,20 @@ std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
 
 ProcessorType Camera::GetType() {
   return PROCESSOR_TYPE_CAMERA;
+}
+
+bool Camera::Capture(cv::Mat &image) {
+  if (stopped_) {
+    Start();
+    auto reader = stream_->Subscribe();
+    image = reader->PopFrame<ImageFrame>()->GetOriginalImage();
+    reader->UnSubscribe();
+    Stop();
+  } else {
+    auto reader = stream_->Subscribe();
+    image = reader->PopFrame<ImageFrame>()->GetOriginalImage();
+    reader->UnSubscribe();
+  }
+
+  return true;
 }
