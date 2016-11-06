@@ -27,6 +27,7 @@ class FileWriter : public Processor {
 
   size_t GetFramesWritten() { return frames_written_; }
   string GetCurrentFilename() { return current_filename_; }
+  virtual ProcessorType GetType() override;
 
  protected:
   virtual bool Init() override;

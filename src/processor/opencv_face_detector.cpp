@@ -45,3 +45,7 @@ void OpenCVFaceDetector::Process() {
 
   PushFrame(0, new MetadataFrame(results_rect, frame->GetOriginalImage()));
 }
+
+ProcessorType OpenCVFaceDetector::GetType() {
+  return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+}

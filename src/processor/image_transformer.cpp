@@ -73,3 +73,7 @@ void ImageTransformer::Process() {
 
 bool ImageTransformer::Init() { return true; }
 bool ImageTransformer::OnStop() { return true; }
+
+ProcessorType ImageTransformer::GetType() {
+  return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
+}

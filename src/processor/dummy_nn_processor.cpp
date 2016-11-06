@@ -38,3 +38,7 @@ bool DummyNNProcessor::OnStop() {
 }
 
 void DummyNNProcessor::Process() { model_->Forward(); }
+
+ProcessorType DummyNNProcessor::GetType() {
+  return PROCESSOR_TYPE_DUMMY_NN;
+}

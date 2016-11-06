@@ -16,6 +16,7 @@ class ImageTransformer : public Processor {
   ImageTransformer(std::shared_ptr<Stream> input_stream,
                    const Shape &target_shape, CropType crop_type,
                    bool subtract_mean = true);
+  virtual ProcessorType GetType() override;
 
  protected:
   virtual bool Init() override;

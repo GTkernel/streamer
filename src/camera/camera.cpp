@@ -22,3 +22,7 @@ int Camera::GetWidth() { return width_; }
 int Camera::GetHeight() { return height_; }
 
 std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
+
+ProcessorType Camera::GetType() {
+  return PROCESSOR_TYPE_CAMERA;
+}

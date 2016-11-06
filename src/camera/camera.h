@@ -22,6 +22,7 @@ class Camera : public Processor {
   int GetWidth();
   int GetHeight();
   virtual CameraType GetType() const = 0;
+  virtual ProcessorType GetType() override;
 
  protected:
   virtual bool Init() = 0;

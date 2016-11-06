@@ -115,3 +115,7 @@ std::vector<std::vector<Prediction>> ImageClassifier::Classify(int N) {
 
   return results;
 }
+
+ProcessorType ImageClassifier::GetType() {
+  return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
+}

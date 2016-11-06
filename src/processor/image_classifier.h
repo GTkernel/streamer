@@ -13,6 +13,7 @@ class ImageClassifier : public Processor {
  public:
   ImageClassifier(std::vector<std::shared_ptr<Stream>> input_streams,
                   const ModelDesc &model_desc, Shape input_shape);
+  virtual ProcessorType GetType() override;
 
  protected:
   virtual bool Init() override;

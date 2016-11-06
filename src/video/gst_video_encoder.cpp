@@ -290,3 +290,7 @@ void GstVideoEncoder::Process() {
 void GstVideoEncoder::SetEncoderElement(const string &encoder) {
   encoder_element_ = encoder;
 }
+
+ProcessorType GstVideoEncoder::GetType() {
+  return PROCESSOR_TYPE_ENCODER;
+}

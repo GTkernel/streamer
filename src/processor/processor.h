@@ -61,6 +61,11 @@ class Processor {
    */
   double GetAvgFps();
 
+  /**
+   * @brief Get the type of the processor
+   */
+  virtual ProcessorType GetType() = 0;
+
  protected:
   /**
    * @brief Initialize the processor.

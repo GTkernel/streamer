@@ -17,6 +17,7 @@ class OpenCVFaceDetector : public Processor {
       std::shared_ptr<Stream> input_stream,
       string classifier_xml_path =
           "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml");
+  virtual ProcessorType GetType() override;
 
  protected:
   virtual bool Init() override;

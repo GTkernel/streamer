@@ -28,6 +28,7 @@ class GstVideoEncoder : public Processor {
    * @param encoder The name of the deocder gstreamer element.
    */
   void SetEncoderElement(const string &encoder);
+  virtual ProcessorType GetType() override;
 
  protected:
   virtual bool Init() override;

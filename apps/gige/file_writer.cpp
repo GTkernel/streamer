@@ -59,3 +59,7 @@ void FileWriter::Process() {
 
   frames_written_ += 1;
 }
+
+ProcessorType FileWriter::GetType() {
+  return PROCESSOR_TYPE_CUSTOM;
+}

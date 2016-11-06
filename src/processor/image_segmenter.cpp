@@ -91,3 +91,7 @@ void ImageSegmenter::Process() {
   PushFrame(0, new ImageFrame(colored_output, frame->GetOriginalImage()));
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }
+
+ProcessorType ImageSegmenter::GetType() {
+  return PROCESSOR_TYPE_IMAGE_SEGMENTER;
+}
