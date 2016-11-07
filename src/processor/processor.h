@@ -11,6 +11,11 @@
 #include "stream/stream.h"
 
 class Pipeline;
+
+#ifdef USE_VIMBA
+class VimbaCameraFrameObserver;
+#endif
+
 /**
  * @brief Processor is the core computation unit in the system. It accepts
  * frames from one or more source streams, and output frames to one or more sink
@@ -18,6 +23,9 @@ class Pipeline;
  */
 class Processor {
   friend class Pipeline;
+#ifdef USE_VIMBA
+  friend class VimbaCameeraFrameObserver;
+#endif
  public:
   Processor(const std::vector<string> &source_names,
             const std::vector<string> &sink_names);
