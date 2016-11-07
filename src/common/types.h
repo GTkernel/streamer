@@ -69,7 +69,7 @@ enum ModelType {
 };
 
 //// Camera types
-enum CameraType { CAMERA_TYPE_GST = 0, CAMERA_TYPE_PTGRAY };
+enum CameraType { CAMERA_TYPE_GST = 0, CAMERA_TYPE_PTGRAY, CAMERA_TYPE_VIMBA };
 
 //// Frame types
 enum FrameType {

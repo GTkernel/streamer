@@ -21,5 +21,5 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(PtGray DEFAULT_MSG
 if (PtGray_INCLUDE_DIRS AND PtGray_LIBRARIES)
   set(PtGray_FOUND 1)
 else ()
-  message("Not found PyGray")
+  message("Not found PtGray")
 endif ()

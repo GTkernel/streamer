@@ -114,6 +114,14 @@ if (USE_PTGRAY)
   message("Build with PtGray")
 endif()
 
+option(USE_VIMBA "Build with AlliedVision Vimba SDK or not." OFF)
+if (USE_VIMBA)
+  find_package(Vimba REQUIRED)
+  include_directories(${Vimba_INCLUDE_DIRS})
+  add_definitions("-D USE_VIMBA")
+  message("Build with Vimba")
+endif()
+
 # Common include paths
 include_directories(
   src
