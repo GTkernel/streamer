@@ -8,7 +8,7 @@
 TEST(SPL_PARSER_TEST, TEST_PARSE) {
   string pipeline_desc = R"pipeline(
 classifier = processor(ImageClassifier, model=AlexNet)
-ip_cam = camera(GST_TEST, width=1024, height=768)
+ip_cam = camera(GST_TEST)
 transformer = processor(ImageTransformer, height=227, width=227)
 
 transformer[input] = ip_cam[bgr_output]
@@ -36,4 +36,28 @@ classifier[input] = transformer[output]
   EXPECT_EQ(statement4.lhs_stream_name, "input");
   EXPECT_EQ(statement4.rhs_processor_name, "ip_cam");
   EXPECT_EQ(statement4.rhs_stream_name, "bgr_output");
+}
+
+TEST(SPL_PARSER_TEST, TEST_COMMENT) {
+  string pipeline_desc = R"pipeline(
+# classifier = processor(ImageClassifier, model=AlexNet)
+ip_cam = camera(GST_TEST)
+transformer = processor(ImageTransformer, height=227, width=227)
+
+transformer[input] = ip_cam[bgr_output]
+# classifier[input] = transformer[output]
+)pipeline";
+
+  SPLParser parser;
+  std::vector<SPLStatement> statements;
+  bool result = parser.Parse(pipeline_desc, statements);
+
+  EXPECT_TRUE(result);
+
+  EXPECT_EQ(statements.size(), 3);
+
+  auto stmt = statements[1];
+  EXPECT_EQ(SPL_STATEMENT_PROCESSOR, stmt.statement_type);
+  EXPECT_EQ("transformer", stmt.processor_name);
+  EXPECT_EQ(PROCESSOR_TYPE_IMAGE_TRANSFORMER, stmt.processor_type);
 }

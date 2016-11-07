@@ -16,6 +16,8 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
         processor =
             ProcessorFactory::CreateInstance(stmt.processor_type, stmt.params);
         pipeline->processors_.insert({stmt.processor_name, processor});
+        pipeline->dependency_graph_.insert({processor.get(), {}});
+        pipeline->reverse_dependency_graph_.insert({processor.get(), {}});
         break;
       }
       case SPL_STATEMENT_CONNECT: {
@@ -31,6 +33,11 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
 
         lhs_processor->SetSource(stmt.lhs_stream_name,
                                  rhs_processor->GetSink(stmt.rhs_stream_name));
+
+        pipeline->dependency_graph_[lhs_processor.get()].insert(
+            rhs_processor.get());
+        pipeline->reverse_dependency_graph_[rhs_processor.get()].insert(
+            lhs_processor.get());
         break;
       }
       default:
@@ -52,4 +59,69 @@ std::shared_ptr<Processor> Pipeline::GetProcessor(const string &name) {
   CHECK(processors_.count(name) != 0) << "Has no processor named: " << name;
 
   return processors_[name];
+}
+
+bool Pipeline::Start() {
+  while (true) {
+    bool some_processor_started = false;
+    int started_processor = 0;
+    for (auto itr : dependency_graph_) {
+      auto processor = itr.first;
+      // For all not yet start processors
+      if (!processor->IsStarted()) {
+        int started_dep = 0;
+        for (auto dep : itr.second) {
+          if (dep->IsStarted()) started_dep += 1;
+        }
+        if (itr.second.size() == started_dep) {
+          // All dependencies have started
+          processor->Start();
+          some_processor_started = true;
+        }
+      } else {
+        started_processor += 1;
+      }
+    }  // For
+    if (started_processor == dependency_graph_.size()) {
+      // All processors have started
+      break;
+    } else {
+      if (some_processor_started) {
+        // Scan again
+      } else {
+        // We have a loop
+        LOG(ERROR) << "Has cycle in pipeline dependency graph!";
+        return false;
+      }
+    }
+  }  // While
+
+  return true;
+}
+
+void Pipeline::Stop() {
+  while (true) {
+    int stopped_processor = 0;
+    for (auto itr : reverse_dependency_graph_) {
+      auto processor = itr.first;
+      // For all not yet stop processors
+      if (processor->IsStarted()) {
+        int stopped_dep = 0;
+        for (auto dep : itr.second) {
+          if (!dep->IsStarted()) stopped_dep += 1;
+        }
+        if (itr.second.size() == stopped_dep) {
+          // All dependencies have stopped
+          processor->Stop();
+        }
+      } else {
+        stopped_processor += 1;
+      }
+    }  // For
+    if (stopped_processor == reverse_dependency_graph_.size()) {
+      // All processors have stopped
+      break;
+    }
+    // No need to check for cycle, it has been checked in Start()
+  }  // While
 }

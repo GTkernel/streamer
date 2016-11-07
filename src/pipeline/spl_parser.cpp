@@ -120,7 +120,6 @@ bool SPLParser::Parse(const string &spl,
         if (t6 == ")") {
           // Done
           statements.push_back(statement);
-          break;
         } else if (t6 == ",") {
           while (t6 == ",") {
             string key = tokenizer.NextToken();

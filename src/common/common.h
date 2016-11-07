@@ -6,16 +6,17 @@
 #define TX1_DNN_COMMON_H
 
 #include <glog/logging.h>
-#include <unordered_map>
-#include <map>
 #include <stdlib.h>
 #include <tinytoml/toml.h>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "data_buffer.h"
 #include "timer.h"

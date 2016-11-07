@@ -9,8 +9,6 @@
 #include "processor/processor.h"
 #include "spl_parser.h"
 
-#include <unordered_map>
-
 class Pipeline {
  public:
   static std::shared_ptr<Pipeline> ConstructPipeline(
@@ -28,8 +26,24 @@ class Pipeline {
 
   std::unordered_map<string, std::shared_ptr<Processor>> GetProcessors();
 
+  /**
+   * @brief Start executing the pipeline
+   */
+  bool Start();
+
+  /**
+   * @brief Stop executing the pipeline
+   */
+  void Stop();
+
  private:
   std::unordered_map<string, std::shared_ptr<Processor>> processors_;
+  // I depend on who
+  std::unordered_map<Processor *, std::unordered_set<Processor *>>
+      dependency_graph_;
+  // Who depends on me
+  std::unordered_map<Processor *, std::unordered_set<Processor *>>
+      reverse_dependency_graph_;
 };
 
 #endif  // STREAMER_PIPELINE_H

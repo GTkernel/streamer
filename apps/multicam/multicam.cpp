@@ -42,7 +42,7 @@ void CleanUp() {
 
 void SignalHandler(int signal) {
   std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
-  CleanUp();
+  //  CleanUp();
 
   exit(0);
 }

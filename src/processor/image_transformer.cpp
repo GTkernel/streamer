@@ -13,7 +13,8 @@ ImageTransformer::ImageTransformer(const Shape &target_shape,
       subtract_mean_(subtract_mean) {
   auto mean_colors = ModelManager::GetInstance().GetMeanColors();
   mean_image_ =
-      cv::Mat(cv::Size(target_shape.width, target_shape.height), CV_32FC3,
+      cv::Mat(cv::Size(target_shape.width, target_shape.height),
+              target_shape.channel == 3 ? CV_32FC3 : CV_32FC1,
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
 }
 
@@ -21,6 +22,7 @@ void ImageTransformer::Process() {
   Timer timer;
   auto frame = GetFrame<ImageFrame>("input");
   cv::Mat img = frame->GetImage();
+  LOG(INFO) << img.cols << " " << img.rows << " " << img.channels();
   timer.Start();
 
   int num_channel = target_shape_.channel, width = target_shape_.width,
@@ -65,9 +67,12 @@ void ImageTransformer::Process() {
     sample_resized_.convertTo(sample_float_, CV_32FC1);
 
   // Normalize
-  cv::subtract(sample_float_, mean_image_, sample_normalized_);
+  if (subtract_mean_) {
+    cv::subtract(sample_float_, mean_image_, sample_normalized_);
+  }
 
-  PushFrame("output", new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
+  PushFrame("output",
+            new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
 }
 
 bool ImageTransformer::Init() { return true; }

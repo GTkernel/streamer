@@ -9,12 +9,15 @@
 #include <thread>
 #include "common/common.h"
 #include "stream/stream.h"
+
+class Pipeline;
 /**
  * @brief Processor is the core computation unit in the system. It accepts
  * frames from one or more source streams, and output frames to one or more sink
  * streams.
  */
 class Processor {
+  friend class Pipeline;
  public:
   Processor(const std::vector<string> &source_names,
             const std::vector<string> &sink_names);
