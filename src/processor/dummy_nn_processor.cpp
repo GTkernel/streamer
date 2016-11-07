@@ -6,7 +6,7 @@
 #include "model/model_manager.h"
 
 DummyNNProcessor::DummyNNProcessor(const ModelDesc &model_desc, int batch_size)
-    : Processor({}, 0), model_desc_(model_desc), batch_size_(batch_size) {
+    : Processor({}, {}), model_desc_(model_desc), batch_size_(batch_size) {
   input_shape_ =
       Shape(3, model_desc_.GetInputWidth(), model_desc_.GetInputHeight());
   fake_input_ = DataBuffer(input_shape_.GetSize() * sizeof(float) * batch_size);
@@ -39,6 +39,4 @@ bool DummyNNProcessor::OnStop() {
 
 void DummyNNProcessor::Process() { model_->Forward(); }
 
-ProcessorType DummyNNProcessor::GetType() {
-  return PROCESSOR_TYPE_DUMMY_NN;
-}
+ProcessorType DummyNNProcessor::GetType() { return PROCESSOR_TYPE_DUMMY_NN; }

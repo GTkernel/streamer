@@ -6,6 +6,8 @@
 #define TX1_DNN_COMMON_H
 
 #include <glog/logging.h>
+#include <unordered_map>
+#include <map>
 #include <stdlib.h>
 #include <tinytoml/toml.h>
 #include <fstream>

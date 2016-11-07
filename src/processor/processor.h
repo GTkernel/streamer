@@ -11,13 +11,13 @@
 #include "stream/stream.h"
 /**
  * @brief Processor is the core computation unit in the system. It accepts
- * frames
- * from one or more source streams, and output frames to one or more sink
+ * frames from one or more source streams, and output frames to one or more sink
  * streams.
  */
 class Processor {
  public:
-  Processor(std::vector<StreamPtr> sources, size_t n_sinks);
+  Processor(const std::vector<string> &source_names,
+            const std::vector<string> &sink_names);
   virtual ~Processor();
   /**
    * @brief Start processing, drain frames from sources and send output to
@@ -32,9 +32,18 @@ class Processor {
   bool Stop();
 
   /**
-   * @brief Get sink streams of the prosessor.
+   * @brief Get sink stream of the processor by name.
+   * @param name Name of the sink.
+   * @return Stream with the name.
    */
-  std::vector<std::shared_ptr<Stream>> GetSinks();
+  StreamPtr GetSink(const string &name);
+
+  /**
+   * @brief Set the source of the processor by name.
+   * @param name Name of the source.
+   * @param stream Stream to be set.
+   */
+  void SetSource(const string &name, StreamPtr stream);
 
   /**
    * @brief Check if the processor has started.
@@ -86,15 +95,17 @@ class Processor {
   virtual void Process() = 0;
 
   template <typename FT = Frame>
-  std::shared_ptr<FT> GetFrame(int src_id);
-  void PushFrame(int sink_id, Frame *frame);
+  std::shared_ptr<FT> GetFrame(const string &source_name);
+  void PushFrame(const string &sink_name, Frame *frame);
   void Init_();
 
   void ProcessorLoop();
-  std::vector<std::shared_ptr<Frame>> source_frame_cache_;
-  std::vector<StreamPtr> sources_;
-  std::vector<StreamReader *> readers_;
-  std::vector<StreamPtr> sinks_;
+
+  std::unordered_map<string, std::shared_ptr<Frame>> source_frame_cache_;
+  std::unordered_map<string, StreamPtr> sources_;
+  std::unordered_map<string, StreamPtr> sinks_;
+  std::unordered_map<string, StreamReader *> readers_;
+
   std::thread process_thread_;
   bool stopped_;
 

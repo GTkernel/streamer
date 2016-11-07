@@ -9,8 +9,8 @@ TEST(GST_VIDEO_ENCODER_TEST, FILE_TEST) {
   CameraManager &camera_manager = CameraManager::GetInstance();
 
   auto camera = camera_manager.GetCamera("GST_TEST");
-  GstVideoEncoder encoder(camera->GetStream(), camera->GetWidth(),
-                          camera->GetHeight(), "test.mp4");
+  GstVideoEncoder encoder(camera->GetWidth(), camera->GetHeight(), "test.mp4");
+  encoder.SetSource("input", camera->GetStream());
   camera->Start();
   encoder.Start();
 
@@ -26,8 +26,8 @@ TEST(GST_VIDEO_ENCODER_TEST, STREAM_TEST) {
   CameraManager &camera_manager = CameraManager::GetInstance();
 
   auto camera = camera_manager.GetCamera("GST_TEST");
-  GstVideoEncoder encoder(camera->GetStream(), camera->GetWidth(),
-                          camera->GetHeight(), 12345);
+  GstVideoEncoder encoder(camera->GetWidth(), camera->GetHeight(), 12345);
+  encoder.SetSource("input", camera->GetStream());
   camera->Start();
   encoder.Start();
 

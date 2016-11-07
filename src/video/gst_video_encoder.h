@@ -17,9 +17,9 @@
  */
 class GstVideoEncoder : public Processor {
  public:
-  GstVideoEncoder(StreamPtr stream, int width, int height,
+  GstVideoEncoder(int width, int height,
                   const string &output_filename);
-  GstVideoEncoder(StreamPtr stream, int width, int height, int port);
+  GstVideoEncoder(int width, int height, int port);
 
   /**
    * @brief Set Gstreamer encoder element direclty. The caller should make sure
@@ -47,7 +47,7 @@ class GstVideoEncoder : public Processor {
   int width_;
   int height_;
   // Frame size in bytes
-  int frame_size_bytes_;
+  size_t frame_size_bytes_;
   string output_filename_;
   int port_;
 

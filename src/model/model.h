@@ -54,7 +54,7 @@ class ModelDesc {
  */
 class Model {
  public:
-  Model(const ModelDesc &model_desc, Shape input_shape, int batch_size = 1);
+  Model(const ModelDesc &model_desc, Shape input_shape, size_t batch_size = 1);
   ModelDesc GetModelDesc() const;
   virtual void Load() = 0;
   // Feed the input to the network, run forward, then copy the output from the
@@ -73,7 +73,7 @@ class Model {
   DataBuffer input_buffer_;
   std::vector<DataBuffer> output_buffers_;
   std::vector<Shape> output_shapes_;
-  int batch_size_;
+  size_t batch_size_;
 };
 
 #endif  // STREAMER_MODEL_H

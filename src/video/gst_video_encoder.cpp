@@ -7,12 +7,12 @@
 
 const static char *ENCODER_SRC_NAME = "encoder_src";
 
-GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
+GstVideoEncoder::GstVideoEncoder(int width, int height,
                                  const string &output_filename)
-    : Processor({input_stream}, 0),
+    : Processor({"input"}, {}),
       width_(width),
       height_(height),
-      frame_size_bytes_(width * height * 3),
+      frame_size_bytes_((size_t)width * height * 3),
       port_(-1),  // Not in streaming mode
       output_filename_(output_filename),
       need_data_(false),
@@ -22,12 +22,11 @@ GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }
 
-GstVideoEncoder::GstVideoEncoder(StreamPtr input_stream, int width, int height,
-                                 int port)
-    : Processor({input_stream}, 0),
+GstVideoEncoder::GstVideoEncoder(int width, int height, int port)
+    : Processor({"input"}, {}),
       width_(width),
       height_(height),
-      frame_size_bytes_(width * height * 3),
+      frame_size_bytes_((size_t)width * height * 3),
       port_(port),
       need_data_(false),
       timestamp_(0) {
@@ -195,7 +194,7 @@ bool GstVideoEncoder::OnStop() {
 }
 
 void GstVideoEncoder::Process() {
-  auto input_frame = GetFrame(0);
+  auto input_frame = GetFrame("input");
   CHECK(input_frame->GetOriginalImage().rows == height_);
   CHECK(input_frame->GetOriginalImage().cols == width_);
   CHECK(!input_frame->GetOriginalImage().empty());
@@ -206,14 +205,21 @@ void GstVideoEncoder::Process() {
   if (!need_data_) return;
 
   // Give PTS to the buffer
-  GstBuffer *buffer = gst_buffer_new_wrapped(
-      input_frame->GetOriginalImage().data, frame_size_bytes_);
+  GstBuffer *buffer = gst_buffer_new();
+  gst_buffer_append_memory(
+      buffer, gst_memory_new_wrapped(GST_MEMORY_FLAG_READONLY,
+                                     input_frame->GetOriginalImage().data,
+                                     frame_size_bytes_, frame_size_bytes_, 0,
+                                     nullptr, nullptr));
+
   GST_BUFFER_PTS(buffer) = timestamp_;
   GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 30);
   timestamp_ += GST_BUFFER_DURATION(buffer);
 
   GstFlowReturn ret;
   g_signal_emit_by_name(gst_appsrc_, "push-buffer", buffer, &ret);
+
+  gst_buffer_unref(buffer);
 
   if (ret != 0) {
     LOG(INFO) << "Encoder -- appsrc can't push buffer, ret code (" << ret
@@ -291,6 +297,4 @@ void GstVideoEncoder::SetEncoderElement(const string &encoder) {
   encoder_element_ = encoder;
 }
 
-ProcessorType GstVideoEncoder::GetType() {
-  return PROCESSOR_TYPE_ENCODER;
-}
+ProcessorType GstVideoEncoder::GetType() { return PROCESSOR_TYPE_ENCODER; }

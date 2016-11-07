@@ -5,13 +5,13 @@
 #include "camera.h"
 
 Camera::Camera(const string &name, const string &video_uri, int width,
-               int height, size_t nsink)
-    : Processor({}, nsink),
+               int height)
+    : Processor({}, {"bgr_output"}),
       name_(name),
       video_uri_(video_uri),
       width_(width),
       height_(height) {
-  stream_ = sinks_[0];
+  stream_ = sinks_["bgr_output"];
 }
 
 string Camera::GetName() const { return name_; }
@@ -23,9 +23,7 @@ int Camera::GetHeight() { return height_; }
 
 std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
 
-ProcessorType Camera::GetType() {
-  return PROCESSOR_TYPE_CAMERA;
-}
+ProcessorType Camera::GetType() { return PROCESSOR_TYPE_CAMERA; }
 
 bool Camera::Capture(cv::Mat &image) {
   if (stopped_) {

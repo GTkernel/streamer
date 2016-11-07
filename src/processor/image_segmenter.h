@@ -6,8 +6,8 @@
 
 class ImageSegmenter : public Processor {
  public:
-  ImageSegmenter(std::shared_ptr<Stream> input_stream,
-                 const ModelDesc &model_desc, Shape input_shape);
+  ImageSegmenter(const ModelDesc &model_desc, Shape input_shape);
+
   virtual ProcessorType GetType() override;
 
  protected:

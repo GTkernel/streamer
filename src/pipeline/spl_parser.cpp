@@ -22,6 +22,16 @@ class Tokenizer {
     while (index_ != end) {
       char ch = str_.data()[index_];
 
+      if (ch == '#') {
+        while (index_ != end) {
+          if (str_.data()[index_] == '\n') {
+            break;
+          }
+          index_ += 1;
+        }
+        continue;
+      }
+
       // Return special character
       if (ch == '=' || ch == '(' || ch == ')' || ch == '[' || ch == ']' ||
           ch == ',' || ch == '\n') {
@@ -77,8 +87,7 @@ bool SPLParser::Parse(const string &spl,
     // Parse one statement at a time
     string t1 = tokenizer.NextToken();
 
-    if (t1 == "\n")
-      continue;
+    if (t1 == "\n") continue;
 
     string t2 = tokenizer.NextToken();
     if (t2 == "") PARSE_ERROR("Expect token after " + t2, spl);
@@ -92,11 +101,20 @@ bool SPLParser::Parse(const string &spl,
       if (t3 == "") PARSE_ERROR("Expect 'processor' or 'camera'", spl);
       if (t3 == "camera" || t3 == "processor") {
         statement.statement_type = SPL_STATEMENT_PROCESSOR;
+
         string t4 = tokenizer.NextToken();
         if (t4 != "(") PARSE_ERROR("Expect ( after " + t3, spl);
         string t5 = tokenizer.NextToken();
         if (t5 == "") PARSE_ERROR("Expect token after " + t4, spl);
-        statement.processor_type = t5;
+
+        // Special condition for camera processor, where the token here is the
+        // camera name instead of processor type.
+        if (t3 == "camera") {
+          statement.processor_type = PROCESSOR_TYPE_CAMERA;
+          statement.params.insert({"camera_name", t5});
+        } else {
+          statement.processor_type = GetProcessorTypeByString(t5);
+        }
 
         string t6 = tokenizer.NextToken();
         if (t6 == ")") {
@@ -106,7 +124,8 @@ bool SPLParser::Parse(const string &spl,
         } else if (t6 == ",") {
           while (t6 == ",") {
             string key = tokenizer.NextToken();
-            if (key == "") PARSE_ERROR("Expect paran key name after " + t6, spl);
+            if (key == "")
+              PARSE_ERROR("Expect param key name after " + t6, spl);
             string equal = tokenizer.NextToken();
             if (equal != "=") PARSE_ERROR("Expect = after " + key, spl);
             string value = tokenizer.NextToken();

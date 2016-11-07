@@ -45,7 +45,8 @@ void AddText(cv::Mat &img, const string &text, int nrow) {
 }
 
 /**
- * @brief Add a gray background to the left of the image to make text more salient.
+ * @brief Add a gray background to the left of the image to make text more
+ * salient.
  * @param img The image to add text onto.
  */
 void AddGrayBackground(cv::Mat &img) {
@@ -66,11 +67,11 @@ void Run(const string &camera_name, const string &output_filename,
       << "Not running with GigE camera";
 
   auto ptgray_camera = dynamic_cast<PGRCamera *>(camera.get());
-  auto camera_reader = ptgray_camera->GetSinks()[0]->Subscribe();
+  auto camera_reader = ptgray_camera->GetSink("bgr_output")->Subscribe();
 
-  auto bytes_stream = ptgray_camera->GetSinks()[1];
-  std::shared_ptr<FileWriter> file_writer(
-      new FileWriter(bytes_stream, "", 100));
+  auto bytes_stream = ptgray_camera->GetSink("raw_output");
+  std::shared_ptr<FileWriter> file_writer(new FileWriter("", 100));
+  file_writer->SetSource("input", bytes_stream);
 
   ptgray_camera->Start();
   STREAMER_SLEEP(10);

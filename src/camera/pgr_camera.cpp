@@ -18,9 +18,12 @@
 PGRCamera::PGRCamera(const string &name, const string &video_uri, int width,
                      int height, FlyCapture2::Mode mode,
                      FlyCapture2::PixelFormat pixel_format)
-    : Camera(name, video_uri, width, height, 2 /* # Sinks */),
+    : Camera(name, video_uri, width, height),
       mode_(mode),
-      pixel_format_(pixel_format) {}
+      pixel_format_(pixel_format) {
+  // Init raw output sink
+  sinks_.insert({"raw_output", StreamPtr(new Stream)});
+}
 
 bool PGRCamera::Init() {
   // Get the camera guid from ip address
@@ -84,8 +87,8 @@ void PGRCamera::PreProcess() {
     cv::Mat output_image;
     output_image = image.clone();
 
-    PushFrame(0, new ImageFrame(output_image, output_image));
-    PushFrame(1, new BytesFrame(image_bytes, output_image));
+    PushFrame("bgr_output", new ImageFrame(output_image, output_image));
+    PushFrame("raw_output", new BytesFrame(image_bytes, output_image));
   }
 }
 

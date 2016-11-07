@@ -22,8 +22,7 @@ class FileWriter : public Processor {
    * ${basename}-${start_frame}-${end_frame}.
    * @param frames_per_file Number of frames per file.
    */
-  FileWriter(StreamPtr input_stream, const string &filename_base,
-             size_t frames_per_file);
+  FileWriter(const string &filename_base, size_t frames_per_file);
 
   size_t GetFramesWritten() { return frames_written_; }
   string GetCurrentFilename() { return current_filename_; }

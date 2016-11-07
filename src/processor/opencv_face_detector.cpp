@@ -4,9 +4,9 @@
 
 #include "opencv_face_detector.h"
 
-OpenCVFaceDetector::OpenCVFaceDetector(std::shared_ptr<Stream> input_stream,
-                                       string classifier_xml_path)
-    : Processor({input_stream}, 1), classifier_xml_path_(classifier_xml_path) {}
+OpenCVFaceDetector::OpenCVFaceDetector(string classifier_xml_path)
+    : Processor({"input"}, {"output"}),
+      classifier_xml_path_(classifier_xml_path) {}
 
 bool OpenCVFaceDetector::Init() {
   return classifier_.load(classifier_xml_path_);
@@ -18,7 +18,7 @@ bool OpenCVFaceDetector::OnStop() {
 }
 
 void OpenCVFaceDetector::Process() {
-  auto frame = GetFrame<ImageFrame>(0);
+  auto frame = GetFrame<ImageFrame>("input");
   cv::Mat image = frame->GetImage();
 
   std::vector<cv::Rect> results;
@@ -43,7 +43,8 @@ void OpenCVFaceDetector::Process() {
   }
 #endif
 
-  PushFrame(0, new MetadataFrame(results_rect, frame->GetOriginalImage()));
+  PushFrame("output",
+            new MetadataFrame(results_rect, frame->GetOriginalImage()));
 }
 
 ProcessorType OpenCVFaceDetector::GetType() {

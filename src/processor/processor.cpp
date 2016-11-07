@@ -7,21 +7,27 @@
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
 
-Processor::Processor(std::vector<std::shared_ptr<Stream>> sources,
-                     size_t n_sinks)
-    : sources_(sources) {
-  for (size_t i = 0; i < n_sinks; i++) {
-    sinks_.emplace_back(new Stream);
+Processor::Processor(const std::vector<string> &source_names,
+                     const std::vector<string> &sink_names) {
+  for (auto &source_name : source_names) {
+    sources_.insert({source_name, nullptr});
+    source_frame_cache_.insert({source_name, nullptr});
+  }
+
+  for (auto &sink_name : sink_names) {
+    sinks_.insert({sink_name, StreamPtr(new Stream)});
   }
 
   Init_();
 }
 
-Processor::~Processor() {
-  for (size_t i = 0; i < sources_.size(); i++) {
-    sources_[i]->UnSubscribe(readers_[i]);
-  }
+StreamPtr Processor::GetSink(const string &name) { return sinks_[name]; }
+
+void Processor::SetSource(const string &name, StreamPtr stream) {
+  sources_[name] = stream;
 }
+
+Processor::~Processor() {}
 
 void Processor::Init_() {
   stopped_ = true;
@@ -29,16 +35,22 @@ void Processor::Init_() {
   sliding_latency_ = 99999.0;
   avg_latency_ = 0.0;
   n_processed_ = 0;
-
-  // Initialize readers
-  for (auto stream : sources_) {
-    readers_.push_back(stream->Subscribe());
-  }
 }
 
 bool Processor::Start() {
   LOG(INFO) << "Start called";
   CHECK(stopped_) << "Processor has already started";
+
+  // Check sources are filled
+  for (auto itr = sources_.begin(); itr != sources_.end(); itr++) {
+    CHECK(itr->second != nullptr) << "Source: " << itr->first << " is not set.";
+  }
+
+  // Subscribe sources
+  for (auto itr = sources_.begin(); itr != sources_.end(); itr++) {
+    readers_.emplace(itr->first, itr->second->Subscribe());
+  }
+
   stopped_ = false;
   process_thread_ = std::thread(&Processor::ProcessorLoop, this);
   return true;
@@ -50,6 +62,10 @@ bool Processor::Stop() {
   process_thread_.join();
   bool result = OnStop();
 
+  for (auto itr = readers_.begin(); itr != readers_.end(); itr++) {
+    itr->second->UnSubscribe();
+  }
+
   return result;
 }
 
@@ -59,8 +75,8 @@ void Processor::ProcessorLoop() {
   while (!stopped_) {
     // Cache source frames
     source_frame_cache_.clear();
-    for (auto reader : readers_) {
-      source_frame_cache_.push_back(reader->PopFrame());
+    for (auto itr = readers_.begin(); itr != readers_.end(); itr++) {
+      source_frame_cache_.insert({itr->first, itr->second->PopFrame()});
     }
 
     timer.Start();
@@ -83,8 +99,6 @@ void Processor::ProcessorLoop() {
   }
 }
 
-std::vector<std::shared_ptr<Stream>> Processor::GetSinks() { return sinks_; }
-
 bool Processor::IsStarted() { return !stopped_; }
 
 double Processor::GetSlidingLatencyMs() { return sliding_latency_; }
@@ -93,18 +107,21 @@ double Processor::GetAvgLatencyMs() { return avg_latency_; }
 
 double Processor::GetAvgFps() { return 1000.0 / avg_latency_; }
 
+void Processor::PushFrame(const string &sink_name, Frame *frame) {
+  CHECK(sinks_.count(sink_name) != 0);
+  sinks_[sink_name]->PushFrame(frame);
+}
+
 template <typename FT>
-std::shared_ptr<FT> Processor::GetFrame(int src_id) {
-  CHECK(src_id < sources_.size());
-  return std::dynamic_pointer_cast<FT>(source_frame_cache_[src_id]);
+std::shared_ptr<FT> Processor::GetFrame(const string &source_name) {
+  CHECK(sources_.count(source_name) != 0);
+  return std::dynamic_pointer_cast<FT>(source_frame_cache_[source_name]);
 }
 
-void Processor::PushFrame(int sink_id, Frame *frame) {
-  CHECK(sink_id < sinks_.size());
-  sinks_[sink_id]->PushFrame(frame);
-}
-
-template std::shared_ptr<Frame> Processor::GetFrame(int src_id);
-template std::shared_ptr<ImageFrame> Processor::GetFrame(int src_id);
-template std::shared_ptr<MetadataFrame> Processor::GetFrame(int src_id);
-template std::shared_ptr<BytesFrame> Processor::GetFrame(int src_id);
+template std::shared_ptr<Frame> Processor::GetFrame(const string &source_name);
+template std::shared_ptr<ImageFrame> Processor::GetFrame(
+    const string &source_name);
+template std::shared_ptr<MetadataFrame> Processor::GetFrame(
+    const string &source_name);
+template std::shared_ptr<BytesFrame> Processor::GetFrame(
+    const string &source_name);

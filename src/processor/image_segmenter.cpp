@@ -1,9 +1,8 @@
 #include "image_segmenter.h"
 #include "model/model_manager.h"
 
-ImageSegmenter::ImageSegmenter(std::shared_ptr<Stream> input_stream,
-                               const ModelDesc &model_desc, Shape input_shape)
-    : Processor({input_stream}, 1),
+ImageSegmenter::ImageSegmenter(const ModelDesc &model_desc, Shape input_shape)
+    : Processor({"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape) {}
 
@@ -35,7 +34,7 @@ void ImageSegmenter::Process() {
   // Do image segmentation
   Timer timer;
   timer.Start();
-  auto frame = GetFrame<ImageFrame>(0);
+  auto frame = GetFrame<ImageFrame>("input");
   cv::Mat image = frame->GetImage();
   cv::Mat original_image = frame->GetOriginalImage();
 
@@ -88,7 +87,7 @@ void ImageSegmenter::Process() {
   cv::resize(colored_output, colored_output,
              cv::Size(original_image.cols, original_image.rows));
 
-  PushFrame(0, new ImageFrame(colored_output, frame->GetOriginalImage()));
+  PushFrame("output", new ImageFrame(colored_output, frame->GetOriginalImage()));
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }
 

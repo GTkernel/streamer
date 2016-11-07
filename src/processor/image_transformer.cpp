@@ -5,10 +5,9 @@
 #include "image_transformer.h"
 #include <streamer.h>
 
-ImageTransformer::ImageTransformer(std::shared_ptr<Stream> input_stream,
-                                   const Shape &target_shape,
+ImageTransformer::ImageTransformer(const Shape &target_shape,
                                    CropType crop_type, bool subtract_mean)
-    : Processor({input_stream}, 1),
+    : Processor({"input"}, {"output"}),
       target_shape_(target_shape),
       crop_type_(crop_type),
       subtract_mean_(subtract_mean) {
@@ -20,7 +19,7 @@ ImageTransformer::ImageTransformer(std::shared_ptr<Stream> input_stream,
 
 void ImageTransformer::Process() {
   Timer timer;
-  auto frame = GetFrame<ImageFrame>(0);
+  auto frame = GetFrame<ImageFrame>("input");
   cv::Mat img = frame->GetImage();
   timer.Start();
 
@@ -68,7 +67,7 @@ void ImageTransformer::Process() {
   // Normalize
   cv::subtract(sample_float_, mean_image_, sample_normalized_);
 
-  PushFrame(0, new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
+  PushFrame("output", new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
 }
 
 bool ImageTransformer::Init() { return true; }

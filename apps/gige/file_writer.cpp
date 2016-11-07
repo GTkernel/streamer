@@ -5,9 +5,8 @@
 #include "file_writer.h"
 #include "boost/filesystem.hpp"
 
-FileWriter::FileWriter(StreamPtr input_stream, const string &filename_base,
-                       size_t frames_per_file)
-    : Processor({input_stream}, 0),
+FileWriter::FileWriter(const string &filename_base, size_t frames_per_file)
+    : Processor({"input"}, {}),
       filename_base_(filename_base),
       frames_written_(0),
       frames_per_file_(frames_per_file) {}
@@ -23,6 +22,7 @@ bool FileWriter::Init() {
 
   return true;
 }
+
 bool FileWriter::OnStop() {
   if (current_file_.is_open()) {
     current_file_.close();
@@ -52,7 +52,7 @@ void FileWriter::Process() {
     current_filename_ = filename;
   }
 
-  auto frame = GetFrame<BytesFrame>(0);
+  auto frame = GetFrame<BytesFrame>("input");
 
   current_file_.write((char *)frame->GetDataBuffer().GetBuffer(),
                       frame->GetDataBuffer().GetSize());
@@ -60,6 +60,4 @@ void FileWriter::Process() {
   frames_written_ += 1;
 }
 
-ProcessorType FileWriter::GetType() {
-  return PROCESSOR_TYPE_CUSTOM;
-}
+ProcessorType FileWriter::GetType() { return PROCESSOR_TYPE_CUSTOM; }

@@ -6,13 +6,17 @@
 #include "model/model_manager.h"
 #include "utils/utils.h"
 
-ImageClassifier::ImageClassifier(
-    std::vector<std::shared_ptr<Stream>> input_streams,
-    const ModelDesc &model_desc, Shape input_shape)
-    : Processor(input_streams, input_streams.size()),
+ImageClassifier::ImageClassifier(const ModelDesc &model_desc, Shape input_shape,
+                                 size_t batch_size)
+    : Processor({}, {}),  // Sources and sinks will be initialized by ourselves
       model_desc_(model_desc),
-      input_shape_(input_shape) {
-  batch_size_ = input_streams.size();
+      input_shape_(input_shape),
+      batch_size_(batch_size) {
+  for (size_t i = 0; i < batch_size; i++) {
+    sources_.insert({"input" + std::to_string(i), nullptr});
+    sinks_.insert(
+        {"output" + std::to_string(i), std::shared_ptr<Stream>(new Stream)});
+  }
   LOG(INFO) << "batch size of " << batch_size_;
 }
 
@@ -50,6 +54,9 @@ bool ImageClassifier::OnStop() {
   return true;
 }
 
+#define GET_SOURCE_NAME(i) ("input" + std::to_string(i))
+#define GET_SINK_NAME(i) ("output" + std::to_string(i))
+
 void ImageClassifier::Process() {
   Timer timer;
   timer.Start();
@@ -57,7 +64,7 @@ void ImageClassifier::Process() {
   std::vector<std::shared_ptr<ImageFrame>> image_frames;
   float *data = (float *)input_buffer_.GetBuffer();
   for (int i = 0; i < batch_size_; i++) {
-    auto image_frame = GetFrame<ImageFrame>(i);
+    auto image_frame = GetFrame<ImageFrame>(GET_SOURCE_NAME(i));
     image_frames.push_back(image_frame);
     cv::Mat img = image_frame->GetImage();
     CHECK(img.channels() == input_shape_.channel &&
@@ -77,9 +84,9 @@ void ImageClassifier::Process() {
   for (int i = 0; i < batch_size_; i++) {
     auto frame = image_frames[i];
     cv::Mat img = frame->GetOriginalImage();
-    CHECK(img.empty() == false);
+    CHECK(!img.empty());
     string predict_label = predictions[i][0].first;
-    PushFrame(i, new MetadataFrame({predict_label}, img));
+    PushFrame(GET_SINK_NAME(i), new MetadataFrame({predict_label}, img));
     for (auto prediction : predictions[i]) {
       LOG(INFO) << prediction.first << " " << prediction.second;
     }
@@ -118,4 +125,8 @@ std::vector<std::vector<Prediction>> ImageClassifier::Classify(int N) {
 
 ProcessorType ImageClassifier::GetType() {
   return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
+}
+
+void ImageClassifier::SetInputStream(int src_id, StreamPtr stream) {
+  SetSource(GET_SOURCE_NAME(src_id), stream);
 }

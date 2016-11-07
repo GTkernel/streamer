@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #ifdef USE_FP16
 // THIS ORDER MATTERS!
@@ -56,6 +57,8 @@ typedef std::pair<std::string, float> Prediction;
 class Stream;
 typedef std::shared_ptr<Stream> StreamPtr;
 
+typedef std::unordered_map<std::string, std::string> FactoryParamsType;
+
 //// Model types
 enum ModelType {
   MODEL_TYPE_INVALID = 0,
@@ -89,6 +92,26 @@ enum ProcessorType {
   PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_ENCODER,
 };
+
+inline ProcessorType GetProcessorTypeByString(const std::string &str) {
+  if (str == "ImageClassifier") {
+    return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
+  } else if (str == "ImageTransformer") {
+    return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
+  } else if (str == "OpenCVFaceDetector") {
+    return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+  } else if (str == "DummyNN") {
+    return PROCESSOR_TYPE_DUMMY_NN;
+  } else if (str == "Custom") {
+    return PROCESSOR_TYPE_CUSTOM;
+  } else if (str == "Camera") {
+    return PROCESSOR_TYPE_CAMERA;
+  } else if (str == "Encoder") {
+    return PROCESSOR_TYPE_ENCODER;
+  } else {
+    return PROCESSOR_TYPE_INVALID;
+  }
+}
 
 #ifdef USE_FP16
 half Cpu_Float2Half(float f);

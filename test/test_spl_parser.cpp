@@ -8,7 +8,7 @@
 TEST(SPL_PARSER_TEST, TEST_PARSE) {
   string pipeline_desc = R"pipeline(
 classifier = processor(ImageClassifier, model=AlexNet)
-ip_cam = camera(AMC, width=1024, height=768)
+ip_cam = camera(GST_TEST, width=1024, height=768)
 transformer = processor(ImageTransformer, height=227, width=227)
 
 transformer[input] = ip_cam[bgr_output]
@@ -28,7 +28,7 @@ classifier[input] = transformer[output]
   EXPECT_EQ(statement1.statement_type, SPL_STATEMENT_PROCESSOR);
   EXPECT_EQ(statement1.processor_name, "classifier");
   EXPECT_EQ(statement1.params["model"], "AlexNet");
-  EXPECT_EQ(statement1.processor_type, "ImageClassifier");
+  EXPECT_EQ(statement1.processor_type, PROCESSOR_TYPE_IMAGE_CLASSIFIER);
 
   auto statement4 = statements[3];
   EXPECT_EQ(statement4.statement_type, SPL_STATEMENT_CONNECT);

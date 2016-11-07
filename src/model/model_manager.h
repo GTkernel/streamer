@@ -25,7 +25,7 @@ class ModelManager {
   ModelDesc GetModelDesc(const string &name) const;
   bool HasModel(const string &name) const;
   std::unique_ptr<Model> CreateModel(const ModelDesc &model_desc,
-                                     Shape input_shape, int batch_size = 1);
+                                     Shape input_shape, size_t batch_size = 1);
 
  private:
   // Mean colors, in BGR order.

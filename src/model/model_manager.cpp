@@ -95,7 +95,7 @@ bool ModelManager::HasModel(const string &name) const {
 
 std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
                                                  Shape input_shape,
-                                                 int batch_size) {
+                                                 size_t batch_size) {
   std::unique_ptr<Model> result;
   if (model_desc.GetModelType() == MODEL_TYPE_CAFFE) {
 #ifdef USE_CAFFE

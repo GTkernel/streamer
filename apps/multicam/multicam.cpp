@@ -84,29 +84,36 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   // Transformers
   for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(
-        new ImageTransformer(camera_stream, input_shape, CROP_TYPE_CENTER,
-                             true /* subtract mean */));
+    std::shared_ptr<Processor> transform_processor(new ImageTransformer(
+        input_shape, CROP_TYPE_CENTER, true /* subtract mean */));
+    transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
-    input_streams.push_back(transform_processor->GetSinks()[0]);
+    input_streams.push_back(transform_processor->GetSink("output"));
   }
 
   // classifier
   auto model_desc = model_manager.GetModelDesc(model_name);
-  classifier.reset(new ImageClassifier(input_streams, model_desc, input_shape));
+  classifier.reset(
+      new ImageClassifier(model_desc, input_shape, input_streams.size()));
+
+  for (size_t i = 0; i < input_streams.size(); i++) {
+    classifier->SetInputStream(i, input_streams[i]);
+  }
 
   // classifier readers
-  for (auto stream : classifier->GetSinks()) {
-    classifier_output_readers.push_back(stream->Subscribe());
+  for (size_t i = 0; i < input_streams.size(); i++) {
+    auto classifier_output = classifier->GetSink("output" + std::to_string(i));
+    classifier_output_readers.push_back(classifier_output->Subscribe());
   }
 
   // encoders, encode each camera stream
   for (int i = 0; i < batch_size; i++) {
     string output_filename = camera_names[i] + ".mp4";
 
-    std::shared_ptr<GstVideoEncoder> encoder(
-        new GstVideoEncoder(classifier->GetSinks()[i], cameras[i]->GetWidth(),
-                            cameras[i]->GetHeight(), output_filename));
+    std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
+        cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
+    encoder->SetSource("input",
+                       classifier->GetSink("output" + std::to_string(i)));
     encoders.push_back(encoder);
   }
 

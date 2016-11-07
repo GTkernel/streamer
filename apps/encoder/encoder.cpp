@@ -42,11 +42,13 @@ void Run(const string &camera_name, string &dst_file, int port) {
   if (dst_file != "") {
     cout << "Store video to: " << dst_file << endl;
     encoder = std::shared_ptr<Processor>(
-        new GstVideoEncoder(camera_stream, 640, 480, dst_file));
+        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), dst_file));
+    encoder->SetSource("input", camera->GetStream());
   } else if (port != -1) {
     cout << "Stream video on port: " << port << endl;
     encoder = std::shared_ptr<Processor>(
-        new GstVideoEncoder(camera_stream, 640, 480, port));
+        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), port));
+    encoder->SetSource("input", camera->GetStream());
     // Receive pipeline
     // st-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
     // avdec_h264 ! videoconvert ! autovideosink sync=false

@@ -13,8 +13,7 @@ enum CropType { CROP_TYPE_INVALID = 0, CROP_TYPE_CENTER = 1 };
 
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(std::shared_ptr<Stream> input_stream,
-                   const Shape &target_shape, CropType crop_type,
+  ImageTransformer(const Shape &target_shape, CropType crop_type,
                    bool subtract_mean = true);
   virtual ProcessorType GetType() override;
 
