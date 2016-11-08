@@ -6,6 +6,7 @@
 #define STREAMER_PGR_CAMERA_H
 
 #include <flycapture/FlyCapture2.h>
+
 #include "camera.h"
 #include "utils/utils.h"
 
@@ -21,33 +22,32 @@ class PGRCamera : public Camera {
       FlyCapture2::PixelFormat pixel_format = FlyCapture2::PIXEL_FORMAT_RAW8);
   virtual CameraType GetCameraType() const override;
 
-  float GetExposure();
-  void SetExposure(float exposure);
-  float GetSharpness();
-  void SetSharpness(float sharpness);
-  Shape GetImageSize();
-  void SetBrightness(float brightness);
-  float GetBrightness();
-  void SetShutterSpeed(float shutter_speed);
-  float GetShutterSpeed();
-  void SetSaturation(float saturation);
-  float GetSaturation();
-  void SetHue(float hue);
-  float GetHue();
-  void SetGain(float gain);
-  float GetGain();
-  void SetGamma(float gamma);
-  float GetGamma();
-  void SetWBRed(float wb_red);
-  float GetWBRed();
-  void SetWBBlue(float wb_blue);
-  float GetWBBlue();
-
-  FlyCapture2::VideoMode GetVideoMode();
-  void SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode);
-
-  FlyCapture2::PixelFormat GetPixelFormat();
-  void SetPixelFormat(FlyCapture2::PixelFormat pixel_format);
+  // Camera controls
+  virtual float GetExposure();
+  virtual void SetExposure(float exposure);
+  virtual float GetSharpness();
+  virtual void SetSharpness(float sharpness);
+  virtual Shape GetImageSize();
+  virtual void SetBrightness(float brightness);
+  virtual float GetBrightness();
+  virtual void SetShutterSpeed(float shutter_speed);
+  virtual float GetShutterSpeed();
+  virtual void SetSaturation(float saturation);
+  virtual float GetSaturation();
+  virtual void SetHue(float hue);
+  virtual float GetHue();
+  virtual void SetGain(float gain);
+  virtual float GetGain();
+  virtual void SetGamma(float gamma);
+  virtual float GetGamma();
+  virtual void SetWBRed(float wb_red);
+  virtual float GetWBRed();
+  virtual void SetWBBlue(float wb_blue);
+  virtual float GetWBBlue();
+  virtual CameraModeType GetMode();
+  virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode);
+  virtual CameraPixelFormatType GetPixelFormat();
+  virtual void SetPixelFormat(CameraPixelFormatType pixel_format);
 
  protected:
   virtual bool Init() override;
@@ -68,6 +68,11 @@ class PGRCamera : public Camera {
                    bool abs, bool value_a = true);
   float GetProperty(FlyCapture2::PropertyType property_type, bool abs,
                     bool value_a = true);
+
+  CameraModeType FCMode2CameraMode(FlyCapture2::Mode fc_mode);
+  FlyCapture2::Mode CameraMode2FCMode(CameraModeType mode);
+  CameraPixelFormatType FCPfmt2CameraPfmt(FlyCapture2::PixelFormat fc_pfmt);
+  FlyCapture2::PixelFormat CameraPfmt2FCPfmt(CameraPixelFormatType pfmt);
 
   FlyCapture2::Camera camera_;
   FlyCapture2::Mode mode_;

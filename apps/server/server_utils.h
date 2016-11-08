@@ -33,7 +33,7 @@ string CameraToJson(Camera *camera, pt::ptree &root) {
     auto ptgray_camera = dynamic_cast<PGRCamera *>(camera);
     root.put("exposure", ptgray_camera->GetExposure());
     root.put("sharpness", ptgray_camera->GetSharpness());
-    root.put("video_mode", (int)ptgray_camera->GetVideoMode());
+    root.put("camera_mode", (int)ptgray_camera->GetMode());
   }
 #endif
 

@@ -50,53 +50,48 @@ static void SetUpEndpoints(HttpServer &server) {
     pt::ptree doc;
     pt::read_json(request->content, doc);
 
-#ifdef USE_PTGRAY
-    if (camera->GetType() != CAMERA_TYPE_PTGRAY) {
+    if (camera->GetCameraType() != CAMERA_TYPE_PTGRAY) {
       LOG(WARNING) << "Non-PtGray camera control not implemented";
       Send400Response(response, "Not implemented");
       return;
     }
 
-    auto ptgray_camera = std::dynamic_pointer_cast<PGRCamera>(camera);
     if (doc.count("width") && doc.count("height") && doc.count("video_mode")) {
       Shape shape;
-      FlyCapture2::Mode mode = FlyCapture2::MODE_0;
+      CameraModeType mode;
       shape.width = doc.get<int>("width");
       shape.height = doc.get<int>("height");
 
       string mode_str = doc.get<string>("video_mode");
       if (mode_str == "mode_0") {
-        mode = FlyCapture2::MODE_0;
+        mode = CAMERA_MODE_0;
       } else if (mode_str == "mode_1") {
-        mode = FlyCapture2::MODE_1;
+        mode = CAMERA_MODE_1;
       } else {
         string warning_message = mode_str + "is not a supported mode";
         LOG(WARNING) << warning_message;
         return;
       }
-
-      ptgray_camera->SetImageSizeAndVideoMode(shape, mode);
+      camera->SetImageSizeAndMode(shape, mode);
     }
 
     if (doc.count("sharpness")) {
       float sharpness = doc.get<float>("sharpness");
-      ptgray_camera->SetSharpness(sharpness);
+      camera->SetSharpness(sharpness);
     }
 
     if (doc.count("exposure")) {
       float exposure = doc.get<float>("exposure");
-      ptgray_camera->SetExposure(exposure);
+      camera->SetExposure(exposure);
     }
-#else
-    LOG(WARNING) << "Not built with PtGray, not able to control camera";
-    Send400Response(response, "Not built with PtGray");
-#endif
+
+    Send200Response(response, "success");
   };
 
   // GET /cameras/:cam_name/capture
   server.resource["^/cameras/" STRING_PATTERN "/capture$"]["GET"] =
       [&camera_manager, &server](HttpServerResponse response,
-                                        HttpServerRequest request) {
+                                 HttpServerRequest request) {
         string camera_name = request->path_match[1];
         LOG(INFO) << "Received " << request->path;
         if (camera_manager.HasCamera(camera_name)) {

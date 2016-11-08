@@ -27,18 +27,9 @@ ENDMACRO()
 set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
 SUBDIRLIST(APP_DIRS ${APPS_ROOT})
 
-set(PTGRAY_APP_DIRS gige)
-list(REMOVE_ITEM APP_DIRS ${PTGRAY_APP_DIRS})
-
 foreach (app_dir ${APP_DIRS})
   BUILD_APP(${app_dir})
 endforeach ()
 
-if (USE_PTGRAY)
-  foreach (app_dir ${PTGRAY_APP_DIRS})
-    BUILD_APP(${app_dir})
-  endforeach ()
-  target_link_libraries(gige ${Boost_FILESYSTEM_LIBRARY})
-endif ()
-
 target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(gige ${Boost_FILESYSTEM_LIBRARY})
