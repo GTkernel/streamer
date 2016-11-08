@@ -34,7 +34,7 @@ float GSTCamera::GetExposure() { return 0; }
 void GSTCamera::SetExposure(float exposure) {}
 float GSTCamera::GetSharpness() { return 0; }
 void GSTCamera::SetSharpness(float sharpness) {}
-Shape GSTCamera::GetImageSize() { return nullptr; }
+Shape GSTCamera::GetImageSize() { return Shape(); }
 void GSTCamera::SetBrightness(float brightness) {}
 float GSTCamera::GetBrightness() { return 0; }
 void GSTCamera::SetShutterSpeed(float shutter_speed) {}
@@ -51,7 +51,7 @@ void GSTCamera::SetWBRed(float wb_red) {}
 float GSTCamera::GetWBRed() { return 0; }
 void GSTCamera::SetWBBlue(float wb_blue) {}
 float GSTCamera::GetWBBlue() { return 0; }
-CameraModeType GSTCamera::GetMode() { return nullptr; }
+CameraModeType GSTCamera::GetMode() { return CAMERA_MODE_INVALID; }
 void GSTCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {}
-CameraPixelFormatType GSTCamera::GetPixelFormat() { return nullptr; }
+CameraPixelFormatType GSTCamera::GetPixelFormat() { return CAMERA_PIXEL_FORMAT_INVALID; }
 void GSTCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {}

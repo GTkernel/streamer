@@ -77,7 +77,7 @@ enum CameraModeType {
   CAMERA_MODE_2,
   CAMERA_MODE_3,
   CAMERA_MODE_COUNT,
-  CAMERA_MDDE_INVALID
+  CAMERA_MODE_INVALID
 };
 
 enum CamereaFeatureType {
