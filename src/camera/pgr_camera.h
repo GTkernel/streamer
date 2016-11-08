@@ -54,7 +54,6 @@ class PGRCamera : public Camera {
   virtual bool OnStop() override;
   virtual void Process() override;
   void Reset();
-  void PreProcess();
 
  private:
   /**
@@ -69,6 +68,8 @@ class PGRCamera : public Camera {
   float GetProperty(FlyCapture2::PropertyType property_type, bool abs,
                     bool value_a = true);
 
+  static void OnImageGrabbed(FlyCapture2::Image *image, const void *user_data);
+
   CameraModeType FCMode2CameraMode(FlyCapture2::Mode fc_mode);
   FlyCapture2::Mode CameraMode2FCMode(CameraModeType mode);
   CameraPixelFormatType FCPfmt2CameraPfmt(FlyCapture2::PixelFormat fc_pfmt);
@@ -78,8 +79,6 @@ class PGRCamera : public Camera {
   FlyCapture2::Mode mode_;
   FlyCapture2::PixelFormat pixel_format_;
   std::mutex camera_lock_;
-  std::thread preprocess_thread_;
-  TaskQueue<FlyCapture2::Image> preprocess_queue_;
 };
 
 #endif  // STREAMER_PGR_CAMERA_H

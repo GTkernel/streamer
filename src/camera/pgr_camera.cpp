@@ -52,67 +52,47 @@ bool PGRCamera::Init() {
   CHECK_PGR(camera_.SetFormat7Configuration(
       &fmt7ImageSettings, fmt7PacketInfo.recommendedBytesPerPacket));
 
-  camera_.StartCapture();
+  camera_.StartCapture(PGRCamera::OnImageGrabbed, this);
   Reset();
-  preprocess_thread_ = std::thread(&PGRCamera::PreProcess, this);
 
   LOG(INFO) << "Camera initialized";
 
   return true;
 }
 
+void PGRCamera::OnImageGrabbed(FlyCapture2::Image *raw_image,
+                               const void *user_data) {
+
+  PGRCamera *camera = (PGRCamera *)user_data;
+
+  FlyCapture2::Image converted_image;
+  DataBuffer image_bytes(raw_image->GetDataSize());
+  image_bytes.Clone(raw_image->GetData(), raw_image->GetDataSize());
+  raw_image->Convert(FlyCapture2::PIXEL_FORMAT_BGR, &converted_image);
+
+  unsigned int rowBytes =
+      static_cast<unsigned>((double)converted_image.GetReceivedDataSize() /
+          (double)converted_image.GetRows());
+
+  cv::Mat image =
+      cv::Mat(converted_image.GetRows(), converted_image.GetCols(), CV_8UC3,
+              converted_image.GetData(), rowBytes);
+
+  cv::Mat output_image;
+  output_image = image.clone();
+
+  camera->PushFrame("bgr_output", new ImageFrame(output_image, output_image));
+  camera->PushFrame("raw_output", new BytesFrame(image_bytes, output_image));
+}
+
 bool PGRCamera::OnStop() {
   camera_.StopCapture();
   camera_.Disconnect();
-  preprocess_thread_.join();
   return true;
 }
 
-void PGRCamera::PreProcess() {
-  while (!stopped_) {
-    FlyCapture2::Image raw_image = preprocess_queue_.Pop();
-    FlyCapture2::Image converted_image;
-    DataBuffer image_bytes(raw_image.GetDataSize());
-    image_bytes.Clone(raw_image.GetData(), raw_image.GetDataSize());
-    raw_image.Convert(FlyCapture2::PIXEL_FORMAT_BGR, &converted_image);
-
-    unsigned int rowBytes =
-        static_cast<unsigned>((double)converted_image.GetReceivedDataSize() /
-                              (double)converted_image.GetRows());
-
-    cv::Mat image =
-        cv::Mat(converted_image.GetRows(), converted_image.GetCols(), CV_8UC3,
-                converted_image.GetData(), rowBytes);
-
-    cv::Mat output_image;
-    output_image = image.clone();
-
-    PushFrame("bgr_output", new ImageFrame(output_image, output_image));
-    PushFrame("raw_output", new BytesFrame(image_bytes, output_image));
-  }
-}
-
 void PGRCamera::Process() {
-  Timer timer, retrieve_timer;
-  timer.Start();
-  FlyCapture2::Image raw_image;
-  FlyCapture2::Error error;
-
-  {
-    std::lock_guard<std::mutex> guard(camera_lock_);
-    retrieve_timer.Start();
-    error = camera_.RetrieveBuffer(&raw_image);
-  }
-
-  if (error != FlyCapture2::PGRERROR_OK) {
-    //    error.PrintErrorTrace();
-    return;
-  }
-
-  //  LOG(INFO) << "Retrieve took " << retrieve_timer.ElapsedMSec() << " ms";
-
-  preprocess_queue_.Push(raw_image);
-  //  LOG(INFO) << "Process took " << timer.ElapsedMSec() << " ms";
+  // Do nothing here, frames are handled in the callback OnImageGrabbed()
 }
 
 float PGRCamera::GetExposure() {
@@ -322,7 +302,7 @@ CameraModeType PGRCamera::FCMode2CameraMode(FlyCapture2::Mode fc_mode) {
     case FlyCapture2::MODE_3:
       return CAMERA_MODE_3;
     default:
-      return CAMERA_MDDE_INVALID;
+      return CAMERA_MODE_INVALID;
   }
 }
 
