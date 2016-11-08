@@ -9,6 +9,9 @@
 #ifdef USE_PTGRAY
 #include "pgr_camera.h"
 #endif
+#ifdef USE_VIMBA
+#include "vimba_camera.h"
+#endif
 
 // The path to the camera config file
 static const string CAMERA_TOML_FILENAME = "cameras.toml";
@@ -55,6 +58,13 @@ CameraManager::CameraManager() {
 #else
       LOG(WARNING) << "Not built with PtGray FlyCapture SDK, camera: " << name
                    << " is not loaded";
+      continue;
+#endif
+    } else if (video_protocol == "vmb") {
+#ifdef USE_VIMBA
+      camera.reset(new VimbaCamera(name, video_uri, width, height));
+#else
+      LOG(WARNING) << "Not built with AlliedVision Vimba SDK, camera: " << name << " is not loaded";
       continue;
 #endif
     } else {

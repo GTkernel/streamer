@@ -26,6 +26,33 @@ class Camera : public Processor {
   virtual CameraType GetCameraType() const = 0;
   virtual ProcessorType GetType() override;
 
+  // Camera controls
+  virtual float GetExposure() = 0;
+  virtual void SetExposure(float exposure) = 0;
+  virtual float GetSharpness() = 0;
+  virtual void SetSharpness(float sharpness) = 0;
+  virtual Shape GetImageSize() = 0;
+  virtual void SetBrightness(float brightness) = 0;
+  virtual float GetBrightness() = 0;
+  virtual void SetShutterSpeed(float shutter_speed) = 0;
+  virtual float GetShutterSpeed() = 0;
+  virtual void SetSaturation(float saturation) = 0;
+  virtual float GetSaturation() = 0;
+  virtual void SetHue(float hue) = 0;
+  virtual float GetHue() = 0;
+  virtual void SetGain(float gain) = 0;
+  virtual float GetGain() = 0;
+  virtual void SetGamma(float gamma) = 0;
+  virtual float GetGamma() = 0;
+  virtual void SetWBRed(float wb_red) = 0;
+  virtual float GetWBRed() = 0;
+  virtual void SetWBBlue(float wb_blue) = 0;
+  virtual float GetWBBlue() = 0;
+  virtual CameraModeType GetMode() = 0;
+  virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode) = 0;
+  virtual CameraPixelFormatType GetPixelFormat() = 0;
+  virtual void SetPixelFormat(CameraPixelFormatType pixel_format) = 0;
+
  protected:
   virtual bool Init() override = 0;
   virtual bool OnStop() override = 0;

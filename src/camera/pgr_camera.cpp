@@ -201,7 +201,9 @@ float PGRCamera::GetWBBlue() {
   return GetProperty(FlyCapture2::WHITE_BALANCE, false, false);
 }
 
-FlyCapture2::PixelFormat PGRCamera::GetPixelFormat() { return pixel_format_; }
+CameraPixelFormatType PGRCamera::GetPixelFormat() {
+  return FCPfmt2CameraPfmt(pixel_format_);
+}
 
 Shape PGRCamera::GetImageSize() {
   FlyCapture2::Format7ImageSettings image_settings;
@@ -212,15 +214,10 @@ Shape PGRCamera::GetImageSize() {
   return Shape(image_settings.width, image_settings.height);
 }
 
-FlyCapture2::VideoMode PGRCamera::GetVideoMode() {
-  FlyCapture2::VideoMode video_mode;
-  FlyCapture2::FrameRate frame_rate;
-  camera_.GetVideoModeAndFrameRate(&video_mode, &frame_rate);
+CameraModeType PGRCamera::GetMode() { return CAMERA_MODE_0; }
 
-  return video_mode;
-}
-
-void PGRCamera::SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode) {
+void PGRCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
+  FlyCapture2::Mode fc_mode = CameraMode2FCMode(mode);
   std::lock_guard<std::mutex> guard(camera_lock_);
   CHECK_PGR(camera_.StopCapture());
 
@@ -231,7 +228,7 @@ void PGRCamera::SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode) {
   CHECK_PGR(camera_.GetFormat7Configuration(
       &image_settings, &current_packet_size, &current_percentage));
 
-  image_settings.mode = mode;
+  image_settings.mode = fc_mode;
   image_settings.height = (unsigned)shape.height;
   image_settings.width = (unsigned)shape.width;
   bool valid;
@@ -246,9 +243,10 @@ void PGRCamera::SetImageSizeAndVideoMode(Shape shape, FlyCapture2::Mode mode) {
   CHECK_PGR(camera_.StartCapture());
 }
 
-void PGRCamera::SetPixelFormat(FlyCapture2::PixelFormat pixel_format) {
+void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
+  FlyCapture2::PixelFormat fc_pfmt = CameraPfmt2FCPfmt(pixel_format);
   std::lock_guard<std::mutex> guard(camera_lock_);
-  pixel_format_ = pixel_format;
+  pixel_format_ = fc_pfmt;
   CHECK_PGR(camera_.StopCapture());
 
   // Get fmt7 image settings
@@ -310,7 +308,82 @@ float PGRCamera::GetProperty(FlyCapture2::PropertyType property_type, bool abs,
     }
   }
 }
+
 CameraType PGRCamera::GetCameraType() const { return CAMERA_TYPE_PTGRAY; }
+
+CameraModeType PGRCamera::FCMode2CameraMode(FlyCapture2::Mode fc_mode) {
+  switch (fc_mode) {
+    case FlyCapture2::MODE_0:
+      return CAMERA_MODE_0;
+    case FlyCapture2::MODE_1:
+      return CAMERA_MODE_1;
+    case FlyCapture2::MODE_2:
+      return CAMERA_MODE_2;
+    case FlyCapture2::MODE_3:
+      return CAMERA_MODE_3;
+    default:
+      return CAMERA_MDDE_INVALID;
+  }
+}
+
+FlyCapture2::Mode PGRCamera::CameraMode2FCMode(CameraModeType mode) {
+  switch (mode) {
+    case CAMERA_MODE_0:
+      return FlyCapture2::MODE_0;
+    case CAMERA_MODE_1:
+      return FlyCapture2::MODE_1;
+    case CAMERA_MODE_2:
+      return FlyCapture2::MODE_2;
+    case CAMERA_MODE_3:
+      return FlyCapture2::MODE_3;
+    default:
+      return FlyCapture2::MODE_31;
+  }
+}
+
+CameraPixelFormatType PGRCamera::FCPfmt2CameraPfmt(
+    FlyCapture2::PixelFormat fc_pfmt) {
+  switch (fc_pfmt) {
+    case FlyCapture2::PIXEL_FORMAT_RAW8:
+      return CAMERA_PIXEL_FORMAT_RAW8;
+    case FlyCapture2::PIXEL_FORMAT_RAW12:
+      return CAMERA_PIXEL_FORMAT_RAW12;
+    case FlyCapture2::PIXEL_FORMAT_BGR:
+      return CAMERA_PIXEL_FORMAT_BGR;
+    case FlyCapture2::PIXEL_FORMAT_411YUV8:
+      return CAMERA_PIXEL_FORMAT_YUV411;
+    case FlyCapture2::PIXEL_FORMAT_422YUV8:
+      return CAMERA_PIXEL_FORMAT_YUV422;
+    case FlyCapture2::PIXEL_FORMAT_444YUV8:
+      return CAMERA_PIXEL_FORMAT_YUV444;
+    case FlyCapture2::PIXEL_FORMAT_MONO8:
+      return CAMERA_PIXEL_FORMAT_MONO8;
+    default:
+      return CAMERA_PIXEL_FORMAT_INVALID;
+  }
+}
+
+FlyCapture2::PixelFormat PGRCamera::CameraPfmt2FCPfmt(
+    CameraPixelFormatType pfmt) {
+  switch (pfmt) {
+    case CAMERA_PIXEL_FORMAT_RAW8:
+      return FlyCapture2::PIXEL_FORMAT_RAW8;
+    case CAMERA_PIXEL_FORMAT_RAW12:
+      return FlyCapture2::PIXEL_FORMAT_RAW12;
+    case CAMERA_PIXEL_FORMAT_BGR:
+      return FlyCapture2::PIXEL_FORMAT_BGR;
+    case CAMERA_PIXEL_FORMAT_YUV411:
+      return FlyCapture2::PIXEL_FORMAT_411YUV8;
+    case CAMERA_PIXEL_FORMAT_YUV422:
+      return FlyCapture2::PIXEL_FORMAT_422YUV8;
+    case CAMERA_PIXEL_FORMAT_YUV444:
+      return FlyCapture2::PIXEL_FORMAT_444YUV8;
+    case CAMERA_PIXEL_FORMAT_MONO8:
+      return FlyCapture2::PIXEL_FORMAT_MONO8;
+    default:
+      return FlyCapture2::PIXEL_FORMAT_MONO8;  // Default to MONO8
+  }
+}
 
 void PGRCamera::Reset() {
   FlyCapture2::Property prop;

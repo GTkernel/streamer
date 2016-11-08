@@ -6,7 +6,7 @@
 
 unset(Vimba_FOUND)
 
-find_path(Vimba_INCLUDE_DIRS NAMES VimbaCPP/Include/VimbaCPP.h
+find_path(Vimba_INCLUDE_DIRS NAMES VimbaCPP/Include/VimbaCPP.h VimbaC/Include/VimbaC.h VimbaImageTransform/Include/VmbTransform.h
   HINTS
   ${Vimba_HOME}/include)
 
