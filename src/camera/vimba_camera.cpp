@@ -5,26 +5,15 @@
 #include "vimba_camera.h"
 #include "utils/utils.h"
 
-#include <VimbaImageTransform/Include/VmbTransform.h>
-
 namespace VmbAPI = AVT::VmbAPI;
-
-#define CHECK_VIMBA(cmd)                    \
-  do {                                      \
-    VmbErrorType error;                     \
-    error = (cmd);                          \
-    if (error != VmbErrorSuccess) {         \
-      LOG(FATAL) << "VIMBA Error happened"; \
-    }                                       \
-  } while (0)
 
 class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
   friend class VimbaCamera;
 
  public:
   VimbaCameraFrameObserver(VimbaCamera *vimba_camera)
-      : vimba_camera_(vimba_camera),
-        VmbAPI::IFrameObserver(vimba_camera->camera_) {}
+      : VmbAPI::IFrameObserver(vimba_camera->camera_),
+        vimba_camera_(vimba_camera) {}
 
   /**
    * @brief Transfrom the Vimba image into a BGR OpenCV Mat.
@@ -38,7 +27,10 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
     VmbUint32_t vmb_width, vmb_height;
     CHECK_VIMBA(pFrame->GetWidth(vmb_width));
     CHECK_VIMBA(pFrame->GetHeight(vmb_height));
+
     size_t width = vmb_width, height = vmb_height;
+
+    LOG(INFO) << "Received image with width: " << width << " " << height;
 
     cv::Mat dest_bgr_mat((int)height, (int)width, CV_8UC3);
 
@@ -80,12 +72,13 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
 
         VmbUint32_t buffer_size;
         VmbUchar_t *vmb_buffer;
-        if (!pFrame->GetBufferSize(buffer_size)) {
+        // We don't use CHECK_VIMBA here because we don't want to crash for
+        // unsuccessful image grab
+        if (VmbErrorSuccess != pFrame->GetBufferSize(buffer_size)) {
           LOG(ERROR) << "Can't get buffer size successfully";
         }
 
-        LOG(INFO) << "Received image buffer of size: " << buffer_size;
-        if (!pFrame->GetBuffer(vmb_buffer)) {
+        if (VmbErrorSuccess != pFrame->GetBuffer(vmb_buffer)) {
           LOG(ERROR) << "Can't get vimba buffer";
         }
 
@@ -112,9 +105,15 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
 };
 
 VimbaCamera::VimbaCamera(const string &name, const string &video_uri, int width,
-                         int height)
+                         int height, CameraModeType mode,
+                         CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
-      vimba_system(VmbAPI::VimbaSystem::GetInstance()) {}
+      initial_pixel_format_(pixel_format),
+      initial_mode_(mode),
+      vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {
+  // Init raw output sink
+  sinks_.insert({"raw_output", StreamPtr(new Stream)});
+}
 
 CameraType VimbaCamera::GetCameraType() const { return CAMERA_TYPE_VIMBA; }
 
@@ -122,16 +121,34 @@ bool VimbaCamera::Init() {
   string protocol, ip;
   ParseProtocolAndPath(video_uri_, protocol, ip);
 
-  if (!vimba_system.OpenCameraByID(ip.c_str(), VmbAccessModeFull, camera_)) {
-    LOG(ERROR) << "Can't open camera: " << name_;
-    return false;
+  if (StringContains(ip, ".")) {
+    // Looks like an IP
+    CHECK_VIMBA(
+        vimba_system_.OpenCameraByID(ip.c_str(), VmbAccessModeFull, camera_));
   } else {
-    LOG(INFO) << "Vimba camera opened: " << name_;
+    // Looks like an device index
+    int device_idx = StringToInt(ip);
+    VmbAPI::CameraPtrVector cameras;
+    CHECK_VIMBA(vimba_system_.GetCameras(cameras));
+    CHECK(device_idx < cameras.size()) << "Invalid camera index: "
+                                       << device_idx;
+    camera_ = cameras[device_idx];
+    camera_->Open(VmbAccessModeFull);
   }
 
   // Now we have a Vimba camera handle
   camera_->StartContinuousImageAcquisition(
-      10, VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
+      11, VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
+
+  // Reset to default camera settings
+  ResetDefaultCameraSettings();
+
+  return true;
+}
+
+void VimbaCamera::ResetDefaultCameraSettings() {
+  SetImageSizeAndMode(Shape(width_, height_), initial_mode_);
+  SetPixelFormat(initial_pixel_format_);
 }
 
 bool VimbaCamera::OnStop() {
@@ -190,25 +207,136 @@ float VimbaCamera::GetGain() {
   return (float)gain;
 }
 
-void VimbaCamera::SetGamma(float gamma) {}
-float VimbaCamera::GetGamma() { return 0; }
-void VimbaCamera::SetWBRed(float wb_red) {}
-float VimbaCamera::GetWBRed() { return 0; }
-void VimbaCamera::SetWBBlue(float wb_blue) {}
-float VimbaCamera::GetWBBlue() { return 0; }
-CameraModeType VimbaCamera::GetMode() { return CAMERA_MODE_0; }
-void VimbaCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {}
-CameraPixelFormatType VimbaCamera::GetPixelFormat() {
-  return CAMERA_PIXEL_FORMAT_INVALID;
+void VimbaCamera::SetGamma(float gamma) {
+  VmbAPI::FeaturePtr pFeature;
+
+  CHECK_VIMBA(camera_->GetFeatureByName("Gamma", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(gamma));
 }
-void VimbaCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {}
+
+float VimbaCamera::GetGamma() {
+  VmbAPI::FeaturePtr pFeature;
+  double gamma;
+
+  CHECK_VIMBA(camera_->GetFeatureByName("Gamma", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(gamma));
+
+  return (float)gamma;
+}
+
+void VimbaCamera::SetWBRed(float wb_red) {}
+
+float VimbaCamera::GetWBRed() { return 0; }
+
+void VimbaCamera::SetWBBlue(float wb_blue) {}
+
+float VimbaCamera::GetWBBlue() { return 0; }
+
+CameraModeType VimbaCamera::GetMode() {
+  VmbAPI::FeaturePtr pFeature;
+  VmbInt64_t binning;
+
+  CHECK_VIMBA(camera_->GetFeatureByName("BinningHorizontal", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(binning));
+
+  if (binning == 1) {
+    return CAMERA_MODE_0;
+  } else if (binning == 2) {
+    return CAMERA_MODE_1;
+  } else if (binning == 4) {
+    return CAMERA_MODE_2;
+  } else if (binning == 8) {
+    return CAMERA_MODE_3;
+  }
+
+  return CAMERA_MODE_INVALID;
+}
+
+void VimbaCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
+  VmbAPI::FeaturePtr pFeature;
+  VmbInt64_t binning, width, height;
+
+  CHECK(mode != CAMERA_MODE_INVALID);
+  if (mode == 0) {
+    binning = 1;
+  } else if (mode == 1) {
+    binning = 2;
+  } else if (mode == 2) {
+    binning = 4;
+  } else if (mode == 3) {
+    binning = 8;
+  }
+
+  CHECK_VIMBA(camera_->GetFeatureByName("BinningHorizontal", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(binning));
+  CHECK_VIMBA(camera_->GetFeatureByName("BinningVertical", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(binning));
+  CHECK_VIMBA(camera_->GetFeatureByName("Width", pFeature));
+  pFeature->SetValue(shape.width);
+  CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
+  pFeature->SetValue(shape.height);
+}
+
+CameraPixelFormatType VimbaCamera::GetPixelFormat() {
+  VmbAPI::FeaturePtr pFeature;
+  string vimba_pfmt;
+
+  CHECK_VIMBA(camera_->GetFeatureByName("PixelFormat", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(vimba_pfmt));
+
+  return VimbaPfmt2CameraPfmt(vimba_pfmt);
+}
+
+void VimbaCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
+  VmbAPI::FeaturePtr pFeature;
+  CHECK_VIMBA(camera_->GetFeatureByName("PixelFormat", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(CameraPfmt2VimbaPfmt(pixel_format).c_str()));
+}
 
 CameraPixelFormatType VimbaCamera::VimbaPfmt2CameraPfmt(
-    VmbPixelFormatType vmb_pfmt) {
-  return CAMERA_PIXEL_FORMAT_BGR;
+    const string &vmb_pfmt) {
+  if (vmb_pfmt == "Mono8") {
+    return CAMERA_PIXEL_FORMAT_MONO8;
+  } else if (vmb_pfmt == "BayerRG8") {
+    return CAMERA_PIXEL_FORMAT_RAW8;
+  } else if (vmb_pfmt == "BayerRG12") {
+    return CAMERA_PIXEL_FORMAT_RAW12;
+  } else if (vmb_pfmt == "BGR8Packed") {
+    return CAMERA_PIXEL_FORMAT_BGR;
+  } else if (vmb_pfmt == "YUV411Packed") {
+    return CAMERA_PIXEL_FORMAT_YUV411;
+  } else if (vmb_pfmt == "YUV422Packed") {
+    return CAMERA_PIXEL_FORMAT_YUV422;
+  } else if (vmb_pfmt == "YUV444Packed") {
+    return CAMERA_PIXEL_FORMAT_YUV444;
+  } else {
+    LOG(FATAL) << "Invalid or unsupported Vimba pixel format: " << vmb_pfmt;
+  }
+
+  return CAMERA_PIXEL_FORMAT_MONO8;
 }
 
-VmbPixelFormatType VimbaCamera::CameraPfmt2VimbaPfmt(
-    CameraPixelFormatType pfmt) {
-  return VmbPixelFormatBayerBG8;
+string VimbaCamera::CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt) {
+  switch (pfmt) {
+    // TODO: Not very sure about the pixel format mapping, if something wrong
+    // with color convertion happens, check here.
+    case CAMERA_PIXEL_FORMAT_MONO8:
+      return "Mono8";
+    case CAMERA_PIXEL_FORMAT_RAW8:
+      return "BayerRG8";
+    case CAMERA_PIXEL_FORMAT_RAW12:
+      return "BayerRG12";
+    case CAMERA_PIXEL_FORMAT_BGR:
+      return "BGR8Packed";
+    case CAMERA_PIXEL_FORMAT_YUV411:
+      return "YUV411Packed";
+    case CAMERA_PIXEL_FORMAT_YUV422:
+      return "YUV422Packed";
+    case CAMERA_PIXEL_FORMAT_YUV444:
+      return "YUV444Packed";
+    default:
+      LOG(FATAL) << "Invalid pixel format: " << pfmt;
+  }
+
+  return "Mono8";
 }

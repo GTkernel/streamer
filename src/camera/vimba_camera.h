@@ -8,6 +8,19 @@
 #include "camera.h"
 
 #include <VimbaCPP/Include/VimbaCPP.h>
+#include <VimbaImageTransform/Include/VmbTransform.h>
+
+#define CHECK_VIMBA(cmd)                                                       \
+  do {                                                                         \
+    VmbErrorType error;                                                        \
+    error = (cmd);                                                             \
+    if (error != VmbErrorSuccess) {                                            \
+      char error_info[256];                                                    \
+      VmbGetErrorInfo(error, (VmbANSIChar_t *)error_info, sizeof(error_info)); \
+      LOG(FATAL) << "VIMBA Error happened: " << error << " (" << error_info    \
+                 << ")";                                                       \
+    }                                                                          \
+  } while (0)
 
 namespace VmbAPI = AVT::VmbAPI;
 
@@ -22,7 +35,8 @@ class VimbaCamera : public Camera {
 
  public:
   VimbaCamera(const string &name, const string &video_uri, int width,
-              int height);
+              int height, CameraModeType mode = CAMERA_MODE_0,
+              CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW8);
   virtual CameraType GetCameraType() const override;
 
   virtual float GetExposure() override;
@@ -57,10 +71,15 @@ class VimbaCamera : public Camera {
   virtual void Process() override;
 
  private:
-  CameraPixelFormatType VimbaPfmt2CameraPfmt(VmbPixelFormatType vmb_pfmt);
-  VmbPixelFormatType CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt);
+  CameraPixelFormatType VimbaPfmt2CameraPfmt(const string &vmb_pfmt);
+  string CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt);
 
-  VmbAPI::VimbaSystem &vimba_system;
+  void ResetDefaultCameraSettings();
+
+  CameraPixelFormatType initial_pixel_format_;
+  CameraModeType initial_mode_;
+
+  VmbAPI::VimbaSystem &vimba_system_;
   VmbAPI::CameraPtr camera_;
 };
 

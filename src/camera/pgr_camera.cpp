@@ -5,6 +5,8 @@
 #include "pgr_camera.h"
 #include "utils/utils.h"
 
+#include <boost/regex.hpp>
+
 #define CHECK_PGR(cmd)                       \
   do {                                       \
     FlyCapture2::Error error;                \
@@ -16,11 +18,11 @@
   } while (0)
 
 PGRCamera::PGRCamera(const string &name, const string &video_uri, int width,
-                     int height, FlyCapture2::Mode mode,
-                     FlyCapture2::PixelFormat pixel_format)
+                     int height, CameraModeType mode,
+                     CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
-      mode_(mode),
-      pixel_format_(pixel_format) {
+      initial_pixel_format_(pixel_format),
+      initial_mode_(mode) {
   // Init raw output sink
   sinks_.insert({"raw_output", StreamPtr(new Stream)});
 }
@@ -29,21 +31,32 @@ bool PGRCamera::Init() {
   // Get the camera guid from ip address
   string protocol, ip;
   ParseProtocolAndPath(video_uri_, protocol, ip);
+
   FlyCapture2::BusManager bus_manager;
+  // Might be a valid ip address
+  FlyCapture2::PGRGuid guid;  // GUID of the camera.
+  if (StringContains(ip, ".")) {
+    unsigned int ip_addr = GetIPAddrFromString(ip);
 
-  unsigned int ip_addr = GetIPAddrFromString(ip);
+    CHECK_PGR(bus_manager.GetCameraFromIPAddress(ip_addr, &guid));
+  } else {
+    // Not ip address, might be the device index
+    unsigned int device_idx = (unsigned int)StringToInt(ip);
+    unsigned int num_cameras;
+    CHECK_PGR(bus_manager.GetNumOfCameras(&num_cameras));
+    CHECK(device_idx < num_cameras) << "Invalid camera index: " << device_idx;
+    CHECK_PGR(bus_manager.GetCameraFromIndex(device_idx, &guid));
+  }
 
-  FlyCapture2::PGRGuid guid;
-  CHECK_PGR(bus_manager.GetCameraFromIPAddress(ip_addr, &guid));
   CHECK_PGR(camera_.Connect(&guid));
 
   FlyCapture2::Format7ImageSettings fmt7ImageSettings;
-  fmt7ImageSettings.mode = mode_;
+  fmt7ImageSettings.mode = CameraMode2FCMode(initial_mode_);
   fmt7ImageSettings.offsetX = 0;
   fmt7ImageSettings.offsetY = 0;
   fmt7ImageSettings.width = (unsigned)width_;
   fmt7ImageSettings.height = (unsigned)height_;
-  fmt7ImageSettings.pixelFormat = pixel_format_;
+  fmt7ImageSettings.pixelFormat = CameraPfmt2FCPfmt(initial_pixel_format_);
 
   bool valid;
   FlyCapture2::Format7PacketInfo fmt7PacketInfo;
@@ -52,8 +65,8 @@ bool PGRCamera::Init() {
   CHECK_PGR(camera_.SetFormat7Configuration(
       &fmt7ImageSettings, fmt7PacketInfo.recommendedBytesPerPacket));
 
-  camera_.StartCapture(PGRCamera::OnImageGrabbed, this);
   Reset();
+  camera_.StartCapture(PGRCamera::OnImageGrabbed, this);
 
   LOG(INFO) << "Camera initialized";
 
@@ -62,7 +75,6 @@ bool PGRCamera::Init() {
 
 void PGRCamera::OnImageGrabbed(FlyCapture2::Image *raw_image,
                                const void *user_data) {
-
   PGRCamera *camera = (PGRCamera *)user_data;
 
   FlyCapture2::Image converted_image;
@@ -72,11 +84,10 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image *raw_image,
 
   unsigned int rowBytes =
       static_cast<unsigned>((double)converted_image.GetReceivedDataSize() /
-          (double)converted_image.GetRows());
+                            (double)converted_image.GetRows());
 
-  cv::Mat image =
-      cv::Mat(converted_image.GetRows(), converted_image.GetCols(), CV_8UC3,
-              converted_image.GetData(), rowBytes);
+  cv::Mat image = cv::Mat(converted_image.GetRows(), converted_image.GetCols(),
+                          CV_8UC3, converted_image.GetData(), rowBytes);
 
   cv::Mat output_image;
   output_image = image.clone();
@@ -181,20 +192,29 @@ float PGRCamera::GetWBBlue() {
   return GetProperty(FlyCapture2::WHITE_BALANCE, false, false);
 }
 
-CameraPixelFormatType PGRCamera::GetPixelFormat() {
-  return FCPfmt2CameraPfmt(pixel_format_);
-}
-
-Shape PGRCamera::GetImageSize() {
+FlyCapture2::Format7ImageSettings PGRCamera::GetImageSettings() {
   FlyCapture2::Format7ImageSettings image_settings;
   unsigned int current_packet_size;
   float current_percentage;
   CHECK_PGR(camera_.GetFormat7Configuration(
       &image_settings, &current_packet_size, &current_percentage));
+  return image_settings;
+}
+
+CameraPixelFormatType PGRCamera::GetPixelFormat() {
+  auto image_settings = GetImageSettings();
+  return FCPfmt2CameraPfmt(image_settings.pixelFormat);
+}
+
+Shape PGRCamera::GetImageSize() {
+  auto image_settings = GetImageSettings();
   return Shape(image_settings.width, image_settings.height);
 }
 
-CameraModeType PGRCamera::GetMode() { return CAMERA_MODE_0; }
+CameraModeType PGRCamera::GetMode() {
+  auto image_settings = GetImageSettings();
+  return FCMode2CameraMode(image_settings.mode);
+}
 
 void PGRCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
   FlyCapture2::Mode fc_mode = CameraMode2FCMode(mode);
@@ -202,11 +222,7 @@ void PGRCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
   CHECK_PGR(camera_.StopCapture());
 
   // Get fmt7 image settings
-  FlyCapture2::Format7ImageSettings image_settings;
-  unsigned int current_packet_size;
-  float current_percentage;
-  CHECK_PGR(camera_.GetFormat7Configuration(
-      &image_settings, &current_packet_size, &current_percentage));
+  auto image_settings = GetImageSettings();
 
   image_settings.mode = fc_mode;
   image_settings.height = (unsigned)shape.height;
@@ -220,13 +236,12 @@ void PGRCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
 
   CHECK_PGR(camera_.SetFormat7Configuration(
       &image_settings, fmt7_packet_info.recommendedBytesPerPacket));
-  CHECK_PGR(camera_.StartCapture());
+  CHECK_PGR(camera_.StartCapture(PGRCamera::OnImageGrabbed, this));
 }
 
 void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
   FlyCapture2::PixelFormat fc_pfmt = CameraPfmt2FCPfmt(pixel_format);
   std::lock_guard<std::mutex> guard(camera_lock_);
-  pixel_format_ = fc_pfmt;
   CHECK_PGR(camera_.StopCapture());
 
   // Get fmt7 image settings
@@ -236,7 +251,7 @@ void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
   CHECK_PGR(camera_.GetFormat7Configuration(
       &image_settings, &current_packet_size, &current_percentage));
 
-  image_settings.pixelFormat = pixel_format_;
+  image_settings.pixelFormat = CameraPfmt2FCPfmt(pixel_format);
   bool valid;
   FlyCapture2::Format7PacketInfo fmt7_packet_info;
 
@@ -246,7 +261,7 @@ void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
 
   CHECK_PGR(camera_.SetFormat7Configuration(
       &image_settings, fmt7_packet_info.recommendedBytesPerPacket));
-  CHECK_PGR(camera_.StartCapture());
+  CHECK_PGR(camera_.StartCapture(PGRCamera::OnImageGrabbed, this));
 }
 
 void PGRCamera::SetProperty(FlyCapture2::PropertyType property_type,
