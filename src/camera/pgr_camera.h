@@ -16,10 +16,9 @@
  */
 class PGRCamera : public Camera {
  public:
-  PGRCamera(
-      const string &name, const string &video_uri, int width = -1,
-      int height = -1, FlyCapture2::Mode mode = FlyCapture2::MODE_2,
-      FlyCapture2::PixelFormat pixel_format = FlyCapture2::PIXEL_FORMAT_RAW8);
+  PGRCamera(const string &name, const string &video_uri, int width = -1,
+            int height = -1, CameraModeType mode = CAMERA_MODE_0,
+            CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW8);
   virtual CameraType GetCameraType() const override;
 
   // Camera controls
@@ -67,6 +66,7 @@ class PGRCamera : public Camera {
                    bool abs, bool value_a = true);
   float GetProperty(FlyCapture2::PropertyType property_type, bool abs,
                     bool value_a = true);
+  FlyCapture2::Format7ImageSettings GetImageSettings();
 
   static void OnImageGrabbed(FlyCapture2::Image *image, const void *user_data);
 
@@ -75,9 +75,10 @@ class PGRCamera : public Camera {
   CameraPixelFormatType FCPfmt2CameraPfmt(FlyCapture2::PixelFormat fc_pfmt);
   FlyCapture2::PixelFormat CameraPfmt2FCPfmt(CameraPixelFormatType pfmt);
 
+  CameraPixelFormatType initial_pixel_format_;
+  CameraModeType initial_mode_;
+
   FlyCapture2::Camera camera_;
-  FlyCapture2::Mode mode_;
-  FlyCapture2::PixelFormat pixel_format_;
   std::mutex camera_lock_;
 };
 

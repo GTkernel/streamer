@@ -59,8 +59,7 @@ void AddGrayBackground(cv::Mat &img) {
 
 void StartUp() {
 #ifdef USE_VIMBA
-  auto res = AVT::VmbAPI::VimbaSystem::GetInstance().Startup();
-  CHECK(res == VmbErrorSuccess) << "Can't start up Vimba system";
+  CHECK_VIMBA(AVT::VmbAPI::VimbaSystem::GetInstance().Startup());
 #endif
 }
 
@@ -214,7 +213,16 @@ void Run(const string &camera_name, const string &output_filename, bool display,
       } else if (k == 'R') {
         file_writer->Start();
       } else if (k == 'X') {
-        camera->SetImageSizeAndMode(Shape(2448, 2048), CAMERA_MODE_0);
+        // TODO: Fix the hardcode for GigE cameras
+        if (StringContains(camera->GetName(), "ptgray")) {
+          camera->SetImageSizeAndMode(Shape(2448, 2048), CAMERA_MODE_0);
+        } else if (StringContains(camera->GetName(), "1930")) {
+          camera->SetImageSizeAndMode(Shape(1936, 1216), CAMERA_MODE_0);
+        } else if (StringContains(camera->GetName(), "2050")) {
+          camera->SetImageSizeAndMode(Shape(2048, 2048), CAMERA_MODE_0);
+        } else {
+          LOG(WARNING) << "Camera: " << camera->GetName() << " is ignored";
+        }
       } else if (k == 'r') {
         if (file_writer->IsStarted()) file_writer->Stop();
       }

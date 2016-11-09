@@ -77,4 +77,23 @@ inline unsigned int GetIPAddrFromString(const string &ip_str) {
   return ip_val;
 }
 
+/**
+ * @brief Check if a string contains a substring.
+ * @param str The string to be checked.
+ * @param substr The substring to be checked.
+ * @return Wether the string has the substring or not.
+ */
+inline bool StringContains(const string &str, const string &substr) {
+  return str.find(substr) != string::npos;
+}
+
+/**
+ * @brief Convert an string to an interger.
+ * @param str The string to be converted.
+ * @return The converted integer.
+ */
+inline int StringToInt(const string &str) {
+  return atoi(str.c_str());
+}
+
 #endif  // STREAMER_STRINGUTILS_H
