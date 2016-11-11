@@ -36,10 +36,12 @@ With homebrew:
 ```
 brew install cmake glog glib gstreamer gst-plugins-base \
 	gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-ffmpeg \
-	boost opencv jemalloc
+	boost opencv jemalloc zmq
 ```
 
 #### 2. Linux x86 (Ubuntu)
+
+Ubuntu 16.04
 
 ```
 # install OpenCV from http://opencv.org/
@@ -47,7 +49,7 @@ sudo apt-get update
 sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
     libboost-all-dev libopencv-dev gstreamer1.0 libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
-    libgstreamer-plugins-bad1.0-dev libjemalloc-dev
+    libgstreamer-plugins-bad1.0-dev libjemalloc-dev libzmq-dev
 ```
 
 For Ubuntu <= 14.04, also need to install cmake 3.
@@ -70,7 +72,7 @@ If the above does not work, you can [compile cmake 3 from source](http://askubun
 ```
 sudo apt-get update
 sudo apt-get install -y cmake libglib2.0-dev \
-	libgoogle-glog-dev libboost-all-dev libjemalloc-dev
+	libgoogle-glog-dev libboost-all-dev libjemalloc-dev libzmq-dev
 # Optinal: install cnmem
 git clone https://github.com/NVIDIA/cnmem
 cd cnmem

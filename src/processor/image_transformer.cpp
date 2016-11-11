@@ -22,7 +22,6 @@ void ImageTransformer::Process() {
   Timer timer;
   auto frame = GetFrame<ImageFrame>("input");
   cv::Mat img = frame->GetImage();
-  LOG(INFO) << img.cols << " " << img.rows << " " << img.channels();
   timer.Start();
 
   int num_channel = target_shape_.channel, width = target_shape_.width,

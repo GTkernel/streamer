@@ -7,6 +7,7 @@
 #include "image_segmenter.h"
 #include "image_transformer.h"
 #include "opencv_face_detector.h"
+#include "stream_publisher.h"
 #include "camera/camera.h"
 
 #ifndef STREAMER_PROCESSOR_FACTORY_H
@@ -29,6 +30,7 @@ class ProcessorFactory {
   static Processor *CreateImageTransformer(const FactoryParamsType &params);
   static Processor *CreateOpenCVFaceDetector(const FactoryParamsType &params);
   static Processor *CreateDummyNNProcessor(const FactoryParamsType &params);
+  static Processor *CreateStreamPublisher(const FactoryParamsType &params);
 };
 
 #endif  // STREAMER_PROCESSOR_FACTORY_H

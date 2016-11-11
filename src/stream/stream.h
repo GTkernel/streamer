@@ -45,6 +45,8 @@ class StreamReader {
   std::mutex buffer_lock_;
   std::condition_variable buffer_cv_;
   Stream *stream_;
+  // Max time to block
+  const int POP_WAIT_TIME_MILLIS = 100;
 };
 
 /**

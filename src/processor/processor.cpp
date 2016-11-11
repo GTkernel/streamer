@@ -59,6 +59,7 @@ bool Processor::Start() {
 bool Processor::Stop() {
   CHECK(!stopped_) << "Processor not started yet";
   stopped_ = true;
+  LOG(INFO) << "Stop called";
   process_thread_.join();
   bool result = OnStop();
 
@@ -78,7 +79,24 @@ void Processor::ProcessorLoop() {
     // Cache source frames
     source_frame_cache_.clear();
     for (auto itr = readers_.begin(); itr != readers_.end(); itr++) {
-      source_frame_cache_.insert({itr->first, itr->second->PopFrame()});
+      auto source_name = itr->first;
+      auto source_stream = itr->second;
+
+      while (true) {
+        auto frame = source_stream->PopFrame();
+        if (frame == nullptr) {
+          LOG(INFO) << "Empty frame";
+          if (stopped_) {
+            // We can't get frame, we should have stopped
+            return;
+          } else {
+            continue;
+          }
+        } else {
+          source_frame_cache_.insert({source_name, frame});
+          break;
+        }
+      }
     }
 
     timer.Start();

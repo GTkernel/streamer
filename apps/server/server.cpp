@@ -14,6 +14,8 @@ namespace po = boost::program_options;
 
 #define STRING_PATTERN "([a-zA-Z0-9_]+)"
 
+std::unordered_map<string, StreamPtr> pipelines;
+
 static void SetUpEndpoints(HttpServer &server) {
   auto &camera_manager = CameraManager::GetInstance();
 
@@ -111,16 +113,41 @@ static void SetUpEndpoints(HttpServer &server) {
         }
       };
 
-  // GET /cameras/:cam_name/
-
-  // GET /pipelines => List all pipelines
+  // GET /cameras/:cam_name/ => Get camera information
+  // TODO: this is of low priority right now
 
   // POST /pipelines/run => Run a new pipeline, this include vision features,
   // DNN evaluation, video recording, video streaming, etc.
+  // data: spl
+  server.resource["^/pipelines/run"]["POST"] = [](HttpServerResponse response, HttpServerRequest request) {
+    pt::ptree doc;
+    pt::read_json(request->content, doc);
+
+    string pipeline_name = doc.get<string>("name");
+    string spl = doc.get<string>("spl");
+    SPLParser parser;
+    std::vector<SPLStatement> statements;
+    bool result = parser.Parse(spl, statements);
+
+    if (!result) {
+      Send400Response(response, "Can't parse SPL");
+      return;
+    }
+
+    auto pipeline = Pipeline::ConstructPipeline(statements);
+
+    if (pipeline == nullptr) {
+      Send400Response(response, "Can't construct pipeline");
+      return;
+    }
+  };
 
   // DELETE /pipelines/stop => Kill an existing pipeline
 
+  // GET /pipelines => List all pipelines
+
   // Get /pipelines/:pipeline_name/stream => Stream a pipeline
+  // data: processor_name, stream_name
 }
 
 int main(int argc, char *argv[]) {

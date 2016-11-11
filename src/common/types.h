@@ -58,6 +58,8 @@ class Stream;
 typedef std::shared_ptr<Stream> StreamPtr;
 class Camera;
 typedef std::shared_ptr<Camera> CameraPtr;
+class Pipeline;
+typedef std::shared_ptr<Pipeline> PipelinePtr;
 
 typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 
@@ -127,6 +129,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
   PROCESSOR_TYPE_DUMMY_NN,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
+  PROCESSOR_TYPE_STREAM_PUBLISHER,
   PROCESSOR_TYPE_CUSTOM,
 
   PROCESSOR_TYPE_CAMERA,

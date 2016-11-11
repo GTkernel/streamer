@@ -30,4 +30,4 @@ script:
   - echo $HOME/installed
   - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DBACKEND=cpu -DCAFFE_HOME=$HOME/installed_${TRAVIS_OS_NAME} ..
   - make -j4
-  - ctest -j4 -V
+  - ctest -V # -j will cause port being used problem

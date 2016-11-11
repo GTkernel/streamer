@@ -13,7 +13,7 @@ class Frame {
   Frame() = delete;
   Frame(FrameType frame_type, cv::Mat original_image = cv::Mat());
   virtual ~Frame(){};
-  FrameType GetType();
+  virtual FrameType GetType() = 0;
   cv::Mat GetOriginalImage();
   void SetOriginalImage(cv::Mat original_image);
 
@@ -29,6 +29,8 @@ class ImageFrame : public Frame {
   cv::Mat GetImage();
   void SetImage(cv::Mat image);
 
+  virtual FrameType GetType() override;
+
  private:
   cv::Mat image_;
   Shape shape_;
@@ -41,6 +43,7 @@ class MetadataFrame : public Frame {
   MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
   std::vector<string> GetTags();
   std::vector<Rect> GetBboxes();
+  virtual FrameType GetType() override;
 
  private:
   std::vector<string> tags_;
@@ -52,6 +55,7 @@ class BytesFrame : public Frame {
   BytesFrame() = delete;
   BytesFrame(DataBuffer data_buffer, cv::Mat original_image = cv::Mat());
   DataBuffer GetDataBuffer();
+  virtual FrameType GetType() override;
 
  private:
   DataBuffer data_buffer_;

@@ -24,4 +24,6 @@
 
 using std::string;
 
+#define STREAMER_NOT_IMPLEMENTED (LOG(FATAL) << "Function not implemented");
+
 #endif  // TX1_DNN_COMMON_H

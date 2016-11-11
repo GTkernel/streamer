@@ -34,6 +34,9 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     case PROCESSOR_TYPE_ENCODER:
       processor.reset(CreateEncoder(params));
       break;
+    case PROCESSOR_TYPE_STREAM_PUBLISHER:
+      processor.reset(CreateStreamPublisher(params));
+      break;
     default:
       LOG(FATAL) << "Unknown processor type";
   }
@@ -93,4 +96,8 @@ Processor *ProcessorFactory::CreateOpenCVFaceDetector(
 Processor *ProcessorFactory::CreateDummyNNProcessor(
     const FactoryParamsType &params) {
   return nullptr;
+}
+
+Processor *ProcessorFactory::CreateStreamPublisher(const FactoryParamsType &params) {
+  return new StreamPublisher(params.at("name"));
 }

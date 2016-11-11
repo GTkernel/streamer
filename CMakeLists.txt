@@ -27,6 +27,7 @@ find_package(Glog REQUIRED)
 find_package(GLIB REQUIRED gobject)
 find_package(Boost REQUIRED COMPONENTS system program_options filesystem)
 find_package(JeMalloc)
+find_package(ZMQ REQUIRED)
 
 # Determine if is on Tegra
 if (EXISTS /var/libopencv4tegra-repo)
@@ -44,7 +45,7 @@ endif ()
 # Different backends
 set(USE_CUDA off)
 set(USE_OPENCL off)
-SET(USE_CPU off)
+set(USE_CPU off)
 
 option(BACKEND "device backend to run the program: cpu, cuda or opencl" cpu)
 if (BACKEND STREQUAL "cuda")

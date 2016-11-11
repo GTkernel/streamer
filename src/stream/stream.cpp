@@ -45,11 +45,17 @@ StreamReader::StreamReader(Stream *stream, size_t max_buffer_size)
 template <typename FT>
 std::shared_ptr<FT> StreamReader::PopFrame() {
   std::unique_lock<std::mutex> lk(buffer_lock_);
-  buffer_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
-  std::shared_ptr<Frame> frame = frame_buffer_.front();
-  frame_buffer_.pop();
+  buffer_cv_.wait_for(lk, std::chrono::milliseconds(POP_WAIT_TIME_MILLIS),
+                      [this] { return frame_buffer_.size() != 0; });
 
-  return std::dynamic_pointer_cast<FT>(frame);
+  if (frame_buffer_.size() != 0) {
+    std::shared_ptr<Frame> frame = frame_buffer_.front();
+    frame_buffer_.pop();
+    return std::dynamic_pointer_cast<FT>(frame);
+  } else {
+    // Can't get frame within timeout
+    return nullptr;
+  }
 }
 
 void StreamReader::PushFrame(std::shared_ptr<Frame> frame) {
