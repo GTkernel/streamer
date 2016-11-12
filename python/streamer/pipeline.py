@@ -1,3 +1,6 @@
+import core
+from .const import API_PATH
+
 class Pipeline:
     def __init__(self, name, plan):
         """
@@ -7,14 +10,22 @@ class Pipeline:
         """
         self._name = name
         self._plan = plan
-        pass
 
     def run(self):
         """
         Run the pipeline.
         :return:
         """
-        pass
+        post_data = {
+            "name": self._name,
+            "spl": self._plan
+        }
+        r = core.Core().request(API_PATH["pipelines"], "POST", data=post_data)
+        if r['result'] == 'success':
+            return True
+        else:
+            core.LOG.Error("Failed to run pipeline, reason: ", r['reason'])
+            return False
 
     def stop(self):
         """

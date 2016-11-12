@@ -1,5 +1,9 @@
 import core
+import config
 from .const import API_PATH
+from .pipeline import Pipeline
+
+import subprocess
 
 
 class Video:
@@ -55,7 +59,32 @@ class Camera:
         :param height: Height of the video. Leaving it None will use the height of the original camera stream.
         :return: Nothing
         """
-        pass
+        import random
+        # Get a random port
+        # FIXME: this is not guaranteed to use a free port on the server, should
+        # have a more robust way.
+        random_port = random.randrange(10000, 30000)
+        STREAM_VIDEO_SPL = \
+        """
+        camera = camera({name})
+        video_encoder = processor(VideoEncoder, port={port})
+        video_encoder[input] = camera[bgr_output]
+        """.format(name=self.name, port=random_port)
+        pipeline = Pipeline("stream_{}_{}".format(self.name, random_port),
+                            STREAM_VIDEO_SPL)
+        r = pipeline.run()
+
+        if not r:
+            return
+
+        GST_PIPELINE = \
+        """
+        gst-launch-1.0 -v udpsrc host={host} port={port} ! application/x-rtp ! rtph264depay !
+        avdec_h264 ! videoconvert ! autovideosink sync=false
+        """.format(host=config.STREAMER_SERVER_PORT, port=random_port)
+        subprocess.call(GST_PIPELINE, shell=True)
+
+        pipeline.stop()
 
     def record(self, duration):
         """

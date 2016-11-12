@@ -87,10 +87,10 @@ bool SPLParser::Parse(const string &spl,
     // Parse one statement at a time
     string t1 = tokenizer.NextToken();
 
-    if (t1 == "\n") continue;
+    if (t1 == "\n" || t1 == "") continue;
 
     string t2 = tokenizer.NextToken();
-    if (t2 == "") PARSE_ERROR("Expect token after " + t2, spl);
+    if (t2 == "") PARSE_ERROR("Expect token after " + t1 + "||", spl);
 
     SPLStatement statement;
 

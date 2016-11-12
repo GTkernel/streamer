@@ -11,6 +11,7 @@
 #include "streamer.h"
 
 namespace po = boost::program_options;
+using njson = nlohmann::json;
 
 #define STRING_PATTERN "([a-zA-Z0-9_]+)"
 
@@ -120,6 +121,8 @@ static void SetUpEndpoints(HttpServer &server) {
   // data: name, spl
   server.resource["^/pipelines$"]["POST"] = [](HttpServerResponse response,
                                                HttpServerRequest request) {
+    DLOG(INFO) << "Received " << request->path;
+
     pt::ptree doc;
     pt::read_json(request->content, doc);
 

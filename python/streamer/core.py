@@ -23,7 +23,11 @@ class Core:
 
     def request(self, path, method, params=None, data=None, load_json=True):
         request_url = self._build_url(path, params)
-        r = requests.get(request_url)
+
+        if method == 'GET':
+            r = requests.get(request_url, json=data)
+        elif method == 'POST':
+            r = requests.post(request_url, json=data)
 
         # Json data
         if load_json:

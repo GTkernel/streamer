@@ -50,7 +50,7 @@ void Run(const string &camera_name, string &dst_file, int port) {
         new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), port));
     encoder->SetSource("input", camera->GetStream());
     // Receive pipeline
-    // st-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
+    // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
     // avdec_h264 ! videoconvert ! autovideosink sync=false
     //
   }
