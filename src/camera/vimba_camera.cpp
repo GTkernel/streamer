@@ -112,6 +112,8 @@ VimbaCamera::VimbaCamera(const string &name, const string &video_uri, int width,
       initial_mode_(mode),
       vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {
   // Init raw output sink
+  LOG(INFO) << "width: " << width_;
+  LOG(INFO) << "height: " << height_;
   sinks_.insert({"raw_output", StreamPtr(new Stream)});
 }
 
@@ -137,8 +139,7 @@ bool VimbaCamera::Init() {
   }
 
   // Now we have a Vimba camera handle
-  camera_->StartContinuousImageAcquisition(
-      11, VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
+  StartCapture();
 
   // Reset to default camera settings
   ResetDefaultCameraSettings();
@@ -158,7 +159,7 @@ bool VimbaCamera::OnStop() {
     LOG(INFO) << "Can't close camera: " << name_;
   }
 
-  camera_->StopContinuousImageAcquisition();
+  StopCapture();
 }
 
 void VimbaCamera::Process() {
@@ -182,7 +183,16 @@ void VimbaCamera::SetExposure(float exposure) {
 
 float VimbaCamera::GetSharpness() { return 0; }
 void VimbaCamera::SetSharpness(float sharpness) {}
-Shape VimbaCamera::GetImageSize() { return Shape(); }
+Shape VimbaCamera::GetImageSize() {
+  VmbAPI::FeaturePtr pFeature;
+  VmbInt64_t width, height;
+  CHECK_VIMBA(camera_->GetFeatureByName("Width", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(width));
+  CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(height));
+
+  return Shape((int)width, (int)height);
+}
 void VimbaCamera::SetBrightness(float brightness) {}
 float VimbaCamera::GetBrightness() { return 0; }
 void VimbaCamera::SetShutterSpeed(float shutter_speed) {}
@@ -253,8 +263,9 @@ CameraModeType VimbaCamera::GetMode() {
 }
 
 void VimbaCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
+  StopCapture();
   VmbAPI::FeaturePtr pFeature;
-  VmbInt64_t binning, width, height;
+  VmbInt64_t binning;
 
   CHECK(mode != CAMERA_MODE_INVALID);
   if (mode == 0) {
@@ -275,6 +286,7 @@ void VimbaCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
   pFeature->SetValue(shape.width);
   CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
   pFeature->SetValue(shape.height);
+  StartCapture();
 }
 
 CameraPixelFormatType VimbaCamera::GetPixelFormat() {
@@ -288,9 +300,11 @@ CameraPixelFormatType VimbaCamera::GetPixelFormat() {
 }
 
 void VimbaCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
+  StopCapture();
   VmbAPI::FeaturePtr pFeature;
   CHECK_VIMBA(camera_->GetFeatureByName("PixelFormat", pFeature));
   CHECK_VIMBA(pFeature->SetValue(CameraPfmt2VimbaPfmt(pixel_format).c_str()));
+  StartCapture();
 }
 
 CameraPixelFormatType VimbaCamera::VimbaPfmt2CameraPfmt(
@@ -340,3 +354,13 @@ string VimbaCamera::CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt) {
 
   return "Mono8";
 }
+
+void VimbaCamera::StopCapture() {
+  camera_->StopContinuousImageAcquisition();
+}
+void VimbaCamera::StartCapture() {
+  const int BUFFER_SIZE = 10;
+  camera_->StartContinuousImageAcquisition(BUFFER_SIZE,
+                                           VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
+}
+

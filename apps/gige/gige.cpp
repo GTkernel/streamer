@@ -173,7 +173,7 @@ void Run(const string &camera_name, const string &output_filename, bool display,
       } else if (k == 'H') {
         camera->SetImageSizeAndMode(Shape(1600, 1200), CAMERA_MODE_0);
       } else if (k == 'h') {
-        camera->SetImageSizeAndMode(Shape(800, 600), CAMERA_MODE_2);
+        camera->SetImageSizeAndMode(Shape(800, 600), CAMERA_MODE_0);
       } else if (k == 'b') {
         camera->SetBrightness(camera->GetBrightness() * 0.95f);
       } else if (k == 'B') {

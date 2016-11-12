@@ -66,6 +66,8 @@ bool Processor::Stop() {
     itr->second->UnSubscribe();
   }
 
+  readers_.clear();
+
   return result;
 }
 

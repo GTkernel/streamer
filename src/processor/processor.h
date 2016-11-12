@@ -123,8 +123,8 @@ class Processor {
   // Process latency, sliding window average of 10 samples;
   std::queue<double> latencies_;
   double latency_sum_;
-  std::atomic<double> sliding_latency_;
-  std::atomic<double> avg_latency_;
+  double sliding_latency_;
+  double avg_latency_;
 
   // Processor stats
   // Number of processed frames
