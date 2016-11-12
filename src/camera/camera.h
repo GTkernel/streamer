@@ -34,8 +34,6 @@ class Camera : public Processor {
   virtual Shape GetImageSize() = 0;
   virtual void SetBrightness(float brightness) = 0;
   virtual float GetBrightness() = 0;
-  virtual void SetShutterSpeed(float shutter_speed) = 0;
-  virtual float GetShutterSpeed() = 0;
   virtual void SetSaturation(float saturation) = 0;
   virtual float GetSaturation() = 0;
   virtual void SetHue(float hue) = 0;

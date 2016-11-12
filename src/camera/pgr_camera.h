@@ -29,8 +29,6 @@ class PGRCamera : public Camera {
   virtual Shape GetImageSize();
   virtual void SetBrightness(float brightness);
   virtual float GetBrightness();
-  virtual void SetShutterSpeed(float shutter_speed);
-  virtual float GetShutterSpeed();
   virtual void SetSaturation(float saturation);
   virtual float GetSaturation();
   virtual void SetHue(float hue);
