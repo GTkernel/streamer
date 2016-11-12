@@ -177,7 +177,13 @@ float VimbaCamera::GetExposure() {
 
 void VimbaCamera::SetExposure(float exposure) {
   VmbAPI::FeaturePtr pFeature;
+  bool available;
   CHECK_VIMBA(camera_->GetFeatureByName("ExposureTimeAbs", pFeature));
+  CHECK_VIMBA(camera_->GetFeatureByName("Gain", pFeature));
+  pFeature->IsValueAvailable(exposure, available);
+
+  if (!available)
+    return;
   CHECK_VIMBA(pFeature->SetValue((double)exposure));
 }
 
@@ -204,7 +210,13 @@ float VimbaCamera::GetHue() { return 0; }
 
 void VimbaCamera::SetGain(float gain) {
   VmbAPI::FeaturePtr pFeature;
+  bool available;
   CHECK_VIMBA(camera_->GetFeatureByName("Gain", pFeature));
+  pFeature->IsValueAvailable(gain, available);
+
+  if (!available)
+    return;
+
   CHECK_VIMBA(pFeature->SetValue(gain));
 }
 float VimbaCamera::GetGain() {
@@ -212,6 +224,7 @@ float VimbaCamera::GetGain() {
   double gain;
 
   CHECK_VIMBA(camera_->GetFeatureByName("Gain", pFeature));
+
   CHECK_VIMBA(pFeature->GetValue(gain));
 
   return (float)gain;
