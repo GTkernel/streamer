@@ -70,6 +70,9 @@ class VimbaCamera : public Camera {
   virtual bool OnStop() override;
   virtual void Process() override;
 
+  void StopCapture();
+  void StartCapture();
+
  private:
   CameraPixelFormatType VimbaPfmt2CameraPfmt(const string &vmb_pfmt);
   string CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt);
