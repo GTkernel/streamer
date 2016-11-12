@@ -179,7 +179,6 @@ void VimbaCamera::SetExposure(float exposure) {
   VmbAPI::FeaturePtr pFeature;
   bool available;
   CHECK_VIMBA(camera_->GetFeatureByName("ExposureTimeAbs", pFeature));
-  CHECK_VIMBA(camera_->GetFeatureByName("Gain", pFeature));
   pFeature->IsValueAvailable(exposure, available);
 
   if (!available)

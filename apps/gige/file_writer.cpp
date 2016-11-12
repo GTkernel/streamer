@@ -5,17 +5,19 @@
 #include "file_writer.h"
 #include "boost/filesystem.hpp"
 
-FileWriter::FileWriter(const string &filename_base, size_t frames_per_file)
+FileWriter::FileWriter(const string &directory, size_t frames_per_file)
     : Processor({"input"}, {}),
-      filename_base_(filename_base),
+      directory_(directory),
       frames_written_(0),
       frames_per_file_(frames_per_file) {}
 
 bool FileWriter::Init() {
   // Make a directory for this run
-  directory_name_ = GetCurrentTimeString("streamer-%Y%m%d-%H%M%S");
-  if (!boost::filesystem::exists(directory_name_))
-    boost::filesystem::create_directory(directory_name_);
+  if (!boost::filesystem::exists(directory_)) {
+    boost::filesystem::create_directory(directory_);
+  } else {
+    LOG(WARNING) << "Directory: " << directory_ << " already exists, may re-write existed files";
+  }
 
   frames_written_ = 0;
   current_filename_ = "";
@@ -34,12 +36,9 @@ void FileWriter::Process() {
   // Create file
   if (frames_written_ % frames_per_file_ == 0) {
     std::ostringstream ss;
-    if (filename_base_ != "") {
-      ss << filename_base_ << "-";
-    }
     ss << frames_written_ / frames_per_file_ << ".dat";
 
-    string filename = directory_name_ + "/" + ss.str();
+    string filename = directory_ + "/" + ss.str();
 
     if (current_file_.is_open()) current_file_.close();
 

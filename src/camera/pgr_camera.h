@@ -18,7 +18,7 @@ class PGRCamera : public Camera {
  public:
   PGRCamera(const string &name, const string &video_uri, int width = -1,
             int height = -1, CameraModeType mode = CAMERA_MODE_0,
-            CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW8);
+            CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW12);
   virtual CameraType GetCameraType() const override;
 
   // Camera controls

@@ -36,7 +36,7 @@ class VimbaCamera : public Camera {
  public:
   VimbaCamera(const string &name, const string &video_uri, int width,
               int height, CameraModeType mode = CAMERA_MODE_0,
-              CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW8);
+              CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW12);
   virtual CameraType GetCameraType() const override;
 
   virtual float GetExposure() override;
