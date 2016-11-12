@@ -1,4 +1,6 @@
 import core
+from .const import API_PATH
+
 
 class Video:
     def __init__(self, filename, size, created_time):
@@ -21,17 +23,23 @@ class Camera:
         self.height = int(attributes['height'])
         self.width = int(attributes['width'])
         self.video_uri = attributes['video_uri']
+        self.started = True if attributes['started'] == 'true' else False
 
     def __str__(self):
         return "[Camera:{self.name}]: " \
-               "{self.width}x{self.height}, {self.video_uri}".format(self=self)
+               "{self.width}x{self.height}, {self.video_uri}, {self.started}".format(self=self)
 
     def capture(self, filename="img.jpeg"):
         """
         Capture an image from the camera, and save to a file.
         :param filename: The name of the file to save the image.
         """
-        pass
+        image_bytes = core.Core().request(API_PATH['capture'],
+                                          'GET',
+                                          params={'camera_name': self.name},
+                                          load_json=False)
+        with open(filename, "wb") as f:
+            f.write(image_bytes)
 
     def stream(self):
         """
@@ -73,7 +81,7 @@ class Camera:
         pass
 
 def get_cameras():
-    r = core.Core().request("/cameras", "GET")
+    r = core.Core().request(API_PATH['cameras'], 'GET')
     cameras = []
     for camera in r['cameras']:
         cameras.append(Camera(camera))

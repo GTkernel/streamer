@@ -15,11 +15,20 @@ class Core:
         self._base_url = "http://{}:{}".format(self._host, self._port)
 
     def _build_url(self, path, params):
-        url = (self._base_url + path).format(params)
+        if params != None:
+            url = (self._base_url + path).format(**params)
+        else:
+            url = (self._base_url + path).format(params)
         return url
 
-    def request(self, path, method, params=None, data=None):
+    def request(self, path, method, params=None, data=None, load_json=True):
         request_url = self._build_url(path, params)
         r = requests.get(request_url)
-        return json.loads(r.text)
+
+        # Json data
+        if load_json:
+            return json.loads(r.text)
+        else:
+            # Binary data
+            return r.content
 

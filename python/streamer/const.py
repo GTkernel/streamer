@@ -4,6 +4,7 @@
 API_PATH = {
     'cameras': '/cameras',
     'camera': '/cameras/{camera_name}',
+    'capture': '/cameras/{camera_name}/capture',
     'camera_control': 'cameras/{camera_name}/control',
     'pipelines': '/pipelines',
     'pipeline': '/pipelines/{pipeline_name}',

@@ -14,7 +14,7 @@ namespace po = boost::program_options;
 
 #define STRING_PATTERN "([a-zA-Z0-9_]+)"
 
-std::unordered_map<string, StreamPtr> pipelines;
+std::unordered_map<string, PipelinePtr> pipelines;
 
 static void SetUpEndpoints(HttpServer &server) {
   auto &camera_manager = CameraManager::GetInstance();
@@ -28,9 +28,8 @@ static void SetUpEndpoints(HttpServer &server) {
   };
 
   // GET /cameras
-  server.resource["^/cameras"]["GET"] = [](HttpServerResponse response,
-                                           HttpServerRequest request) {
-    CameraManager &camera_manager = CameraManager::GetInstance();
+  server.resource["^/cameras"]["GET"] = [&camera_manager](
+      HttpServerResponse response, HttpServerRequest request) {
     ModelManager &model_manager = ModelManager::GetInstance();
     std::vector<pt::ptree> cameras_node;
     auto cameras = camera_manager.GetCameras();
@@ -116,14 +115,22 @@ static void SetUpEndpoints(HttpServer &server) {
   // GET /cameras/:cam_name/ => Get camera information
   // TODO: this is of low priority right now
 
-  // POST /pipelines/run => Run a new pipeline, this include vision features,
+  // POST /pipelines => Run a new pipeline, this include vision features,
   // DNN evaluation, video recording, video streaming, etc.
-  // data: spl
-  server.resource["^/pipelines/run"]["POST"] = [](HttpServerResponse response, HttpServerRequest request) {
+  // data: name, spl
+  server.resource["^/pipelines$"]["POST"] = [](HttpServerResponse response,
+                                               HttpServerRequest request) {
     pt::ptree doc;
     pt::read_json(request->content, doc);
 
     string pipeline_name = doc.get<string>("name");
+
+    if (pipelines.count(pipeline_name) != 0) {
+      Send400Response(response,
+                      string("Pipeline: ") + pipeline_name + " already exists");
+      return;
+    }
+
     string spl = doc.get<string>("spl");
     SPLParser parser;
     std::vector<SPLStatement> statements;
@@ -140,9 +147,36 @@ static void SetUpEndpoints(HttpServer &server) {
       Send400Response(response, "Can't construct pipeline");
       return;
     }
+
+    pipelines.insert({pipeline_name, pipeline});
+
+    SendResponseSuccess(response);
   };
 
-  // DELETE /pipelines/stop => Kill an existing pipeline
+  // DELETE /pipelines => Kill an existing pipeline by its name
+  // data: name
+  server.resource["^/pipelines$"]["DELETE"] = [](HttpServerResponse response,
+                                                 HttpServerRequest request) {
+    pt::ptree doc;
+    pt::read_json(request->content, doc);
+
+    string pipeline_name = doc.get<string>("name");
+
+    if (pipelines.count(pipeline_name) == 0) {
+      Send400Response(response,
+                      string("Pipeline: ") + pipeline_name + " does not exist");
+      return;
+    }
+
+    auto pipeline = pipelines.at(pipeline_name);
+    LOG(INFO) << "Stopping pipeline: " << pipeline_name;
+    pipeline->Stop();
+    LOG(INFO) << "Stopped";
+
+    pipelines.erase(pipeline_name);
+
+    SendResponseSuccess(response);
+  };
 
   // GET /pipelines => List all pipelines
 

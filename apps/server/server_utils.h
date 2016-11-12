@@ -67,6 +67,15 @@ void Send200Response(HttpServerResponse res, const string &content) {
        << RN2 << content;
 }
 
+void SendResponseSuccess(HttpServerResponse res) {
+  pt::ptree doc;
+  doc.put("result", "success");
+  std::ostringstream ss;
+  pt::write_json(ss, doc);
+
+  Send200Response(res, ss.str());
+}
+
 void Send400Response(HttpServerResponse res, const string &content) {
   *res << "HTTP/1.1 400 Bad Request" << RN
        << "Content-Length: " << content.length() << RN2 << content;

@@ -68,7 +68,8 @@ CameraManager::CameraManager() {
       continue;
 #endif
     } else {
-      LOG(FATAL) << "Unknown video protocol: " << video_protocol;
+      LOG(WARNING) << "Unknown video protocol: " << video_protocol << ". Ignored";
+      continue;
     }
 
     cameras_.emplace(name, camera);
