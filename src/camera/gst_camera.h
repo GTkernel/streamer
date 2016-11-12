@@ -21,8 +21,6 @@ class GSTCamera : public Camera {
   virtual Shape GetImageSize() override;
   virtual void SetBrightness(float brightness) override;
   virtual float GetBrightness() override;
-  virtual void SetShutterSpeed(float shutter_speed) override;
-  virtual float GetShutterSpeed() override;
   virtual void SetSaturation(float saturation) override;
   virtual float GetSaturation() override;
   virtual void SetHue(float hue) override;

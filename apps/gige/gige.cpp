@@ -135,10 +135,6 @@ void Run(const string &camera_name, bool display,
       AddText(image_to_show, string() + "[N] Gain: " +
                   std::to_string(camera->GetGain()) + "dB",
               row_idx++);
-      AddText(image_to_show,
-              string() + "[Z] Shutter: " +
-                  std::to_string(camera->GetShutterSpeed()) + "ms",
-              row_idx++);
       AddText(image_to_show, "--------------------", row_idx++);
       AddText(image_to_show, string() + "[S] Sharpness: " +
                   std::to_string(camera->GetSharpness()),
@@ -206,10 +202,6 @@ void Run(const string &camera_name, bool display,
           camera->SetBrightness(camera->GetBrightness() * 0.95f);
         } else if (k == 'B') {
           camera->SetBrightness(camera->GetBrightness() * 1.05f + 0.5f);
-        } else if (k == 'z') {
-          camera->SetShutterSpeed(camera->GetShutterSpeed() * 0.95f);
-        } else if (k == 'Z') {
-          camera->SetShutterSpeed(camera->GetShutterSpeed() * 1.05f);
         } else if (k == 'u') {
           camera->SetSaturation(camera->GetSaturation() * 0.95f);
         } else if (k == 'U') {
@@ -225,7 +217,7 @@ void Run(const string &camera_name, bool display,
         } else if (k == 'n') {
           camera->SetGain(camera->GetGain() * 0.95f);
         } else if (k == 'N') {
-          camera->SetGain(camera->GetGain() * 1.05f + 0.5f);
+          camera->SetGain(camera->GetGain() * 1.05f + 1.0f);
         } else if (k == 'o') {
           camera->SetWBRed(camera->GetWBRed() * 0.95f);
         } else if (k == 'O') {
@@ -239,7 +231,7 @@ void Run(const string &camera_name, bool display,
         } else if (k == 'M') {
           camera->SetPixelFormat(CAMERA_PIXEL_FORMAT_RAW12);
         } else if (k == 'R') {
-          string output_directory = GetCurrentTimeString("streamer-%Y%m%d-%H%M%S");
+          string output_directory = GetCurrentTimeString(camera->GetName() + "-streamer-%Y%m%d-%H%M%S");
           file_writer->SetDirectory(output_directory);
           file_writer->Start();
           WriteCameraInfo(camera, output_directory);
@@ -281,6 +273,7 @@ int main(int argc, char *argv[]) {
   desc.add_options()("camera",
                      po::value<string>()->value_name("CAMERA")->required(),
                      "The name of the camera to use");
+
   desc.add_options()("display,d", "Enable display or not");
 
   desc.add_options()("config_dir,C",

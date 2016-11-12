@@ -128,14 +128,6 @@ float PGRCamera::GetBrightness() {
   return GetProperty(FlyCapture2::BRIGHTNESS, true, false);
 }
 
-void PGRCamera::SetShutterSpeed(float shutter_speed) {
-  shutter_speed = std::max(5.0f, shutter_speed);
-  SetProperty(FlyCapture2::SHUTTER, shutter_speed, true, false);
-}
-float PGRCamera::GetShutterSpeed() {
-  GetProperty(FlyCapture2::SHUTTER, true, false);
-}
-
 void PGRCamera::SetSaturation(float saturation) {
   SetProperty(FlyCapture2::SATURATION, saturation, true, false);
 }

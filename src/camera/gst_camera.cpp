@@ -37,8 +37,6 @@ void GSTCamera::SetSharpness(float sharpness) {}
 Shape GSTCamera::GetImageSize() { return Shape(); }
 void GSTCamera::SetBrightness(float brightness) {}
 float GSTCamera::GetBrightness() { return 0; }
-void GSTCamera::SetShutterSpeed(float shutter_speed) {}
-float GSTCamera::GetShutterSpeed() { return 0; }
 void GSTCamera::SetSaturation(float saturation) {}
 float GSTCamera::GetSaturation() { return 0; }
 void GSTCamera::SetHue(float hue) {}
