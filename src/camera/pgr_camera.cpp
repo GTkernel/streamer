@@ -65,8 +65,8 @@ bool PGRCamera::Init() {
   CHECK_PGR(camera_.SetFormat7Configuration(
       &fmt7ImageSettings, fmt7PacketInfo.recommendedBytesPerPacket));
 
-  Reset();
   camera_.StartCapture(PGRCamera::OnImageGrabbed, this);
+  Reset();
 
   LOG(INFO) << "Camera initialized";
 
@@ -383,7 +383,8 @@ FlyCapture2::PixelFormat PGRCamera::CameraPfmt2FCPfmt(
 void PGRCamera::Reset() {
   FlyCapture2::Property prop;
   prop.onOff = true;
-  prop.autoManualMode = true;
+  prop.autoManualMode = false;
+  prop.onePush = true;
 
   prop.type = FlyCapture2::BRIGHTNESS;
   CHECK_PGR(camera_.SetProperty(&prop));
@@ -400,7 +401,13 @@ void PGRCamera::Reset() {
   prop.type = FlyCapture2::AUTO_EXPOSURE;
   CHECK_PGR(camera_.SetProperty(&prop));
 
+  prop.type = FlyCapture2::SHUTTER;
+  CHECK_PGR(camera_.SetProperty(&prop));
+
   prop.type = FlyCapture2::WHITE_BALANCE;
+  prop.absControl = false;
+  prop.valueA = (unsigned int)GetWBRed();
+  prop.valueB = (unsigned int)GetWBBlue();
   CHECK_PGR(camera_.SetProperty(&prop));
 
   prop.type = FlyCapture2::SATURATION;

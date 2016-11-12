@@ -17,15 +17,16 @@ class FileWriter : public Processor {
  public:
   /**
    * @brief FileWriter constructor
-   * @param Input stream that feeds bytes.
-   * @param filename_base The basename of a file, filename will be named as
-   * ${basename}-${start_frame}-${end_frame}.
+   * @param directory Directroy to store the file.
+   * @param filename_base The basename of a file, file will be named as {frame_count / frames_per_file}.dat
    * @param frames_per_file Number of frames per file.
    */
-  FileWriter(const string &filename_base, size_t frames_per_file);
+  FileWriter(const string &directory, size_t frames_per_file);
 
   size_t GetFramesWritten() { return frames_written_; }
   string GetCurrentFilename() { return current_filename_; }
+  string GetCurrentDirectory() { return directory_; }
+  void SetDirectory(const string &directory) { directory_ = directory; }
   virtual ProcessorType GetType() override;
 
  protected:
@@ -34,8 +35,7 @@ class FileWriter : public Processor {
   virtual void Process() override;
 
  private:
-  string filename_base_;
-  string directory_name_;
+  string directory_;
   string current_filename_;
   size_t frames_written_;
   size_t frames_per_file_;

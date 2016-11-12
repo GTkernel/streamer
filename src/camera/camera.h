@@ -53,6 +53,8 @@ class Camera : public Processor {
   virtual CameraPixelFormatType GetPixelFormat() = 0;
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) = 0;
 
+  string GetCameraInfo();
+
  protected:
   virtual bool Init() override = 0;
   virtual bool OnStop() override = 0;

@@ -56,6 +56,8 @@ typedef std::pair<std::string, float> Prediction;
 
 class Stream;
 typedef std::shared_ptr<Stream> StreamPtr;
+class Camera;
+typedef std::shared_ptr<Camera> CameraPtr;
 
 typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 
@@ -106,6 +108,8 @@ enum CameraPixelFormatType {
   CAMERA_PIXEL_FORMAT_YUV422,
   CAMERA_PIXEL_FORMAT_YUV444
 };
+
+std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
 
 //// Frame types
 enum FrameType {
