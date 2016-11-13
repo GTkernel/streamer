@@ -95,7 +95,8 @@ sudo make install
 To run unit tests:
 
 * `cmake -DTEST_ON=true ..`
-* `make test`
+* `make tests`
+* `ctest -j4`
 
 ### Run multi-camera end-to-end demo
 

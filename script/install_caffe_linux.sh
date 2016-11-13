@@ -4,8 +4,10 @@ sudo apt-get -y install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-d
 sudo apt-get -y install --no-install-recommends libboost-all-dev
 sudo apt-get -y install libgflags-dev libgoogle-glog-dev
 sudo apt-get -y install libatlas-base-dev
-git clone https://github.com/BVLC/caffe
-cd caffe
+
+CAFFE_DIR_NAME = caffe-${CAFFE_COMMIT_HASH}
+git clone https://github.com/BVLC/caffe $CAFFE_DIR_NAME
+cd $CAFFE_DIR_NAME
 git reset --hard ${CAFFE_COMMIT_HASH}
 mkdir build
 cd build

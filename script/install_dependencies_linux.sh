@@ -11,4 +11,9 @@ if [ ! -d $INSTALL_DIR ]; then
     mkdir -p $INSTALL_DIR
 fi
 
-bash $SCRIPT_DIR/install_caffe_linux.sh
+CAFFE_DIR=$INSTALL_DIR/caffe-${CAFFE_COMMIT_HASH}
+if [ -d "$CAFFE_DIR" ] && [ -e "$CAFFE_DIR/build" ]; then
+    echo "Using cached Caffe build ($CAFFE_COMMIT_HASH)"
+else
+    bash $SCRIPT_DIR/install_caffe_linux.sh
+fi

@@ -16,6 +16,11 @@ branches:
   only:
     - master
 
+cache:
+  apt: true
+  directories:
+    - $HOME/installed_${TRAVIS_OS_NAME}
+
 env:
   global:
     - CAFFE_COMMIT_HASH=a8ec123c00723df0d0ad897e1eea32a29201c81b
@@ -30,4 +35,5 @@ script:
   - echo $HOME/installed
   - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DBACKEND=cpu -DCAFFE_HOME=$HOME/installed_${TRAVIS_OS_NAME} ..
   - make -j4
+  - make -j4 tests
   - ctest -V # -j will cause port being used problem
