@@ -8,7 +8,7 @@ import time
 from multiprocessing import Process
 
 
-class Video:
+class CameraFile:
     def __init__(self, filename, size, created_time):
         self.filename = filename
         self.size = size
@@ -17,7 +17,8 @@ class Video:
 
     def download(self, location):
         """
-        Download a video from a streamer device. The method will block until video is downloaded.
+        Download a file from a streamer device. The method will block until the
+        file is downloaded.
         :param location: Location to store the video.
         :return:
         """
@@ -95,20 +96,51 @@ class Camera:
 
         pipeline.stop()
 
-    def record(self, duration):
+    def record(self, duration, compress=True):
         """
         Record the camera video for a given duration.
         :param duration: the duration (in s) of the video to record.
-        :return: A filename of the recorded video. The filename might not be used to retrieve the video
-                 until the camera has actually finished recording.
+        :param compress: compress the video or not.
+        :return: A filename of the recorded video. The filename might not be used to retrieve the video until the camera has actually finished recording.
         """
-        pass
+        from time import strftime, localtime
+        record_time = strftime("%Y-%m-%d+%H:%M:%S", localtime())
+        filename = self.name + "/" + record_time + ".mp4"
+        if compress:
+            RECORD_VIDEO_SPL = \
+            """
+            camera = camera({name})
+            video_encoder = processor(VideoEncoder, filename={filename}, width={width}, height={height})
 
-    def videos(self):
+            video_encoder[input] = camera[bgr_output]
+            """.format(name=self.name, filename=filename, width=self.width, height=self.height)
+        else:
+            RECORD_VIDEO_SPL = \
+            """
+            camera = camera({name})
+            file_writer = processor(FileWriter, filename={filename})
+
+            file_writer[input] = camera[raw_output]
+            """.format(name=self.name, filename=filename)
+
+        # FIXME: this assumes that there is only one record pipeline on any
+        # given camera.
+        pipeline = Pipeline("record_{}".format(self.name), RECORD_VIDEO_SPL)
+
+        r = pipeline.run()
+
+        if not r:
+            return
+
+        time.sleep(duration)
+        pipeline.stop()
+
+    def files(self):
         """
-        Get the list of recorded videos on the camera.
-        :return: A list of videos, each video
+        Get the list of files generated from the camera.
+        :return: A list of files
         """
+        
 
     def control(self, params):
         """

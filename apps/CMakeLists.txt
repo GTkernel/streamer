@@ -1,5 +1,5 @@
 find_package(Threads REQUIRED)
-find_package(Boost COMPONENTS regex system thread filesystem date_time REQUIRED)
+find_package(Boost COMPONENTS regex system thread date_time REQUIRED)
 
 include_directories(${ZMQ_INCLUDE_DIRS})
 
@@ -36,4 +36,3 @@ foreach (app_dir ${APP_DIRS})
 endforeach ()
 
 target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(gige ${Boost_FILESYSTEM_LIBRARY})

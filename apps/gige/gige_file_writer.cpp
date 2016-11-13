@@ -2,16 +2,17 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/2/16.
 //
 
-#include "file_writer.h"
-#include "boost/filesystem.hpp"
+#include "gige_file_writer.h"
 
-FileWriter::FileWriter(const string &directory, size_t frames_per_file)
+#include <boost/filesystem.hpp>
+
+GigeFileWriter::GigeFileWriter(const string &directory, size_t frames_per_file)
     : Processor({"input"}, {}),
       directory_(directory),
       frames_written_(0),
       frames_per_file_(frames_per_file) {}
 
-bool FileWriter::Init() {
+bool GigeFileWriter::Init() {
   // Make a directory for this run
   if (!boost::filesystem::exists(directory_)) {
     boost::filesystem::create_directory(directory_);
@@ -26,14 +27,14 @@ bool FileWriter::Init() {
   return true;
 }
 
-bool FileWriter::OnStop() {
+bool GigeFileWriter::OnStop() {
   if (current_file_.is_open()) {
     current_file_.close();
   }
   return true;
 }
 
-void FileWriter::Process() {
+void GigeFileWriter::Process() {
   // Create file
   if (frames_written_ % frames_per_file_ == 0) {
     std::ostringstream ss;
@@ -60,4 +61,4 @@ void FileWriter::Process() {
   frames_written_ += 1;
 }
 
-ProcessorType FileWriter::GetType() { return PROCESSOR_TYPE_CUSTOM; }
+ProcessorType GigeFileWriter::GetType() { return PROCESSOR_TYPE_CUSTOM; }

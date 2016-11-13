@@ -132,6 +132,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_DUMMY_NN,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_STREAM_PUBLISHER,
+  PROCESSOR_TYPE_FILE_WRITER,
   PROCESSOR_TYPE_CUSTOM,
 
   PROCESSOR_TYPE_CAMERA,
@@ -154,6 +155,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string &str) {
     return PROCESSOR_TYPE_CAMERA;
   } else if (str == "Encoder" || str == "VideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
+  } else if (str == "FileWriter") {
+    return PROCESSOR_TYPE_FILE_WRITER;
   } else {
     return PROCESSOR_TYPE_INVALID;
   }

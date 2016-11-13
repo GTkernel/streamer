@@ -6,7 +6,7 @@
  * @brief A demo showing how to stream, control and record from a GigE camera.
  */
 
-#include "file_writer.h"
+#include "gige_file_writer.h"
 #include "streamer.h"
 
 #include <boost/program_options.hpp>
@@ -94,7 +94,7 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
   auto camera_reader = camera->GetSink("bgr_output")->Subscribe();
 
   auto bytes_stream = camera->GetSink("raw_output");
-  std::shared_ptr<FileWriter> file_writer(new FileWriter("", frames_per_file));
+  std::shared_ptr<GigeFileWriter> file_writer(new GigeFileWriter("", frames_per_file));
   file_writer->SetSource("input", bytes_stream);
 
   camera->Start();

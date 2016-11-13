@@ -4,7 +4,15 @@
 
 #include "processor_factory.h"
 #include "camera/camera_manager.h"
+#include "dummy_nn_processor.h"
+#include "file_writer.h"
+#include "image_classifier.h"
+#include "image_segmenter.h"
+#include "image_transformer.h"
 #include "model/model_manager.h"
+#include "opencv_face_detector.h"
+#include "stream_publisher.h"
+#include "video/gst_video_encoder.h"
 
 std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     ProcessorType processor_type, FactoryParamsType params) {
@@ -37,6 +45,9 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     case PROCESSOR_TYPE_STREAM_PUBLISHER:
       processor.reset(CreateStreamPublisher(params));
       break;
+    case PROCESSOR_TYPE_FILE_WRITER:
+      processor.reset(CreateFileWriter(params));
+      break;
     default:
       LOG(FATAL) << "Unknown processor type";
   }
@@ -59,11 +70,26 @@ std::shared_ptr<Camera> ProcessorFactory::CreateCamera(
   }
 }
 Processor *ProcessorFactory::CreateEncoder(const FactoryParamsType &params) {
-  int port = atoi(params.at("port").c_str());
+  int port = -1;
+  string filename;
+
+  if (params.count("port") != 0) {
+    port = atoi(params.at("port").c_str());
+  } else if (params.count("filename") != 0) {
+    filename = params.at("filename");
+  } else {
+    LOG(FATAL) << "At least port or filename is needed for encoder";
+  }
+
   int width = atoi(params.at("width").c_str());
   int height = atoi(params.at("height").c_str());
 
-  GstVideoEncoder *encoder = new GstVideoEncoder(width, height, port);
+  GstVideoEncoder *encoder;
+  if (port > 0) {
+    encoder = new GstVideoEncoder(width, height, port);
+  } else {
+    encoder = new GstVideoEncoder(width, height, filename);
+  }
 
   return encoder;
 }
@@ -107,4 +133,8 @@ Processor *ProcessorFactory::CreateDummyNNProcessor(
 Processor *ProcessorFactory::CreateStreamPublisher(
     const FactoryParamsType &params) {
   return new StreamPublisher(params.at("name"));
+}
+
+Processor *ProcessorFactory::CreateFileWriter(const FactoryParamsType &params) {
+  return new FileWriter(params.at("filename"));
 }

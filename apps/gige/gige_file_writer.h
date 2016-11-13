@@ -13,7 +13,7 @@
 /**
  * @brief A file writer that writes raw bytes to a file.
  */
-class FileWriter : public Processor {
+class GigeFileWriter : public Processor {
  public:
   /**
    * @brief FileWriter constructor
@@ -22,7 +22,7 @@ class FileWriter : public Processor {
    * {frame_count / frames_per_file}.dat
    * @param frames_per_file Number of frames per file.
    */
-  FileWriter(const string &directory, size_t frames_per_file);
+  GigeFileWriter(const string &directory, size_t frames_per_file);
 
   size_t GetFramesWritten() { return frames_written_; }
   string GetCurrentFilename() { return current_filename_; }

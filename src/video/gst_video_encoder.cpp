@@ -94,6 +94,11 @@ string GstVideoEncoder::BuildCapsString() {
 }
 
 bool GstVideoEncoder::Init() {
+  // Create a directory for file if the directory does not exist yet
+  if (output_filename_ != "") {
+    CreateDirs(GetDir(output_filename_));
+  }
+
   if (width_ == 0 || height_ == 0) {
     LOG(ERROR) << "width or height of output video is not valid (" << width_
                << "x" << height_ << ")";

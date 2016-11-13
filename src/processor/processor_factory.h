@@ -3,13 +3,7 @@
 //
 
 #include "camera/camera.h"
-#include "dummy_nn_processor.h"
-#include "image_classifier.h"
-#include "image_segmenter.h"
-#include "image_transformer.h"
-#include "opencv_face_detector.h"
-#include "stream_publisher.h"
-#include "video/gst_video_encoder.h"
+#include "processor.h"
 
 #ifndef STREAMER_PROCESSOR_FACTORY_H
 #define STREAMER_PROCESSOR_FACTORY_H
@@ -32,6 +26,7 @@ class ProcessorFactory {
   static Processor *CreateOpenCVFaceDetector(const FactoryParamsType &params);
   static Processor *CreateDummyNNProcessor(const FactoryParamsType &params);
   static Processor *CreateStreamPublisher(const FactoryParamsType &params);
+  static Processor *CreateFileWriter(const FactoryParamsType &params);
 };
 
 #endif  // STREAMER_PROCESSOR_FACTORY_H

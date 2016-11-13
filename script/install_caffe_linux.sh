@@ -5,7 +5,7 @@ sudo apt-get -y install --no-install-recommends libboost-all-dev
 sudo apt-get -y install libgflags-dev libgoogle-glog-dev
 sudo apt-get -y install libatlas-base-dev
 
-CAFFE_DIR_NAME = caffe-${CAFFE_COMMIT_HASH}
+CAFFE_DIR_NAME=caffe-${CAFFE_COMMIT_HASH}
 git clone https://github.com/BVLC/caffe $CAFFE_DIR_NAME
 cd $CAFFE_DIR_NAME
 git reset --hard ${CAFFE_COMMIT_HASH}

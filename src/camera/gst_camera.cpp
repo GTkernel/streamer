@@ -6,7 +6,9 @@
 
 GSTCamera::GSTCamera(const string &name, const string &video_uri, int width,
                      int height)
-    : Camera(name, video_uri, width, height) {}
+    : Camera(name, video_uri, width, height) {
+  sinks_.insert({"raw_output", StreamPtr(new Stream)});
+}
 
 bool GSTCamera::Init() {
   bool opened = capture_.CreatePipeline(video_uri_);
@@ -25,7 +27,10 @@ bool GSTCamera::OnStop() {
 void GSTCamera::Process() {
   cv::Mat frame = capture_.GetFrame();
   PushFrame("bgr_output", new ImageFrame(frame, frame));
+  PushFrame("raw_output", new BytesFrame(DataBuffer(
+                              frame.data, frame.total() * frame.elemSize())));
 }
+
 CameraType GSTCamera::GetCameraType() const { return CAMERA_TYPE_GST; }
 
 // TODO: Implement camera control for GST camera, we may need to have subclass

@@ -14,5 +14,9 @@ camera = cameras[0]
 camera.capture(camera.name + ".jpeg")
 
 # Stream the video of the camera
-print "Streaming..."
-camera.preview()
+# print "Streaming..."
+# camera.preview()
+
+# Record 10 seconds of the camera with compression
+print "Recording 10 secs..."
+camera.record(10, compress=False)

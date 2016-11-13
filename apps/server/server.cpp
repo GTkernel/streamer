@@ -154,6 +154,8 @@ static void SetUpEndpoints(HttpServer &server) {
 
     pipeline->Start();
 
+    LOG(INFO) << "Pipeline: " << pipeline_name << " started";
+
     SendResponseSuccess(response);
   };
 
