@@ -7,12 +7,14 @@
 
 const static char *ENCODER_SRC_NAME = "encoder_src";
 
+ProcessorType GstVideoEncoder::GetType() { return PROCESSOR_TYPE_ENCODER; }
+
 GstVideoEncoder::GstVideoEncoder(int width, int height,
                                  const string &output_filename)
-    : Processor({"input"}, {}),
+    : Processor({"input"}, {"output"}),
       width_(width),
       height_(height),
-      frame_size_bytes_((size_t)width * height * 3),
+      frame_size_bytes_(width * height * 3),
       port_(-1),  // Not in streaming mode
       output_filename_(output_filename),
       need_data_(false),
@@ -23,10 +25,10 @@ GstVideoEncoder::GstVideoEncoder(int width, int height,
 }
 
 GstVideoEncoder::GstVideoEncoder(int width, int height, int port)
-    : Processor({"input"}, {}),
+    : Processor({"input"}, {"output"}),
       width_(width),
       height_(height),
-      frame_size_bytes_((size_t)width * height * 3),
+      frame_size_bytes_(width * height * 3),
       port_(port),
       need_data_(false),
       timestamp_(0) {
@@ -195,9 +197,15 @@ bool GstVideoEncoder::OnStop() {
 
 void GstVideoEncoder::Process() {
   auto input_frame = GetFrame("input");
-  CHECK(input_frame->GetOriginalImage().rows == height_);
-  CHECK(input_frame->GetOriginalImage().cols == width_);
-  CHECK(!input_frame->GetOriginalImage().empty());
+
+  // Resize the image
+  cv::Mat image;
+  cv::Mat original_image = input_frame->GetOriginalImage();
+
+  cv::resize(original_image, image, cv::Size(width_, height_));
+
+  // Forward the input image to output
+  PushFrame("output", new ImageFrame(image, original_image));
 
   // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);
@@ -207,12 +215,12 @@ void GstVideoEncoder::Process() {
   // Give PTS to the buffer
   GstBuffer *buffer = gst_buffer_new();
   gst_buffer_append_memory(
-      buffer, gst_memory_new_wrapped(GST_MEMORY_FLAG_READONLY,
-                                     input_frame->GetOriginalImage().data,
-                                     frame_size_bytes_, frame_size_bytes_, 0,
+      buffer, gst_memory_new_wrapped(GST_MEMORY_FLAG_READONLY, image.data,
+                                     frame_size_bytes_, 0, frame_size_bytes_,
                                      nullptr, nullptr));
-
   GST_BUFFER_PTS(buffer) = timestamp_;
+
+  // TODO: FPS is fixed right now
   GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 30);
   timestamp_ += GST_BUFFER_DURATION(buffer);
 
@@ -296,5 +304,3 @@ void GstVideoEncoder::Process() {
 void GstVideoEncoder::SetEncoderElement(const string &encoder) {
   encoder_element_ = encoder;
 }
-
-ProcessorType GstVideoEncoder::GetType() { return PROCESSOR_TYPE_ENCODER; }

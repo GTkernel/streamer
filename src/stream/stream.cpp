@@ -43,10 +43,14 @@ StreamReader::StreamReader(Stream *stream, size_t max_buffer_size)
     : stream_(stream), max_buffer_size_(max_buffer_size) {}
 
 template <typename FT>
-std::shared_ptr<FT> StreamReader::PopFrame() {
+std::shared_ptr<FT> StreamReader::PopFrame(unsigned int timeout_ms) {
   std::unique_lock<std::mutex> lk(buffer_lock_);
-  buffer_cv_.wait_for(lk, std::chrono::milliseconds(POP_WAIT_TIME_MILLIS),
-                      [this] { return frame_buffer_.size() != 0; });
+  if (timeout_ms > 0) {
+    buffer_cv_.wait_for(lk, std::chrono::milliseconds(timeout_ms),
+                        [this] { return frame_buffer_.size() != 0; });
+  } else {
+    buffer_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
+  }
 
   if (frame_buffer_.size() != 0) {
     std::shared_ptr<Frame> frame = frame_buffer_.front();
@@ -69,7 +73,7 @@ void StreamReader::PushFrame(std::shared_ptr<Frame> frame) {
 
 void StreamReader::UnSubscribe() { stream_->UnSubscribe(this); }
 
-template std::shared_ptr<Frame> StreamReader::PopFrame();
-template std::shared_ptr<ImageFrame> StreamReader::PopFrame();
-template std::shared_ptr<MetadataFrame> StreamReader::PopFrame();
-template std::shared_ptr<BytesFrame> StreamReader::PopFrame();
+template std::shared_ptr<Frame> StreamReader::PopFrame(unsigned int);
+template std::shared_ptr<ImageFrame> StreamReader::PopFrame(unsigned int);
+template std::shared_ptr<MetadataFrame> StreamReader::PopFrame(unsigned int);
+template std::shared_ptr<BytesFrame> StreamReader::PopFrame(unsigned int);

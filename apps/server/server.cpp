@@ -153,6 +153,8 @@ static void SetUpEndpoints(HttpServer &server) {
 
     pipelines.insert({pipeline_name, pipeline});
 
+    pipeline->Start();
+
     SendResponseSuccess(response);
   };
 

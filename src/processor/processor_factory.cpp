@@ -59,7 +59,13 @@ std::shared_ptr<Camera> ProcessorFactory::CreateCamera(
   }
 }
 Processor *ProcessorFactory::CreateEncoder(const FactoryParamsType &params) {
-  return nullptr;
+  int port = atoi(params.at("port").c_str());
+  int width = atoi(params.at("width").c_str());
+  int height = atoi(params.at("height").c_str());
+
+  GstVideoEncoder *encoder = new GstVideoEncoder(width, height, port);
+
+  return encoder;
 }
 Processor *ProcessorFactory::CreateImageClassifier(
     const FactoryParamsType &params) {

@@ -67,9 +67,9 @@ class Camera:
         STREAM_VIDEO_SPL = \
         """
         camera = camera({name})
-        video_encoder = processor(VideoEncoder, port={port})
+        video_encoder = processor(VideoEncoder, port={port}, width={width}, height={height})
         video_encoder[input] = camera[bgr_output]
-        """.format(name=self.name, port=random_port)
+        """.format(name=self.name, port=random_port, width=self.width, height=self.height)
         pipeline = Pipeline("stream_{}_{}".format(self.name, random_port),
                             STREAM_VIDEO_SPL)
         r = pipeline.run()
@@ -79,12 +79,14 @@ class Camera:
 
         GST_PIPELINE = \
         """
-        gst-launch-1.0 -v udpsrc host={host} port={port} ! application/x-rtp ! rtph264depay !
-        avdec_h264 ! videoconvert ! autovideosink sync=false
-        """.format(host=config.STREAMER_SERVER_PORT, port=random_port)
+        gst-launch-1.0 -v udpsrc address={host} port={port} ! application/x-rtp ! rtph264depay ! vaapidecode ! videoconvert ! autovideosink sync=false
+        """.format(host=config.STREAMER_SERVER_HOST, port=random_port)
+        print GST_PIPELINE
         subprocess.call(GST_PIPELINE, shell=True)
 
-        pipeline.stop()
+        print GST_PIPELINE
+
+        # pipeline.stop()
 
     def record(self, duration):
         """

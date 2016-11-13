@@ -8,6 +8,7 @@
 #include "image_transformer.h"
 #include "opencv_face_detector.h"
 #include "stream_publisher.h"
+#include "video/gst_video_encoder.h"
 #include "camera/camera.h"
 
 #ifndef STREAMER_PROCESSOR_FACTORY_H

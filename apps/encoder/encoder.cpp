@@ -27,6 +27,8 @@ void Run(const string &camera_name, string &dst_file, int port) {
     return;
   }
 
+  cv::namedWindow("encoder input");
+
   CameraManager &camera_manager = CameraManager::GetInstance();
 
   CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
@@ -43,12 +45,12 @@ void Run(const string &camera_name, string &dst_file, int port) {
     cout << "Store video to: " << dst_file << endl;
     encoder = std::shared_ptr<Processor>(
         new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), dst_file));
-    encoder->SetSource("input", camera->GetStream());
+    encoder->SetSource("input", camera_stream);
   } else if (port != -1) {
     cout << "Stream video on port: " << port << endl;
     encoder = std::shared_ptr<Processor>(
         new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), port));
-    encoder->SetSource("input", camera->GetStream());
+    encoder->SetSource("input", camera_stream);
     // Receive pipeline
     // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
     // avdec_h264 ! videoconvert ! autovideosink sync=false
@@ -85,9 +87,6 @@ int main(int argc, char *argv[]) {
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
-
-  // Init streamer context, this must be called before using streamer.
-  Context::GetContext().Init();
 
   std::signal(SIGINT, SignalHandler);
 

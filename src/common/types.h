@@ -60,6 +60,8 @@ class Camera;
 typedef std::shared_ptr<Camera> CameraPtr;
 class Pipeline;
 typedef std::shared_ptr<Pipeline> PipelinePtr;
+class Frame;
+typedef std::shared_ptr<Frame> FramePtr;
 
 typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 
@@ -134,6 +136,7 @@ enum ProcessorType {
 
   PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_ENCODER,
+  PROCESSOR_TYPE_DECODER
 };
 
 inline ProcessorType GetProcessorTypeByString(const std::string &str) {
@@ -149,7 +152,7 @@ inline ProcessorType GetProcessorTypeByString(const std::string &str) {
     return PROCESSOR_TYPE_CUSTOM;
   } else if (str == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
-  } else if (str == "Encoder") {
+  } else if (str == "Encoder" || str == "VideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
   } else {
     return PROCESSOR_TYPE_INVALID;

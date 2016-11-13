@@ -21,13 +21,13 @@ Processor::Processor(const std::vector<string> &source_names,
   Init_();
 }
 
+Processor::~Processor() {}
+
 StreamPtr Processor::GetSink(const string &name) { return sinks_[name]; }
 
 void Processor::SetSource(const string &name, StreamPtr stream) {
   sources_[name] = stream;
 }
-
-Processor::~Processor() {}
 
 void Processor::Init_() {
   stopped_ = true;
@@ -83,9 +83,8 @@ void Processor::ProcessorLoop() {
       auto source_stream = itr->second;
 
       while (true) {
-        auto frame = source_stream->PopFrame();
+        auto frame = source_stream->PopFrame(100);
         if (frame == nullptr) {
-          LOG(INFO) << "Empty frame";
           if (stopped_) {
             // We can't get frame, we should have stopped
             return;

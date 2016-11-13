@@ -22,12 +22,13 @@ class StreamReader {
 
  public:
   StreamReader(Stream *stream, size_t max_buffer_size = 5);
+
   /**
-   * @brief Pop a frame of type FT from the stream.
-   * @return  The head frame in the stream.
+   * @brief Pop a frame, and timeout if no frame available for a given time
+   * @param timeout_ms Time out threshold, 0 for forever
    */
   template <typename FT = Frame>
-  std::shared_ptr<FT> PopFrame();
+  std::shared_ptr<FT> PopFrame(unsigned int timeout_ms = 0);
 
   void UnSubscribe();
 
@@ -45,8 +46,6 @@ class StreamReader {
   std::mutex buffer_lock_;
   std::condition_variable buffer_cv_;
   Stream *stream_;
-  // Max time to block
-  const int POP_WAIT_TIME_MILLIS = 100;
 };
 
 /**

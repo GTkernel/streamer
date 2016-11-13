@@ -20,6 +20,7 @@ class Pipeline:
             "name": self._name,
             "spl": self._plan
         }
+
         r = core.Core().request(API_PATH["pipelines"], "POST", data=post_data)
         if r['result'] == 'success':
             return True
