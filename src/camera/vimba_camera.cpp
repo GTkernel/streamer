@@ -390,5 +390,15 @@ void VimbaCamera::StartCapture() {
   const int BUFFER_SIZE = 10;
   camera_->StartContinuousImageAcquisition(BUFFER_SIZE,
                                            VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
+
+  // White balance auto
+  VmbAPI::FeaturePtr pFeature;
+  VmbErrorType error;
+  error = camera_->GetFeatureByName("BalanceWhiteAuto", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Camera does not support auto wb, ignored";
+  } else {
+    CHECK_VIMBA(pFeature->SetValue("Continuous"));
+  }
 }
 
