@@ -16,7 +16,8 @@ bool FileWriter::Init() {
   if (!boost::filesystem::exists(directory_)) {
     boost::filesystem::create_directory(directory_);
   } else {
-    LOG(WARNING) << "Directory: " << directory_ << " already exists, may re-write existed files";
+    LOG(WARNING) << "Directory: " << directory_
+                 << " already exists, may re-write existed files";
   }
 
   frames_written_ = 0;

@@ -104,6 +104,7 @@ Processor *ProcessorFactory::CreateDummyNNProcessor(
   return nullptr;
 }
 
-Processor *ProcessorFactory::CreateStreamPublisher(const FactoryParamsType &params) {
+Processor *ProcessorFactory::CreateStreamPublisher(
+    const FactoryParamsType &params) {
   return new StreamPublisher(params.at("name"));
 }

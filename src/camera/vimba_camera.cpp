@@ -30,7 +30,7 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
 
     size_t width = vmb_width, height = vmb_height;
 
-    cv::Mat dest_bgr_mat((int) height, (int) width, CV_8UC3);
+    cv::Mat dest_bgr_mat((int)height, (int)width, CV_8UC3);
 
     // set size member for verification inside API
     sourceImage.Size = sizeof(sourceImage);
@@ -168,7 +168,7 @@ float VimbaCamera::GetExposure() {
   double exposure;
   CHECK_VIMBA(camera_->GetFeatureByName("ExposureTimeAbs", pFeature));
   CHECK_VIMBA(pFeature->GetValue(exposure));
-  return (float) exposure;
+  return (float)exposure;
 }
 
 void VimbaCamera::SetExposure(float exposure) {
@@ -177,9 +177,9 @@ void VimbaCamera::SetExposure(float exposure) {
   CHECK_VIMBA(camera_->GetFeatureByName("ExposureTimeAbs", pFeature));
   pFeature->GetRange(minimum, maximum);
 
-  exposure = std::max(std::min(exposure, (float) maximum), (float) minimum);
+  exposure = std::max(std::min(exposure, (float)maximum), (float)minimum);
 
-  CHECK_VIMBA(pFeature->SetValue((double) exposure));
+  CHECK_VIMBA(pFeature->SetValue((double)exposure));
 }
 
 float VimbaCamera::GetSharpness() { return 0; }
@@ -192,7 +192,7 @@ Shape VimbaCamera::GetImageSize() {
   CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
   CHECK_VIMBA(pFeature->GetValue(height));
 
-  return Shape((int) width, (int) height);
+  return Shape((int)width, (int)height);
 }
 void VimbaCamera::SetBrightness(float brightness) {}
 float VimbaCamera::GetBrightness() { return 0; }
@@ -207,7 +207,7 @@ void VimbaCamera::SetGain(float gain) {
   CHECK_VIMBA(camera_->GetFeatureByName("Gain", pFeature));
   pFeature->GetRange(minimum, maximum);
 
-  gain = std::max(std::min(gain, (float) maximum), (float) minimum);
+  gain = std::max(std::min(gain, (float)maximum), (float)minimum);
 
   CHECK_VIMBA(pFeature->SetValue(gain));
 }
@@ -219,7 +219,7 @@ float VimbaCamera::GetGain() {
 
   CHECK_VIMBA(pFeature->GetValue(gain));
 
-  return (float) gain;
+  return (float)gain;
 }
 
 void VimbaCamera::SetGamma(float gamma) {
@@ -236,7 +236,7 @@ float VimbaCamera::GetGamma() {
   CHECK_VIMBA(camera_->GetFeatureByName("Gamma", pFeature));
   CHECK_VIMBA(pFeature->GetValue(gamma));
 
-  return (float) gamma;
+  return (float)gamma;
 }
 
 void VimbaCamera::SetWBRed(float wb_red) {}
@@ -289,7 +289,6 @@ void VimbaCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
     LOG(WARNING) << "Feature: BinningHorizontal is not found, ignoring";
   } else {
     CHECK_VIMBA(pFeature->SetValue(binning));
-
   }
 
   error = camera_->GetFeatureByName("BinningVertical", pFeature);
@@ -297,7 +296,6 @@ void VimbaCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
     LOG(WARNING) << "Feature: BinningHorizontal is not found, ignoring";
   } else {
     CHECK_VIMBA(pFeature->SetValue(binning));
-
   }
 
   CHECK_VIMBA(camera_->GetFeatureByName("Width", pFeature));
@@ -330,9 +328,11 @@ CameraPixelFormatType VimbaCamera::VimbaPfmt2CameraPfmt(
     const string &vmb_pfmt) {
   if (vmb_pfmt == "Mono8") {
     return CAMERA_PIXEL_FORMAT_MONO8;
-  } else if (vmb_pfmt == "BayerRG8" || vmb_pfmt == "BayerGB8" || vmb_pfmt == "BayerGR8" || vmb_pfmt == "BayerBG8") {
+  } else if (vmb_pfmt == "BayerRG8" || vmb_pfmt == "BayerGB8" ||
+             vmb_pfmt == "BayerGR8" || vmb_pfmt == "BayerBG8") {
     return CAMERA_PIXEL_FORMAT_RAW8;
-  } else if (vmb_pfmt == "BayerRG12" || vmb_pfmt == "BayerGB12" || vmb_pfmt == "BayerGR12" || vmb_pfmt == "BayerBG12") {
+  } else if (vmb_pfmt == "BayerRG12" || vmb_pfmt == "BayerGB12" ||
+             vmb_pfmt == "BayerGR12" || vmb_pfmt == "BayerBG12") {
     return CAMERA_PIXEL_FORMAT_RAW12;
   } else if (vmb_pfmt == "BGR8Packed") {
     return CAMERA_PIXEL_FORMAT_BGR;
@@ -356,9 +356,11 @@ string VimbaCamera::CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt) {
   switch (pfmt) {
     // TODO: Not very sure about the pixel format mapping, if something wrong
     // with color convertion happens, check here.
-    case CAMERA_PIXEL_FORMAT_MONO8:return "Mono8";
+    case CAMERA_PIXEL_FORMAT_MONO8:
+      return "Mono8";
     case CAMERA_PIXEL_FORMAT_RAW8: {
-      for (auto pfmt_string : {"BayerGB8", "BayerRG8", "BayerGR8", "BayerBG8"}) {
+      for (auto pfmt_string :
+           {"BayerGB8", "BayerRG8", "BayerGR8", "BayerBG8"}) {
         CHECK_VIMBA(pFeature->IsValueAvailable(pfmt_string, available));
         if (available) return pfmt_string;
       }
@@ -366,30 +368,35 @@ string VimbaCamera::CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt) {
       break;
     }
     case CAMERA_PIXEL_FORMAT_RAW12: {
-      for (auto pfmt_string : {"BayerGB12", "BayerRG12", "BayerGR12", "BayerBG12"}) {
+      for (auto pfmt_string :
+           {"BayerGB12", "BayerRG12", "BayerGR12", "BayerBG12"}) {
         CHECK_VIMBA(pFeature->IsValueAvailable(pfmt_string, available));
         if (available) return pfmt_string;
       }
       LOG(FATAL) << "No RAW12 format on this camera";
       break;
     }
-    case CAMERA_PIXEL_FORMAT_BGR:return "BGR8Packed";
-    case CAMERA_PIXEL_FORMAT_YUV411:return "YUV411Packed";
-    case CAMERA_PIXEL_FORMAT_YUV422:return "YUV422Packed";
-    case CAMERA_PIXEL_FORMAT_YUV444:return "YUV444Packed";
-    default:LOG(FATAL) << "Invalid pixel format: " << pfmt;
+    case CAMERA_PIXEL_FORMAT_BGR:
+      return "BGR8Packed";
+    case CAMERA_PIXEL_FORMAT_YUV411:
+      return "YUV411Packed";
+    case CAMERA_PIXEL_FORMAT_YUV422:
+      return "YUV422Packed";
+    case CAMERA_PIXEL_FORMAT_YUV444:
+      return "YUV444Packed";
+    default:
+      LOG(FATAL) << "Invalid pixel format: " << pfmt;
   }
 
   return "Mono8";
 }
 
-void VimbaCamera::StopCapture() {
-  camera_->StopContinuousImageAcquisition();
-}
+void VimbaCamera::StopCapture() { camera_->StopContinuousImageAcquisition(); }
 void VimbaCamera::StartCapture() {
   const int BUFFER_SIZE = 10;
-  camera_->StartContinuousImageAcquisition(BUFFER_SIZE,
-                                           VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
+  camera_->StartContinuousImageAcquisition(
+      BUFFER_SIZE,
+      VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
 
   // White balance auto
   VmbAPI::FeaturePtr pFeature;
@@ -401,4 +408,3 @@ void VimbaCamera::StartCapture() {
     CHECK_VIMBA(pFeature->SetValue("Continuous"));
   }
 }
-

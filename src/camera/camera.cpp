@@ -49,8 +49,10 @@ string Camera::GetCameraInfo() {
   std::ostringstream ss;
   ss << "name: " << GetName() << "\n";
   ss << "record time: " << GetCurrentTimeString("%Y%m%d-%H%M%S") << "\n";
-  ss << "image size: " << GetImageSize().width << "x" << GetImageSize().height << "\n";
-  ss << "pixel format: " << GetCameraPixelFormatString(GetPixelFormat()) << "\n";
+  ss << "image size: " << GetImageSize().width << "x" << GetImageSize().height
+     << "\n";
+  ss << "pixel format: " << GetCameraPixelFormatString(GetPixelFormat())
+     << "\n";
   ss << "exposure: " << GetExposure() << "\n";
   ss << "gain: " << GetGain() << "\n";
   return ss.str();

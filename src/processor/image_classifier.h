@@ -11,8 +11,8 @@
 
 class ImageClassifier : public Processor {
  public:
-  ImageClassifier(const ModelDesc &model_desc,
-                  Shape input_shape, size_t batch_size);
+  ImageClassifier(const ModelDesc &model_desc, Shape input_shape,
+                  size_t batch_size);
   virtual ProcessorType GetType() override;
   void SetInputStream(int src_id, StreamPtr stream);
 

@@ -92,8 +92,6 @@ inline bool StringContains(const string &str, const string &substr) {
  * @param str The string to be converted.
  * @return The converted integer.
  */
-inline int StringToInt(const string &str) {
-  return atoi(str.c_str());
-}
+inline int StringToInt(const string &str) { return atoi(str.c_str()); }
 
 #endif  // STREAMER_STRINGUTILS_H

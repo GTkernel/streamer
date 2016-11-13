@@ -17,8 +17,7 @@
  */
 class GstVideoEncoder : public Processor {
  public:
-  GstVideoEncoder(int width, int height,
-                  const string &output_filename);
+  GstVideoEncoder(int width, int height, const string &output_filename);
   GstVideoEncoder(int width, int height, int port);
 
   /**

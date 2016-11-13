@@ -64,11 +64,13 @@ CameraManager::CameraManager() {
 #ifdef USE_VIMBA
       camera.reset(new VimbaCamera(name, video_uri, width, height));
 #else
-      LOG(WARNING) << "Not built with AlliedVision Vimba SDK, camera: " << name << " is not loaded";
+      LOG(WARNING) << "Not built with AlliedVision Vimba SDK, camera: " << name
+                   << " is not loaded";
       continue;
 #endif
     } else {
-      LOG(WARNING) << "Unknown video protocol: " << video_protocol << ". Ignored";
+      LOG(WARNING) << "Unknown video protocol: " << video_protocol
+                   << ". Ignored";
       continue;
     }
 

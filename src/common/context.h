@@ -179,7 +179,8 @@ class Context {
     }
 
     // Bind the publisher socket
-    zmq_publisher_addr_ = "tcp://127.0.0.1:" + std::to_string(GetInt(PUBLISHER_PORT));
+    zmq_publisher_addr_ =
+        "tcp://127.0.0.1:" + std::to_string(GetInt(PUBLISHER_PORT));
     LOG(INFO) << zmq_publisher_addr_;
     zmq_publisher_.bind(zmq_publisher_addr_);
   }

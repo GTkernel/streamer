@@ -51,5 +51,7 @@ void GSTCamera::SetWBBlue(float wb_blue) {}
 float GSTCamera::GetWBBlue() { return 0; }
 CameraModeType GSTCamera::GetMode() { return CAMERA_MODE_INVALID; }
 void GSTCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {}
-CameraPixelFormatType GSTCamera::GetPixelFormat() { return CAMERA_PIXEL_FORMAT_INVALID; }
+CameraPixelFormatType GSTCamera::GetPixelFormat() {
+  return CAMERA_PIXEL_FORMAT_INVALID;
+}
 void GSTCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {}

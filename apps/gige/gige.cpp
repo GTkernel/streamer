@@ -38,7 +38,7 @@ void AddText(cv::Mat &img, const string &text, int nrow) {
 
   CHECK(nrow < MAX_LINE);
 
-  cv::Point text_point(START_X, START_Y + (int) (TEXT_HEIGHT * nrow));
+  cv::Point text_point(START_X, START_Y + (int)(TEXT_HEIGHT * nrow));
   cv::putText(img, text, text_point, FONT_FACE, FONT_SCALE, TEXT_COLOR,
               THICKNESS, CV_AA);
 }
@@ -80,8 +80,7 @@ void CleanUp() {
 #endif
 }
 
-void Run(const string &camera_name, bool display,
-         size_t frames_per_file) {
+void Run(const string &camera_name, bool display, size_t frames_per_file) {
   StartUp();
 
   auto &camera_manager = CameraManager::GetInstance();
@@ -89,8 +88,8 @@ void Run(const string &camera_name, bool display,
 
   CHECK(camera->GetCameraType() == CAMERA_TYPE_PTGRAY ||
         camera->GetCameraType() == CAMERA_TYPE_VIMBA)
-  << "Not running with GigE camera, we support PtGray and AlliedVision "
-      "camera now";
+      << "Not running with GigE camera, we support PtGray and AlliedVision "
+         "camera now";
 
   auto camera_reader = camera->GetSink("bgr_output")->Subscribe();
 
@@ -111,7 +110,7 @@ void Run(const string &camera_name, bool display,
       int width = image.cols;
       int height = image.rows;
       int new_width = 1280;
-      int new_height = (int) ((double) new_width / width * height);
+      int new_height = (int)((double)new_width / width * height);
       cv::resize(image, image_to_show, cv::Size(new_width, new_height));
 
       AddGrayBackground(image_to_show);
@@ -130,24 +129,24 @@ void Run(const string &camera_name, bool display,
               row_idx++);
 
       AddText(image_to_show, string() + "[E] Exposure: " +
-                  std::to_string(camera->GetExposure()),
+                                 std::to_string(camera->GetExposure()),
               row_idx++);
       AddText(image_to_show, string() + "[N] Gain: " +
-                  std::to_string(camera->GetGain()) + "dB",
+                                 std::to_string(camera->GetGain()) + "dB",
               row_idx++);
       AddText(image_to_show, "--------------------", row_idx++);
       AddText(image_to_show, string() + "[S] Sharpness: " +
-                  std::to_string(camera->GetSharpness()),
+                                 std::to_string(camera->GetSharpness()),
               row_idx++);
 
       AddText(image_to_show, string() + "[V] Hue: " +
-                  std::to_string(camera->GetHue()) + " deg",
+                                 std::to_string(camera->GetHue()) + " deg",
               row_idx++);
       AddText(image_to_show, string() + "[U] Saturation: " +
-                  std::to_string(camera->GetSaturation()) + "%",
+                                 std::to_string(camera->GetSaturation()) + "%",
               row_idx++);
       AddText(image_to_show, string() + "[B] Brightness: " +
-                  std::to_string(camera->GetBrightness()) + "%",
+                                 std::to_string(camera->GetBrightness()) + "%",
               row_idx++);
       AddText(image_to_show,
               string() + "[G] Gamma: " + std::to_string(camera->GetGamma()),
@@ -155,33 +154,33 @@ void Run(const string &camera_name, bool display,
 
       AddText(image_to_show,
               string() + "[O,P] WB " + "R:" +
-                  std::to_string((int) camera->GetWBRed()) + " B:" +
-                  std::to_string((int) camera->GetWBBlue()),
+                  std::to_string((int)camera->GetWBRed()) + " B:" +
+                  std::to_string((int)camera->GetWBBlue()),
               row_idx++);
-      AddText(image_to_show,
-              string() + "[M] Color: " +
-                  (camera->GetPixelFormat() != CAMERA_PIXEL_FORMAT_MONO8 ? "YES"
-                                                                         : "MONO"),
-              row_idx++);
+      AddText(
+          image_to_show,
+          string() + "[M] Color: " +
+              (camera->GetPixelFormat() != CAMERA_PIXEL_FORMAT_MONO8 ? "YES"
+                                                                     : "MONO"),
+          row_idx++);
 
       cv::imshow("Camera", image_to_show);
 
       //// Keyboard controls
-      char k = (char) cv::waitKey(15);
+      char k = (char)cv::waitKey(15);
 
-      if (k == -1)
-        continue;
+      if (k == -1) continue;
 
       if (k == 'q') {
         break;
       } else {
-
         if (k == 'r') {
           if (file_writer->IsStarted()) file_writer->Stop();
         }
 
         if (file_writer->IsStarted()) {
-          LOG(WARNING) << "Video is recording, stop then adjust camera parameters";
+          LOG(WARNING)
+              << "Video is recording, stop then adjust camera parameters";
           continue;
         }
 
@@ -231,7 +230,8 @@ void Run(const string &camera_name, bool display,
         } else if (k == 'M') {
           camera->SetPixelFormat(CAMERA_PIXEL_FORMAT_RAW12);
         } else if (k == 'R') {
-          string output_directory = GetCurrentTimeString(camera->GetName() + "-streamer-%Y%m%d-%H%M%S");
+          string output_directory = GetCurrentTimeString(
+              camera->GetName() + "-streamer-%Y%m%d-%H%M%S");
           file_writer->SetDirectory(output_directory);
           file_writer->Start();
           WriteCameraInfo(camera, output_directory);

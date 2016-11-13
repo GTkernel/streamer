@@ -2,6 +2,7 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/6/16.
 //
 
+#include "camera/camera.h"
 #include "dummy_nn_processor.h"
 #include "image_classifier.h"
 #include "image_segmenter.h"
@@ -9,7 +10,6 @@
 #include "opencv_face_detector.h"
 #include "stream_publisher.h"
 #include "video/gst_video_encoder.h"
-#include "camera/camera.h"
 
 #ifndef STREAMER_PROCESSOR_FACTORY_H
 #define STREAMER_PROCESSOR_FACTORY_H

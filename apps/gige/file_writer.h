@@ -18,7 +18,8 @@ class FileWriter : public Processor {
   /**
    * @brief FileWriter constructor
    * @param directory Directroy to store the file.
-   * @param filename_base The basename of a file, file will be named as {frame_count / frames_per_file}.dat
+   * @param filename_base The basename of a file, file will be named as
+   * {frame_count / frames_per_file}.dat
    * @param frames_per_file Number of frames per file.
    */
   FileWriter(const string &directory, size_t frames_per_file);
