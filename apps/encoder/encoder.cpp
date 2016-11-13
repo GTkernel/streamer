@@ -27,8 +27,6 @@ void Run(const string &camera_name, string &dst_file, int port) {
     return;
   }
 
-  cv::namedWindow("encoder input");
-
   CameraManager &camera_manager = CameraManager::GetInstance();
 
   CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name

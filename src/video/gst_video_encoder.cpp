@@ -213,11 +213,15 @@ void GstVideoEncoder::Process() {
   if (!need_data_) return;
 
   // Give PTS to the buffer
-  GstBuffer *buffer = gst_buffer_new();
-  gst_buffer_append_memory(
-      buffer, gst_memory_new_wrapped(GST_MEMORY_FLAG_READONLY, image.data,
-                                     frame_size_bytes_, 0, frame_size_bytes_,
-                                     nullptr, nullptr));
+  GstMapInfo info;
+  GstBuffer *buffer =
+      gst_buffer_new_allocate(nullptr, frame_size_bytes_, nullptr);
+  gst_buffer_map(buffer, &info, GST_MAP_WRITE);
+  // Copy the image to gst buffer, should have better way such as using
+  // gst_buffer_new_wrapper_full(). TODO
+  memcpy(info.data, image.data, frame_size_bytes_);
+  gst_buffer_unmap(buffer, &info);
+
   GST_BUFFER_PTS(buffer) = timestamp_;
 
   // TODO: FPS is fixed right now
