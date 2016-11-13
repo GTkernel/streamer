@@ -4,6 +4,8 @@ from .const import API_PATH
 from .pipeline import Pipeline
 
 import subprocess
+import time
+from multiprocessing import Process
 
 
 class Video:
@@ -52,6 +54,15 @@ class Camera:
         """
         pass
 
+    def _stream_udp(self, port):
+        decoder = self._get_decoder()
+        GST_PIPELINE = \
+        """
+        gst-launch-1.0 -v udpsrc address={host} port={port} ! application/x-rtp ! rtph264depay ! {decoder} ! videoconvert ! autovideosink sync=false
+        """.format(host=config.STREAMER_SERVER_HOST, port=port, decoder=decoder)
+        print GST_PIPELINE
+        subprocess.call(GST_PIPELINE, shell=True)
+
     def preview(self, width=None, height=None):
         """
         Preview the video of the camera, the method will not return anything but display the camera directly.
@@ -59,11 +70,14 @@ class Camera:
         :param height: Height of the video. Leaving it None will use the height of the original camera stream.
         :return: Nothing
         """
+
+        # Start a pipeline in another thread
         import random
         # Get a random port
         # FIXME: this is not guaranteed to use a free port on the server, should
         # have a more robust way.
         random_port = random.randrange(10000, 30000)
+
         STREAM_VIDEO_SPL = \
         """
         camera = camera({name})
@@ -77,16 +91,9 @@ class Camera:
         if not r:
             return
 
-        GST_PIPELINE = \
-        """
-        gst-launch-1.0 -v udpsrc address={host} port={port} ! application/x-rtp ! rtph264depay ! vaapidecode ! videoconvert ! autovideosink sync=false
-        """.format(host=config.STREAMER_SERVER_HOST, port=random_port)
-        print GST_PIPELINE
-        subprocess.call(GST_PIPELINE, shell=True)
+        self._stream_udp(random_port)
 
-        print GST_PIPELINE
-
-        # pipeline.stop()
+        pipeline.stop()
 
     def record(self, duration):
         """
@@ -110,6 +117,14 @@ class Camera:
         :return: True if the configured succeeded, False otherwise. On False, an error message will be printed.
         """
         pass
+
+    def _get_decoder(self):
+        import platform
+        system = platform.system()
+        if system == "Darwin":
+            return "avdec_h264"
+        return "x264dec"
+
 
 def get_cameras():
     r = core.Core().request(API_PATH['cameras'], 'GET')

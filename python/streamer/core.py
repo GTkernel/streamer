@@ -28,6 +28,8 @@ class Core:
             r = requests.get(request_url, json=data)
         elif method == 'POST':
             r = requests.post(request_url, json=data)
+        elif method == 'DELETE':
+            r = requests.delete(request_url, json=data)
 
         # Json data
         if load_json:

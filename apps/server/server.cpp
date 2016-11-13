@@ -11,7 +11,6 @@
 #include "streamer.h"
 
 namespace po = boost::program_options;
-using njson = nlohmann::json;
 
 #define STRING_PATTERN "([a-zA-Z0-9_]+)"
 
@@ -160,12 +159,9 @@ static void SetUpEndpoints(HttpServer &server) {
 
   // DELETE /pipelines => Kill an existing pipeline by its name
   // data: name
-  server.resource["^/pipelines$"]["DELETE"] = [](HttpServerResponse response,
-                                                 HttpServerRequest request) {
-    pt::ptree doc;
-    pt::read_json(request->content, doc);
-
-    string pipeline_name = doc.get<string>("name");
+  server.resource["^/pipelines/" STRING_PATTERN "$"]["DELETE"] = [](
+      HttpServerResponse response, HttpServerRequest request) {
+    string pipeline_name = request->path_match[1];
 
     if (pipelines.count(pipeline_name) == 0) {
       Send400Response(response,

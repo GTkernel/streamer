@@ -33,7 +33,12 @@ class Pipeline:
         Stop the pipeline.
         :return:
         """
-        pass
+        r = core.Core().request(API_PATH["pipeline"], "DELETE", {"pipeline_name": self._name})
+        if r['result'] == 'success':
+            return True
+        else:
+            core.LOG.Error("Failed to stop pipeline, reason: ", r['reason'])
+            return False
 
     def processors(self):
         """

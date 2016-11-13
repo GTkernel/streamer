@@ -10,7 +10,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <json/json.hpp>
 #include <simplewebserver/server_http.hpp>
 
 #define BOOST_SPIRIT_THREADSAFE
@@ -28,6 +27,7 @@ string CameraToJson(Camera *camera, pt::ptree &root) {
   root.put("video_uri", camera->GetVideoURI());
   root.put("width", camera->GetWidth());
   root.put("height", camera->GetHeight());
+  root.put("started", camera->IsStarted());
 
 #ifdef USE_PTGRAY
   if (camera->GetCameraType() == CAMERA_TYPE_PTGRAY) {
@@ -87,18 +87,13 @@ void SendBytes(HttpServer &server, HttpServerResponse res, const char *buf,
   *res << "HTTP/1.1 200 OK" << RN << "Content-Type: " << content_type << RN
        << "Content-Length: " << total << RN2;
 
-  const size_t BYTES_PER_TRANSFER = (1 << 16);
-  size_t sent = 0;
-
-  while (sent < total) {
-    res->write(buf + sent, BYTES_PER_TRANSFER);
-    server.send(res, [](const boost::system::error_code &ec) {
-      if (ec != nullptr) {
-        LOG(ERROR) << "Can't send buffer";
-      }
-    });
-    sent += BYTES_PER_TRANSFER;
-  }
+  // TODO: Consider send in chunk
+  res->write(buf, total);
+  server.send(res, [](const boost::system::error_code &ec) {
+    if (ec != nullptr) {
+      LOG(ERROR) << "Can't send buffer";
+    }
+  });
 }
 
 void SendFile(HttpServer &server, HttpServerResponse res,
