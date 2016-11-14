@@ -88,12 +88,21 @@ class Camera:
         decoder = self._get_decoder()
         GST_PIPELINE = \
         """
-        gst-launch-1.0 -v udpsrc address={host} port={port} ! application/x-rtp ! rtph264depay ! {decoder} ! videoconvert ! autovideosink sync=false
+        gst-launch-1.0 udpsrc address={host} port={port} ! application/x-rtp ! rtph264depay ! {decoder} ! videoconvert ! autovideosink sync=false
         """.format(host=config.STREAMER_SERVER_HOST, port=port, decoder=decoder)
         print GST_PIPELINE
         subprocess.call(GST_PIPELINE, shell=True)
 
-    def preview(self, width=None, height=None):
+    def _stream_tcp(self, port):
+        decoder = self._get_decoder()
+        GST_PIPELINE = \
+        """
+        gst-launch-1.0 tcpclientsrc port={port} host={host} ! tsdemux ! h264parse ! {decoder} ! videoconvert ! autovideosink sync=false
+        """.format(host=config.STREAMER_SERVER_HOST, port=port, decoder=decoder)
+        print GST_PIPELINE
+        subprocess.call(GST_PIPELINE, shell=True)
+
+    def preview(self, width=None, height=None, tcp=True):
         """
         Preview the video of the camera, the method will not return anything but display the camera directly.
         :param width: Width of the video. Leaving it None will use the width of the original camera stream.
@@ -107,6 +116,8 @@ class Camera:
         # FIXME: this is not guaranteed to use a free port on the server, should
         # have a more robust way.
         random_port = random.randrange(10000, 30000)
+        # Fix it to 12345 for debugging with ssh tunnel
+        random_port = 12345
 
         STREAM_VIDEO_SPL = \
         """
@@ -121,7 +132,10 @@ class Camera:
         if not r:
             return
 
-        self._stream_udp(random_port)
+        if tcp:
+            self._stream_tcp(random_port)
+        else:
+            self._stream_udp(random_port)
 
         pipeline.stop()
 

@@ -18,7 +18,7 @@
 class GstVideoEncoder : public Processor {
  public:
   GstVideoEncoder(int width, int height, const string &output_filename);
-  GstVideoEncoder(int width, int height, int port);
+  GstVideoEncoder(int width, int height, int port, bool tcp = true);
 
   /**
    * @brief Set Gstreamer encoder element direclty. The caller should make sure
@@ -49,6 +49,8 @@ class GstVideoEncoder : public Processor {
   size_t frame_size_bytes_;
   string output_filename_;
   int port_;
+  // Use tcp for streaming or not (udp)
+  bool tcp_;
 
   // Gst elements
   GstBus *gst_bus_;

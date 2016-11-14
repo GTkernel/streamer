@@ -31,14 +31,11 @@ string CameraToJson(Camera *camera, pt::ptree &root) {
   root.put("height", camera->GetHeight());
   root.put("started", camera->IsStarted());
 
-#ifdef USE_PTGRAY
-  if (camera->GetCameraType() == CAMERA_TYPE_PTGRAY) {
-    auto ptgray_camera = dynamic_cast<PGRCamera *>(camera);
-    root.put("exposure", ptgray_camera->GetExposure());
-    root.put("sharpness", ptgray_camera->GetSharpness());
-    root.put("camera_mode", (int)ptgray_camera->GetMode());
+  if (camera->IsStarted()) {
+    root.put("exposure", camera->GetExposure());
+    root.put("sharpness", camera->GetSharpness());
+    root.put("camera_mode", (int)camera->GetMode());
   }
-#endif
 
   pt::write_json(ss, root);
 

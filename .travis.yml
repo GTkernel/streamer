@@ -20,6 +20,7 @@ cache:
   apt: true
   directories:
     - $HOME/installed_${TRAVIS_OS_NAME}
+    - $HOME/installed_${TRAVIS_OS_NAME}/caffe-${CAFFE_COMMIT_HASH}
 
 env:
   global:

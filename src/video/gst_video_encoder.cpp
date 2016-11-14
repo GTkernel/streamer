@@ -24,12 +24,13 @@ GstVideoEncoder::GstVideoEncoder(int width, int height,
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }
 
-GstVideoEncoder::GstVideoEncoder(int width, int height, int port)
+GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
     : Processor({"input"}, {"output"}),
       width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),
       port_(port),
+      tcp_(tcp),
       need_data_(false),
       timestamp_(0) {
   CHECK(width > 0 && height > 0) << "Width or height is invalid";
@@ -74,8 +75,12 @@ string GstVideoEncoder::BuildPipelineString() {
   }
 
   if (port_ != -1) {
-    ss << "rtph264pay config-interval=1 ! udpsink host=127.0.0.1 port=" << port_
-       << " auto-multicast=true";
+    if (tcp_) {
+      ss << "mpegtsmux ! tcpserversink port=" << port_;
+    } else {
+      ss << "rtph264pay config-interval=1 ! "
+         << "udpsink host=127.0.0.1 port=" << port_ << " auto-multicast=true";
+    }
   }
 
   DLOG(INFO) << "Encoder pipeline is " << ss.str();
