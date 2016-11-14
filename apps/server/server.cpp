@@ -112,6 +112,20 @@ static void SetUpEndpoints(HttpServer &server) {
         }
       };
 
+  // GET /cameras/:cam_name/files => List files of a camera
+  server.resource["^/cameras/" STRING_PATTERN "/files$"]["GET"] =
+      [&camera_manager](HttpServerResponse response,
+                        HttpServerRequest request) {
+        LOG(INFO) << "Received " << request->path;
+        string camera_name = request->path_match[1];
+        if (camera_manager.HasCamera(camera_name)) {
+          string camera_dir = camera_name;
+          Send200Response(response, DirectoryToJson(camera_dir));
+        } else {
+          Send400Response(response, "Camera not found: " + camera_name);
+        }
+      };
+
   // GET /cameras/:cam_name/ => Get camera information
   // TODO: this is of low priority right now
 
@@ -185,6 +199,24 @@ static void SetUpEndpoints(HttpServer &server) {
 
   // Get /pipelines/:pipeline_name/stream => Stream a pipeline
   // data: processor_name, stream_name
+
+  // POST /files/download => Download a file
+  // data: path
+  server.resource["^/download$"]["POST"] = [&server](
+      HttpServerResponse response, HttpServerRequest request) {
+    DLOG(INFO) << "Received " << request->path;
+
+    pt::ptree doc;
+    pt::read_json(request->content, doc);
+
+    string filepath = doc.get<string>("path");
+
+    if (!FileExists(filepath)) {
+      Send400Response(response, "File not exist");
+    } else {
+      SendFile(server, response, filepath, "application");
+    }
+  };
 }
 
 int main(int argc, char *argv[]) {

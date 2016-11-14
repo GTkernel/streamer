@@ -39,4 +39,18 @@ inline bool CreateDirs(const string &path) {
   return create_directories(bpath);
 }
 
+/**
+ * @brief Get the size of a file.
+ * @param path The path to the file.
+ * @return The size of the file in bytes.
+ */
+inline size_t GetFileSize(const string &path) {
+  std::ifstream ifile(path);
+  ifile.seekg(0, std::ios_base::end);
+  size_t size = (size_t)ifile.tellg();
+  ifile.close();
+
+  return size;
+}
+
 #endif  // STREAMER_FILE_UTILS_H

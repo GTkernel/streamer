@@ -21,20 +21,20 @@ class Core:
             url = (self._base_url + path).format(params)
         return url
 
-    def request(self, path, method, params=None, data=None, load_json=True):
+    def request(self, path, method, params=None, data=None, load_json=True, stream=False):
         request_url = self._build_url(path, params)
 
         if method == 'GET':
-            r = requests.get(request_url, json=data)
+            r = requests.get(request_url, json=data, stream=stream)
         elif method == 'POST':
-            r = requests.post(request_url, json=data)
+            r = requests.post(request_url, json=data, stream=stream)
         elif method == 'DELETE':
-            r = requests.delete(request_url, json=data)
+            r = requests.delete(request_url, json=data, stream=stream)
 
         # Json data
         if load_json:
             return json.loads(r.text)
         else:
             # Binary data
-            return r.content
+            return r
 

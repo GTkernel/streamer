@@ -9,20 +9,49 @@ from multiprocessing import Process
 
 
 class CameraFile:
-    def __init__(self, filename, size, created_time):
-        self.filename = filename
+    def __init__(self, path, size, created_time):
+        self.path = path
         self.size = size
         self.created_time = created_time
-        pass
 
-    def download(self, location):
+    def download(self, location=None):
         """
         Download a file from a streamer device. The method will block until the
         file is downloaded.
         :param location: Location to store the video.
-        :return:
+        :return: The path to the downloaded file.
         """
-        pass
+        r = core.Core().request(API_PATH['download'], 'POST',
+            data={'path': self.path}, stream=True, load_json=False)
+        if location == None:
+            local_filename = self.path.split("/")[-1]
+        else:
+            local_filename = location
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+
+        return local_filename
+
+    def __str__(self):
+        size = float(self.size)
+        unit = "B"
+        if size > 1024:
+            size /= 1024
+            unit = "KB"
+
+        if size > 1024:
+            size /= 1024
+            unit = "MB"
+
+        if size > 1024:
+            size /= 1024
+            unit = "GB"
+
+        size_str = "%.2f %s" % (size, unit)
+        return "[File:{self.path}]: " \
+               "{size_str}, {self.created_time}".format(self=self, size_str=size_str)
 
 class Camera:
     def __init__(self, attributes):
@@ -41,12 +70,12 @@ class Camera:
         Capture an image from the camera, and save to a file.
         :param filename: The name of the file to save the image.
         """
-        image_bytes = core.Core().request(API_PATH['capture'],
+        r = core.Core().request(API_PATH['capture'],
                                           'GET',
                                           params={'camera_name': self.name},
                                           load_json=False)
         with open(filename, "wb") as f:
-            f.write(image_bytes)
+            f.write(r.content)
 
     def stream(self):
         """
@@ -140,7 +169,14 @@ class Camera:
         Get the list of files generated from the camera.
         :return: A list of files
         """
-        
+        r = core.Core().request(API_PATH['camera_files'], 'GET',
+                params={'camera_name': self.name})
+        files = []
+        for file_json in r['files']:
+            file = CameraFile(file_json['path'], int(file_json['size']),
+                              file_json['created_at'])
+            files.append(file)
+        return files
 
     def control(self, params):
         """
