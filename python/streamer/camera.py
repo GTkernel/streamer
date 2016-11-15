@@ -148,8 +148,9 @@ class Camera:
         """
         from time import strftime, localtime
         record_time = strftime("%Y-%m-%d+%H:%M:%S", localtime())
-        filename = self.name + "/" + record_time + ".mp4"
+        filename = self.name + "/" + record_time
         if compress:
+            filename += ".mp4"
             RECORD_VIDEO_SPL = \
             """
             camera = camera({name})
@@ -158,6 +159,7 @@ class Camera:
             video_encoder[input] = camera[bgr_output]
             """.format(name=self.name, filename=filename, width=self.width, height=self.height)
         else:
+            filename += ".dat"
             RECORD_VIDEO_SPL = \
             """
             camera = camera({name})
@@ -192,13 +194,19 @@ class Camera:
             files.append(file)
         return files
 
-    def control(self, params):
+    def control(self, configs):
         """
         Control the camera parameters.
         :param params: The settings of the cameras.
         :return: True if the configured succeeded, False otherwise. On False, an error message will be printed.
         """
-        pass
+        r = core.Core().request(API_PATH['camera_control'],
+            'POST', params={'camera_name': self.name}, data=configs)
+
+        if r['result'] == 'success':
+            return True
+        else:
+            return False
 
     def _get_decoder(self):
         import platform

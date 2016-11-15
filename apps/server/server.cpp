@@ -42,20 +42,21 @@ static void SetUpEndpoints(HttpServer &server) {
     Send200Response(response, ListToJson("cameras", cameras_node));
   };
 
-  // POST /cameras/:cam_name/configure
-  server.resource["^/cameras/" STRING_PATTERN "/configure$"]["POST"] = [](
+  // POST /cameras/:cam_name/control
+  // data: key, value
+  server.resource["^/cameras/" STRING_PATTERN "/control$"]["POST"] = [](
       HttpServerResponse response, HttpServerRequest request) {
+    LOG(INFO) << "Received " << request->path;
     string camera_name = request->path_match[1];
     auto camera = CameraManager::GetInstance().GetCamera(camera_name);
 
     pt::ptree doc;
     pt::read_json(request->content, doc);
 
-    if (camera->GetCameraType() != CAMERA_TYPE_PTGRAY) {
-      LOG(WARNING) << "Non-PtGray camera control not implemented";
-      Send400Response(response, "Not implemented");
-      return;
-    }
+    std::ostringstream ss;
+    pt::write_json(ss, doc);
+
+    LOG(INFO) << ss.str();
 
     if (doc.count("width") && doc.count("height") && doc.count("video_mode")) {
       Shape shape;
@@ -86,7 +87,23 @@ static void SetUpEndpoints(HttpServer &server) {
       camera->SetExposure(exposure);
     }
 
-    Send200Response(response, "success");
+    if (doc.count("move")) {
+      string direction = doc.get<string>("move");
+      if (direction == "up") {
+        camera->MoveUp();
+      } else if (direction == "down") {
+        camera->MoveDown();
+      } else if (direction == "left") {
+        camera->MoveLeft();
+      } else if (direction == "right") {
+        camera->MoveRight();
+      } else {
+        Send400Response(response,
+                        string("Not valid move direction: ") + direction);
+      }
+    }
+
+    SendResponseSuccess(response);
   };
 
   // GET /cameras/:cam_name/capture

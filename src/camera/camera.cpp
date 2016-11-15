@@ -61,3 +61,13 @@ string Camera::GetCameraInfo() {
   ss << "gain: " << GetGain() << "\n";
   return ss.str();
 }
+
+/*****************************************************************************
+ * Pan/Tile, the implementation is ugly, but it is ok to show that we can
+ * pan/tile the camera programmably.
+ * TODO: A more general, and extendable way to unify this.
+ *****************************************************************************/
+void Camera::MoveUp() { system((tile_up_command_ + " &").c_str()); }
+void Camera::MoveDown() { system((tile_down_command_ + " &").c_str()); }
+void Camera::MoveLeft() { system((pan_left_command_ + " &").c_str()); }
+void Camera::MoveRight() { system((pan_right_command_ + " &").c_str()); }

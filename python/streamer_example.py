@@ -13,17 +13,21 @@ print "Capture image..."
 camera = cameras[0]
 camera.capture(camera.name + ".jpeg")
 
+# Control the camera, and take a picture again
+print "Pan/Tile..."
+camera.control({'pan': 'left'})
+
 # Stream the video of the camera
-print "Streaming..."
-camera.preview()
+# print "Streaming..."
+# camera.preview()
 
-# Record 10 seconds of the camera with compression
-print "Recording 10 secs..."
-camera.record(10, compress=True)
+# # Record 10 seconds of the camera with compression
+# print "Recording 10 secs..."
+# camera.record(10, compress=True)
 
-files = camera.files()
-for file in files:
-  print file
+# files = camera.files()
+# for file in files:
+#   print file
 
-# Download the file
-files[1].download()
+# # Download the file
+# files[1].download()

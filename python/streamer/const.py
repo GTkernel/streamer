@@ -6,7 +6,7 @@ API_PATH = {
     'camera': '/cameras/{camera_name}',
     'camera_files': '/cameras/{camera_name}/files',
     'capture': '/cameras/{camera_name}/capture',
-    'camera_control': 'cameras/{camera_name}/control',
+    'camera_control': '/cameras/{camera_name}/control',
     'pipelines': '/pipelines',
     'pipeline': '/pipelines/{pipeline_name}',
     'processors': '/processors',
@@ -15,4 +15,3 @@ API_PATH = {
     'stream': '/streams/{stream_id}',
     'download': '/download'
 }
-

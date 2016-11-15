@@ -37,6 +37,10 @@ CameraManager::CameraManager() {
 
     string name = camera_value.get<string>("name");
     string video_uri = camera_value.get<string>("video_uri");
+    string tile_up_command;
+    string tile_down_command;
+    string pan_left_command;
+    string pan_right_command;
 
     int width = -1;
     int height = -1;
@@ -45,6 +49,18 @@ CameraManager::CameraManager() {
     }
     if (camera_value.find("height") != nullptr) {
       height = camera_value.get<int>("height");
+    }
+    if (camera_value.find("tile_up_command") != nullptr) {
+      tile_up_command = camera_value.get<string>("tile_up_command");
+    }
+    if (camera_value.find("tile_down_command") != nullptr) {
+      tile_down_command = camera_value.get<string>("tile_down_command");
+    }
+    if (camera_value.find("pan_left_command") != nullptr) {
+      pan_left_command = camera_value.get<string>("pan_left_command");
+    }
+    if (camera_value.find("pan_right_command") != nullptr) {
+      pan_right_command = camera_value.get<string>("pan_right_command");
     }
 
     std::shared_ptr<Camera> camera;
@@ -73,6 +89,11 @@ CameraManager::CameraManager() {
                    << ". Ignored";
       continue;
     }
+
+    camera->tile_down_command_ = tile_down_command;
+    camera->tile_up_command_ = tile_up_command;
+    camera->pan_left_command_ = pan_left_command;
+    camera->pan_right_command_ = pan_right_command;
 
     cameras_.emplace(name, camera);
   }

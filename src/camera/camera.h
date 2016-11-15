@@ -9,10 +9,12 @@
 #include "processor/processor.h"
 #include "stream/stream.h"
 
+class CameraManager;
 /**
  * @brief This class represents a camera available on the device.
  */
 class Camera : public Processor {
+  friend class CameraManager;
  public:
   Camera(const string &name, const string &video_uri, int width = -1,
          int height = -1);  // Just a nonsense default value
@@ -50,6 +52,10 @@ class Camera : public Processor {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode) = 0;
   virtual CameraPixelFormatType GetPixelFormat() = 0;
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) = 0;
+  void MoveUp();
+  void MoveDown();
+  void MoveLeft();
+  void MoveRight();
 
   string GetCameraInfo();
 
@@ -63,6 +69,10 @@ class Camera : public Processor {
   string video_uri_;
   int width_;
   int height_;
+  string tile_up_command_;
+  string tile_down_command_;
+  string pan_left_command_;
+  string pan_right_command_;
   // Camera output stream
   std::shared_ptr<Stream> stream_;
 };
