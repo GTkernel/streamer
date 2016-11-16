@@ -16,6 +16,7 @@ void CaffeModel<DType>::Load() {
   int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
 
   if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    LOG(INFO) << "Use device: " << desired_device_number << "(CPU)";
     caffe::Caffe::set_mode(caffe::Caffe::CPU);
   } else {
 #ifdef USE_CUDA

@@ -10,7 +10,7 @@ GIEModel::GIEModel(const ModelDesc &model_desc, Shape input_shape,
     : Model(model_desc, input_shape, batch_size) {}
 
 void GIEModel::Load() {
-  bool use_fp16 = Context::GetContext().GetBool(USE_FP16);
+  bool use_fp16 = Context::GetContext().GetBool(USEFP16);
   if (use_fp16 && batch_size_ > 1 && batch_size_ % 2 != 0) {
     LOG(FATAL) << "GIE half precision only supports even batch size";
   }

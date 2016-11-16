@@ -4,14 +4,6 @@
 
 #include "camera_manager.h"
 #include "common/context.h"
-#include "gst_camera.h"
-
-#ifdef USE_PTGRAY
-#include "pgr_camera.h"
-#endif
-#ifdef USE_VIMBA
-#include "vimba_camera.h"
-#endif
 
 // The path to the camera config file
 static const string CAMERA_TOML_FILENAME = "cameras.toml";

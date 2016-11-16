@@ -142,9 +142,10 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   int update_overlay = 0;
   const int UPDATE_OVERLAY_INTERVAL = 10;
   string label_to_show = "XXX";
-  double fps_to_show = 0.0;
+//  double fps_to_show = 0.0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
+      double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
       auto reader = classifier_output_readers[i];
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
@@ -238,10 +239,10 @@ int main(int argc, char *argv[]) {
   if (vm.count("config_dir")) {
     Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
   }
-  int device_number = vm["device"].as<int>();
-  Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
+  int device_number = vm["device"].as<int>();
+  Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
   auto model = vm["model"].as<string>();
