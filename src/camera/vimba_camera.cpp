@@ -251,7 +251,12 @@ CameraModeType VimbaCamera::GetMode() {
   VmbAPI::FeaturePtr pFeature;
   VmbInt64_t binning;
 
-  CHECK_VIMBA(camera_->GetFeatureByName("BinningHorizontal", pFeature));
+  VmbErrorType error = camera_->GetFeatureByName("BinningHorizontal", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Feature: BinningHorizontal is not found, ignoring";
+    return CAMERA_MODE_INVALID;
+  }
+
   CHECK_VIMBA(pFeature->GetValue(binning));
 
   if (binning == 1) {

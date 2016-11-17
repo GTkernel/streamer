@@ -20,7 +20,7 @@ camera.control({'pan': 'left'})
 
 # Stream and preview the video of the camera
 print "Streaming..."
-camera.preview()
+camera.preview(640, 480)
 
 # Record 10 seconds of the camera with compression
 print "Recording 10 secs..."

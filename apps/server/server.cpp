@@ -16,6 +16,19 @@ namespace po = boost::program_options;
 
 std::unordered_map<string, PipelinePtr> pipelines;
 
+void StartUp() {
+#ifdef USE_VIMBA
+  CHECK_VIMBA(AVT::VmbAPI::VimbaSystem::GetInstance().Startup());
+#endif
+}
+
+void CleanUp() {
+#ifdef USE_VIMBA
+  auto res = AVT::VmbAPI::VimbaSystem::GetInstance().Shutdown();
+  CHECK(res == VmbErrorSuccess) << "Can't shut down Vimba system";
+#endif
+}
+
 static void SetUpEndpoints(HttpServer &server) {
   auto &camera_manager = CameraManager::GetInstance();
 
@@ -72,6 +85,7 @@ static void SetUpEndpoints(HttpServer &server) {
       } else {
         string warning_message = mode_str + "is not a supported mode";
         LOG(WARNING) << warning_message;
+        Send400Response(response, warning_message);
         return;
       }
       camera->SetImageSizeAndMode(shape, mode);
@@ -85,6 +99,11 @@ static void SetUpEndpoints(HttpServer &server) {
     if (doc.count("exposure")) {
       float exposure = doc.get<float>("exposure");
       camera->SetExposure(exposure);
+    }
+
+    if (doc.count("gain")) {
+      float gain = doc.get<float>("gain");
+      camera->SetGain(gain);
     }
 
     if (doc.count("move")) {
@@ -276,10 +295,14 @@ int main(int argc, char *argv[]) {
 
   SetUpEndpoints(server);
 
+  // Init
+  StartUp();
   // Start the server thread
   std::thread server_thread([&server]() { server.start(); });
 
   STREAMER_SLEEP(1000);
   LOG(INFO) << "Streamer server started at " << server_port;
   server_thread.join();
+
+  CleanUp();
 }

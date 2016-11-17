@@ -61,6 +61,7 @@ string ListToJson(const string &list_name,
 
 string DirectoryToJson(const string &dir_path) {
   pt::ptree root;
+
   std::ostringstream ss;
 
   pt::ptree files_node;
