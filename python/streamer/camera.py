@@ -55,6 +55,9 @@ class CameraFile:
            "{size_str}, {self.created_time}".format(
                self=self, size_str=size_str)
 
+  def __repr__(self):
+    return self.__str__()
+
 
 class Camera:
 
@@ -69,6 +72,9 @@ class Camera:
     return "[Camera:{self.name}]: " \
            "{self.width}x{self.height}, {self.video_uri}, {self.started}".format(
                self=self)
+
+  def __repr__(self):
+    return self.__str__()
 
   def capture(self, filename="img.jpeg"):
     """
@@ -107,7 +113,7 @@ class Camera:
     print GST_PIPELINE
     subprocess.call(GST_PIPELINE, shell=True)
 
-  def preview(self, width, height, tcp=True):
+  def preview(self, width, height, tcp=True, port=None):
     """
     Preview the video of the camera, the method will not return anything but display the camera directly.
     :param width: Width of the video. Leaving it None will use the width of the original camera stream.
@@ -120,9 +126,12 @@ class Camera:
     # Get a random port
     # FIXME: this is not guaranteed to use a free port on the server, should
     # have a more robust way.
-    random_port = random.randrange(10000, 30000)
-    # Fix it to 12345 for debugging with ssh tunnel
-    random_port = 12345
+    if port == None:
+      random_port = random.randrange(10000, 30000)
+      # Fix it to 12345 for debugging with ssh tunnel
+      random_port = 12345
+    else:
+      random_port = port
 
     STREAM_VIDEO_SPL = \
         """

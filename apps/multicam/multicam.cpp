@@ -118,7 +118,9 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   }
 
   for (auto camera : cameras) {
-    camera->Start();
+    if (!camera->IsStarted()) {
+      camera->Start();
+    }
   }
 
   for (auto transformer : transformers) {
@@ -141,8 +143,8 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   int update_overlay = 0;
   const int UPDATE_OVERLAY_INTERVAL = 10;
-  string label_to_show = "XXX";
-//  double fps_to_show = 0.0;
+  std::vector<string> label_to_show(camera_names.size());
+  //  double fps_to_show = 0.0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
       double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
@@ -152,7 +154,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
         cv::Mat img = md_frame->GetOriginalImage();
         string label = md_frame->GetTags()[0];
         if (update_overlay == 1) {
-          label_to_show = label;
+          label_to_show[i] = label;
           fps_to_show = classifier->GetAvgFps();
         }
 
@@ -162,9 +164,9 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
         cv::Scalar outline_color(0, 0, 0);
         cv::Scalar label_color(200, 200, 250);
 
-        cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+        cv::putText(img, label_to_show[i], label_point, CV_FONT_HERSHEY_DUPLEX,
                     font_size, outline_color, 8, CV_AA);
-        cv::putText(img, label_to_show, label_point, CV_FONT_HERSHEY_DUPLEX,
+        cv::putText(img, label_to_show[i], label_point, CV_FONT_HERSHEY_DUPLEX,
                     font_size, label_color, 2, CV_AA);
 
         cv::Point fps_point(img.rows / 3, img.cols / 6);
