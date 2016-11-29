@@ -62,6 +62,8 @@ class Pipeline;
 typedef std::shared_ptr<Pipeline> PipelinePtr;
 class Frame;
 typedef std::shared_ptr<Frame> FramePtr;
+class Processor;
+typedef std::shared_ptr<Processor> ProcessorPtr;
 
 typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 
