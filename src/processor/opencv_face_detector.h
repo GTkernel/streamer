@@ -5,6 +5,8 @@
 #ifndef STREAMER_OPENCV_FACE_DETECTOR_H
 #define STREAMER_OPENCV_FACE_DETECTOR_H
 
+using namespace std;
+
 #include <opencv2/gpu/gpu.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include "common/common.h"
