@@ -129,6 +129,7 @@ enum FrameType {
 enum ProcessorType {
   PROCESSOR_TYPE_INVALID = 0,
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
+  PROCESSOR_TYPE_OBJECT_DETECTOR,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
   PROCESSOR_TYPE_DUMMY_NN,
@@ -145,6 +146,8 @@ enum ProcessorType {
 inline ProcessorType GetProcessorTypeByString(const std::string &str) {
   if (str == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
+  } else if (str == "ObjectDetector") {
+    return PROCESSOR_TYPE_OBJECT_DETECTOR;
   } else if (str == "ImageTransformer") {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
   } else if (str == "OpenCVFaceDetector") {

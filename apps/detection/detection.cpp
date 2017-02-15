@@ -1,10 +1,3 @@
-/**
- * @brief multicam.cpp - An example showing the usage to run realtime
- * classification on multiple camera streams. This example reads frames from
- * multiple cameras, overlays labels with each camera input, filter
- * `unimportant' videos and store the video and classification results locally.
- */
-
 #include <boost/program_options.hpp>
 #include <csignal>
 #include "streamer.h"
@@ -16,8 +9,8 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
-std::shared_ptr<ImageClassifier> classifier;
-std::vector<StreamReader *> classifier_output_readers;
+std::shared_ptr<ObjectDetector> detector;
+std::vector<StreamReader *> detector_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
@@ -25,11 +18,11 @@ void CleanUp() {
     if (encoder->IsStarted()) encoder->Stop();
   }
 
-  for (auto reader : classifier_output_readers) {
+  for (auto reader : detector_output_readers) {
     reader->UnSubscribe();
   }
 
-  if (classifier != nullptr && classifier->IsStarted()) classifier->Stop();
+  if (detector != nullptr && detector->IsStarted()) detector->Stop();
 
   for (auto transformer : transformers) {
     if (transformer->IsStarted()) transformer->Stop();
@@ -91,19 +84,19 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     input_streams.push_back(transform_processor->GetSink("output"));
   }
 
-  // classifier
+  // detector
   auto model_desc = model_manager.GetModelDesc(model_name);
-  classifier.reset(
-      new ImageClassifier(model_desc, input_shape, input_streams.size()));
+  detector.reset(
+      new ObjectDetector(model_desc, input_shape, input_streams.size()));
 
   for (size_t i = 0; i < input_streams.size(); i++) {
-    classifier->SetInputStream(i, input_streams[i]);
+    detector->SetInputStream(i, input_streams[i]);
   }
 
-  // classifier readers
+  // detector readers
   for (size_t i = 0; i < input_streams.size(); i++) {
-    auto classifier_output = classifier->GetSink("output" + std::to_string(i));
-    classifier_output_readers.push_back(classifier_output->Subscribe());
+    auto detector_output = detector->GetSink("output" + std::to_string(i));
+    detector_output_readers.push_back(detector_output->Subscribe());
   }
 
   // encoders, encode each camera stream
@@ -113,7 +106,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
         cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
     encoder->SetSource("input",
-                       classifier->GetSink("output" + std::to_string(i)));
+                       detector->GetSink("output" + std::to_string(i)));
     encoders.push_back(encoder);
   }
 
@@ -127,7 +120,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     transformer->Start();
   }
 
-  classifier->Start();
+  detector->Start();
 
   for (auto encoder : encoders) {
     encoder->Start();
@@ -147,15 +140,15 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   //  double fps_to_show = 0.0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
-      double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
-      auto reader = classifier_output_readers[i];
+      double fps_to_show = (1000.0 / detector->GetSlidingLatencyMs());
+      auto reader = detector_output_readers[i];
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat img = md_frame->GetOriginalImage();
         string label = md_frame->GetTags()[0];
         if (update_overlay == 1) {
           label_to_show[i] = label;
-          fps_to_show = classifier->GetAvgFps();
+          fps_to_show = detector->GetAvgFps();
         }
 
         // Overlay FPS label and classification label

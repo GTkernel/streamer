@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
   CameraManager &camera_manager = CameraManager::GetInstance();
   ModelManager &model_manager = ModelManager::GetInstance();
 
-  if (argc != 5) {
+  if (argc != 4) {
     std::cout << argv[0] << " - Image segmentation example\n";
     std::cout << "Usage:\n"
               << " CAMERA\n"
@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
   // Do video stream classification
   LOG(INFO) << "Do video stream segmentation on " + camera_name;
   if (display) {
-    cv::namedWindow("camera");
-    cv::namedWindow("Result");
+    cv::namedWindow("Camera", cv::WINDOW_NORMAL);
+    cv::namedWindow("Result", cv::WINDOW_NORMAL);
   }
 
   // Processor
