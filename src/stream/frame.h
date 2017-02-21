@@ -41,6 +41,9 @@ class MetadataFrame : public Frame {
   MetadataFrame() = delete;
   MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
+  MetadataFrame(std::vector<string> tags,
+                std::vector<Rect> bboxes,
+                cv::Mat original_image = cv::Mat());
   std::vector<string> GetTags();
   std::vector<Rect> GetBboxes();
   virtual FrameType GetType() override;

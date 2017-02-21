@@ -73,6 +73,10 @@ ModelManager::ModelManager() {
     if (label_file_value != nullptr) {
       model_desc.SetLabelFilePath(label_file_value->as<string>());
     }
+    auto voc_config_value = model_value.find("voc_config");
+    if (voc_config_value != nullptr) {
+      model_desc.SetVocConfigPath(voc_config_value->as<string>());
+    }
 
     model_descs_.emplace(name, model_desc);
   }

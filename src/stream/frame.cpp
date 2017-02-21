@@ -31,6 +31,8 @@ MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image)
     : Frame(FRAME_TYPE_IMAGE, original_image), tags_(tags) {}
 MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
     : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {}
+MetadataFrame::MetadataFrame(std::vector<string> tags, std::vector<Rect> bboxes, cv::Mat original_image)
+    : Frame(FRAME_TYPE_MD, original_image), tags_(tags), bboxes_(bboxes) {}
 
 std::vector<string> MetadataFrame::GetTags() { return tags_; }
 std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }

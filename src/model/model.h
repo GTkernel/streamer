@@ -37,6 +37,10 @@ class ModelDesc {
     label_file_path_ = file_path;
   }
   const string &GetLabelFilePath() const { return label_file_path_; }
+  void SetVocConfigPath(const string &file_path) {
+    voc_config_path_ = file_path;
+  }
+  const string& GetVocConfigPath() const { return voc_config_path_; }
 
  private:
   string name_;
@@ -47,6 +51,7 @@ class ModelDesc {
   int input_height_;
   // Optional attributes
   string label_file_path_;
+  string voc_config_path_;
 };
 
 /**

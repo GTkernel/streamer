@@ -68,10 +68,12 @@ void ImageTransformer::Process() {
   // Normalize
   if (subtract_mean_) {
     cv::subtract(sample_float_, mean_image_, sample_normalized_);
+    PushFrame("output",
+          new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
+  } else {
+    PushFrame("output",
+          new ImageFrame(sample_float_, frame->GetOriginalImage()));
   }
-
-  PushFrame("output",
-            new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
 }
 
 bool ImageTransformer::Init() { return true; }

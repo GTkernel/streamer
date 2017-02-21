@@ -42,15 +42,15 @@ void SignalHandler(int signal) {
 
 void Run(const std::vector<string> &camera_names, const string &model_name,
          bool display) {
-  cout << "Run multicam demo" << endl;
+  cout << "Run detection demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
   int batch_size = camera_names.size();
   CameraManager &camera_manager = CameraManager::GetInstance();
   ModelManager &model_manager = ModelManager::GetInstance();
-
-  // Check options
+  
+// Check options
   CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
                                             << " does not exist";
   for (auto camera_name : camera_names) {
@@ -72,7 +72,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     camera_streams.push_back(camera_stream);
   }
 
-  Shape input_shape(3, 227, 227);
+  Shape input_shape(3, 224, 224);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
@@ -134,9 +134,6 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     }
   }
 
-  int update_overlay = 0;
-  const int UPDATE_OVERLAY_INTERVAL = 10;
-  std::vector<string> label_to_show(camera_names.size());
   //  double fps_to_show = 0.0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
@@ -144,34 +141,18 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
       auto reader = detector_output_readers[i];
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
-        cv::Mat img = md_frame->GetOriginalImage();
-        string label = md_frame->GetTags()[0];
-        if (update_overlay == 1) {
-          label_to_show[i] = label;
-          fps_to_show = detector->GetAvgFps();
+        cv::Mat image = md_frame->GetOriginalImage();
+        auto tags = md_frame->GetTags();
+        auto results = md_frame->GetBboxes();
+        cv::Scalar box_color(255, 0, 0);
+        for (size_t i = 0; i < results.size(); ++i) {
+          cv::Rect rect(results[i].px, results[i].py, results[i].width, results[i].height);
+          cv::rectangle(image, rect, box_color, 2);
+          cv::putText(image, tags[i] , cv::Point(results[i].px,results[i].py-18) , 0 , 0.6 , cv::Scalar(0,255,0) );
         }
-
-        // Overlay FPS label and classification label
-        double font_size = 0.8 * img.size[0] / 320.0;
-        cv::Point label_point(img.rows / 6, img.cols / 3);
-        cv::Scalar outline_color(0, 0, 0);
-        cv::Scalar label_color(200, 200, 250);
-
-        cv::putText(img, label_to_show[i], label_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, outline_color, 8, CV_AA);
-        cv::putText(img, label_to_show[i], label_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, label_color, 2, CV_AA);
-
-        cv::Point fps_point(img.rows / 3, img.cols / 6);
-
-        char fps_string[256];
-        sprintf(fps_string, "%.2lffps", fps_to_show);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, outline_color, 8, CV_AA);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, label_color, 2, CV_AA);
-
-        cv::imshow(camera_names[i], img);
+        if (display) {
+          cv::imshow(camera_names[i], image);
+        }
       }
     }
 
@@ -179,8 +160,6 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
       int q = cv::waitKey(10);
       if (q == 'q') break;
     }
-
-    update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
   }
 
   LOG(INFO) << "Done";
