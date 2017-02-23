@@ -97,8 +97,8 @@ void ObjectDetector::Process() {
     auto image_frame = GetFrame<ImageFrame>(GET_SOURCE_NAME(i));
     cv::Mat img = image_frame->GetImage();
     CHECK(img.channels() == input_shape_.channel &&
-            img.size[0] == input_shape_.width &&
-            img.size[1] == input_shape_.height);
+            img.size[1] == input_shape_.width &&
+            img.size[0] == input_shape_.height);
     detector_->predict(img, results);
     LOG(INFO) << "There are " << results.size() << " objects in picture.";
     for (size_t obj = 0; obj < results.size(); obj++) {
@@ -117,13 +117,13 @@ void ObjectDetector::Process() {
     CHECK(!original_img.empty());
     std::vector<string> tags;
     std::vector<Rect> bboxes;
-    float factor = (float)original_img.size[0]/(float)img.size[0];
-    float factor1 = ((float)original_img.size[1]-(float)original_img.size[0])/2.0;
+    float scale_factor[] = { (float)original_img.size[1]/(float)img.size[1],
+                             (float)original_img.size[0]/(float)img.size[0] };
     for (const auto& m: filtered_res) {
       std::ostringstream text;
       text << caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(), m.id) << "  :  " << m.confidence;
       tags.push_back(text.str());
-      bboxes.push_back(Rect((int)((m[0]*factor)+factor1), (int)(m[1]*factor), (int)((m[2]-m[0])*factor), (int)((m[3]-m[1])*factor)));
+      bboxes.push_back(Rect((int)(m[0]*scale_factor[0]), (int)(m[1]*scale_factor[1]), (int)((m[2]-m[0])*scale_factor[0]), (int)((m[3]-m[1])*scale_factor[1])));
     }
     PushFrame(GET_SINK_NAME(i), new MetadataFrame(tags, bboxes, original_img));
   }

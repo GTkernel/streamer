@@ -68,8 +68,8 @@ void ImageClassifier::Process() {
     image_frames.push_back(image_frame);
     cv::Mat img = image_frame->GetImage();
     CHECK(img.channels() == input_shape_.channel &&
-          img.size[0] == input_shape_.width &&
-          img.size[1] == input_shape_.height);
+          img.size[1] == input_shape_.width &&
+          img.size[0] == input_shape_.height);
     std::vector<cv::Mat> output_channels;
     for (int j = 0; j < input_shape_.channel; j++) {
       cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);

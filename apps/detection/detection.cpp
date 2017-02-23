@@ -71,14 +71,13 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
-
-  Shape input_shape(3, 224, 224);
+  Shape input_shape(3, cameras[0]->GetWidth(), cameras[0]->GetHeight());
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, CROP_TYPE_CENTER, true /* subtract mean */));
+        input_shape, CROP_TYPE_INVALID, false /* subtract mean */));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -147,8 +146,8 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
         cv::Scalar box_color(255, 0, 0);
         for (size_t i = 0; i < results.size(); ++i) {
           cv::Rect rect(results[i].px, results[i].py, results[i].width, results[i].height);
-          cv::rectangle(image, rect, box_color, 2);
-          cv::putText(image, tags[i] , cv::Point(results[i].px,results[i].py-18) , 0 , 0.6 , cv::Scalar(0,255,0) );
+          cv::rectangle(image, rect, box_color, 5);
+          cv::putText(image, tags[i] , cv::Point(results[i].px,results[i].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
         }
         if (display) {
           cv::imshow(camera_names[i], image);

@@ -40,18 +40,22 @@ void ImageTransformer::Process() {
   else
     sample_image_ = img;
 
-  // Crop according to scale
-  int desired_width = (int)((float)width / height * img.size[1]);
-  int desired_height = (int)((float)height / width * img.size[0]);
-  int new_width = img.size[0], new_height = img.size[1];
-  if (desired_width < img.size[0]) {
-    new_width = desired_width;
+  if (crop_type_ == CROP_TYPE_CENTER) {
+    // Crop according to scale
+    int desired_width = (int)((float)width / height * img.size[1]);
+    int desired_height = (int)((float)height / width * img.size[0]);
+    int new_width = img.size[0], new_height = img.size[1];
+    if (desired_width < img.size[0]) {
+      new_width = desired_width;
+    } else {
+      new_height = desired_height;
+    }
+    cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2,
+                 new_width, new_height);
+    sample_cropped_ = sample_image_(roi);
   } else {
-    new_height = desired_height;
+    sample_cropped_ = sample_image_;
   }
-  cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2,
-               new_width, new_height);
-  sample_cropped_ = sample_image_(roi);
 
   // Resize
   if (sample_cropped_.size() != input_geometry)
