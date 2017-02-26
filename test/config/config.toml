@@ -3,7 +3,7 @@
 [decoder]
 h264_decoder_gst_element = 'invalid'
 # h264_decoder_gst_element = 'avdec_h264' # Mac
-# h264_encoder_gst_element = 'avdec_h264' # Ubuntu
+# h264_decoder_gst_element = 'avdec_h264' # Ubuntu
 # h264_decoder_gst_element = 'omxh264dec' # Tegra
 
 [encoder]
