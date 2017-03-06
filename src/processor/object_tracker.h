@@ -3,7 +3,6 @@
 
 #include "cv.h"
 #include "common/common.h"
-#include "model/model.h"
 #include "processor.h"
 
 class ObjectTracker : public Processor {

@@ -1,7 +1,5 @@
 #include "common/context.h"
 #include "object_tracker.h"
-#include "model/model_manager.h"
-#include "caffe/FRCNN/util/frcnn_vis.hpp"
 
 ObjectTracker::ObjectTracker(size_t rem_size)
     : Processor({"input"}, {"output"}),
@@ -18,13 +16,11 @@ bool ObjectTracker::OnStop() {
 }
 
 void ObjectTracker::Process() {
-  Timer timer;
-  timer.Start();
-
   auto md_frame = GetFrame<MetadataFrame>("input");
   cv::Mat image = md_frame->GetOriginalImage();
   auto tags = md_frame->GetTags();
   auto boxes = md_frame->GetBboxes();
+  CHECK(tags.size() == boxes.size());
   cv::Scalar box_color(255, 0, 0);
   for (size_t i = 0; i < boxes.size(); ++i) {
     cv::Rect rect(boxes[i].px, boxes[i].py, boxes[i].width, boxes[i].height);
@@ -42,9 +38,9 @@ void ObjectTracker::Process() {
     tags_name_points[tags_name].push_back(point);
   }
 
-  //typedef std::map<std::string, std::vector<cv::Point>> TagsNamePointsMapType;
   if (first_frame_) {
     rem_list_.push_back(tags_name_points);
+    first_frame_ = false;
   } else {
     if (rem_list_.size() >= rem_size_) {
       rem_list_.pop_front();
@@ -69,8 +65,6 @@ void ObjectTracker::Process() {
   }
   
   PushFrame("output", new ImageFrame(image, md_frame->GetOriginalImage()));
-
-  LOG(INFO) << "Object Track took " << timer.ElapsedMSec() << " ms";
 }
 
 ProcessorType ObjectTracker::GetType() {
