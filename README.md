@@ -1,7 +1,7 @@
 ## streamer
 
 [![GitHub license](https://img.shields.io/badge/license-apache-green.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Build Status](https://travis-ci.com/ranxian/streamer.svg?token=QaYrj2g7p1xx7VjDqDzv&branch=master)](https://travis-ci.com/ranxian/streamer)
+[![Build Status](https://travis-ci.com/viscloud/streamer.svg?token=Khh4txHVr3EZjYCRAdze&branch=master)](https://travis-ci.com/viscloud/streamer)
 
 Streamer is a system built for real-time video ingestion and analytics of live camera streams, with a special focus on running state-of-the-art deep learning based vision algorithms. The goal of streamer is twofold:
 
