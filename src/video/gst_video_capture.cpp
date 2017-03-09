@@ -206,6 +206,11 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
     LOG(WARNING) << "Directly use gst pipeline as video pipeline";
     video_pipeline = video_path;
     LOG(INFO) << video_pipeline;
+  } else if (video_protocol == "file") {
+    LOG(WARNING) << "Reading H.264-encoded data from file using GStreamer";
+    video_pipeline = "filesrc location=\"" + video_path + "\"" +
+                     " ! qtdemux ! h264parse ! " + decoder_element_;
+    LOG(INFO) << video_pipeline;
   } else {
     LOG(FATAL) << "Video uri: " << video_uri << " is not valid";
   }
