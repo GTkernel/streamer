@@ -79,7 +79,8 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     camera_streams.push_back(camera_stream);
   }
 
-  Shape input_shape(3, 227, 227);
+  auto model_desc = model_manager.GetModelDesc(model_name);
+  Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
@@ -92,7 +93,6 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   }
 
   // classifier
-  auto model_desc = model_manager.GetModelDesc(model_name);
   classifier.reset(
       new ImageClassifier(model_desc, input_shape, input_streams.size()));
 
