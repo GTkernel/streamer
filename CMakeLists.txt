@@ -89,6 +89,12 @@ if (USE_CAFFE)
   message("Build with Caffe")
 endif ()
 
+option(USE_FRCNN "Build with Caffe Faster Rcnn" ON)
+if (USE_FRCNN)
+  add_definitions("-D USE_FRCNN")
+  message("Build with Caffe Faster Rcnn")
+endif ()
+
 option(USE_GIE "Build with GIE or not. GIE could not be used together with Caffe for now." OFF)
 if (USE_GIE)
   if (USE_CAFFE)

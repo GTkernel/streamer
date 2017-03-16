@@ -12,6 +12,7 @@ file(GLOB_RECURSE MXNET_SOURCE_FILES ${SRC_ROOT}/mxnet_*.cpp ${SRC_ROOT}/mxnet_*
 file(GLOB_RECURSE GIE_SOURCE_FILES ${SRC_ROOT}/gie_*.cpp ${SRC_ROOT}/gie_*.h)
 file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/camera/pgr_*.h)
 file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/camera/vimba_*.h)
+file(GLOB_RECURSE FRCNN_SOURCE_FILES ${SRC_ROOT}/processor/object_detector.cpp ${SRC_ROOT}/processor/object_detector.h)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${CAFFE_SOURCE_FILES}
   ${CAFFE_FP16_SOURCE_FILES}
@@ -19,7 +20,8 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${MXNET_SOURCE_FILES}
   ${GIE_SOURCE_FILES}
   ${PTGRAY_SOURCE_FILES}
-  ${VIMBA_SOURCE_FILES})
+  ${VIMBA_SOURCE_FILES}
+  ${FRCNN_SOURCE_FILES})
 
 # Pick libraries
 set(STREAMER_LIBRARIES
@@ -93,6 +95,11 @@ if (USE_VIMBA)
   message("Use Vimba")
   list(APPEND STREAMER_SOURCE_FILES ${VIMBA_SOURCE_FILES})
   list(APPEND STREAMER_LIBRARIES ${Vimba_LIBRARIES})
+endif ()
+
+# Build with FRCNN libraries
+if (USE_FRCNN)
+  list(APPEND STREAMER_SOURCE_FILES ${FRCNN_SOURCE_FILES})
 endif ()
 
 message(${STREAMER_LIBRARIES})

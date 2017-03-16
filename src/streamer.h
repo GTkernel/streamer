@@ -6,7 +6,9 @@
 #include "pipeline/spl_parser.h"
 #include "processor/dummy_nn_processor.h"
 #include "processor/image_classifier.h"
+#ifdef USE_FRCNN
 #include "processor/object_detector.h"
+#endif
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
 #include "processor/opencv_face_detector.h"
