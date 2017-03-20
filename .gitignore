@@ -149,3 +149,4 @@ ENV/
 sftp-config.json
 /config/*.toml
 /python/streamer.cfg
+*~
