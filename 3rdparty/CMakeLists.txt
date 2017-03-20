@@ -4,3 +4,6 @@ endif ()
 
 # linenoise
 add_library(linenoise linenoise/linenoise.c linenoise/linenoise.h)
+
+# json
+add_subdirectory(json)
