@@ -14,6 +14,7 @@
 #include "processor/opencv_face_detector.h"
 #include "processor/opencv_people_detector.h"
 #include "processor/object_tracker.h"
+#include "processor/caffe_mtcnn.h"
 #include "processor/processor.h"
 #include "processor/processor_factory.h"
 #include "utils/utils.h"

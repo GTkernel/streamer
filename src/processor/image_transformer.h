@@ -14,7 +14,7 @@ enum CropType { CROP_TYPE_INVALID = 0, CROP_TYPE_CENTER = 1 };
 class ImageTransformer : public Processor {
  public:
   ImageTransformer(const Shape &target_shape, CropType crop_type,
-                   bool subtract_mean = true);
+                   bool subtract_mean = true, bool convert = true);
   virtual ProcessorType GetType() override;
 
  protected:
@@ -27,6 +27,7 @@ class ImageTransformer : public Processor {
   cv::Mat mean_image_;
   CropType crop_type_;
   bool subtract_mean_;
+  bool convert_;
 
   // Temporary mat for image processing, reduce memory (de)allocation
   cv::Mat sample_image_;

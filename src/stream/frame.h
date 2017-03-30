@@ -7,6 +7,8 @@
 
 #include "common/common.h"
 #include "frame.h"
+#include "cv.h"
+#include <boost/any.hpp>
 
 class Frame {
  public:
@@ -36,6 +38,27 @@ class ImageFrame : public Frame {
   Shape shape_;
 };
 
+struct FaceRect {
+  float x1;
+  float y1;
+  float x2;
+  float y2;
+  float score; /**< Larger score should mean higher confidence. */
+};
+
+struct FacePts {
+  float x[5],y[5];
+};
+
+struct FaceInfo {
+  FaceRect bbox;
+  cv::Vec4f regression;
+  FacePts facePts;
+  double roll;
+  double pitch;
+  double yaw;
+};
+
 class MetadataFrame : public Frame {
  public:
   MetadataFrame() = delete;
@@ -44,13 +67,17 @@ class MetadataFrame : public Frame {
   MetadataFrame(std::vector<string> tags,
                 std::vector<Rect> bboxes,
                 cv::Mat original_image = cv::Mat());
+  MetadataFrame(std::vector<FaceInfo> faceInfo, cv::Mat original_image = cv::Mat())
+    : Frame(FRAME_TYPE_MD, original_image), data_(faceInfo) {}
   std::vector<string> GetTags();
   std::vector<Rect> GetBboxes();
+  std::vector<FaceInfo> GetFaceInfo() { return boost::any_cast<std::vector<FaceInfo>>(data_); }
   virtual FrameType GetType() override;
 
  private:
   std::vector<string> tags_;
   std::vector<Rect> bboxes_;
+  boost::any data_;
 };
 
 class BytesFrame : public Frame {
