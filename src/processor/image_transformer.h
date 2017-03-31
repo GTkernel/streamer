@@ -31,7 +31,6 @@ class ImageTransformer : public Processor {
 
   // Temporary mat for image processing, reduce memory (de)allocation
   cv::Mat sample_image_;
-  cv::Mat sample_resized_;
   cv::Mat sample_cropped_;
   cv::Mat sample_float_;
   cv::Mat sample_normalized_;

@@ -59,19 +59,20 @@ void ImageTransformer::Process() {
   }
 
   // Resize
+  cv::Mat sample_resized;
   if (sample_cropped_.size() != input_geometry)
-    cv::resize(sample_cropped_, sample_resized_, input_geometry);
+    cv::resize(sample_cropped_, sample_resized, input_geometry);
   else
-    sample_resized_ = sample_cropped_;
+    sample_resized = sample_cropped_;
 
   // Convert to float
   if (convert_) {
     if (num_channel == 3)
-      sample_resized_.convertTo(sample_float_, CV_32FC3);
+      sample_resized.convertTo(sample_float_, CV_32FC3);
     else
-      sample_resized_.convertTo(sample_float_, CV_32FC1);
+      sample_resized.convertTo(sample_float_, CV_32FC1);
   } else {
-    sample_float_ = sample_resized_;
+    sample_float_ = sample_resized;
   }
 
   // Normalize

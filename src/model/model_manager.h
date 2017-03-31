@@ -23,6 +23,8 @@ class ModelManager {
   std::vector<int> GetMeanColors() const;
   std::unordered_map<string, ModelDesc> GetModelDescs() const;
   ModelDesc GetModelDesc(const string &name) const;
+  std::unordered_map<string, ModelDescription> GetModelDescriptions() const;
+  ModelDescription GetModelDescription(const string &name) const;
   bool HasModel(const string &name) const;
   std::unique_ptr<Model> CreateModel(const ModelDesc &model_desc,
                                      Shape input_shape, size_t batch_size = 1);
@@ -31,6 +33,7 @@ class ModelManager {
   // Mean colors, in BGR order.
   std::vector<int> mean_colors_;
   std::unordered_map<string, ModelDesc> model_descs_;
+  std::unordered_map<string, ModelDescription> model_descriptions_;
 };
 
 #endif  // STREAMER_MODEL_CONTROLLER_H

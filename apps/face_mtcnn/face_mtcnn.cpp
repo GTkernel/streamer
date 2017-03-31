@@ -43,7 +43,7 @@ void SignalHandler(int signal) {
 }
 
 void Run(const std::vector<string> &camera_names, const string &model_name,
-         bool display) {
+         bool display, float scale, int min_size) {
   cout << "Run face mtcnn demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -73,7 +73,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
-  Shape input_shape(3, cameras[0]->GetWidth(), cameras[0]->GetHeight());
+  Shape input_shape(3, cameras[0]->GetWidth()*scale, cameras[0]->GetHeight()*scale);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
@@ -86,8 +86,9 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   }
 
   // mtcnn
+  auto model_desc = model_manager.GetModelDescription(model_name);
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> mtcnn(new CaffeMtcnn());
+    std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_desc, min_size));
     mtcnn->SetSource("input", input_streams[i]);
     mtcnns.push_back(mtcnn);
 
@@ -191,6 +192,10 @@ int main(int argc, char *argv[]) {
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
+  desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
+                     "scale factor before mtcnn");
+  desc.add_options()("min_size", po::value<int>()->default_value(40),
+                     "face minimum size");
 
   po::variables_map vm;
   try {
@@ -219,7 +224,9 @@ int main(int argc, char *argv[]) {
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
   auto model = vm["model"].as<string>();
   bool display = vm.count("display") != 0;
-  Run(camera_names, model, display);
+  float scale = vm["scale"].as<float>();
+  int min_size = vm["min_size"].as<int>();
+  Run(camera_names, model, display, scale, min_size);
 
   return 0;
 }

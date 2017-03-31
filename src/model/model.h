@@ -54,6 +54,24 @@ class ModelDesc {
   string voc_config_path_;
 };
 
+class ModelDescription {
+ public:
+  ModelDescription() {}
+  ModelDescription(const string &name, const ModelType &type, const toml::Value& value)
+      : name_(name),
+        type_(type),
+        value_(value) {}
+
+  const string &GetName() const { return name_; }
+  const ModelType &GetModelType() const { return type_; }
+  toml::Value& operator[](const std::string& key) { return value_[key]; }
+
+ private:
+  string name_;
+  ModelType type_;
+  toml::Value value_;
+};
+
 /**
  * @brief A class representing a DNN model.
  */

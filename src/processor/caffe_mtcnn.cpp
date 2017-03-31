@@ -168,37 +168,37 @@ void MTCNN::GenerateBoundingBox(Blob<float>* confidence,Blob<float>* reg,
   }
 }
 
-MTCNN::MTCNN(const std::string &proto_model_dir){
+MTCNN::MTCNN(ModelDescription& model_description){
 #ifdef CPU_ONLY
   Caffe::set_mode(Caffe::CPU);
 #else
   Caffe::set_mode(Caffe::GPU);
 #endif
   /* Load the network. */
-  PNet_.reset(new Net<float>((proto_model_dir+"/det1.prototxt"), TEST));
-  PNet_->CopyTrainedLayersFrom(proto_model_dir+"/det1.caffemodel");
+  PNet_.reset(new Net<float>(model_description["det1_prototxt"].as<std::string>(), TEST));
+  PNet_->CopyTrainedLayersFrom(model_description["det1_caffemodel"].as<std::string>());
 
   CHECK_EQ(PNet_->num_inputs(), 1) << "Network should have exactly one input.";
   CHECK_EQ(PNet_->num_outputs(),2) << "Network should have exactly two output, one"
                                      " is bbox and another is confidence.";
 
   #ifdef CPU_ONLY
-  RNet_.reset(new Net<float>((proto_model_dir+"/det2.prototxt"), TEST));
+  RNet_.reset(new Net<float>(model_description["det2_prototxt"].as<std::string>(), TEST));
   #else
-  RNet_.reset(new Net<float>((proto_model_dir+"/det2_input.prototxt"), TEST));
+  RNet_.reset(new Net<float>(model_description["det2_input_prototxt"].as<std::string>(), TEST));
   #endif
-  RNet_->CopyTrainedLayersFrom(proto_model_dir+"/det2.caffemodel");
+  RNet_->CopyTrainedLayersFrom(model_description["det2_caffemodel"].as<std::string>());
 
 //  CHECK_EQ(RNet_->num_inputs(), 0) << "Network should have exactly one input.";
 //  CHECK_EQ(RNet_->num_outputs(),3) << "Network should have exactly two output, one"
 //                                     " is bbox and another is confidence.";
 
   #ifdef CPU_ONLY
-  ONet_.reset(new Net<float>((proto_model_dir+"/det3.prototxt"), TEST));
+  ONet_.reset(new Net<float>(model_description["det3_prototxt"].as<std::string>(), TEST));
   #else
-  ONet_.reset(new Net<float>((proto_model_dir+"/det3_input.prototxt"), TEST));
+  ONet_.reset(new Net<float>(model_description["det3_input_prototxt"].as<std::string>(), TEST));
   #endif
-  ONet_->CopyTrainedLayersFrom(proto_model_dir+"/det3.caffemodel");
+  ONet_->CopyTrainedLayersFrom(model_description["det3_caffemodel"].as<std::string>());
 
 //  CHECK_EQ(ONet_->num_inputs(), 1) << "Network should have exactly one input.";
 //  CHECK_EQ(ONet_->num_outputs(),3) << "Network should have exactly three output, one"
@@ -510,28 +510,28 @@ void MTCNN::Detect(const cv::Mat& image,std::vector<FaceInfo>& faceInfo,int minS
   condidate_rects_.clear();
 }
 
-CaffeMtcnn::CaffeMtcnn()
-    : Processor({"input"}, {"output"})
+MtcnnFaceDetector::MtcnnFaceDetector(const ModelDescription& model_description, int min_size)
+    : Processor({"input"}, {"output"}),
+      model_description_(model_description),
+      minSize_(min_size)
 {
   threshold_[0] = 0.6;
   threshold_[1] = 0.7;
   threshold_[2] = 0.7;
   factor_ = 0.709;
-  minSize_ = 40;
-  proto_model_dir_ = "/home/tony/MTCNN_Caffe/examples/MTmodel";
 }
 
-bool CaffeMtcnn::Init() {
-  detector_.reset(new MTCNN(proto_model_dir_));
-  LOG(INFO) << "CaffeMtcnn initialized";
+bool MtcnnFaceDetector::Init() {
+  detector_.reset(new MTCNN(model_description_));
+  LOG(INFO) << "MtcnnFaceDetector initialized";
   return true;
 }
 
-bool CaffeMtcnn::OnStop() {
+bool MtcnnFaceDetector::OnStop() {
   return true;
 }
 
-void CaffeMtcnn::Process() {
+void MtcnnFaceDetector::Process() {
   Timer timer;
   timer.Start();
 
@@ -560,6 +560,6 @@ void CaffeMtcnn::Process() {
   LOG(INFO) << "Caffe Mtcnn took " << timer.ElapsedMSec() << " ms";
 }
 
-ProcessorType CaffeMtcnn::GetType() {
+ProcessorType MtcnnFaceDetector::GetType() {
   return PROCESSOR_TYPE_CAFFE_MTCNN;
 }

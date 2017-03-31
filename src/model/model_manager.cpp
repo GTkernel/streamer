@@ -80,6 +80,27 @@ ModelManager::ModelManager() {
 
     model_descs_.emplace(name, model_desc);
   }
+
+  // Get model descriptions
+  model_values = root_value.find("model_description")->as<toml::Array>();
+  for (auto model_value : model_values) {
+    string name = model_value.get<string>("name");
+    string type_string = model_value.get<string>("type");
+    ModelType type = MODEL_TYPE_INVALID;
+    if (type_string == "caffe") {
+      type = MODEL_TYPE_CAFFE;
+    } else if (type_string == "mxnet") {
+      type = MODEL_TYPE_MXNET;
+    } else if (type_string == "gie") {
+      type = MODEL_TYPE_GIE;
+    } else if (type_string == "tensorflow") {
+      type = MODEL_TYPE_TENSORFLOW;
+    }
+    CHECK(type != MODEL_TYPE_INVALID) << "Type " << type_string
+                                      << " is not a valid mode type";
+    ModelDescription model_description(name, type, model_value);
+    model_descriptions_.emplace(name, model_description);
+  }
 }
 
 std::vector<int> ModelManager::GetMeanColors() const { return mean_colors_; }
@@ -93,8 +114,18 @@ ModelDesc ModelManager::GetModelDesc(const string &name) const {
   return itr->second;
 }
 
+std::unordered_map<string, ModelDescription> ModelManager::GetModelDescriptions() const {
+  return model_descriptions_;
+}
+ModelDescription ModelManager::GetModelDescription(const string &name) const {
+  auto itr = model_descriptions_.find(name);
+  CHECK(itr != model_descriptions_.end()) << "Model description with name " << name
+                                   << " is not present";
+  return itr->second;
+}
+
 bool ModelManager::HasModel(const string &name) const {
-  return model_descs_.count(name) != 0;
+  return (model_descs_.count(name) != 0) || (model_descriptions_.count(name) != 0);
 }
 
 std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,

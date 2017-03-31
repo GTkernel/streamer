@@ -15,6 +15,7 @@
 #include "boost/make_shared.hpp"
 
 #include "common/common.h"
+#include "model/model.h"
 #include "processor.h"
 
 using caffe::Datum;
@@ -26,7 +27,7 @@ using caffe::MemoryDataLayer;
 
 class MTCNN {
  public:
-  MTCNN(const string& proto_model_dir);
+  MTCNN(ModelDescription& model_description);
   void Detect(const cv::Mat& img, std::vector<FaceInfo> &faceInfo, int minSize, double* threshold, double factor);
 
  private:
@@ -65,9 +66,9 @@ class MTCNN {
   int num_channels_;
 };
 
-class CaffeMtcnn : public Processor {
+class MtcnnFaceDetector : public Processor {
 public:
-  CaffeMtcnn();
+  MtcnnFaceDetector(const ModelDescription& model_description, int min_size);
   virtual ProcessorType GetType() override;
 
 protected:
@@ -76,11 +77,11 @@ protected:
   virtual void Process() override;
 
 private:
+  ModelDescription model_description_;
   std::unique_ptr<MTCNN> detector_;
   double threshold_[3];
   double factor_;
   int minSize_;
-  std::string proto_model_dir_;
 };
 
 #endif  // STREAMER_CAFFE_MTCNN_H
