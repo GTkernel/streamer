@@ -169,35 +169,92 @@ void MTCNN::GenerateBoundingBox(Blob<float>* confidence,Blob<float>* reg,
 }
 
 MTCNN::MTCNN(ModelDescription& model_description){
-#ifdef CPU_ONLY
-  Caffe::set_mode(Caffe::CPU);
+  // Set Caffe backend
+  int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
+
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    LOG(INFO) << "Use device: " << desired_device_number << "(CPU)";
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+  } else {
+#ifdef USE_CUDA
+    std::vector<int> gpus;
+    GetCUDAGpus(gpus);
+
+    if (desired_device_number < gpus.size()) {
+      // Device exists
+      LOG(INFO) << "Use GPU with device ID " << desired_device_number;
+      caffe::Caffe::SetDevice(desired_device_number);
+      caffe::Caffe::set_mode(caffe::Caffe::GPU);
+    } else {
+      LOG(FATAL) << "No GPU device: " << desired_device_number;
+    }
+#elif USE_OPENCL
+    std::vector<int> gpus;
+    int count = caffe::Caffe::EnumerateDevices();
+
+    if (desired_device_number < count) {
+      // Device exists
+      LOG(INFO) << "Use GPU with device ID " << desired_device_number;
+      caffe::Caffe::SetDevice(desired_device_number);
+      caffe::Caffe::set_mode(caffe::Caffe::GPU);
+    } else {
+      LOG(FATAL) << "No GPU device: " << desired_device_number;
+    }
 #else
-  Caffe::set_mode(Caffe::GPU);
+    LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
+                  "configured rather than -1";
 #endif
+  }
+
   /* Load the network. */
+#ifdef USE_OPENCL
+  PNet_.reset(new Net<float>(model_description["det1_prototxt"].as<std::string>(), TEST,
+                                   Caffe::GetDefaultDevice()));
+#else
   PNet_.reset(new Net<float>(model_description["det1_prototxt"].as<std::string>(), TEST));
+#endif
   PNet_->CopyTrainedLayersFrom(model_description["det1_caffemodel"].as<std::string>());
 
   CHECK_EQ(PNet_->num_inputs(), 1) << "Network should have exactly one input.";
   CHECK_EQ(PNet_->num_outputs(),2) << "Network should have exactly two output, one"
                                      " is bbox and another is confidence.";
 
-  #ifdef CPU_ONLY
-  RNet_.reset(new Net<float>(model_description["det2_prototxt"].as<std::string>(), TEST));
-  #else
-  RNet_.reset(new Net<float>(model_description["det2_input_prototxt"].as<std::string>(), TEST));
-  #endif
+#ifdef USE_OPENCL
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    RNet_.reset(new Net<float>(model_description["det2_prototxt"].as<std::string>(), TEST,
+                               Caffe::GetDefaultDevice()));
+  } else {
+    RNet_.reset(new Net<float>(model_description["det2_input_prototxt"].as<std::string>(), TEST,
+                               Caffe::GetDefaultDevice()));
+  }
+#else
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    RNet_.reset(new Net<float>(model_description["det2_prototxt"].as<std::string>(), TEST));
+  } else {
+    RNet_.reset(new Net<float>(model_description["det2_input_prototxt"].as<std::string>(), TEST));
+  }
+#endif
   RNet_->CopyTrainedLayersFrom(model_description["det2_caffemodel"].as<std::string>());
 
 //  CHECK_EQ(RNet_->num_inputs(), 0) << "Network should have exactly one input.";
 //  CHECK_EQ(RNet_->num_outputs(),3) << "Network should have exactly two output, one"
 //                                     " is bbox and another is confidence.";
 
-  #ifdef CPU_ONLY
-  ONet_.reset(new Net<float>(model_description["det3_prototxt"].as<std::string>(), TEST));
-  #else
-  ONet_.reset(new Net<float>(model_description["det3_input_prototxt"].as<std::string>(), TEST));
-  #endif
+#ifdef USE_OPENCL
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    ONet_.reset(new Net<float>(model_description["det3_prototxt"].as<std::string>(), TEST,
+                               Caffe::GetDefaultDevice()));
+  } else {
+    ONet_.reset(new Net<float>(model_description["det3_input_prototxt"].as<std::string>(), TEST,
+                               Caffe::GetDefaultDevice()));
+  }
+#else
+  if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+    ONet_.reset(new Net<float>(model_description["det3_prototxt"].as<std::string>(), TEST));
+  } else {
+    ONet_.reset(new Net<float>(model_description["det3_input_prototxt"].as<std::string>(), TEST));
+  }
+#endif
   ONet_->CopyTrainedLayersFrom(model_description["det3_caffemodel"].as<std::string>());
 
 //  CHECK_EQ(ONet_->num_inputs(), 1) << "Network should have exactly one input.";

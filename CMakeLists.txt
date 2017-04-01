@@ -89,7 +89,7 @@ if (USE_CAFFE)
   message("Build with Caffe")
 endif ()
 
-option(USE_FRCNN "Build with Caffe Faster Rcnn" ON)
+option(USE_FRCNN "Build with Caffe Faster Rcnn" OFF)
 if (USE_FRCNN)
   add_definitions("-D USE_FRCNN")
   message("Build with Caffe Faster Rcnn")
