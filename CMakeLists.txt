@@ -28,6 +28,7 @@ find_package(GLIB REQUIRED gobject)
 find_package(Boost REQUIRED COMPONENTS system program_options filesystem)
 find_package(JeMalloc)
 find_package(ZMQ REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # Determine if is on Tegra
 if (EXISTS /var/libopencv4tegra-repo)
@@ -130,7 +131,8 @@ include_directories(
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
   ${GSTREAMER_APP_INCLUDE_DIRS}
-)
+  ${EIGEN3_INCLUDE_DIR}
+  )
 
 # Include cblas libraries
 if (CUDA_FOUND)
