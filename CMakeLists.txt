@@ -131,9 +131,8 @@ include_directories(
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
   ${GSTREAMER_APP_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
   )
-
-include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Include cblas libraries
 if (CUDA_FOUND)
