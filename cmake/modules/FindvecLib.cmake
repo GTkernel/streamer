@@ -12,11 +12,14 @@ endif ()
 
 set(__veclib_include_suffix "Frameworks/vecLib.framework/Versions/Current/Headers")
 
+# TODO: Replace the hardcoded OS X-specific paths with a single path that is
+#       configured automatically based on system's version of OS X.
 find_path(vecLib_INCLUDE_DIR vecLibTypes.h
         DOC "vecLib include directory"
         PATHS
         /System/Library/Frameworks/Accelerate.framework/Versions/Current/${__veclib_include_suffix}
         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers/
+        /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers/
         /System/Library/${__veclib_include_suffix})
 
 include(FindPackageHandleStandardArgs)
