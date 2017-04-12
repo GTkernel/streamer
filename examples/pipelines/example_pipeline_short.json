@@ -1,0 +1,23 @@
+{
+    "pipeline_name": "ObjectClassifier",
+    "processors": [
+	{
+	    "processor_name": "Camera",
+	    "processor_type": "Camera",
+	    "parameters": {
+		"camera_name": "GST_TEST"
+	    }
+	},
+	{
+	    "processor_name": "Writer",
+	    "processor_type": "FileWriter",
+	    "parameters": {
+		"filename": "/home/ccanel/Desktop/classifier_output"
+	    },
+            "inputs": {
+                "input": "Camera:bgr_output"
+            }
+	}
+
+    ]
+}
