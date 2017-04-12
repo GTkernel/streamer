@@ -17,6 +17,10 @@
 #include <cuda_fp16.h>
 #endif
 
+#include "json/json.hpp"
+
+#include "common/common.h"
+
 /**
  * @brief 3-D shape structure
  */
@@ -41,6 +45,35 @@ struct Shape {
  */
 struct Rect {
   Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
+
+  Rect(nlohmann::json j) {
+    try {
+      nlohmann::json rect_j = j.at("Rect");
+      px = rect_j.at("px").get<int>();
+      py = rect_j.at("py").get<int>();
+      width = rect_j.at("width").get<int>();
+      height = rect_j.at("height").get<int>();
+    } catch (std::out_of_range) {
+      LOG(FATAL) << "Malformed Rect JSON: " << j.dump();
+    }
+  }
+
+  nlohmann::json ToJson() {
+    nlohmann::json rect_j;
+    rect_j["px"] = px;
+    rect_j["py"] = py;
+    rect_j["width"] = width;
+    rect_j["height"] = height;
+    nlohmann::json j;
+    j["Rect"] = rect_j;
+    return j;
+  }
+
+  bool operator==(const Rect &rhs) const {
+    return (px == rhs.px) && (py == rhs.py) && (width == rhs.width) &&
+           (height == rhs.height);
+  }
+
   // The top left point of the rectangle
   int px;
   int py;

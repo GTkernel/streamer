@@ -5,6 +5,8 @@
 #ifndef STREAMER_FRAME_H
 #define STREAMER_FRAME_H
 
+#include "json/json.hpp"
+
 #include "common/common.h"
 #include "frame.h"
 
@@ -41,8 +43,11 @@ class MetadataFrame : public Frame {
   MetadataFrame() = delete;
   MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
+  MetadataFrame(nlohmann::json j);
   std::vector<string> GetTags();
   std::vector<Rect> GetBboxes();
+  nlohmann::json ToJson();
+
   virtual FrameType GetType() override;
 
  private:
