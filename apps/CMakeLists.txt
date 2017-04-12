@@ -29,7 +29,7 @@ set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
 SUBDIRLIST(APP_DIRS ${APPS_ROOT})
 
 if (NOT USE_FRCNN)
-  list(REMOVE_ITEM APP_DIRS detection tracker)
+  list(REMOVE_ITEM APP_DIRS detection)
 endif ()
 
 add_custom_target(apps)
