@@ -7,14 +7,19 @@
 
 #include <unordered_map>
 
+#include "json/src/json.hpp"
+
 #include "common/common.h"
+#include "pipeline/spl_parser.h"
 #include "processor/processor.h"
-#include "spl_parser.h"
+
 
 class Pipeline {
  public:
   static std::shared_ptr<Pipeline> ConstructPipeline(
-      const std::vector<SPLStatement>& spl_statements);
+      const std::vector<SPLStatement> &spl_statements);
+  static std::shared_ptr<Pipeline> ConstructPipeline(nlohmann::json json);
+
   /**
    * @brief Initialize the pipeline from spl statements
    * @param spl_statements The spl statements used to construct the pipeline

@@ -2,8 +2,15 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/5/16.
 //
 
-#include "pipeline.h"
+#include <unordered_map>
+
+#include "json/src/json.hpp"
+
+#include "common/types.h"
+#include "pipeline/pipeline.h"
+#include "pipeline/spl_parser.h"
 #include "processor/processor_factory.h"
+
 
 std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
     const std::vector<SPLStatement>& spl_statements) {
@@ -47,14 +54,75 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
   return pipeline;
 }
 
+
+std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(nlohmann::json json) {
+  nlohmann::json processors = json["processors"];
+  std::cout << "Pipeline:\n" + json.dump(4) << std::endl;
+
+  std::shared_ptr<Pipeline> pipeline(new Pipeline);
+  std::unordered_map<std::string, std::string> id_to_type;
+
+  // First pass to create all processors
+  for (auto & processor_spec : processors) {
+    std::string processor_name = processor_spec["processor_name"];
+    std::string processor_type_str = processor_spec["processor_type"];
+    std::unordered_map<std::string, nlohmann::json> processor_parameters_json = processor_spec["parameters"].get<std::unordered_map<std::string, nlohmann::json>>();
+    std::unordered_map<std::string, std::string> processor_parameters;
+    for (auto const & pair : processor_parameters_json) {
+      std::string key = pair.first;
+      std::string value = pair.second.get<std::string>();
+      processor_parameters[key] = value;
+    }
+    ProcessorType processor_type = GetProcessorTypeByString(processor_type_str);
+    FactoryParamsType params = (FactoryParamsType) processor_parameters;
+
+    std::cout << "Creating processor \"" << processor_name << "\" of type \"" << processor_type_str << "\"" << std::endl;
+    std::shared_ptr<Processor> processor = ProcessorFactory::Create(processor_type, params);
+    pipeline->processors_.insert({processor_name, processor});
+    pipeline->dependency_graph_.insert({processor.get(), {}});
+    pipeline->reverse_dependency_graph_.insert({processor.get(), {}});
+    id_to_type[processor_name] = processor_type_str;
+  }
+
+  // Second pass to create all processors
+  for (auto & processor_spec : processors) {
+    auto inputs_it = processor_spec.find("inputs");
+    if (inputs_it != processor_spec.end()) {
+      std::unordered_map<std::string, nlohmann::json> inputs = processor_spec["inputs"].get<std::unordered_map<std::string, nlohmann::json>>();
+
+      std::string cur_proc_id = processor_spec["processor_name"];
+      std::shared_ptr<Processor> cur_processor = pipeline->GetProcessor(cur_proc_id);
+
+      // auto inputs = *inputs_it;
+      for (const auto input : inputs) {
+        std::string src = input.first;
+        std::string stream_id = input.second;
+        int i = stream_id.find(":");
+        std::string src_proc_id = stream_id.substr(0, i);
+        std::string sink = stream_id.substr(i + 1, stream_id.length());
+
+        std::shared_ptr<Processor> src_processor = pipeline->GetProcessor(src_proc_id);
+
+        cur_processor->SetSource(src, src_processor->GetSink(sink));
+        pipeline->dependency_graph_[cur_processor.get()].insert(src_processor.get());
+        pipeline->reverse_dependency_graph_[src_processor.get()].insert(cur_processor.get());
+
+        std::cout << "Connected source \"" << src << "\" of processor \"" << cur_proc_id << "\" to the sink \"" << sink << "\" from processor \"" << src_proc_id << "\"" << std::endl;
+      }
+    }
+  }
+
+  return pipeline;
+}
+
 Pipeline::Pipeline() {}
 
-std::unordered_map<string, std::shared_ptr<Processor>>
+std::unordered_map<std::string, std::shared_ptr<Processor>>
 Pipeline::GetProcessors() {
   return processors_;
 }
 
-std::shared_ptr<Processor> Pipeline::GetProcessor(const string& name) {
+std::shared_ptr<Processor> Pipeline::GetProcessor(const std::string &name) {
   CHECK(processors_.count(name) != 0) << "Has no processor named: " << name;
 
   return processors_[name];
