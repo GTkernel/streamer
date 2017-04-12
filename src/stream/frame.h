@@ -15,7 +15,7 @@ class Frame {
   Frame() = delete;
   Frame(FrameType frame_type, cv::Mat original_image = cv::Mat());
   virtual ~Frame(){};
-  virtual FrameType GetType() = 0;
+  FrameType GetType();
   cv::Mat GetOriginalImage();
   void SetOriginalImage(cv::Mat original_image);
 
@@ -30,8 +30,6 @@ class ImageFrame : public Frame {
   Shape GetSize();
   cv::Mat GetImage();
   void SetImage(cv::Mat image);
-
-  virtual FrameType GetType() override;
 
  private:
   cv::Mat image_;
@@ -48,8 +46,6 @@ class MetadataFrame : public Frame {
   std::vector<Rect> GetBboxes();
   nlohmann::json ToJson();
 
-  virtual FrameType GetType() override;
-
  private:
   std::vector<string> tags_;
   std::vector<Rect> bboxes_;
@@ -60,7 +56,6 @@ class BytesFrame : public Frame {
   BytesFrame() = delete;
   BytesFrame(DataBuffer data_buffer, cv::Mat original_image = cv::Mat());
   DataBuffer GetDataBuffer();
-  virtual FrameType GetType() override;
 
  private:
   DataBuffer data_buffer_;

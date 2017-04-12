@@ -16,6 +16,8 @@ void Frame::SetOriginalImage(cv::Mat original_image) {
   original_image_ = original_image;
 }
 
+FrameType Frame::GetType() { return frame_type_; }
+
 ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image)
     : Frame(FRAME_TYPE_IMAGE, original_image),
       image_(image),
@@ -26,11 +28,9 @@ Shape ImageFrame::GetSize() { return shape_; }
 cv::Mat ImageFrame::GetImage() { return image_; }
 
 void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
-FrameType ImageFrame::GetType() { return FRAME_TYPE_IMAGE; }
-FrameType Frame::GetType() { return frame_type_; }
 
 MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image)
-    : Frame(FRAME_TYPE_IMAGE, original_image), tags_(tags) {}
+    : Frame(FRAME_TYPE_MD, original_image), tags_(tags) {}
 MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
     : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {}
 
@@ -51,7 +51,6 @@ MetadataFrame::MetadataFrame(nlohmann::json j)
 
 std::vector<string> MetadataFrame::GetTags() { return tags_; }
 std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }
-FrameType MetadataFrame::GetType() { return FRAME_TYPE_MD; }
 
 nlohmann::json MetadataFrame::ToJson() {
   nlohmann::json md_j;
@@ -72,4 +71,3 @@ BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image)
     : Frame(FRAME_TYPE_BYTES, original_image), data_buffer_(data_buffer) {}
 
 DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }
-FrameType BytesFrame::GetType() { return FRAME_TYPE_BYTES; }
