@@ -18,46 +18,46 @@ bool ObjectTracker::OnStop() {
 void ObjectTracker::Process() {
   auto md_frame = GetFrame<MetadataFrame>("input");
   cv::Mat image = md_frame->GetOriginalImage();
-  auto tags = md_frame->GetTags();
-  auto boxes = md_frame->GetBboxes();
-  CHECK(tags.size() == boxes.size());
-  cv::Scalar box_color(255, 0, 0);
-  for (size_t i = 0; i < boxes.size(); ++i) {
-    cv::Rect rect(boxes[i].px, boxes[i].py, boxes[i].width, boxes[i].height);
-    cv::rectangle(image, rect, box_color, 5);
-    cv::putText(image, tags[i] , cv::Point(boxes[i].px,boxes[i].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
+  std::vector<FaceInfo> faceInfo = md_frame->GetFaceInfo();
+  for(int i = 0;i<faceInfo.size();i++){
+    float x = faceInfo[i].bbox.x1;
+    float y = faceInfo[i].bbox.y1;
+    float h = faceInfo[i].bbox.x2 - faceInfo[i].bbox.x1 +1;
+    float w = faceInfo[i].bbox.y2 - faceInfo[i].bbox.y1 +1;
+    cv::rectangle(image,cv::Rect(y,x,w,h),cv::Scalar(255,0,0),2);
+  }
+  for(int i=0;i<faceInfo.size();i++){
+    FacePts facePts = faceInfo[i].facePts;
+    for(int j=0;j<5;j++)
+      cv::circle(image,cv::Point(facePts.y[j],facePts.x[j]),1,cv::Scalar(255,255,0),2);
   }
 
-  std::map<std::string, std::vector<cv::Point>> tags_name_points;
-  for (size_t i = 0; i < boxes.size(); ++i) {
-    cv::Point point(boxes[i].px+(boxes[i].width/2), boxes[i].py+(boxes[i].height/2));
-    std::string needle("  :  ");
-    std::string::size_type found = tags[i].find(needle);
-    CHECK(found!=std::string::npos) << "Can not find " << needle << " in " << tags[i];
-    std::string tags_name = tags[i].substr(0, found-0);
-    tags_name_points[tags_name].push_back(point);
+  std::vector<PointFeature> point_features;
+  std::vector<std::vector<float>> face_features = md_frame->GetFaceFeatures();
+  CHECK(faceInfo.size() == face_features.size());
+  for(int i = 0;i<faceInfo.size();i++){
+    cv::Point point((faceInfo[i].bbox.y1 + faceInfo[i].bbox.y2) / 2,
+                    (faceInfo[i].bbox.x1 + faceInfo[i].bbox.x2) / 2);
+    point_features.push_back(PointFeature(point, face_features[i]));
   }
 
   if (first_frame_) {
-    rem_list_.push_back(tags_name_points);
+    rem_list_.push_back(point_features);
     first_frame_ = false;
   } else {
     if (rem_list_.size() >= rem_size_) {
       rem_list_.pop_front();
     }
-    rem_list_.push_back(tags_name_points);
+    rem_list_.push_back(point_features);
 
     auto prev_it=rem_list_.begin();
     for (auto it=rem_list_.begin(); it != rem_list_.end(); ++it) {
       if (it != rem_list_.begin()) {
-        for (const auto& m_pair: *it) {
-          for (const auto& m_point: m_pair.second) {
-            auto prev_map = *prev_it;
-            if (prev_map.find(m_pair.first) != prev_map.end()) {
-              cv::Point prev_point = FindPreviousNearest(m_point, prev_map[m_pair.first]);
-              cv::line(image, prev_point, m_point, cv::Scalar(0,255,0), 3);
-            }
-          }
+        const auto& prev_point_features = *prev_it;
+        for (const auto& m: *it) {
+          auto prev = FindPreviousNearest(m, prev_point_features, 20.0);
+          if (prev)
+            cv::line(image, prev->point, m.point, cv::Scalar(0,255,0), 3);
         }
       }
       prev_it = it;
@@ -71,25 +71,31 @@ ProcessorType ObjectTracker::GetType() {
   return PROCESSOR_TYPE_OBJECT_TRACKER;
 }
 
-cv::Point ObjectTracker::FindPreviousNearest(const cv::Point& point, const std::vector<cv::Point>& points)
+boost::optional<PointFeature> ObjectTracker::FindPreviousNearest(const PointFeature& point_feature,
+                                                                 std::vector<PointFeature> point_features,
+                                                                 float threshold)
 {
-  CHECK(points.size() > 0);
-  cv::Point result;
-  int distance = std::numeric_limits<int>::max();
-  for (const auto& m: points) {
-    int d = GetDistance(point, m);
-    if (d < distance) {
+  boost::optional<PointFeature> result;
+  float distance = std::numeric_limits<float>::max();
+  //printf("=====================FindPreviousNearest====================\n");
+  for (const auto& m: point_features) {
+    float d = GetDistance(point_feature.face_feature, m.face_feature);
+    //printf("%f ", d);
+    if ((d < distance) && (d < threshold)) {
       distance = d;
       result = m;
     }
   }
+  //printf("\n");
   return result;
 }
 
-int ObjectTracker::GetDistance(const cv::Point& a, const cv::Point& b)
+float ObjectTracker::GetDistance(const std::vector<float>& a, const std::vector<float>& b)
 {
-  int distance;
-  distance = pow((a.x - b.x),2) + pow((a.y - b.y),2);
+  float distance = 0;
+  for (size_t i = 0; i < a.size(); ++i) {
+    distance += pow((a[i] - b[i]),2);
+  }
   distance = sqrt(distance);
 
   return distance;

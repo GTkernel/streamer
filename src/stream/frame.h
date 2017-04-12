@@ -8,7 +8,6 @@
 #include "common/common.h"
 #include "frame.h"
 #include "cv.h"
-#include <boost/any.hpp>
 
 class Frame {
  public:
@@ -68,16 +67,22 @@ class MetadataFrame : public Frame {
                 std::vector<Rect> bboxes,
                 cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<FaceInfo> faceInfo, cv::Mat original_image = cv::Mat())
-    : Frame(FRAME_TYPE_MD, original_image), data_(faceInfo) {}
+    : Frame(FRAME_TYPE_MD, original_image), faceInfo_(faceInfo) {}
+  MetadataFrame(std::vector<FaceInfo> faceInfo,
+                std::vector<std::vector<float>> face_features,
+                cv::Mat original_image = cv::Mat())
+    : Frame(FRAME_TYPE_MD, original_image), faceInfo_(faceInfo), face_features_(face_features) {}
   std::vector<string> GetTags();
   std::vector<Rect> GetBboxes();
-  std::vector<FaceInfo> GetFaceInfo() { return boost::any_cast<std::vector<FaceInfo>>(data_); }
+  std::vector<FaceInfo> GetFaceInfo() { return faceInfo_; }
+  std::vector<std::vector<float>> GetFaceFeatures() { return face_features_; }
   virtual FrameType GetType() override;
 
  private:
   std::vector<string> tags_;
   std::vector<Rect> bboxes_;
-  boost::any data_;
+  std::vector<FaceInfo> faceInfo_;
+  std::vector<std::vector<float>> face_features_;
 };
 
 class BytesFrame : public Frame {

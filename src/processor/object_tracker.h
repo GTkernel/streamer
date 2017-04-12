@@ -1,9 +1,17 @@
 #ifndef STREAMER_OBJECT_TRACKER_H
 #define STREAMER_OBJECT_TRACKER_H
 
+#include <boost/optional.hpp>
 #include "cv.h"
 #include "common/common.h"
 #include "processor.h"
+
+struct PointFeature {
+  PointFeature(const cv::Point& p, const std::vector<float>& f)
+    : point(p), face_feature(f) {}
+  cv::Point point;
+  std::vector<float> face_feature;
+};
 
 class ObjectTracker : public Processor {
 public:
@@ -16,11 +24,13 @@ protected:
   virtual void Process() override;
 
 private:
-  cv::Point FindPreviousNearest(const cv::Point& point, const std::vector<cv::Point>& points);
-  int GetDistance(const cv::Point& a, const cv::Point& b);
+  boost::optional<PointFeature> FindPreviousNearest(const PointFeature& point_feature,
+                                                    std::vector<PointFeature> point_features,
+                                                    float threshold);
+  float GetDistance(const std::vector<float>& a, const std::vector<float>& b);
   
 private:
-  std::list<std::map<std::string, std::vector<cv::Point>>> rem_list_;
+  std::list<std::vector<PointFeature>> rem_list_;
   size_t rem_size_;
   bool first_frame_;
 };

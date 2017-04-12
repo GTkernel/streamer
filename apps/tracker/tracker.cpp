@@ -9,7 +9,8 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
-std::shared_ptr<ObjectDetector> detector;
+std::vector<std::shared_ptr<Processor>> mtcnns;
+std::shared_ptr<Facenet> facenet;
 std::vector<std::shared_ptr<Processor>> trackers;
 std::vector<StreamReader *> tracker_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
@@ -27,7 +28,11 @@ void CleanUp() {
     if (tracker->IsStarted()) tracker->Stop();
   }
 
-  if (detector != nullptr && detector->IsStarted()) detector->Stop();
+  if (facenet != nullptr && facenet->IsStarted()) facenet->Stop();
+
+  for (auto mtcnn : mtcnns) {
+    if (mtcnn->IsStarted()) mtcnn->Stop();
+  }
 
   for (auto transformer : transformers) {
     if (transformer->IsStarted()) transformer->Stop();
@@ -45,8 +50,8 @@ void SignalHandler(int signal) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names, const string &model_name,
-         bool display) {
+void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name,
+         const string &facenet_model_name, bool display, float scale, int min_size) {
   cout << "Run tracker demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -56,7 +61,9 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   ModelManager &model_manager = ModelManager::GetInstance();
   
 // Check options
-  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
+  CHECK(model_manager.HasModel(mtcnn_model_name)) << "Model " << mtcnn_model_name
+                                            << " does not exist";
+  CHECK(model_manager.HasModel(facenet_model_name)) << "Model " << facenet_model_name
                                             << " does not exist";
   for (auto camera_name : camera_names) {
     CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
@@ -82,25 +89,34 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, CROP_TYPE_INVALID, false /* subtract mean */));
+        input_shape, CROP_TYPE_INVALID, false, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
   }
 
-  // detector
-  auto model_desc = model_manager.GetModelDesc(model_name);
-  detector.reset(
-      new ObjectDetector(model_desc, input_shape, input_streams.size()));
+  // mtcnn
+  auto model_description = model_manager.GetModelDescription(mtcnn_model_name);
+  for (int i = 0; i < batch_size; i++) {
+    std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_description, min_size));
+    mtcnn->SetSource("input", input_streams[i]);
+    mtcnns.push_back(mtcnn);
+  }
 
-  for (size_t i = 0; i < input_streams.size(); i++) {
-    detector->SetInputStream(i, input_streams[i]);
+  // facenet
+  auto model_desc = model_manager.GetModelDesc(facenet_model_name);
+  Shape input_shape_facenet(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
+  facenet.reset(
+      new Facenet(model_desc, input_shape_facenet, input_streams.size()));
+
+  for (size_t i = 0; i < batch_size; i++) {
+    facenet->SetInputStream(i, mtcnns[i]->GetSink("output"));
   }
 
   // tracker
   for (int i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> tracker(new ObjectTracker());
-    tracker->SetSource("input", detector->GetSink("output" + std::to_string(i)));
+    tracker->SetSource("input", facenet->GetSink("output" + std::to_string(i)));
     trackers.push_back(tracker);
 
     // tracker readers
@@ -126,7 +142,11 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     transformer->Start();
   }
 
-  detector->Start();
+  for (auto mtcnn : mtcnns) {
+    mtcnn->Start();
+  }
+
+  facenet->Start();
 
   for (auto tracker : trackers) {
     tracker->Start();
@@ -179,9 +199,12 @@ int main(int argc, char *argv[]) {
 
   po::options_description desc("Multi-camera end to end video ingestion demo");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("model,m",
-                     po::value<string>()->value_name("MODEL")->required(),
-                     "The name of the model to run");
+  desc.add_options()("mtcnn_model,m",
+                     po::value<string>()->value_name("MTCNN_MODEL")->required(),
+                     "The name of the mtcnn model to run");
+  desc.add_options()("facenet_model",
+                     po::value<string>()->value_name("FACENET_MODEL")->required(),
+                     "The name of the facenet model to run");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
@@ -192,6 +215,10 @@ int main(int argc, char *argv[]) {
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
+  desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
+                     "scale factor before mtcnn");
+  desc.add_options()("min_size", po::value<int>()->default_value(40),
+                     "face minimum size");
 
   po::variables_map vm;
   try {
@@ -218,9 +245,12 @@ int main(int argc, char *argv[]) {
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
-  auto model = vm["model"].as<string>();
+  auto mtcnn_model = vm["mtcnn_model"].as<string>();
+  auto facenet_model = vm["facenet_model"].as<string>();
   bool display = vm.count("display") != 0;
-  Run(camera_names, model, display);
+  float scale = vm["scale"].as<float>();
+  int min_size = vm["min_size"].as<int>();
+  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size);
 
   return 0;
 }
