@@ -83,7 +83,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
-  Shape input_shape(3, cameras[0]->GetWidth(), cameras[0]->GetHeight());
+  Shape input_shape(3, cameras[0]->GetWidth()*scale, cameras[0]->GetHeight()*scale);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
