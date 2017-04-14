@@ -144,12 +144,12 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
           float y = faceInfo[i].bbox.y1;
           float h = faceInfo[i].bbox.x2 - faceInfo[i].bbox.x1 +1;
           float w = faceInfo[i].bbox.y2 - faceInfo[i].bbox.y1 +1;
-          cv::rectangle(image,cv::Rect(y,x,w,h),cv::Scalar(255,0,0),2);
+          cv::rectangle(image,cv::Rect(y,x,w,h),cv::Scalar(255,0,0),5);
         }
         for(int i=0;i<faceInfo.size();i++){
           FacePts facePts = faceInfo[i].facePts;
           for(int j=0;j<5;j++)
-            cv::circle(image,cv::Point(facePts.y[j],facePts.x[j]),1,cv::Scalar(255,255,0),2);
+            cv::circle(image,cv::Point(facePts.y[j],facePts.x[j]),1,cv::Scalar(255,255,0),5);
         }
         cv::imshow(camera_names[i], image);
       }

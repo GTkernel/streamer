@@ -24,12 +24,12 @@ void ObjectTracker::Process() {
     float y = faceInfo[i].bbox.y1;
     float h = faceInfo[i].bbox.x2 - faceInfo[i].bbox.x1 +1;
     float w = faceInfo[i].bbox.y2 - faceInfo[i].bbox.y1 +1;
-    cv::rectangle(image,cv::Rect(y,x,w,h),cv::Scalar(255,0,0),2);
+    cv::rectangle(image,cv::Rect(y,x,w,h),cv::Scalar(255,0,0),5);
   }
   for(int i=0;i<faceInfo.size();i++){
     FacePts facePts = faceInfo[i].facePts;
     for(int j=0;j<5;j++)
-      cv::circle(image,cv::Point(facePts.y[j],facePts.x[j]),1,cv::Scalar(255,255,0),2);
+      cv::circle(image,cv::Point(facePts.y[j],facePts.x[j]),1,cv::Scalar(255,255,0),5);
   }
 
   std::vector<PointFeature> point_features;
@@ -57,7 +57,7 @@ void ObjectTracker::Process() {
         for (const auto& m: *it) {
           auto prev = FindPreviousNearest(m, prev_point_features, 20.0);
           if (prev)
-            cv::line(image, prev->point, m.point, cv::Scalar(0,255,0), 3);
+            cv::line(image, prev->point, m.point, cv::Scalar(255,0,0), 5);
         }
       }
       prev_it = it;

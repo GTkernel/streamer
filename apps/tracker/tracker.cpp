@@ -9,6 +9,7 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
+std::vector<std::shared_ptr<Processor>> motion_detectors;
 std::vector<std::shared_ptr<Processor>> mtcnns;
 std::shared_ptr<Facenet> facenet;
 std::vector<std::shared_ptr<Processor>> trackers;
@@ -34,6 +35,10 @@ void CleanUp() {
     if (mtcnn->IsStarted()) mtcnn->Stop();
   }
 
+  for (auto motion_detector : motion_detectors) {
+    if (motion_detector->IsStarted()) motion_detector->Stop();
+  }
+
   for (auto transformer : transformers) {
     if (transformer->IsStarted()) transformer->Stop();
   }
@@ -51,7 +56,8 @@ void SignalHandler(int signal) {
 }
 
 void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name,
-         const string &facenet_model_name, bool display, float scale, int min_size) {
+         const string &facenet_model_name, bool display, float scale, int min_size,
+         float motion_threshold) {
   cout << "Run tracker demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -95,11 +101,18 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
     input_streams.push_back(transform_processor->GetSink("output"));
   }
 
+  // motion_detector
+  for (int i = 0; i < batch_size; i++) {
+    std::shared_ptr<Processor> motion_detector(new OpenCVMotionDetector(motion_threshold));
+    motion_detector->SetSource("input", input_streams[i]);
+    motion_detectors.push_back(motion_detector);
+  }
+
   // mtcnn
   auto model_description = model_manager.GetModelDescription(mtcnn_model_name);
   for (int i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_description, min_size));
-    mtcnn->SetSource("input", input_streams[i]);
+    mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
     mtcnns.push_back(mtcnn);
   }
 
@@ -140,6 +153,10 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
 
   for (auto transformer : transformers) {
     transformer->Start();
+  }
+
+  for (auto motion_detector : motion_detectors) {
+    motion_detector->Start();
   }
 
   for (auto mtcnn : mtcnns) {
@@ -219,6 +236,8 @@ int main(int argc, char *argv[]) {
                      "scale factor before mtcnn");
   desc.add_options()("min_size", po::value<int>()->default_value(40),
                      "face minimum size");
+  desc.add_options()("motion_threshold", po::value<float>()->default_value(0.5),
+                     "motion threshold");
 
   po::variables_map vm;
   try {
@@ -250,7 +269,8 @@ int main(int argc, char *argv[]) {
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
-  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size);
+  float motion_threshold = vm["motion_threshold"].as<float>();
+  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size, motion_threshold);
 
   return 0;
 }
