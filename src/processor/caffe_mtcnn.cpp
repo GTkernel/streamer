@@ -469,7 +469,7 @@ bool MTCNN::CvMatToDatumSignalChannel(const cv::Mat& cv_mat, Datum* datum){
 }
 
 void MTCNN::Detect(const cv::Mat& image,std::vector<FaceInfo>& faceInfo,int minSize,double* threshold,double factor){
-
+  int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
   // 2~3ms
   // invert to RGB color space and float type
   cv::Mat sample_single,resized;
@@ -539,11 +539,11 @@ void MTCNN::Detect(const cv::Mat& image,std::vector<FaceInfo>& faceInfo,int minS
     Padding(width,height);
 
     /// Second stage
-    #ifdef CPU_ONLY
-    ClassifyFace(regressed_rects_,sample_single,RNet_,threshold[1],'r');
-    #else
-    ClassifyFace_MulImage(regressed_rects_,sample_single,RNet_,threshold[1],'r');
-    #endif
+    if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+      ClassifyFace(regressed_rects_,sample_single,RNet_,threshold[1],'r');
+    } else {
+      ClassifyFace_MulImage(regressed_rects_,sample_single,RNet_,threshold[1],'r');
+    }
     condidate_rects_ = NonMaximumSuppression(condidate_rects_,0.7,'u');
     regressed_rects_ = BoxRegress(condidate_rects_,2);
 
@@ -553,11 +553,11 @@ void MTCNN::Detect(const cv::Mat& image,std::vector<FaceInfo>& faceInfo,int minS
     /// three stage
     numBox = regressed_rects_.size();
     if(numBox != 0){
-      #ifdef CPU_ONLY
-      ClassifyFace(regressed_rects_,sample_single,ONet_,threshold[2],'o');
-      #else
-      ClassifyFace_MulImage(regressed_rects_,sample_single,ONet_,threshold[2],'o');
-      #endif
+      if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
+        ClassifyFace(regressed_rects_,sample_single,ONet_,threshold[2],'o');
+      } else {
+        ClassifyFace_MulImage(regressed_rects_,sample_single,ONet_,threshold[2],'o');
+      }
       regressed_rects_ = BoxRegress(condidate_rects_,3);
       faceInfo = NonMaximumSuppression(regressed_rects_,0.7,'m');
     }
