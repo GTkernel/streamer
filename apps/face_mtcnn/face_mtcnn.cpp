@@ -133,8 +133,8 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   //  double fps_to_show = 0.0;
   while (true) {
-    for (int i = 0; i < camera_names.size(); i++) {
-      auto reader = mtcnn_output_readers[i];
+    for (int k = 0; k < camera_names.size(); k++) {
+      auto reader = mtcnn_output_readers[k];
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat image = md_frame->GetOriginalImage();
@@ -151,7 +151,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
           for(int j=0;j<5;j++)
             cv::circle(image,cv::Point(facePts.y[j],facePts.x[j]),1,cv::Scalar(255,255,0),5);
         }
-        cv::imshow(camera_names[i], image);
+        cv::imshow(camera_names[k], image);
       }
     }
 
