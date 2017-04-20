@@ -57,7 +57,7 @@ void SignalHandler(int signal) {
 
 void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name,
          const string &facenet_model_name, bool display, float scale, int min_size,
-         float motion_threshold) {
+         float motion_threshold, float motion_max_duration) {
   cout << "Run tracker demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -103,7 +103,8 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
 
   // motion_detector
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> motion_detector(new OpenCVMotionDetector(motion_threshold));
+    std::shared_ptr<Processor> motion_detector(new OpenCVMotionDetector(motion_threshold,
+        motion_max_duration));
     motion_detector->SetSource("input", input_streams[i]);
     motion_detectors.push_back(motion_detector);
   }
@@ -238,6 +239,8 @@ int main(int argc, char *argv[]) {
                      "face minimum size");
   desc.add_options()("motion_threshold", po::value<float>()->default_value(0.5),
                      "motion threshold");
+  desc.add_options()("motion_max_duration", po::value<float>()->default_value(1.0),
+                     "motion max duration");
 
   po::variables_map vm;
   try {
@@ -270,7 +273,9 @@ int main(int argc, char *argv[]) {
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
   float motion_threshold = vm["motion_threshold"].as<float>();
-  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size, motion_threshold);
+  float motion_max_duration = vm["motion_max_duration"].as<float>();
+  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size, motion_threshold,
+      motion_max_duration);
 
   return 0;
 }

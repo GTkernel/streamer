@@ -1,11 +1,12 @@
 
 #include "opencv_motion_detector.h"
 
-OpenCVMotionDetector::OpenCVMotionDetector(float threshold) 
+OpenCVMotionDetector::OpenCVMotionDetector(float threshold, float max_duration) 
     : Processor({"input"}, {"output"}),
       first_frame_(true),
       previous_pixels_(0),
-      threshold_(threshold) {}
+      threshold_(threshold),
+      max_duration_(max_duration) {}
 
 bool OpenCVMotionDetector::Init() {
   mog2_.reset(new cv::BackgroundSubtractorMOG2());
@@ -47,7 +48,7 @@ void OpenCVMotionDetector::Process() {
   //imshow("fore", fore);
   auto now = std::chrono::system_clock::now();
   std::chrono::duration<double> diff = now-last_send_time_;
-  if (need_send || (diff.count() >= 1.0)) {
+  if (need_send || (diff.count() >= max_duration_)) {
     last_send_time_ = now;
     PushFrame("output",
         new ImageFrame(image, frame->GetOriginalImage()));

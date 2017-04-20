@@ -9,7 +9,7 @@
 
 class OpenCVMotionDetector : public Processor {
   public:
-    OpenCVMotionDetector(float threshold = 0.5);
+    OpenCVMotionDetector(float threshold = 0.5, float max_duration = 1.0);
     virtual ProcessorType GetType() override;
 
   protected:
@@ -27,6 +27,7 @@ class OpenCVMotionDetector : public Processor {
     int previous_pixels_;
     std::chrono::time_point<std::chrono::system_clock> last_send_time_;
     float threshold_;
+    float max_duration_;
 };
 
 #endif // STREAMER_OPENCV_MOTION_DETECTOR_H
