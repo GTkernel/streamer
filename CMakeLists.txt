@@ -11,8 +11,6 @@ set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 # See https://intellij-support.jetbrains.com/hc/en-us/community/posts/207110289-Best-practices-for-CMake-files-for-use-in-CLion
 set(CMAKE_CONFIGURATION_TYPES "Debug")
 
-add_definitions("-D USE_MKL")
-
 if (APPLE)
   set(CMAKE_MACOSX_RPATH 1)
 endif ()
