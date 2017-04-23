@@ -567,10 +567,13 @@ void MTCNN::Detect(const cv::Mat& image,std::vector<FaceInfo>& faceInfo,int minS
   condidate_rects_.clear();
 }
 
-MtcnnFaceDetector::MtcnnFaceDetector(const ModelDescription& model_description, int min_size)
+MtcnnFaceDetector::MtcnnFaceDetector(const ModelDescription& model_description,
+                                     int min_size,
+                                     float idle_duration)
     : Processor({"input"}, {"output"}),
       model_description_(model_description),
-      minSize_(min_size)
+      minSize_(min_size),
+      idle_duration_(idle_duration)
 {
   threshold_[0] = 0.6;
   threshold_[1] = 0.7;
@@ -594,27 +597,41 @@ void MtcnnFaceDetector::Process() {
 
   std::vector<FaceInfo> faceInfo;
   auto image_frame = GetFrame<ImageFrame>("input");
-  cv::Mat img = image_frame->GetImage();
-  detector_->Detect(img,faceInfo,minSize_,threshold_,factor_);
-  
-  cv::Mat original_img = image_frame->GetOriginalImage();
-  CHECK(!original_img.empty());
-  float scale_factor[] = { (float)original_img.size[1]/(float)img.size[1],
-                           (float)original_img.size[0]/(float)img.size[0] };
-  for (auto& m: faceInfo) {
-    m.bbox.x1 *= scale_factor[0];
-    m.bbox.y1 *= scale_factor[1];
-    m.bbox.x2 *= scale_factor[0];
-    m.bbox.y2 *= scale_factor[1];
 
-    for (int i = 0; i < 5; ++i) {
-      m.facePts.x[i] *= scale_factor[0];
-      m.facePts.y[i] *= scale_factor[1];
+  auto now = std::chrono::system_clock::now();
+  std::chrono::duration<double> diff = now-last_detect_time_;
+  if (diff.count() >= idle_duration_) {
+    cv::Mat img = image_frame->GetImage();
+    detector_->Detect(img,faceInfo,minSize_,threshold_,factor_);
+    cv::Mat original_img = image_frame->GetOriginalImage();
+    CHECK(!original_img.empty());
+    float scale_factor[] = { (float)original_img.size[1]/(float)img.size[1],
+                             (float)original_img.size[0]/(float)img.size[0] };
+    std::vector<Rect> bboxes;
+    std::vector<FaceLandmark> face_landmarks;
+    for (auto& m: faceInfo) {
+      m.bbox.x1 *= scale_factor[0];
+      m.bbox.y1 *= scale_factor[1];
+      m.bbox.x2 *= scale_factor[0];
+      m.bbox.y2 *= scale_factor[1];
+      bboxes.push_back(Rect(m.bbox.y1, m.bbox.x1, m.bbox.y2-m.bbox.y1, m.bbox.x2-m.bbox.x1));
+
+      FaceLandmark fl;
+      for (int i = 0; i < 5; ++i) {
+        m.facePts.x[i] *= scale_factor[0];
+        m.facePts.y[i] *= scale_factor[1];
+        fl.x[i] = m.facePts.y[i];
+        fl.y[i] = m.facePts.x[i];
+      }
+      face_landmarks.push_back(fl);
     }
-  }
-  PushFrame("output", new MetadataFrame(faceInfo, original_img));
+    last_detect_time_ = std::chrono::system_clock::now();
 
-  LOG(INFO) << "Caffe Mtcnn took " << timer.ElapsedMSec() << " ms";
+    PushFrame("output", new MetadataFrame(bboxes, face_landmarks, original_img));
+    LOG(INFO) << "Caffe Mtcnn took " << timer.ElapsedMSec() << " ms";
+  } else {
+    PushFrame("output", new MetadataFrame(image_frame->GetOriginalImage()));
+  }
 }
 
 ProcessorType MtcnnFaceDetector::GetType() {

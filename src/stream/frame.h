@@ -5,6 +5,7 @@
 #ifndef STREAMER_FRAME_H
 #define STREAMER_FRAME_H
 
+#include <bitset>
 #include "common/common.h"
 #include "frame.h"
 #include "cv.h"
@@ -37,52 +38,56 @@ class ImageFrame : public Frame {
   Shape shape_;
 };
 
-struct FaceRect {
-  float x1;
-  float y1;
-  float x2;
-  float y2;
-  float score; /**< Larger score should mean higher confidence. */
-};
-
-struct FacePts {
-  float x[5],y[5];
-};
-
-struct FaceInfo {
-  FaceRect bbox;
-  cv::Vec4f regression;
-  FacePts facePts;
-  double roll;
-  double pitch;
-  double yaw;
-};
-
 class MetadataFrame : public Frame {
  public:
+  enum Bit{
+    Bit_tags = 0,
+    Bit_bboxes,
+    Bit_face_landmarks,
+    Bit_face_features,
+  };
   MetadataFrame() = delete;
+  MetadataFrame(cv::Mat original_image = cv::Mat())
+    : Frame(FRAME_TYPE_MD, original_image) {}
   MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<string> tags,
                 std::vector<Rect> bboxes,
                 cv::Mat original_image = cv::Mat());
-  MetadataFrame(std::vector<FaceInfo> faceInfo, cv::Mat original_image = cv::Mat())
-    : Frame(FRAME_TYPE_MD, original_image), faceInfo_(faceInfo) {}
-  MetadataFrame(std::vector<FaceInfo> faceInfo,
+  MetadataFrame(std::vector<Rect> bboxes,
+                std::vector<FaceLandmark> face_landmarks,
+                cv::Mat original_image = cv::Mat())
+    : Frame(FRAME_TYPE_MD, original_image),
+      bboxes_(bboxes),
+      face_landmarks_(face_landmarks) {
+    bitset_.set(Bit_bboxes);
+    bitset_.set(Bit_face_landmarks);
+  }
+  MetadataFrame(std::vector<Rect> bboxes,
+                std::vector<FaceLandmark> face_landmarks,
                 std::vector<std::vector<float>> face_features,
                 cv::Mat original_image = cv::Mat())
-    : Frame(FRAME_TYPE_MD, original_image), faceInfo_(faceInfo), face_features_(face_features) {}
+    : Frame(FRAME_TYPE_MD, original_image),
+      bboxes_(bboxes),
+      face_landmarks_(face_landmarks),
+      face_features_(face_features) {
+    bitset_.set(Bit_bboxes);
+    bitset_.set(Bit_face_landmarks);
+    bitset_.set(Bit_face_features);
+  }
   std::vector<string> GetTags();
   std::vector<Rect> GetBboxes();
-  std::vector<FaceInfo> GetFaceInfo() { return faceInfo_; }
+  std::vector<FaceLandmark> GetFaceLandmarks() { return face_landmarks_; }
   std::vector<std::vector<float>> GetFaceFeatures() { return face_features_; }
+  std::bitset<32> GetBitset() { return bitset_; }
   virtual FrameType GetType() override;
 
  private:
   std::vector<string> tags_;
   std::vector<Rect> bboxes_;
-  std::vector<FaceInfo> faceInfo_;
+  std::vector<FaceLandmark> face_landmarks_;
   std::vector<std::vector<float>> face_features_;
+  std::bitset<32> bitset_;
 };
 
 class BytesFrame : public Frame {

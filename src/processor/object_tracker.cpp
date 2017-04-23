@@ -18,26 +18,22 @@ bool ObjectTracker::OnStop() {
 void ObjectTracker::Process() {
   auto md_frame = GetFrame<MetadataFrame>("input");
   cv::Mat image = md_frame->GetOriginalImage();
-  std::vector<FaceInfo> faceInfo = md_frame->GetFaceInfo();
-  for(int i = 0;i<faceInfo.size();i++){
-    float x = faceInfo[i].bbox.x1;
-    float y = faceInfo[i].bbox.y1;
-    float h = faceInfo[i].bbox.x2 - faceInfo[i].bbox.x1 +1;
-    float w = faceInfo[i].bbox.y2 - faceInfo[i].bbox.y1 +1;
-    cv::rectangle(image,cv::Rect(y,x,w,h),cv::Scalar(255,0,0),5);
+  std::vector<Rect> bboxes = md_frame->GetBboxes();
+  for(const auto& m: bboxes) {
+    cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
   }
-  for(int i=0;i<faceInfo.size();i++){
-    FacePts facePts = faceInfo[i].facePts;
+  std::vector<FaceLandmark> face_landmarks = md_frame->GetFaceLandmarks();
+  for(const auto& m: face_landmarks) {
     for(int j=0;j<5;j++)
-      cv::circle(image,cv::Point(facePts.y[j],facePts.x[j]),1,cv::Scalar(255,255,0),5);
+      cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
   }
 
   std::vector<PointFeature> point_features;
   std::vector<std::vector<float>> face_features = md_frame->GetFaceFeatures();
-  CHECK(faceInfo.size() == face_features.size());
-  for(int i = 0;i<faceInfo.size();i++){
-    cv::Point point((faceInfo[i].bbox.y1 + faceInfo[i].bbox.y2) / 2,
-                    (faceInfo[i].bbox.x1 + faceInfo[i].bbox.x2) / 2);
+  CHECK(bboxes.size() == face_features.size());
+  for(int i = 0;i<bboxes.size();i++){
+    cv::Point point(bboxes[i].px + bboxes[i].width/2,
+                    bboxes[i].py + bboxes[i].height/2);
     point_features.push_back(PointFeature(point, face_features[i]));
   }
 

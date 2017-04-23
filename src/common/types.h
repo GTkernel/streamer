@@ -50,6 +50,13 @@ struct Rect {
 };
 
 /**
+ * @brief Face landmark
+ */
+struct FaceLandmark {
+  float x[5],y[5];
+};
+
+/**
  * @brief Prediction result, a string label and a confidence score
  */
 typedef std::pair<std::string, float> Prediction;
@@ -142,6 +149,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_CAFFE_MTCNN,
   PROCESSOR_TYPE_FACENET,
   PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
+  PROCESSOR_TYPE_STRUCK_TRACKER,
 
   PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_ENCODER,

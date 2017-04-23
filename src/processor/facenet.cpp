@@ -114,8 +114,8 @@ void Facenet::Process() {
   for (int i = 0; i < batch_size_; i++) {
     auto md_frame = GetFrame<MetadataFrame>(GET_SOURCE_NAME(i));    
     md_frames.push_back(md_frame);
-    std::vector<FaceInfo> faceInfo = md_frame->GetFaceInfo();
-    face_total_num += faceInfo.size();
+    std::vector<Rect> bboxes = md_frame->GetBboxes();
+    face_total_num += bboxes.size();
   }
 
   std::vector<std::vector<float>> face_features;
@@ -141,21 +141,21 @@ void Facenet::Process() {
     // load data
     for (int i = 0; i < batch_size_; i++) {
       cv::Mat img = md_frames[i]->GetOriginalImage();
-      std::vector<FaceInfo> faceInfo = md_frames[i]->GetFaceInfo();
-      for(int i = 0;i<faceInfo.size();i++){
-        float x = faceInfo[i].bbox.x1;
-        float y = faceInfo[i].bbox.y1;
-        float h = faceInfo[i].bbox.x2 - faceInfo[i].bbox.x1 +1;
-        float w = faceInfo[i].bbox.y2 - faceInfo[i].bbox.y1 +1;
+      std::vector<Rect> bboxes = md_frames[i]->GetBboxes();
+      for(int i = 0;i<bboxes.size();i++){
+        int x = bboxes[i].px;
+        int y = bboxes[i].py;
+        int w = bboxes[i].width;
+        int h = bboxes[i].height;
         if (x < 0)
           x = 0;
         if (y < 0)
           y = 0;
-        if (y+w > img.cols)
-          w = img.cols-y;
-        if (x+h > img.rows)
-          h = img.rows-x;
-        cv::Rect roi(y,x,w,h);
+        if (x+w > img.cols)
+          w = img.cols-x;
+        if (y+h > img.rows)
+          h = img.rows-y;
+        cv::Rect roi(x,y,w,h);
         //printf("%d, %d, %d, %d\n", roi.x ,roi.width, roi.y ,roi.height);
         face_image_ = img(roi);
 
@@ -208,9 +208,10 @@ void Facenet::Process() {
     auto md_frame = md_frames[i];
     cv::Mat img = md_frame->GetOriginalImage();
     CHECK(!img.empty());
-    std::vector<FaceInfo> faceInfo = md_frame->GetFaceInfo();
+    std::vector<Rect> bboxes = md_frame->GetBboxes();
+    std::vector<FaceLandmark> face_landmarks = md_frame->GetFaceLandmarks();
     
-    PushFrame(GET_SINK_NAME(i), new MetadataFrame(faceInfo, face_features, img));
+    PushFrame(GET_SINK_NAME(i), new MetadataFrame(bboxes, face_landmarks, face_features, img));
   }
 
   LOG(INFO) << "Facenet took " << timer.ElapsedMSec() << " ms";

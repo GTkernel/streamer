@@ -25,6 +25,27 @@ using caffe::Caffe;
 using caffe::TEST;
 using caffe::MemoryDataLayer;
 
+struct FaceRect {
+  float x1;
+  float y1;
+  float x2;
+  float y2;
+  float score; /**< Larger score should mean higher confidence. */
+};
+
+struct FacePts {
+  float x[5],y[5];
+};
+
+struct FaceInfo {
+  FaceRect bbox;
+  cv::Vec4f regression;
+  FacePts facePts;
+  double roll;
+  double pitch;
+  double yaw;
+};
+
 class MTCNN {
  public:
   MTCNN(ModelDescription& model_description);
@@ -68,7 +89,9 @@ class MTCNN {
 
 class MtcnnFaceDetector : public Processor {
 public:
-  MtcnnFaceDetector(const ModelDescription& model_description, int min_size);
+  MtcnnFaceDetector(const ModelDescription& model_description,
+                    int min_size,
+                    float idle_duration = 0.f);
   virtual ProcessorType GetType() override;
 
 protected:
@@ -82,6 +105,8 @@ private:
   double threshold_[3];
   double factor_;
   int minSize_;
+  float idle_duration_;
+  std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
 };
 
 #endif  // STREAMER_CAFFE_MTCNN_H

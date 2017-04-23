@@ -28,11 +28,18 @@ FrameType ImageFrame::GetType() { return FRAME_TYPE_IMAGE; }
 FrameType Frame::GetType() { return frame_type_; }
 
 MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image)
-    : Frame(FRAME_TYPE_IMAGE, original_image), tags_(tags) {}
+    : Frame(FRAME_TYPE_IMAGE, original_image), tags_(tags) {
+  bitset_.set(Bit_tags);
+}
 MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {}
+    : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {
+  bitset_.set(Bit_bboxes);
+}
 MetadataFrame::MetadataFrame(std::vector<string> tags, std::vector<Rect> bboxes, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), tags_(tags), bboxes_(bboxes) {}
+    : Frame(FRAME_TYPE_MD, original_image), tags_(tags), bboxes_(bboxes) {
+  bitset_.set(Bit_tags);
+  bitset_.set(Bit_bboxes);
+}
 
 std::vector<string> MetadataFrame::GetTags() { return tags_; }
 std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }
