@@ -51,7 +51,8 @@ void Run(const std::vector<string> &camera_names,
          const string &detector_type,
          const string &detector_model,
          bool display, float scale, int min_size,
-         float detector_idle_duration) {
+         float detector_idle_duration,
+         const string &detector_targets) {
   cout << "Run tracker_struck demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -99,7 +100,12 @@ void Run(const std::vector<string> &camera_names,
     auto p = GetProcessorTypeByString(detector_type);
     if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
-      detector.reset(new ObjectDetector(model_desc, input_shape, detector_idle_duration));
+      auto t = SplitString(detector_targets, ",");
+      std::set<std::string> targets;
+      for (const auto& m: t) {
+        if (!m.empty()) targets.insert(m);
+      }
+      detector.reset(new ObjectDetector(model_desc, input_shape, detector_idle_duration, targets));
     } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
       auto model_description = model_manager.GetModelDescription(detector_model);
       detector.reset(new MtcnnFaceDetector(model_description, min_size, detector_idle_duration));
@@ -233,6 +239,9 @@ int main(int argc, char *argv[]) {
                      "face minimum size");
   desc.add_options()("detector_idle_duration", po::value<float>()->default_value(1.0),
                      "detector idle duration");
+  desc.add_options()("detector_targets",
+                     po::value<string>()->default_value(""),
+                     "The name of the target to detect, separate with ,");
 
   po::variables_map vm;
   try {
@@ -265,7 +274,9 @@ int main(int argc, char *argv[]) {
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
-  Run(camera_names, detector_type, detector_model, display, scale, min_size, detector_idle_duration);
+  auto detector_targets = vm["detector_targets"].as<string>();
+  Run(camera_names, detector_type, detector_model, display, scale, min_size,
+      detector_idle_duration, detector_targets);
 
   return 0;
 }

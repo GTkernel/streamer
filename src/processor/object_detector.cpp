@@ -5,11 +5,13 @@
 
 ObjectDetector::ObjectDetector(const ModelDesc &model_desc,
                                Shape input_shape,
-                               float idle_duration)
+                               float idle_duration,
+                               const std::set<std::string>& targets)
     : Processor({"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape),
-      idle_duration_(idle_duration) {}
+      idle_duration_(idle_duration),
+      targets_(targets) {}
 
 bool ObjectDetector::Init() {
   // Set Caffe backend
@@ -93,7 +95,13 @@ void ObjectDetector::Process() {
     std::vector<caffe::Frcnn::BBox<float>> filtered_res;
     for (const auto& m: results) {
       if (m.confidence > 0.5) {
-        filtered_res.push_back(m);
+        if (targets_.empty()) {
+          filtered_res.push_back(m);
+        } else {
+          auto it = targets_.find(caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(), m.id));
+          if (it != targets_.end())
+            filtered_res.push_back(m);
+        }
       }
     }
 
