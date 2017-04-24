@@ -27,22 +27,50 @@ void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
 FrameType ImageFrame::GetType() { return FRAME_TYPE_IMAGE; }
 FrameType Frame::GetType() { return frame_type_; }
 
+MetadataFrame::MetadataFrame(cv::Mat original_image)
+    : Frame(FRAME_TYPE_MD, original_image) {}
 MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image)
-    : Frame(FRAME_TYPE_IMAGE, original_image), tags_(tags) {
+    : Frame(FRAME_TYPE_MD, original_image), tags_(tags) {
   bitset_.set(Bit_tags);
 }
 MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
     : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {
   bitset_.set(Bit_bboxes);
 }
-MetadataFrame::MetadataFrame(std::vector<string> tags, std::vector<Rect> bboxes, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), tags_(tags), bboxes_(bboxes) {
+std::vector<string> MetadataFrame::GetTags() { return tags_; }
+void MetadataFrame::SetTags(const std::vector<string>& tags) {
+  tags_ = tags;
   bitset_.set(Bit_tags);
+}
+std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }
+void MetadataFrame::SetBboxes(const std::vector<Rect>& bboxes) {
+  bboxes_ = bboxes;
   bitset_.set(Bit_bboxes);
 }
-
-std::vector<string> MetadataFrame::GetTags() { return tags_; }
-std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }
+std::vector<FaceLandmark> MetadataFrame::GetFaceLandmarks() {
+  return face_landmarks_;
+}
+void MetadataFrame::SetFaceLandmarks(const std::vector<FaceLandmark>& face_landmarks) {
+  face_landmarks_ = face_landmarks;
+  bitset_.set(Bit_face_landmarks);
+}
+std::vector<std::vector<float>> MetadataFrame::GetFaceFeatures() {
+  return face_features_;
+}
+void MetadataFrame::SetFaceFeatures(const std::vector<std::vector<float>>& face_features) {
+  face_features_ = face_features;
+  bitset_.set(Bit_face_features);
+}
+std::vector<float> MetadataFrame::GetConfidences() {
+  return confidences_;
+}
+void MetadataFrame::SetConfidences(const std::vector<float>& confidences) {
+  confidences_ = confidences;
+  bitset_.set(Bit_confidences);
+}
+std::bitset<32> MetadataFrame::GetBitset() {
+  return bitset_;
+}
 FrameType MetadataFrame::GetType() { return FRAME_TYPE_MD; }
 
 BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image)

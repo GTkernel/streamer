@@ -45,41 +45,23 @@ class MetadataFrame : public Frame {
     Bit_bboxes,
     Bit_face_landmarks,
     Bit_face_features,
+    Bit_confidences,
   };
   MetadataFrame() = delete;
-  MetadataFrame(cv::Mat original_image = cv::Mat())
-    : Frame(FRAME_TYPE_MD, original_image) {}
+  MetadataFrame(cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
-  MetadataFrame(std::vector<string> tags,
-                std::vector<Rect> bboxes,
-                cv::Mat original_image = cv::Mat());
-  MetadataFrame(std::vector<Rect> bboxes,
-                std::vector<FaceLandmark> face_landmarks,
-                cv::Mat original_image = cv::Mat())
-    : Frame(FRAME_TYPE_MD, original_image),
-      bboxes_(bboxes),
-      face_landmarks_(face_landmarks) {
-    bitset_.set(Bit_bboxes);
-    bitset_.set(Bit_face_landmarks);
-  }
-  MetadataFrame(std::vector<Rect> bboxes,
-                std::vector<FaceLandmark> face_landmarks,
-                std::vector<std::vector<float>> face_features,
-                cv::Mat original_image = cv::Mat())
-    : Frame(FRAME_TYPE_MD, original_image),
-      bboxes_(bboxes),
-      face_landmarks_(face_landmarks),
-      face_features_(face_features) {
-    bitset_.set(Bit_bboxes);
-    bitset_.set(Bit_face_landmarks);
-    bitset_.set(Bit_face_features);
-  }
   std::vector<string> GetTags();
+  void SetTags(const std::vector<string>& tags);
   std::vector<Rect> GetBboxes();
-  std::vector<FaceLandmark> GetFaceLandmarks() { return face_landmarks_; }
-  std::vector<std::vector<float>> GetFaceFeatures() { return face_features_; }
-  std::bitset<32> GetBitset() { return bitset_; }
+  void SetBboxes(const std::vector<Rect>& bboxes);
+  std::vector<FaceLandmark> GetFaceLandmarks();
+  void SetFaceLandmarks(const std::vector<FaceLandmark>& face_landmarks);
+  std::vector<std::vector<float>> GetFaceFeatures();
+  void SetFaceFeatures(const std::vector<std::vector<float>>& face_features);
+  std::vector<float> GetConfidences();
+  void SetConfidences(const std::vector<float>& confidences);
+  std::bitset<32> GetBitset();
   virtual FrameType GetType() override;
 
  private:
@@ -87,6 +69,7 @@ class MetadataFrame : public Frame {
   std::vector<Rect> bboxes_;
   std::vector<FaceLandmark> face_landmarks_;
   std::vector<std::vector<float>> face_features_;
+  std::vector<float> confidences_;
   std::bitset<32> bitset_;
 };
 

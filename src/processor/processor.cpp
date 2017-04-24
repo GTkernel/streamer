@@ -126,6 +126,11 @@ double Processor::GetAvgLatencyMs() { return avg_latency_; }
 
 double Processor::GetAvgFps() { return 1000.0 / avg_latency_; }
 
+void Processor::PushFrame(const string &sink_name, std::shared_ptr<Frame> frame) {
+  CHECK(sinks_.count(sink_name) != 0);
+  sinks_[sink_name]->PushFrame(frame);
+}
+
 void Processor::PushFrame(const string &sink_name, Frame *frame) {
   CHECK(sinks_.count(sink_name) != 0);
   sinks_[sink_name]->PushFrame(frame);

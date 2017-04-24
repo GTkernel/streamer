@@ -146,7 +146,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
   PROCESSOR_TYPE_OBJECT_TRACKER,
-  PROCESSOR_TYPE_CAFFE_MTCNN,
+  PROCESSOR_TYPE_MTCNN_FACE_DETECTOR,
   PROCESSOR_TYPE_FACENET,
   PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
   PROCESSOR_TYPE_STRUCK_TRACKER,
@@ -169,6 +169,18 @@ inline ProcessorType GetProcessorTypeByString(const std::string &str) {
     return PROCESSOR_TYPE_DUMMY_NN;
   } else if (str == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
+  } else if (str == "OpenCVPeopleDetector") {
+    return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
+  } else if (str == "ObjectTracker") {
+    return PROCESSOR_TYPE_OBJECT_TRACKER;
+  } else if (str == "MtcnnFaceDetector") {
+    return PROCESSOR_TYPE_MTCNN_FACE_DETECTOR;
+  } else if (str == "Facenet") {
+    return PROCESSOR_TYPE_FACENET;
+  } else if (str == "OpenCVMotionDetector") {
+    return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
+  } else if (str == "StruckTracker") {
+    return PROCESSOR_TYPE_STRUCK_TRACKER;
   } else if (str == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
   } else if (str == "Encoder" || str == "VideoEncoder") {

@@ -210,8 +210,13 @@ void Facenet::Process() {
     CHECK(!img.empty());
     std::vector<Rect> bboxes = md_frame->GetBboxes();
     std::vector<FaceLandmark> face_landmarks = md_frame->GetFaceLandmarks();
-    
-    PushFrame(GET_SINK_NAME(i), new MetadataFrame(bboxes, face_landmarks, face_features, img));
+
+    auto p_meta = new MetadataFrame(img);
+    CHECK(p_meta);
+    p_meta->SetBboxes(bboxes);
+    p_meta->SetFaceLandmarks(face_landmarks);
+    p_meta->SetFaceFeatures(face_features);
+    PushFrame(GET_SINK_NAME(i), p_meta);
   }
 
   LOG(INFO) << "Facenet took " << timer.ElapsedMSec() << " ms";

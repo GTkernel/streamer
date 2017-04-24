@@ -101,12 +101,8 @@ void StruckTracker::Process() {
     }
   }
 
-  if (md_frame->GetBitset().test(MetadataFrame::Bit_face_landmarks))
-    PushFrame("output", new MetadataFrame(tracked_bboxes, md_frame->GetFaceLandmarks(),
-        md_frame->GetOriginalImage()));
-  else
-    PushFrame("output", new MetadataFrame(tracked_bboxes, md_frame->GetOriginalImage()));
-
+  md_frame->SetBboxes(tracked_bboxes);
+  PushFrame("output", md_frame);
   //LOG(INFO) << "StruckTracker took " << timer.ElapsedMSec() << " ms";
 }
 

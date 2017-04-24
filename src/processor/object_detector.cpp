@@ -3,24 +3,13 @@
 #include "model/model_manager.h"
 #include "caffe/FRCNN/util/frcnn_vis.hpp"
 
-#define GET_SOURCE_NAME(i) ("input" + std::to_string(i))
-#define GET_SINK_NAME(i) ("output" + std::to_string(i))
-
 ObjectDetector::ObjectDetector(const ModelDesc &model_desc,
                                Shape input_shape,
-                               size_t batch_size)
-    : Processor({}, {}),
+                               float idle_duration)
+    : Processor({"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape),
-      batch_size_(batch_size) {
-  for (size_t i = 0; i < batch_size_; i++) {
-    sources_.insert({"input" + std::to_string(i), nullptr});
-    sinks_.insert({"output" + std::to_string(i),
-                   std::shared_ptr<Stream>(new Stream)});
-  }
-
-  LOG(INFO) << "batch size of " << batch_size_;
-}
+      idle_duration_(idle_duration) {}
 
 bool ObjectDetector::Init() {
   // Set Caffe backend
@@ -60,15 +49,6 @@ bool ObjectDetector::Init() {
 #endif
   }
 
-  auto &manager = ModelManager::GetInstance();
-  auto mean_colors = manager.GetMeanColors();
-  mean_image_ = cv::Mat(cv::Size(input_shape_.width, input_shape_.height),
-          CV_32FC3,
-          cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
-
-  input_buffer_ =
-      DataBuffer(batch_size_ * input_shape_.GetSize() * sizeof(float));
-
   std::string proto_file = model_desc_.GetModelDescPath();
   std::string model_file = model_desc_.GetModelParamsPath();
   std::string voc_config = model_desc_.GetVocConfigPath();
@@ -84,7 +64,6 @@ bool ObjectDetector::Init() {
 }
 
 bool ObjectDetector::OnStop() {
-  model_.reset(nullptr);
   return true;
 }
 
@@ -92,21 +71,26 @@ void ObjectDetector::Process() {
   Timer timer;
   timer.Start();
 
-  std::vector<caffe::Frcnn::BBox<float> > results;
-  for (int i = 0; i < batch_size_; i++) {
-    auto image_frame = GetFrame<ImageFrame>(GET_SOURCE_NAME(i));
+  auto image_frame = GetFrame<ImageFrame>("input");
+
+  auto now = std::chrono::system_clock::now();
+  std::chrono::duration<double> diff = now-last_detect_time_;
+  if (diff.count() >= idle_duration_) {
     cv::Mat img = image_frame->GetImage();
     CHECK(img.channels() == input_shape_.channel &&
             img.size[1] == input_shape_.width &&
             img.size[0] == input_shape_.height);
+    std::vector<caffe::Frcnn::BBox<float>> results;
     detector_->predict(img, results);
+    /*
     LOG(INFO) << "There are " << results.size() << " objects in picture.";
     for (size_t obj = 0; obj < results.size(); obj++) {
       LOG(INFO) << results[obj].to_string() << "\t\t"
                 << caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(),results[obj].id);
     }
+    */
 
-    std::vector<caffe::Frcnn::BBox<float> > filtered_res;
+    std::vector<caffe::Frcnn::BBox<float>> filtered_res;
     for (const auto& m: results) {
       if (m.confidence > 0.5) {
         filtered_res.push_back(m);
@@ -117,24 +101,31 @@ void ObjectDetector::Process() {
     CHECK(!original_img.empty());
     std::vector<string> tags;
     std::vector<Rect> bboxes;
+    std::vector<float> confidences;
     float scale_factor[] = { (float)original_img.size[1]/(float)img.size[1],
                              (float)original_img.size[0]/(float)img.size[0] };
     for (const auto& m: filtered_res) {
-      std::ostringstream text;
-      text << caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(), m.id) << "  :  " << m.confidence;
-      tags.push_back(text.str());
-      bboxes.push_back(Rect((int)(m[0]*scale_factor[0]), (int)(m[1]*scale_factor[1]), (int)((m[2]-m[0])*scale_factor[0]), (int)((m[3]-m[1])*scale_factor[1])));
+      tags.push_back(caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(), m.id));
+      bboxes.push_back(Rect((int)(m[0]*scale_factor[0]),
+                            (int)(m[1]*scale_factor[1]),
+                            (int)((m[2]-m[0])*scale_factor[0]),
+                            (int)((m[3]-m[1])*scale_factor[1])));
+      confidences.push_back(m.confidence);
     }
-    PushFrame(GET_SINK_NAME(i), new MetadataFrame(tags, bboxes, original_img));
-  }
+    
+    last_detect_time_ = std::chrono::system_clock::now();
+    auto p_meta = new MetadataFrame(tags, original_img);
+    CHECK(p_meta);
+    p_meta->SetBboxes(bboxes);
+    p_meta->SetConfidences(confidences);
+    PushFrame("output", p_meta);
 
-  LOG(INFO) << "Object detection took " << timer.ElapsedMSec() << " ms";
+    LOG(INFO) << "Object detection took " << timer.ElapsedMSec() << " ms";
+  } else {
+    PushFrame("output", new MetadataFrame(image_frame->GetOriginalImage()));
+  }
 }
 
 ProcessorType ObjectDetector::GetType() {
   return PROCESSOR_TYPE_OBJECT_DETECTOR;
-}
-
-void ObjectDetector::SetInputStream(int src_id, StreamPtr stream) {
-  SetSource(GET_SOURCE_NAME(src_id), stream);
 }

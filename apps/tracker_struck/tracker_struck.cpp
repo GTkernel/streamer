@@ -9,7 +9,7 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
-std::vector<std::shared_ptr<Processor>> mtcnns;
+std::vector<std::shared_ptr<Processor>> detectors;
 std::vector<std::shared_ptr<Processor>> trackers;
 std::vector<StreamReader *> tracker_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
@@ -27,8 +27,8 @@ void CleanUp() {
     if (tracker->IsStarted()) tracker->Stop();
   }
 
-  for (auto mtcnn : mtcnns) {
-    if (mtcnn->IsStarted()) mtcnn->Stop();
+  for (auto detector : detectors) {
+    if (detector->IsStarted()) detector->Stop();
   }
 
   for (auto transformer : transformers) {
@@ -47,9 +47,11 @@ void SignalHandler(int signal) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name,
+void Run(const std::vector<string> &camera_names,
+         const string &detector_type,
+         const string &detector_model,
          bool display, float scale, int min_size,
-         float mtcnn_idle_duration) {
+         float detector_idle_duration) {
   cout << "Run tracker_struck demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -59,7 +61,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
   ModelManager &model_manager = ModelManager::GetInstance();
   
 // Check options
-  CHECK(model_manager.HasModel(mtcnn_model_name)) << "Model " << mtcnn_model_name
+  CHECK(model_manager.HasModel(detector_model)) << "Model " << detector_model
                                             << " does not exist";
   for (auto camera_name : camera_names) {
     CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
@@ -91,19 +93,27 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
     input_streams.push_back(transform_processor->GetSink("output"));
   }
 
-  // mtcnn
-  auto model_description = model_manager.GetModelDescription(mtcnn_model_name);
+  // detector
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_description, min_size,
-      mtcnn_idle_duration));
-    mtcnn->SetSource("input", input_streams[i]);
-    mtcnns.push_back(mtcnn);
+    std::shared_ptr<Processor> detector;
+    auto p = GetProcessorTypeByString(detector_type);
+    if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
+      auto model_desc = model_manager.GetModelDesc(detector_model);
+      detector.reset(new ObjectDetector(model_desc, input_shape, detector_idle_duration));
+    } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
+      auto model_description = model_manager.GetModelDescription(detector_model);
+      detector.reset(new MtcnnFaceDetector(model_description, min_size, detector_idle_duration));
+    } else {
+      CHECK(false) << "detector_type " << detector_type << " not supported.";
+    }
+    detector->SetSource("input", input_streams[i]);
+    detectors.push_back(detector);
   }
 
   // tracker
   for (int i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> tracker(new StruckTracker());
-    tracker->SetSource("input", mtcnns[i]->GetSink("output"));
+    tracker->SetSource("input", detectors[i]->GetSink("output"));
     trackers.push_back(tracker);
 
     // tracker readers
@@ -129,8 +139,8 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
     transformer->Start();
   }
 
-  for (auto mtcnn : mtcnns) {
-    mtcnn->Start();
+  for (auto detector : detectors) {
+    detector->Start();
   }
 
   for (auto tracker : trackers) {
@@ -156,7 +166,9 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat image = md_frame->GetOriginalImage();
-        std::vector<Rect> bboxes = md_frame->GetBboxes();
+        auto tags = md_frame->GetTags();
+        auto bboxes = md_frame->GetBboxes();
+        auto confidences = md_frame->GetConfidences();
         for(const auto& m: bboxes) {
           cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
         }
@@ -164,6 +176,12 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
         for(const auto& m: face_landmarks) {
           for(int j=0;j<5;j++)
             cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
+        }
+        CHECK(tags.size() == confidences.size());
+        for (size_t j = 0; j < tags.size(); ++j) {
+          std::ostringstream text;
+          text << tags[i] << "  :  " << confidences[i];
+          cv::putText(image, text.str() , cv::Point(bboxes[i].px,bboxes[i].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
         }
         cv::imshow(camera_names[i], image);
       }
@@ -193,9 +211,12 @@ int main(int argc, char *argv[]) {
 
   po::options_description desc("Multi-camera end to end video ingestion demo");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("mtcnn_model,m",
-                     po::value<string>()->value_name("MTCNN_MODEL")->required(),
-                     "The name of the mtcnn model to run");
+  desc.add_options()("detector_type",
+                     po::value<string>()->value_name("DETECTOR_TYPE")->required(),
+                     "The name of the detector type to run");
+  desc.add_options()("detector_model,m",
+                     po::value<string>()->value_name("DETECTOR_MODEL")->required(),
+                     "The name of the detector model to run");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
@@ -210,8 +231,8 @@ int main(int argc, char *argv[]) {
                      "scale factor before mtcnn");
   desc.add_options()("min_size", po::value<int>()->default_value(40),
                      "face minimum size");
-  desc.add_options()("mtcnn_idle_duration", po::value<float>()->default_value(1.0),
-                     "mtcnn idle duration");
+  desc.add_options()("detector_idle_duration", po::value<float>()->default_value(1.0),
+                     "detector idle duration");
 
   po::variables_map vm;
   try {
@@ -238,12 +259,13 @@ int main(int argc, char *argv[]) {
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
-  auto mtcnn_model = vm["mtcnn_model"].as<string>();
+  auto detector_type = vm["detector_type"].as<string>();
+  auto detector_model = vm["detector_model"].as<string>();
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
-  float mtcnn_idle_duration = vm["mtcnn_idle_duration"].as<float>();
-  Run(camera_names, mtcnn_model, display, scale, min_size, mtcnn_idle_duration);
+  float detector_idle_duration = vm["detector_idle_duration"].as<float>();
+  Run(camera_names, detector_type, detector_model, display, scale, min_size, detector_idle_duration);
 
   return 0;
 }

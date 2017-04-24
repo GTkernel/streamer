@@ -10,9 +10,8 @@ class ObjectDetector : public Processor {
 public:
   ObjectDetector(const ModelDesc &model_desc,
                  Shape input_shape,
-                 size_t batch_size);
+                 float idle_duration = 0.f);
   virtual ProcessorType GetType() override;
-  void SetInputStream(int src_id, StreamPtr stream);
 
 protected:
   virtual bool Init() override;
@@ -20,15 +19,11 @@ protected:
   virtual void Process() override;
 
 private:
-  DataBuffer input_buffer_;
-  std::unique_ptr<Model> model_;
-  std::vector<string> labels_;
-  // TODO: Add variables for holding bounding boxes
   ModelDesc model_desc_;
   Shape input_shape_;
-  cv::Mat mean_image_;
-  size_t batch_size_;
   std::unique_ptr<API::Detector> detector_;
+  float idle_duration_;
+  std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
 };
 
 #endif // STREAMER_OBJECT_DETECTOR_H

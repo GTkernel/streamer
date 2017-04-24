@@ -107,6 +107,7 @@ class Processor {
 
   template <typename FT = Frame>
   std::shared_ptr<FT> GetFrame(const string &source_name);
+  void PushFrame(const string &sink_name, std::shared_ptr<Frame> frame);
   void PushFrame(const string &sink_name, Frame *frame);
   void Init_();
 

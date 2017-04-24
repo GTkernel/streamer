@@ -9,7 +9,7 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
-std::shared_ptr<ObjectDetector> detector;
+std::vector<std::shared_ptr<Processor>> detectors;
 std::vector<StreamReader *> detector_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
@@ -22,7 +22,9 @@ void CleanUp() {
     reader->UnSubscribe();
   }
 
-  if (detector != nullptr && detector->IsStarted()) detector->Stop();
+  for (auto detector : detectors) {
+    if (detector->IsStarted()) detector->Stop();
+  }
 
   for (auto transformer : transformers) {
     if (transformer->IsStarted()) transformer->Stop();
@@ -85,16 +87,15 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   // detector
   auto model_desc = model_manager.GetModelDesc(model_name);
-  detector.reset(
-      new ObjectDetector(model_desc, input_shape, input_streams.size()));
-
-  for (size_t i = 0; i < input_streams.size(); i++) {
-    detector->SetInputStream(i, input_streams[i]);
+  for (int i = 0; i < batch_size; i++) {
+    std::shared_ptr<Processor> detector(new ObjectDetector(model_desc, input_shape));
+    detector->SetSource("input", input_streams[i]);
+    detectors.push_back(detector);
   }
 
   // detector readers
   for (size_t i = 0; i < input_streams.size(); i++) {
-    auto detector_output = detector->GetSink("output" + std::to_string(i));
+    auto detector_output = detectors[i]->GetSink("output");
     detector_output_readers.push_back(detector_output->Subscribe());
   }
 
@@ -104,8 +105,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
     std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
         cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
-    encoder->SetSource("input",
-                       detector->GetSink("output" + std::to_string(i)));
+    encoder->SetSource("input", detectors[i]->GetSink("output"));
     encoders.push_back(encoder);
   }
 
@@ -119,7 +119,9 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     transformer->Start();
   }
 
-  detector->Start();
+  for (auto detector : detectors) {
+    detector->Start();
+  }
 
   for (auto encoder : encoders) {
     encoder->Start();
@@ -136,27 +138,27 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   //  double fps_to_show = 0.0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
-      double fps_to_show = (1000.0 / detector->GetSlidingLatencyMs());
+      double fps_to_show = (1000.0 / detectors[i]->GetSlidingLatencyMs());
       auto reader = detector_output_readers[i];
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat image = md_frame->GetOriginalImage();
         auto tags = md_frame->GetTags();
-        auto results = md_frame->GetBboxes();
-        cv::Scalar box_color(255, 0, 0);
-        for (size_t i = 0; i < results.size(); ++i) {
-          cv::Rect rect(results[i].px, results[i].py, results[i].width, results[i].height);
-          cv::rectangle(image, rect, box_color, 5);
-          cv::putText(image, tags[i] , cv::Point(results[i].px,results[i].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
+        auto bboxes = md_frame->GetBboxes();
+        auto confidences = md_frame->GetConfidences();
+        for (size_t i = 0; i < bboxes.size(); ++i) {
+          cv::Rect rect(bboxes[i].px, bboxes[i].py, bboxes[i].width, bboxes[i].height);
+          cv::rectangle(image, rect, cv::Scalar(255, 0, 0), 5);
+          std::ostringstream text;
+          text << tags[i] << "  :  " << confidences[i];
+          cv::putText(image, text.str() , cv::Point(bboxes[i].px,bboxes[i].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
         }
-        if (display) {
-          cv::imshow(camera_names[i], image);
-        }
+        cv::imshow(camera_names[i], image);
       }
     }
 
     if (display) {
-      int q = cv::waitKey(10);
+      char q = cv::waitKey(10);
       if (q == 'q') break;
     }
   }

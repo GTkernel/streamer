@@ -627,13 +627,16 @@ void MtcnnFaceDetector::Process() {
     }
     last_detect_time_ = std::chrono::system_clock::now();
 
-    PushFrame("output", new MetadataFrame(bboxes, face_landmarks, original_img));
-    LOG(INFO) << "Caffe Mtcnn took " << timer.ElapsedMSec() << " ms";
+    auto p_meta = new MetadataFrame(bboxes, original_img);
+    CHECK(p_meta);
+    p_meta->SetFaceLandmarks(face_landmarks);
+    PushFrame("output", p_meta);
+    LOG(INFO) << "MtcnnFaceDetector took " << timer.ElapsedMSec() << " ms";
   } else {
     PushFrame("output", new MetadataFrame(image_frame->GetOriginalImage()));
   }
 }
 
 ProcessorType MtcnnFaceDetector::GetType() {
-  return PROCESSOR_TYPE_CAFFE_MTCNN;
+  return PROCESSOR_TYPE_MTCNN_FACE_DETECTOR;
 }
