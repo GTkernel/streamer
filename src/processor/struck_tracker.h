@@ -9,7 +9,7 @@
 
 class StruckTracker : public Processor {
 public:
-  StruckTracker();
+  StruckTracker(float calibration_duration);
   virtual ProcessorType GetType() override;
 
 protected:
@@ -21,6 +21,8 @@ private:
   std::list<std::shared_ptr<struck::Tracker>> tracker_list_;
   cv::Mat gray_image_;
   struck::Config conf_;
+  float calibration_duration_;
+  std::chrono::time_point<std::chrono::system_clock> last_calibration_time_;
 };
 
 #endif // STREAMER_STRUCK_TRACKER_H

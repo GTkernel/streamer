@@ -3,9 +3,10 @@
 
 static const string STRUCK_CONF_FILENAME = "struck_config.txt";
 
-StruckTracker::StruckTracker()
+StruckTracker::StruckTracker(float calibration_duration)
     : Processor({"input"}, {"output"}),
-      conf_(Context::GetContext().GetConfigFile(STRUCK_CONF_FILENAME)) {}
+      conf_(Context::GetContext().GetConfigFile(STRUCK_CONF_FILENAME)),
+      calibration_duration_(calibration_duration) {}
 
 bool StruckTracker::Init() {
   /*
@@ -39,8 +40,8 @@ bool StruckTracker::OnStop() {
 }
 
 void StruckTracker::Process() {
-  //Timer timer;
-  //timer.Start();
+  Timer timer;
+  timer.Start();
   
   auto md_frame = GetFrame<MetadataFrame>("input");
   cv::Mat image = md_frame->GetOriginalImage();
@@ -93,17 +94,25 @@ void StruckTracker::Process() {
       tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
       tracker_list_.push_back(new_tracker);
     }
+    last_calibration_time_ = std::chrono::system_clock::now();
   } else {
-    for (auto it = tracker_list_.begin(); it != tracker_list_.end(); ++it) {
-      (*it)->Track(gray_image_);
-      struck::IntRect r((*it)->GetBB());
-      tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
+    auto now = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff = now-last_calibration_time_;
+    if (diff.count() < calibration_duration_) {
+      for (auto it = tracker_list_.begin(); it != tracker_list_.end(); ++it) {
+        (*it)->Track(gray_image_);
+        struck::IntRect r((*it)->GetBB());
+        tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
+      }
+    } else {
+      LOG(INFO) << "Time " << calibration_duration_ << " is up, need calibration ......";
+      return;
     }
   }
 
   md_frame->SetBboxes(tracked_bboxes);
   PushFrame("output", md_frame);
-  //LOG(INFO) << "StruckTracker took " << timer.ElapsedMSec() << " ms";
+  LOG(INFO) << "StruckTracker took " << timer.ElapsedMSec() << " ms";
 }
 
 ProcessorType StruckTracker::GetType() {

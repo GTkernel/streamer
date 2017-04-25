@@ -52,7 +52,8 @@ void Run(const std::vector<string> &camera_names,
          const string &detector_model,
          bool display, float scale, int min_size,
          float detector_idle_duration,
-         const string &detector_targets) {
+         const string &detector_targets,
+         float tracker_calibration_duration) {
   cout << "Run tracker_struck demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -123,7 +124,7 @@ void Run(const std::vector<string> &camera_names,
 
   // tracker
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> tracker(new StruckTracker());
+    std::shared_ptr<Processor> tracker(new StruckTracker(tracker_calibration_duration));
     tracker->SetSource("input", detectors[i]->GetSink("output"));
     trackers.push_back(tracker);
 
@@ -231,6 +232,8 @@ int main(int argc, char *argv[]) {
   desc.add_options()("detector_targets",
                      po::value<string>()->default_value(""),
                      "The name of the target to detect, separate with ,");
+  desc.add_options()("tracker_calibration_duration", po::value<float>()->default_value(2.0),
+                     "tracker calibration duration");
 
   po::variables_map vm;
   try {
@@ -264,8 +267,9 @@ int main(int argc, char *argv[]) {
   int min_size = vm["min_size"].as<int>();
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
   auto detector_targets = vm["detector_targets"].as<string>();
+  float tracker_calibration_duration = vm["tracker_calibration_duration"].as<float>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_idle_duration, detector_targets);
+      detector_idle_duration, detector_targets, tracker_calibration_duration);
 
   return 0;
 }
