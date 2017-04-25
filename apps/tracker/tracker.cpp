@@ -186,15 +186,16 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
       auto reader = tracker_output_readers[i];
-      auto image_frame = reader->PopFrame<ImageFrame>();
+      auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
-        cv::Mat image = image_frame->GetImage();
+        md_frame->RenderAll();
+        cv::Mat image = md_frame->GetOriginalImage();
         cv::imshow(camera_names[i], image);
       }
     }
 
     if (display) {
-      int q = cv::waitKey(10);
+      char q = cv::waitKey(10);
       if (q == 'q') break;
     }
   }

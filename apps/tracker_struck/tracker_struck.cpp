@@ -99,6 +99,7 @@ void Run(const std::vector<string> &camera_names,
     std::shared_ptr<Processor> detector;
     auto p = GetProcessorTypeByString(detector_type);
     if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
+#ifdef USE_FRCNN
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
@@ -106,6 +107,10 @@ void Run(const std::vector<string> &camera_names,
         if (!m.empty()) targets.insert(m);
       }
       detector.reset(new ObjectDetector(model_desc, input_shape, detector_idle_duration, targets));
+#else
+      CHECK(false) << "detector_type " << detector_type
+                   << " not supported, please compile with -DUSE_FRCNN=ON";
+#endif
     } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
       auto model_description = model_manager.GetModelDescription(detector_model);
       detector.reset(new MtcnnFaceDetector(model_description, min_size, detector_idle_duration));
@@ -171,24 +176,8 @@ void Run(const std::vector<string> &camera_names,
       auto reader = tracker_output_readers[i];
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
+        md_frame->RenderAll();
         cv::Mat image = md_frame->GetOriginalImage();
-        auto tags = md_frame->GetTags();
-        auto bboxes = md_frame->GetBboxes();
-        auto confidences = md_frame->GetConfidences();
-        for(const auto& m: bboxes) {
-          cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
-        }
-        std::vector<FaceLandmark> face_landmarks = md_frame->GetFaceLandmarks();
-        for(const auto& m: face_landmarks) {
-          for(int j=0;j<5;j++)
-            cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
-        }
-        CHECK(tags.size() == confidences.size());
-        for (size_t j = 0; j < tags.size(); ++j) {
-          std::ostringstream text;
-          text << tags[i] << "  :  " << confidences[i];
-          cv::putText(image, text.str() , cv::Point(bboxes[i].px,bboxes[i].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
-        }
         cv::imshow(camera_names[i], image);
       }
     }

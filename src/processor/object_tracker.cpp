@@ -19,18 +19,10 @@ void ObjectTracker::Process() {
   auto md_frame = GetFrame<MetadataFrame>("input");
   cv::Mat image = md_frame->GetOriginalImage();
   std::vector<Rect> bboxes = md_frame->GetBboxes();
-  for(const auto& m: bboxes) {
-    cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
-  }
-  std::vector<FaceLandmark> face_landmarks = md_frame->GetFaceLandmarks();
-  for(const auto& m: face_landmarks) {
-    for(int j=0;j<5;j++)
-      cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
-  }
-
-  std::vector<PointFeature> point_features;
   std::vector<std::vector<float>> face_features = md_frame->GetFaceFeatures();
   CHECK(bboxes.size() == face_features.size());
+  
+  std::vector<PointFeature> point_features;
   for(int i = 0;i<bboxes.size();i++){
     cv::Point point(bboxes[i].px + bboxes[i].width/2,
                     bboxes[i].py + bboxes[i].height/2);
@@ -38,52 +30,69 @@ void ObjectTracker::Process() {
   }
 
   if (first_frame_) {
-    rem_list_.push_back(point_features);
     first_frame_ = false;
   } else {
-    if (rem_list_.size() >= rem_size_) {
-      rem_list_.pop_front();
-    }
-    rem_list_.push_back(point_features);
-
-    auto prev_it=rem_list_.begin();
-    for (auto it=rem_list_.begin(); it != rem_list_.end(); ++it) {
-      if (it != rem_list_.begin()) {
-        const auto& prev_point_features = *prev_it;
-        for (const auto& m: *it) {
-          auto prev = FindPreviousNearest(m, prev_point_features, 20.0);
-          if (prev)
-            cv::line(image, prev->point, m.point, cv::Scalar(255,0,0), 5);
-        }
-      }
-      prev_it = it;
-    }
+    AttachNearest(point_features, 20.0);
   }
-  
-  PushFrame("output", new ImageFrame(image, md_frame->GetOriginalImage()));
+  for (const auto& m: point_features) {
+    std::list<boost::optional<PointFeature>> l;
+    l.push_back(m);
+    path_list_.push_back(l);
+  }
+
+  for (auto it = path_list_.begin(); it != path_list_.end(); ) {
+    if (it->size() > rem_size_)
+      it->pop_front();
+
+    bool list_all_empty_point = true;
+    for (const auto& m: *it) {
+      if (m) list_all_empty_point = false;
+    }
+
+    if (list_all_empty_point)
+      path_list_.erase(it++);
+    else
+      it++;
+  }
+
+  md_frame->SetPaths(path_list_);
+  PushFrame("output", md_frame);
 }
 
 ProcessorType ObjectTracker::GetType() {
   return PROCESSOR_TYPE_OBJECT_TRACKER;
 }
 
-boost::optional<PointFeature> ObjectTracker::FindPreviousNearest(const PointFeature& point_feature,
-                                                                 std::vector<PointFeature> point_features,
-                                                                 float threshold)
+void ObjectTracker::AttachNearest(std::vector<PointFeature>& point_features,
+                                  float threshold)
 {
-  boost::optional<PointFeature> result;
-  float distance = std::numeric_limits<float>::max();
-  //printf("=====================FindPreviousNearest====================\n");
-  for (const auto& m: point_features) {
-    float d = GetDistance(point_feature.face_feature, m.face_feature);
-    //printf("%f ", d);
-    if ((d < distance) && (d < threshold)) {
-      distance = d;
-      result = m;
+  for (auto& m: path_list_) {
+    boost::optional<PointFeature> lp = m.back();
+    if (!lp) {
+      m.push_back(boost::optional<PointFeature>());
+      continue;
+    }
+    
+    auto it_result = point_features.end();
+    float distance = std::numeric_limits<float>::max();
+    //printf("=====================AttachNearest====================\n");
+    for (auto it = point_features.begin(); it != point_features.end(); it++) {
+      float d = GetDistance(lp->face_feature, it->face_feature);
+      //printf("%f ", d);
+      if ((d < distance) && (d < threshold)) {
+        distance = d;
+        it_result = it;
+      }
+    }
+    //printf("\n");
+
+    if (it_result != point_features.end()) {
+      m.push_back(*it_result);
+      point_features.erase(it_result);
+    } else {
+      m.push_back(boost::optional<PointFeature>());
     }
   }
-  //printf("\n");
-  return result;
 }
 
 float ObjectTracker::GetDistance(const std::vector<float>& a, const std::vector<float>& b)
