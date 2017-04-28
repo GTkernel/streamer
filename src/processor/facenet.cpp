@@ -142,19 +142,12 @@ void Facenet::Process() {
     for (int i = 0; i < batch_size_; i++) {
       cv::Mat img = md_frames[i]->GetOriginalImage();
       std::vector<Rect> bboxes = md_frames[i]->GetBboxes();
-      for(int i = 0;i<bboxes.size();i++){
-        int x = bboxes[i].px;
-        int y = bboxes[i].py;
-        int w = bboxes[i].width;
-        int h = bboxes[i].height;
-        if (x < 0)
-          x = 0;
-        if (y < 0)
-          y = 0;
-        if (x+w > img.cols)
-          w = img.cols-x;
-        if (y+h > img.rows)
-          h = img.rows-y;
+      for(const auto& m: bboxes){
+        int x = m.px;
+        int y = m.py;
+        int w = m.width;
+        int h = m.height;
+        CHECK((x>=0) && (y>=0) && (x+w<=img.cols) && (y+h<=img.rows));
         cv::Rect roi(x,y,w,h);
         //printf("%d, %d, %d, %d\n", roi.x ,roi.width, roi.y ,roi.height);
         face_image_ = img(roi);

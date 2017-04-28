@@ -83,7 +83,12 @@ void StruckTracker::Process() {
 
     for (const auto& m: untracked_bboxes) {
       LOG(INFO) << "Create new tracker";
-      struck::FloatRect initBB = struck::IntRect(m.px, m.py, m.width, m.height);
+      int x = m.px;
+      int y = m.py;
+      int w = m.width;
+      int h = m.height;
+      CHECK((x>=0) && (y>=0) && (x+w<=gray_image_.cols) && (y+h<=gray_image_.rows));
+      struck::FloatRect initBB = struck::IntRect(x, y, w, h);
       std::shared_ptr<struck::Tracker> new_tracker(new struck::Tracker(conf_));
       new_tracker->Initialise(gray_image_, initBB);
       CHECK(new_tracker->IsInitialised());

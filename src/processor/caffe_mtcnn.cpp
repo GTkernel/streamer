@@ -614,6 +614,10 @@ void MtcnnFaceDetector::Process() {
       m.bbox.y1 *= scale_factor[1];
       m.bbox.x2 *= scale_factor[0];
       m.bbox.y2 *= scale_factor[1];
+      if (m.bbox.y1 < 0) m.bbox.y1 = 0;
+      if (m.bbox.x1 < 0) m.bbox.x1 = 0;
+      if (m.bbox.y2 > original_img.cols) m.bbox.y2 = original_img.cols;
+      if (m.bbox.x2 > original_img.rows) m.bbox.x2 = original_img.rows;
       bboxes.push_back(Rect(m.bbox.y1, m.bbox.x1, m.bbox.y2-m.bbox.y1, m.bbox.x2-m.bbox.x1));
 
       FaceLandmark fl;
