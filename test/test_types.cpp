@@ -5,6 +5,16 @@
 
 #include "common/types.h"
 
+// Verifies that Rect::ToJson() produces a correctly-formatted JSON object The
+// resulting JSON should look like this:
+//   {
+//     "Rect": {
+//       "px": 1,
+//       "py": 2,
+//       "width": 3,
+//       "height": 4
+//     }
+//   }
 TEST(TestTypes, TestRectToJson) {
   int a = 1;
   int b = 2;
@@ -21,6 +31,9 @@ TEST(TestTypes, TestRectToJson) {
   EXPECT_EQ(rect_j.at("height").get<int>(), d);
 }
 
+// Verifies that Rect::Rect(nlohmann::json) creates a properly-initialized Rect
+// struct from a JSON object. See TestRectToJson for details on the format of
+// the JSON object.
 TEST(TestTypes, TestJsonToRect) {
   int a = 1;
   int b = 2;

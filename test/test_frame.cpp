@@ -6,6 +6,18 @@
 std::vector<std::string> tags_master = {"tag1", "tag2"};
 std::vector<Rect> bboxes_master = {Rect(1, 2, 3, 4), Rect(5, 6, 7, 8)};
 
+// Verifies that a MetadataFrame containing tags is correctly converted to a
+// JSON object by MetadataFrame::ToJson. The resulting JSON should look like:
+//   {
+//     "MetadataFrame": {
+//       "bboxes": [
+//       ]
+//       "tags": [
+//         "tag1",
+//         "tag2"
+//       ]
+//     }
+//   }
 TEST(TestFrame, TestMetadataFrameToJsonTags) {
   MetadataFrame md(tags_master);
   nlohmann::json j = md.ToJson();
@@ -24,6 +36,10 @@ TEST(TestFrame, TestMetadataFrameToJsonTags) {
   EXPECT_EQ(bboxes.size(), 0);
 }
 
+// Verifies that MetadataFrame::MetadataFrame(nlohmann::json) creates a
+// properly-formatted MetadataFrame object from a JSON object containing only
+// tags. See TestMetadataFrameToJsonTags for details on the format of the JSON
+// object.
 TEST(TestFrame, TestJsonToMetadataFrameTags) {
   nlohmann::json md_j;
   md_j["tags"] = tags_master;
@@ -44,6 +60,33 @@ TEST(TestFrame, TestJsonToMetadataFrameTags) {
   EXPECT_EQ(bboxes.size(), 0);
 }
 
+// Verifies that a MetadataFrame containing bounding boxes is correctly
+// converted to a JSON object by MetadataFrame::ToJson. The resulting JSON
+// should look like:
+//   {
+//     "MetadataFrame": {
+//       "bboxes": [
+//         {
+//           "Rect": {
+//             "px": 1,
+//             "py": 2,
+//             "width": 3,
+//             "height": 4
+//           }
+//         },
+//         {
+//           "Rect": {
+//             "px": 5,
+//             "py": 6,
+//             "width": 7,
+//             "height": 8
+//           }
+//         }
+//       ]
+//       "tags": [
+//       ]
+//     }
+//   }
 TEST(TestFrame, TestMetadataFrameToJsonBboxes) {
   MetadataFrame md(bboxes_master);
   nlohmann::json j = md.ToJson();
@@ -63,6 +106,10 @@ TEST(TestFrame, TestMetadataFrameToJsonBboxes) {
   }
 }
 
+// Verifies that MetadataFrame::MetadataFrame(nlohmann::json) creates a
+// properly-formatted MetadataFrame object from a JSON object containing only
+// bounding boxes. See TestMetadataFrameToJsonTags for details on the format of
+// the JSON object.
 TEST(TestFrame, TestJsonToMetadataFrameBboxes) {
   std::vector<nlohmann::json> bboxes_j;
   for (auto bbox : bboxes_master) {
