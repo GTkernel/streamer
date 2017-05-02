@@ -67,7 +67,7 @@ string Camera::GetCameraInfo() {
  * pan/tile the camera programmably.
  * TODO: A more general, and extendable way to unify this.
  *****************************************************************************/
-void Camera::MoveUp() { system((tile_up_command_ + " &").c_str()); }
-void Camera::MoveDown() { system((tile_down_command_ + " &").c_str()); }
-void Camera::MoveLeft() { system((pan_left_command_ + " &").c_str()); }
-void Camera::MoveRight() { system((pan_right_command_ + " &").c_str()); }
+void Camera::MoveUp() { int status = system((tile_up_command_ + " &").c_str()); }
+void Camera::MoveDown() { int status = system((tile_down_command_ + " &").c_str()); }
+void Camera::MoveLeft() { int status = system((pan_left_command_ + " &").c_str()); }
+void Camera::MoveRight() { int status = system((pan_right_command_ + " &").c_str()); }
