@@ -1,3 +1,10 @@
+/**
+* Multi-face tracking using face feature
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
+
 #include "common/context.h"
 #include "object_tracker.h"
 

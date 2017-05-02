@@ -1,3 +1,10 @@
+/**
+* Multi-target detection using MTCNN
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
+
 #ifndef STREAMER_CAFFE_MTCNN_H
 #define STREAMER_CAFFE_MTCNN_H
 

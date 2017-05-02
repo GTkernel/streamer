@@ -1,3 +1,10 @@
+/**
+* Face feature extractor using facenet
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
+
 #ifndef STREAMER_FACENET_H
 #define STREAMER_FACENET_H
 

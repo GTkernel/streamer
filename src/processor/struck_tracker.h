@@ -1,3 +1,10 @@
+/**
+* Multi-target tracking using Struck
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
+
 #ifndef STREAMER_STRUCK_TRACKER_H
 #define STREAMER_STRUCK_TRACKER_H
 

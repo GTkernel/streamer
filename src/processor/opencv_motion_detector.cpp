@@ -1,3 +1,9 @@
+/**
+* Motion detector using opencv
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
 
 #include "opencv_motion_detector.h"
 

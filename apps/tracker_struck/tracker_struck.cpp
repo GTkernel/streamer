@@ -1,3 +1,10 @@
+/**
+* An example application showing the usage of Struck tracker.
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
+
 #include <boost/program_options.hpp>
 #include <csignal>
 #include "streamer.h"

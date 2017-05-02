@@ -1,3 +1,9 @@
+/**
+* Multi-target detection using MTCNN
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
 
 #include "cv.h"
 #include "common/context.h"

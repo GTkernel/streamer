@@ -1,3 +1,10 @@
+/**
+* Multi-target tracking using Struck
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
+
 #include "common/context.h"
 #include "struck_tracker.h"
 

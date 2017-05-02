@@ -1,3 +1,10 @@
+/**
+* Motion detector using opencv
+* 
+* @author Tony Chen <xiaolongx.chen@intel.com>
+* @author Shao-Wen Yang <shao-wen.yang@intel.com>
+*/
+
 #ifndef STREAMER_OPENCV_MOTION_DETECTOR_H
 #define STREAMER_OPENCV_MOTION_DETECTOR_H
 
