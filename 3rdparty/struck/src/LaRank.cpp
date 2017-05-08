@@ -547,4 +547,11 @@ void LaRank::UpdateDebugImage()
 	setGraphColor(0);
 	drawFloatGraph(vals, n, &II, 0.f, 0.f, I.cols, I.rows);
 }
+
+std::vector<double> LaRank::GetSPFeature(int i)
+{
+  Eigen::VectorXd& ev = m_sps.back()->x[i];
+  std::vector<double> result(ev.data(), ev.data() + ev.rows() * ev.cols());
+  return result;
+}
 } // namespace struck

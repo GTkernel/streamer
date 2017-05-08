@@ -235,4 +235,9 @@ void Tracker::UpdateLearner(const ImageRep& image)
 	MultiSample sample(image, keptRects);
 	m_pLearner->Update(sample, 0);
 }
+
+std::vector<double> Tracker::GetBBFeature() const
+{
+  return m_pLearner->GetSPFeature(0);
+}
 } // namespace struck

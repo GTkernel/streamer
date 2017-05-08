@@ -51,6 +51,7 @@ public:
 	virtual void Update(const MultiSample& x, int y);
 	
 	virtual void Debug();
+  virtual std::vector<double> GetSPFeature(int i);
 
 private:
 
