@@ -82,6 +82,13 @@ void MetadataFrame::SetUuids(const std::vector<std::string>& uuids) {
   uuids_ = uuids;
   bitset_.set(Bit_uuids);
 }
+std::vector<std::vector<double>> MetadataFrame::GetStruckFeatures() {
+  return struck_features_;
+}
+void MetadataFrame::SetStruckFeatures(const std::vector<std::vector<double>>& struck_features) {
+  struck_features_ = struck_features;
+  bitset_.set(Bit_struck_features);
+}
 std::bitset<32> MetadataFrame::GetBitset() {
   return bitset_;
 }

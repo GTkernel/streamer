@@ -56,6 +56,7 @@ class MetadataFrame : public Frame {
     Bit_confidences,
     Bit_paths,
     Bit_uuids,
+    Bit_struck_features,
   };
   MetadataFrame() = delete;
   MetadataFrame(cv::Mat original_image = cv::Mat());
@@ -75,6 +76,8 @@ class MetadataFrame : public Frame {
   void SetPaths(const std::list<std::list<boost::optional<PointFeature>>>& paths);
   std::vector<std::string> GetUuids();
   void SetUuids(const std::vector<std::string>& uuids);
+  std::vector<std::vector<double>> GetStruckFeatures();
+  void SetStruckFeatures(const std::vector<std::vector<double>>& struck_features);
   std::bitset<32> GetBitset();
   virtual FrameType GetType() override;
 
@@ -86,6 +89,7 @@ class MetadataFrame : public Frame {
   std::vector<float> confidences_;
   std::list<std::list<boost::optional<PointFeature>>> paths_;
   std::vector<std::string> uuids_;
+  std::vector<std::vector<double>> struck_features_;
   std::bitset<32> bitset_;
 };
 

@@ -19,11 +19,11 @@ std::vector<std::shared_ptr<Processor>> transformers;
 std::vector<std::shared_ptr<Processor>> detectors;
 std::vector<std::shared_ptr<Processor>> trackers;
 std::vector<StreamReader *> tracker_output_readers;
-std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
+std::vector<std::shared_ptr<Processor>> db_writers;
 
 void CleanUp() {
-  for (auto encoder : encoders) {
-    if (encoder->IsStarted()) encoder->Stop();
+  for (auto db_writer : db_writers) {
+    if (db_writer->IsStarted()) db_writer->Stop();
   }
 
   for (auto reader : tracker_output_readers) {
@@ -139,13 +139,9 @@ void Run(const std::vector<string> &camera_names,
     auto tracker_output = tracker->GetSink("output");
     tracker_output_readers.push_back(tracker_output->Subscribe());
 
-    // encoders, encode each camera stream
-    string output_filename = camera_names[i] + ".mp4";
-
-    std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-        cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
-    encoder->SetSource("input", tracker->GetSink("output"));
-    encoders.push_back(encoder);
+    std::shared_ptr<Processor> db_writer(new DbWriter(cameras[i]));
+    db_writer->SetSource("input", tracker->GetSink("output"));
+    db_writers.push_back(db_writer);
   }
 
   for (auto camera : cameras) {
@@ -166,8 +162,8 @@ void Run(const std::vector<string> &camera_names,
     tracker->Start();
   }
 
-  for (auto encoder : encoders) {
-    encoder->Start();
+  for (auto db_writer : db_writers) {
+    db_writer->Start();
   }
 
   //////// Processor started, display the results

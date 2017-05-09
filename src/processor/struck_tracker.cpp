@@ -65,6 +65,7 @@ void StruckTracker::Process() {
   std::vector<Rect> tracked_bboxes;
   std::vector<string> tracked_tags;
   std::vector<string> tracked_uuids;
+  std::vector<std::vector<double>> struck_features;
   if (md_frame->GetBitset().test(MetadataFrame::Bit_bboxes)) {
     std::vector<Rect> bboxes = md_frame->GetBboxes();
     LOG(INFO) << "Got new MetadataFrame, bboxes size is " << bboxes.size()
@@ -94,6 +95,7 @@ void StruckTracker::Process() {
         tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
         tracked_tags.push_back((*it)->GetTag());
         tracked_uuids.push_back((*it)->GetUuid());
+        struck_features.push_back((*it)->GetBBFeature());
         it++;
       } else {
         LOG(INFO) << "Remove tracker, best_percent is " << best_percent;
@@ -124,6 +126,7 @@ void StruckTracker::Process() {
       tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
       tracked_tags.push_back(untracked_tags[i]);
       tracked_uuids.push_back(uuid_str);
+      struck_features.push_back(new_tracker->GetBBFeature());
       tracker_list_.push_back(new_tracker);
     }
     last_calibration_time_ = std::chrono::system_clock::now();
@@ -137,6 +140,7 @@ void StruckTracker::Process() {
         tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
         tracked_tags.push_back((*it)->GetTag());
         tracked_uuids.push_back((*it)->GetUuid());
+        struck_features.push_back((*it)->GetBBFeature());
       }
     } else {
       LOG(INFO) << "Time " << calibration_duration_ << " is up, need calibration ......";
@@ -147,6 +151,7 @@ void StruckTracker::Process() {
   md_frame->SetBboxes(tracked_bboxes);
   md_frame->SetTags(tracked_tags);
   md_frame->SetUuids(tracked_uuids);
+  md_frame->SetStruckFeatures(struck_features);
   PushFrame("output", md_frame);
   LOG(INFO) << "StruckTracker took " << timer.ElapsedMSec() << " ms";
 }
