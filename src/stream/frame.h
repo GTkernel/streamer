@@ -55,6 +55,7 @@ class MetadataFrame : public Frame {
     Bit_face_features,
     Bit_confidences,
     Bit_paths,
+    Bit_uuids,
   };
   MetadataFrame() = delete;
   MetadataFrame(cv::Mat original_image = cv::Mat());
@@ -72,8 +73,9 @@ class MetadataFrame : public Frame {
   void SetConfidences(const std::vector<float>& confidences);
   std::list<std::list<boost::optional<PointFeature>>> GetPaths();
   void SetPaths(const std::list<std::list<boost::optional<PointFeature>>>& paths);
+  std::vector<std::string> GetUuids();
+  void SetUuids(const std::vector<std::string>& uuids);
   std::bitset<32> GetBitset();
-  void RenderAll();
   virtual FrameType GetType() override;
 
  private:
@@ -83,6 +85,7 @@ class MetadataFrame : public Frame {
   std::vector<std::vector<float>> face_features_;
   std::vector<float> confidences_;
   std::list<std::list<boost::optional<PointFeature>>> paths_;
+  std::vector<std::string> uuids_;
   std::bitset<32> bitset_;
 };
 

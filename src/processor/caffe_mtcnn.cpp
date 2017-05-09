@@ -615,6 +615,7 @@ void MtcnnFaceDetector::Process() {
                              (float)original_img.size[0]/(float)img.size[0] };
     std::vector<Rect> bboxes;
     std::vector<FaceLandmark> face_landmarks;
+    std::vector<std::string> tags;
     for (auto& m: faceInfo) {
       m.bbox.x1 *= scale_factor[0];
       m.bbox.y1 *= scale_factor[1];
@@ -634,12 +635,15 @@ void MtcnnFaceDetector::Process() {
         fl.y[i] = m.facePts.x[i];
       }
       face_landmarks.push_back(fl);
+
+      tags.push_back("face");
     }
     last_detect_time_ = std::chrono::system_clock::now();
 
     auto p_meta = new MetadataFrame(bboxes, original_img);
     CHECK(p_meta);
     p_meta->SetFaceLandmarks(face_landmarks);
+    p_meta->SetTags(tags);
     PushFrame("output", p_meta);
     LOG(INFO) << "MtcnnFaceDetector took " << timer.ElapsedMSec() << " ms";
   } else {

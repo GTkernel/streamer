@@ -75,34 +75,15 @@ void MetadataFrame::SetPaths(const std::list<std::list<boost::optional<PointFeat
   paths_ = paths;
   bitset_.set(Bit_paths);
 }
+std::vector<std::string> MetadataFrame::GetUuids() {
+  return uuids_;
+}
+void MetadataFrame::SetUuids(const std::vector<std::string>& uuids) {
+  uuids_ = uuids;
+  bitset_.set(Bit_uuids);
+}
 std::bitset<32> MetadataFrame::GetBitset() {
   return bitset_;
-}
-void MetadataFrame::RenderAll() {
-  cv::Mat image = GetOriginalImage();
-  for(const auto& m: bboxes_) {
-    cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
-  }
-  for(const auto& m: face_landmarks_) {
-    for(int j=0;j<5;j++)
-      cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
-  }
-  CHECK(tags_.size() == confidences_.size());
-  for (size_t j = 0; j < tags_.size(); ++j) {
-    std::ostringstream text;
-    text << tags_[j] << "  :  " << confidences_[j];
-    cv::putText(image, text.str() , cv::Point(bboxes_[j].px,bboxes_[j].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
-  }
-  for (const auto& m: paths_) {
-    auto prev_it=m.begin();
-    for (auto it=m.begin(); it != m.end(); ++it) {
-      if (it != m.begin()) {
-        if ((*it) && (*prev_it))
-          cv::line(image, (*prev_it)->point, (*it)->point, cv::Scalar(255,0,0), 5);
-      }
-      prev_it = it;
-    }
-  }
 }
 FrameType MetadataFrame::GetType() { return FRAME_TYPE_MD; }
 

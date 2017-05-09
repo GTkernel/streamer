@@ -14,6 +14,19 @@
 #include "struck/src/Tracker.h"
 #include "struck/src/Config.h"
 
+class Tracker1 : public struck::Tracker {
+public:
+  Tracker1(const struck::Config& conf, const std::string& uuid, const std::string& tag):
+      struck::Tracker(conf), uuid_(uuid), tag_(tag) {}
+  ~Tracker1() {}
+  std::string GetUuid() const { return uuid_; }
+  std::string GetTag() const { return tag_; }
+
+private:
+  std::string uuid_;
+  std::string tag_;
+};
+
 class StruckTracker : public Processor {
 public:
   StruckTracker(float calibration_duration);
@@ -25,7 +38,7 @@ protected:
   virtual void Process() override;
 
 private:
-  std::list<std::shared_ptr<struck::Tracker>> tracker_list_;
+  std::list<std::shared_ptr<Tracker1>> tracker_list_;
   cv::Mat gray_image_;
   struck::Config conf_;
   float calibration_duration_;

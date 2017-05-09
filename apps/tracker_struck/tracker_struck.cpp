@@ -184,8 +184,26 @@ void Run(const std::vector<string> &camera_names,
       auto reader = tracker_output_readers[i];
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
-        md_frame->RenderAll();
         cv::Mat image = md_frame->GetOriginalImage();
+        auto bboxes = md_frame->GetBboxes();
+        for(const auto& m: bboxes) {
+          cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
+        }
+        auto face_landmarks = md_frame->GetFaceLandmarks();
+        for(const auto& m: face_landmarks) {
+          for(int j=0;j<5;j++)
+            cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
+        }
+        auto tags = md_frame->GetTags();
+        auto confidences = md_frame->GetConfidences();
+        for (size_t j = 0; j < tags.size(); ++j) {
+          std::ostringstream text;
+          if (tags.size() == confidences.size())
+            text << tags[j] << "  :  " << confidences[j];
+          else
+            text << tags[j];
+          cv::putText(image, text.str() , cv::Point(bboxes[j].px,bboxes[j].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
+        }  
         cv::imshow(camera_names[i], image);
       }
     }

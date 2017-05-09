@@ -5,6 +5,10 @@
 * @author Shao-Wen Yang <shao-wen.yang@intel.com>
 */
 
+#include <boost/uuid/uuid.hpp>            // uuid class
+#include <boost/uuid/uuid_generators.hpp> // generators
+#include <boost/uuid/uuid_io.hpp>         // streaming operators etc.
+#include <boost/lexical_cast.hpp>
 #include "common/context.h"
 #include "struck_tracker.h"
 
@@ -59,28 +63,37 @@ void StruckTracker::Process() {
   }
 
   std::vector<Rect> tracked_bboxes;
+  std::vector<string> tracked_tags;
+  std::vector<string> tracked_uuids;
   if (md_frame->GetBitset().test(MetadataFrame::Bit_bboxes)) {
     std::vector<Rect> bboxes = md_frame->GetBboxes();
     LOG(INFO) << "Got new MetadataFrame, bboxes size is " << bboxes.size()
               << ", current tracker size is " << tracker_list_.size();
     std::vector<Rect> untracked_bboxes = bboxes;
+    std::vector<string> untracked_tags = md_frame->GetTags();
+    CHECK(untracked_bboxes.size() == untracked_tags.size());
     for (auto it = tracker_list_.begin(); it != tracker_list_.end(); ) {
       (*it)->Track(gray_image_);
       struck::IntRect r((*it)->GetBB());
       cv::Rect rt(r.XMin(), r.YMin(), r.Width(), r.Height());
       float best_percent = 0.f;
-      for (auto u_it = untracked_bboxes.begin(); u_it != untracked_bboxes.end(); ++u_it) {
-        cv::Rect ru(u_it->px, u_it->py, u_it->width, u_it->height);
+      //for (auto u_it = untracked_bboxes.begin(); u_it != untracked_bboxes.end(); ++u_it) {
+      for (size_t i = 0; i < untracked_bboxes.size(); ++i) {
+        cv::Rect ru(untracked_bboxes[i].px, untracked_bboxes[i].py,
+            untracked_bboxes[i].width, untracked_bboxes[i].height);
         cv::Rect intersects = rt&ru;
         float percent = (float)intersects.area() / (float)ru.area();
         if (percent >= 0.7) {
-          untracked_bboxes.erase(u_it);
+          untracked_bboxes.erase(untracked_bboxes.begin()+i);
+          untracked_tags.erase(untracked_tags.begin()+i);
           best_percent = percent;
           break;
         }
       }
       if (best_percent >= 0.7) {
         tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
+        tracked_tags.push_back((*it)->GetTag());
+        tracked_uuids.push_back((*it)->GetUuid());
         it++;
       } else {
         LOG(INFO) << "Remove tracker, best_percent is " << best_percent;
@@ -88,15 +101,20 @@ void StruckTracker::Process() {
       }
     }
 
-    for (const auto& m: untracked_bboxes) {
+    CHECK(untracked_bboxes.size() == untracked_tags.size());
+    //for (const auto& m: untracked_bboxes) {
+    for (size_t i = 0; i < untracked_bboxes.size(); ++i) {
       LOG(INFO) << "Create new tracker";
-      int x = m.px;
-      int y = m.py;
-      int w = m.width;
-      int h = m.height;
+      int x = untracked_bboxes[i].px;
+      int y = untracked_bboxes[i].py;
+      int w = untracked_bboxes[i].width;
+      int h = untracked_bboxes[i].height;
       CHECK((x>=0) && (y>=0) && (x+w<=gray_image_.cols) && (y+h<=gray_image_.rows));
       struck::FloatRect initBB = struck::IntRect(x, y, w, h);
-      std::shared_ptr<struck::Tracker> new_tracker(new struck::Tracker(conf_));
+      boost::uuids::uuid uuid = boost::uuids::random_generator()();
+      std::string uuid_str = boost::lexical_cast<std::string>(uuid);
+      std::shared_ptr<Tracker1> new_tracker(new Tracker1(
+          conf_, uuid_str, untracked_tags[i]));
       new_tracker->Initialise(gray_image_, initBB);
       CHECK(new_tracker->IsInitialised());
       //printf("%s, %d\n", __FUNCTION__, __LINE__);
@@ -104,6 +122,8 @@ void StruckTracker::Process() {
       //printf("%s, %d\n", __FUNCTION__, __LINE__);
       struck::IntRect r(new_tracker->GetBB());
       tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
+      tracked_tags.push_back(untracked_tags[i]);
+      tracked_uuids.push_back(uuid_str);
       tracker_list_.push_back(new_tracker);
     }
     last_calibration_time_ = std::chrono::system_clock::now();
@@ -115,6 +135,8 @@ void StruckTracker::Process() {
         (*it)->Track(gray_image_);
         struck::IntRect r((*it)->GetBB());
         tracked_bboxes.push_back(Rect(r.XMin(), r.YMin(), r.Width(), r.Height()));
+        tracked_tags.push_back((*it)->GetTag());
+        tracked_uuids.push_back((*it)->GetUuid());
       }
     } else {
       LOG(INFO) << "Time " << calibration_duration_ << " is up, need calibration ......";
@@ -123,6 +145,8 @@ void StruckTracker::Process() {
   }
 
   md_frame->SetBboxes(tracked_bboxes);
+  md_frame->SetTags(tracked_tags);
+  md_frame->SetUuids(tracked_uuids);
   PushFrame("output", md_frame);
   LOG(INFO) << "StruckTracker took " << timer.ElapsedMSec() << " ms";
 }
