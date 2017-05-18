@@ -26,7 +26,7 @@ bool FileWriter::OnStop() {
 }
 
 void FileWriter::Process() {
-  auto frame = GetFrame<BytesFrame>("input");
+  auto frame = GetFrame<Frame>("input");
   switch (frame->GetType()) {
     case FRAME_TYPE_BYTES: {
       auto bytes_frame = std::dynamic_pointer_cast<BytesFrame>(frame);
@@ -38,6 +38,12 @@ void FileWriter::Process() {
       auto image_frame = std::dynamic_pointer_cast<ImageFrame>(frame);
       auto image = image_frame->GetImage();
       file_.write((char *)image.data, image.total() * image.elemSize());
+      break;
+    }
+    case FRAME_TYPE_MD: {
+      auto md_frame = std::dynamic_pointer_cast<MetadataFrame>(frame);
+      std::string s = md_frame->ToJson().dump();
+      file_.write(s.c_str(), sizeof(char) * s.length());
       break;
     }
     default: { STREAMER_NOT_IMPLEMENTED; }
