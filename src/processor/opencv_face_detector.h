@@ -7,7 +7,9 @@
 
 using namespace std;
 
+#ifdef USE_CUDA
 #include <opencv2/gpu/gpu.hpp>
+#endif
 #include <opencv2/objdetect/objdetect.hpp>
 #include "common/common.h"
 #include "processor.h"
