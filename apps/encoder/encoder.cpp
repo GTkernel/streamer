@@ -47,7 +47,7 @@ void Run(const string &camera_name, string &dst_file, int port) {
   } else if (port != -1) {
     cout << "Stream video on port: " << port << endl;
     encoder = std::shared_ptr<Processor>(
-        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), port));
+        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), port, false));
     encoder->SetSource("input", camera_stream);
     // Receive pipeline
     // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
