@@ -2,19 +2,20 @@
  * @brief simple.cpp - An example application to display camera data.
  */
 
-#include <boost/program_options.hpp>
 #include <csignal>
+
+#include <boost/program_options.hpp>
+
 #include "streamer.h"
 
 namespace po = boost::program_options;
-using std::cout;
-using std::endl;
 
 std::shared_ptr<Camera> camera;
 
 void SignalHandler(int signal) {
   std::cout << "Received SIGINT, stopping" << std::endl;
-  if (camera != nullptr) camera->Stop();
+  if (camera != nullptr)
+    camera->Stop();
 
   exit(0);
 }
@@ -37,7 +38,8 @@ void Run(const string &camera_name) {
     cv::imshow(camera_name, img);
 
     unsigned char q = cv::waitKey(10);
-    if (q == 'q') break;
+    if (q == 'q')
+      break;
   }
 
   camera->Stop();
@@ -67,8 +69,8 @@ int main(int argc, char *argv[]) {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
   } catch (const po::error &e) {
-    std::cerr << e.what() << endl;
-    cout << desc << endl;
+    std::cerr << e.what() << std::endl;
+    std::cout << desc << std::endl;
     return 1;
   }
 
