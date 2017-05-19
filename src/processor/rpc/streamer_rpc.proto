@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+// The Messenger service definition.
+service Messenger {
+  // Sends a frame
+  rpc SendFrame (SingleFrame) returns (google.protobuf.Empty) {}
+}
+
+// The request message
+message SingleFrame {
+   bytes Frame = 1;
+   string StreamName = 2;
+}

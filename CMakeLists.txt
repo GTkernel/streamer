@@ -124,6 +124,17 @@ if (USE_VIMBA)
   message("Build with Vimba")
 endif()
 
+option(USE_RPC "Build RPC support." OFF)
+if (USE_RPC)
+  find_package(Protobuf REQUIRED)
+  find_package(GRPC REQUIRED)
+  include_directories(
+    ${PROTOBUF_INCLUDE_DIRS}
+    ${GRPC_INCLUDE_DIRS}
+  )
+  message("Build RPC support")
+endif()
+
 # Common include paths
 include_directories(
   src
