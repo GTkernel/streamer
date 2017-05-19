@@ -18,9 +18,9 @@ echo "OPENCV_VERSION := 3" >> Makefile.config
 echo "CPU_ONLY := 1" >> Makefile.config
 
 # Compile Caffe
-make all -j
-make test -j
-make runtest -j
-make distribute -j
+make all
+make test
+make runtest
+make distribute
 
 cd ..

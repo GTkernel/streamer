@@ -19,7 +19,7 @@ git checkout 3.2.0
 mkdir build
 cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local ..
-make -j
+make
 sudo make install
 
 # Run basic tests

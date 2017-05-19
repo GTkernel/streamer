@@ -31,6 +31,6 @@ script:
   - cd build
   - echo $HOME/installed
   - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DBACKEND=cpu -DCAFFE_HOME=$(pwd)/../caffe/distribute ..
-  - make -j4
-  - make -j4 tests
-  - ctest -V # -j will cause port being used problem
+  - make
+  - make tests
+  - ctest -V
