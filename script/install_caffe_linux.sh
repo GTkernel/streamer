@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
-# Install Caffe
-sudo apt-get -y install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler
-sudo apt-get -y install --no-install-recommends libboost-all-dev
-sudo apt-get -y install libgflags-dev libgoogle-glog-dev
-sudo apt-get -y install libatlas-base-dev
 
-CAFFE_DIR_NAME=caffe-${CAFFE_COMMIT_HASH}
-git clone https://github.com/BVLC/caffe $CAFFE_DIR_NAME
-cd $CAFFE_DIR_NAME
-git reset --hard ${CAFFE_COMMIT_HASH}
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=release -DCPU_ONLY=ON -DBUILD_docs=OFF -DBUILD_python=OFF -DBUILD_python_layer=OFF -DCMAKE_INSTALL_PREFIX=$HOME/installed_${TRAVIS_OS_NAME} -DUSE_LMDB=off ..
-make -j`nproc`
-sudo make install
-cd ..
+# Install dependencies for Caffe
+sudo apt-get -y install build-essential cmake git pkg-config libprotobuf-dev \
+     libleveldb-dev libsnappy-dev libhdf5-serial-dev protobuf-compiler \
+     libatlas-base-dev libgflags-dev libgoogle-glog-dev liblmdb-dev python-pip \
+     python-dev python-numpy python-scipy
+sudo apt-get -y install --no-install-recommends libboost-all-dev
+
+# Set up the Caffe source code
+git clone git@github.com:BVLC/caffe.git
+cd caffe
+git checkout 1.0
+
+# Configure the build
+cp Makefile.config.example Makefile.config
+echo "OPENCV_VERSION := 3" >> Makefile.config
+echo "CPU_ONLY := 1" >> Makefile.config
+
+# Compile Caffe
+make all -j
+make test -j
+make runtest -j
+make distribute -j
+
 cd ..
