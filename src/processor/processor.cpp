@@ -138,7 +138,7 @@ void Processor::PushFrame(const string &sink_name, Frame *frame) {
 
 template <typename FT>
 std::shared_ptr<FT> Processor::GetFrame(const string &source_name) {
-  CHECK(sources_.count(source_name) != 0);
+  CHECK(source_frame_cache_.count(source_name) != 0);
   return std::dynamic_pointer_cast<FT>(source_frame_cache_[source_name]);
 }
 

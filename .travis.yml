@@ -22,10 +22,6 @@ cache:
     - $HOME/installed_${TRAVIS_OS_NAME}
     - $HOME/installed_${TRAVIS_OS_NAME}/caffe-${CAFFE_COMMIT_HASH}
 
-env:
-  global:
-    - CAFFE_COMMIT_HASH=a8ec123c00723df0d0ad897e1eea32a29201c81b
-
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash ./script/install_dependencies_linux.sh; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]  ; then bash ./script/install_dependencies_mac.sh  ; fi
@@ -33,8 +29,8 @@ install:
 script:
   - mkdir build
   - cd build
-  - echo $HOME/installed
-  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DBACKEND=cpu -DCAFFE_HOME=$HOME/installed_${TRAVIS_OS_NAME} ..
-  - make -j4
-  - make -j4 tests
-  - ctest -V # -j will cause port being used problem
+  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DBACKEND=cpu -DCAFFE_HOME=$(pwd)/../caffe/distribute ..
+  - make
+  - make apps
+  - make tests
+  - ctest -V

@@ -2,6 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
 
+#include "json/json.hpp"
+
 #include "frame.h"
 #include <opencv2/core/core.hpp>
 
@@ -14,6 +16,8 @@ void Frame::SetOriginalImage(cv::Mat original_image) {
   original_image_ = original_image;
 }
 
+FrameType Frame::GetType() { return frame_type_; }
+
 ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image)
     : Frame(FRAME_TYPE_IMAGE, original_image),
       image_(image),
@@ -24,8 +28,6 @@ Shape ImageFrame::GetSize() { return shape_; }
 cv::Mat ImageFrame::GetImage() { return image_; }
 
 void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
-FrameType ImageFrame::GetType() { return FRAME_TYPE_IMAGE; }
-FrameType Frame::GetType() { return frame_type_; }
 
 MetadataFrame::MetadataFrame(cv::Mat original_image)
     : Frame(FRAME_TYPE_MD, original_image) {}
@@ -37,6 +39,21 @@ MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
     : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {
   bitset_.set(Bit_bboxes);
 }
+MetadataFrame::MetadataFrame(nlohmann::json j)
+    : Frame(FRAME_TYPE_MD, cv::Mat()) {
+  try {
+    nlohmann::json md_j = j.at("MetadataFrame");
+    this->tags_ = md_j.at("tags").get<std::vector<std::string>>();
+
+    for (const auto bbox_j :
+         md_j.at("bboxes").get<std::vector<nlohmann::json>>()) {
+      this->bboxes_.push_back(Rect(bbox_j));
+    }
+  } catch (std::out_of_range) {
+    LOG(FATAL) << "Malformed MetadataFrame JSON: " << j.dump();
+  }
+}
+
 std::vector<string> MetadataFrame::GetTags() { return tags_; }
 void MetadataFrame::SetTags(const std::vector<string>& tags) {
   tags_ = tags;
@@ -92,10 +109,23 @@ void MetadataFrame::SetStruckFeatures(const std::vector<std::vector<double>>& st
 std::bitset<32> MetadataFrame::GetBitset() {
   return bitset_;
 }
-FrameType MetadataFrame::GetType() { return FRAME_TYPE_MD; }
+
+nlohmann::json MetadataFrame::ToJson() {
+  nlohmann::json md_j;
+  md_j["tags"] = this->GetTags();
+
+  std::vector<nlohmann::json> bboxes;
+  for (auto bbox : this->GetBboxes()) {
+    bboxes.push_back(bbox.ToJson());
+  }
+  md_j["bboxes"] = bboxes;
+
+  nlohmann::json j;
+  j["MetadataFrame"] = md_j;
+  return j;
+}
 
 BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image)
     : Frame(FRAME_TYPE_BYTES, original_image), data_buffer_(data_buffer) {}
 
 DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }
-FrameType BytesFrame::GetType() { return FRAME_TYPE_BYTES; }

@@ -7,6 +7,7 @@
 
 #include <bitset>
 #include <boost/optional.hpp>
+#include "json/json.hpp"
 #include "common/common.h"
 #include "frame.h"
 #include "cv.h"
@@ -16,7 +17,7 @@ class Frame {
   Frame() = delete;
   Frame(FrameType frame_type, cv::Mat original_image = cv::Mat());
   virtual ~Frame(){};
-  virtual FrameType GetType() = 0;
+  FrameType GetType();
   cv::Mat GetOriginalImage();
   void SetOriginalImage(cv::Mat original_image);
 
@@ -31,8 +32,6 @@ class ImageFrame : public Frame {
   Shape GetSize();
   cv::Mat GetImage();
   void SetImage(cv::Mat image);
-
-  virtual FrameType GetType() override;
 
  private:
   cv::Mat image_;
@@ -62,6 +61,7 @@ class MetadataFrame : public Frame {
   MetadataFrame(cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
+  MetadataFrame(nlohmann::json j);
   std::vector<string> GetTags();
   void SetTags(const std::vector<string>& tags);
   std::vector<Rect> GetBboxes();
@@ -79,7 +79,7 @@ class MetadataFrame : public Frame {
   std::vector<std::vector<double>> GetStruckFeatures();
   void SetStruckFeatures(const std::vector<std::vector<double>>& struck_features);
   std::bitset<32> GetBitset();
-  virtual FrameType GetType() override;
+  nlohmann::json ToJson();
 
  private:
   std::vector<string> tags_;
@@ -98,7 +98,6 @@ class BytesFrame : public Frame {
   BytesFrame() = delete;
   BytesFrame(DataBuffer data_buffer, cv::Mat original_image = cv::Mat());
   DataBuffer GetDataBuffer();
-  virtual FrameType GetType() override;
 
  private:
   DataBuffer data_buffer_;

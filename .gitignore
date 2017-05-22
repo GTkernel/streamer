@@ -151,3 +151,4 @@ sftp-config.json
 /config/*.txt
 /python/streamer.cfg
 /3rdparty/struck/sequences/*.zip
+*~
