@@ -172,7 +172,10 @@ enum ProcessorType {
 
   PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_ENCODER,
-  PROCESSOR_TYPE_DECODER
+  PROCESSOR_TYPE_DECODER,
+
+  PROCESSOR_TYPE_FRAME_SENDER,
+  PROCESSOR_TYPE_FRAME_RECEIVER
 };
 
 inline ProcessorType GetProcessorTypeByString(const std::string &str) {
@@ -192,6 +195,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string &str) {
     return PROCESSOR_TYPE_ENCODER;
   } else if (str == "FileWriter") {
     return PROCESSOR_TYPE_FILE_WRITER;
+  } else if (str == "FrameSender") {
+    return PROCESSOR_TYPE_FRAME_SENDER;
+  } else if (str == "FrameReceiver") {
+    return PROCESSOR_TYPE_FRAME_RECEIVER;
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
