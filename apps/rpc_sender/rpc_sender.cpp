@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
                      "The directory to find streamer's configuration");
   desc.add_options()("server_address,s", po::value<string>()->required(),
                      "address:port to connect to (e.g., example.com:4444)");
-  desc.add_options()("camera,c", po::value<string>()->value_name("CAMERAS"),
+  desc.add_options()("camera,c", po::value<string>()->required(),
                      "The name of the camera to use, if there are multiple "
                      "cameras to be used, separate with ,");
   desc.add_options()("duration,d", po::value<unsigned int>()->default_value(5),
@@ -88,11 +88,7 @@ int main(int argc, char *argv[]) {
   Context::GetContext().Init();
 
   CONFIG.server = vm["server_address"].as<string>();
-
-  if (vm.count("camera")) {
-    CONFIG.camera_name = vm["camera"].as<string>();
-  }
-
+  CONFIG.camera_name = vm["camera"].as<string>();
   CONFIG.duration = vm["duration"].as<unsigned int>();
 
   Run();

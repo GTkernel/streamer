@@ -132,6 +132,7 @@ if (USE_RPC)
     ${PROTOBUF_INCLUDE_DIRS}
     ${GRPC_INCLUDE_DIRS}
   )
+  add_definitions("-D USE_RPC")
   message("Build RPC support")
 endif()
 
