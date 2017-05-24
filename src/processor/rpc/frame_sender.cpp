@@ -18,8 +18,9 @@ bool FrameSender::Init() { return true; }
 bool FrameSender::OnStop() { return true; }
 
 void FrameSender::Process() {
-  auto frame = this->GetFrame(SOURCE);
-  cv::Mat img = frame->GetOriginalImage();
+  // TODO:  Support more than just ImageFrame
+  auto frame = this->GetFrame<ImageFrame>(SOURCE);
+  cv::Mat img = frame->GetImage();
 
   // serialize
   std::stringstream frame_string;

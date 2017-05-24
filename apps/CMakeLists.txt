@@ -3,6 +3,10 @@ find_package(Boost COMPONENTS regex system thread date_time REQUIRED)
 
 include_directories(${ZMQ_INCLUDE_DIRS})
 
+if (USE_RPC)
+  include_directories(${CMAKE_BINARY_DIR}/src)
+endif ()
+
 # Macro to get sub directories
 MACRO(SUBDIRLIST result curdir)
   FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)

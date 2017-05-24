@@ -4,6 +4,8 @@
 #include "model/model_manager.h"
 #include "pipeline/pipeline.h"
 #include "pipeline/spl_parser.h"
+#include "processor/rpc/frame_receiver.h"
+#include "processor/rpc/frame_sender.h"
 #include "processor/dummy_nn_processor.h"
 #include "processor/image_classifier.h"
 #include "processor/image_classifier.h"
