@@ -26,18 +26,26 @@ void FrameReceiver::RunServer(std::string server_url) {
 grpc::Status FrameReceiver::SendFrame(grpc::ServerContext *context,
                                       const SingleFrame *frame_message,
                                       google::protobuf::Empty *ignored) {
-  auto streamname = frame_message->streamname();
-  auto frame = frame_message->frame();
+  std::stringstream frame_string;
+  frame_string << frame_message->frame();
 
-  std::string frame_string = frame;
-  std::stringstream ss;
-  ss.str(frame_string);
-  cv::Mat new_mat;
+  cv::Mat image;
 
-  boost::archive::binary_iarchive lmat(ss);
-  lmat >> new_mat;
+  // If Boost's serialization fails, it throws an exception.  If we don't
+  // catch the exception, gRPC triggers a core dump with a "double free or
+  // corruption" error. See https://github.com/grpc/grpc/issues/3071
+  try {
+    boost::archive::binary_iarchive ar(frame_string);
+    ar >> image;
+  } catch (const boost::archive::archive_exception &e) {
+    std::ostringstream error_message;
+    error_message << "Boost serialization error: " << e.what();
+    LOG(INFO) << error_message.str();
+    return grpc::Status(grpc::StatusCode::ABORTED, error_message.str());
+  }
 
-  PushFrame(SINK, new ImageFrame(new_mat, new_mat));
+  // TODO:  Support more than just ImageFrame
+  PushFrame(SINK, new ImageFrame(image, image));
 
   return grpc::Status::OK;
 }
