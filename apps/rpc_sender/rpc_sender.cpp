@@ -58,10 +58,9 @@ int main(int argc, char *argv[]) {
   desc.add_options()("server_address,s", po::value<string>()->required(),
                      "address:port to connect to (e.g., example.com:4444)");
   desc.add_options()("camera,c", po::value<string>()->required(),
-                     "The name of the camera to use, if there are multiple "
-                     "cameras to be used, separate with ,");
+                     "The name of the camera to use");
   desc.add_options()("duration,d", po::value<unsigned int>()->default_value(5),
-                     "How long to send stream in seconds (default: 5)");
+                     "How long to send stream in seconds");
 
   po::variables_map vm;
   try {
