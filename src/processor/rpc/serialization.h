@@ -4,42 +4,36 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 
-BOOST_SERIALIZATION_SPLIT_FREE(cv::Mat)
 namespace boost {
 namespace serialization {
 
 /** Serialization support for cv::Mat */
+// http://stackoverflow.com/a/21444792/1072039
 template <class Archive>
-void save(Archive& ar, const cv::Mat& m,
-          const unsigned int __attribute__((unused)) version) {
-  size_t elem_size = m.elemSize();
-  size_t elem_type = m.type();
+void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
+  int cols, rows, type;
+  bool continuous;
 
-  ar << m.cols;
-  ar << m.rows;
-  ar << elem_size;
-  ar << elem_type;
+  if (Archive::is_saving::value) {
+    cols = mat.cols;
+    rows = mat.rows;
+    type = mat.type();
+    continuous = mat.isContinuous();
+  }
 
-  const size_t data_size = m.cols * m.rows * elem_size;
-  ar << boost::serialization::make_array(m.ptr(), data_size);
-}
+  ar & cols & rows & type & continuous;
 
-/** Serialization support for cv::Mat */
-template <class Archive>
-void load(Archive& ar, cv::Mat& m,
-          const unsigned int __attribute__((unused)) version) {
-  int cols, rows;
-  size_t elem_size, elem_type;
+  if (Archive::is_loading::value) mat.create(rows, cols, type);
 
-  ar >> cols;
-  ar >> rows;
-  ar >> elem_size;
-  ar >> elem_type;
-
-  m.create(rows, cols, elem_type);
-
-  size_t data_size = m.cols * m.rows * elem_size;
-  ar >> boost::serialization::make_array(m.ptr(), data_size);
+  if (continuous) {
+    const unsigned int data_size = rows * cols * mat.elemSize();
+    ar & boost::serialization::make_array(mat.ptr(), data_size);
+  } else {
+    const unsigned int row_size = cols * mat.elemSize();
+    for (int i = 0; i < rows; i++) {
+      ar & boost::serialization::make_array(mat.ptr(i), row_size);
+    }
+  }
 }
 
 }  // namespace serialization
