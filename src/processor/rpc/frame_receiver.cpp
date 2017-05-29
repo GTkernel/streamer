@@ -18,9 +18,9 @@ void FrameReceiver::RunServer(std::string server_url) {
   server_->Wait();
 }
 
-grpc::Status FrameReceiver::SendFrame(grpc::ServerContext *context,
+grpc::Status FrameReceiver::SendFrame(grpc::ServerContext *,
                                       const SingleFrame *frame_message,
-                                      google::protobuf::Empty *ignored) {
+                                      google::protobuf::Empty *) {
   std::stringstream frame_string;
   frame_string << frame_message->frame();
 
