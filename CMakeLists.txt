@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 project(streamer)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra")
 
 # See https://github.com/opencv/opencv/issues/6542
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
