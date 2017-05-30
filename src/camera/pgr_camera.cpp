@@ -133,13 +133,13 @@ void PGRCamera::SetSaturation(float saturation) {
 }
 
 float PGRCamera::GetSaturation() {
-  GetProperty(FlyCapture2::SATURATION, true, false);
+  return GetProperty(FlyCapture2::SATURATION, true, false);
 }
 
 void PGRCamera::SetHue(float hue) {
   SetProperty(FlyCapture2::HUE, hue, true, false);
 }
-float PGRCamera::GetHue() { GetProperty(FlyCapture2::HUE, true, false); }
+float PGRCamera::GetHue() { return GetProperty(FlyCapture2::HUE, true, false); }
 
 void PGRCamera::SetGain(float gain) {
   SetProperty(FlyCapture2::GAIN, gain, true, false);
@@ -232,7 +232,6 @@ void PGRCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
 }
 
 void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
-  FlyCapture2::PixelFormat fc_pfmt = CameraPfmt2FCPfmt(pixel_format);
   std::lock_guard<std::mutex> guard(camera_lock_);
   CHECK_PGR(camera_.StopCapture());
 

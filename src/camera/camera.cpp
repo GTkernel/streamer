@@ -4,6 +4,7 @@
 
 #include "camera.h"
 #include "utils/time_utils.h"
+#include "utils/utils.h"
 
 Camera::Camera(const string &name, const string &video_uri, int width,
                int height)
@@ -24,7 +25,7 @@ int Camera::GetHeight() { return height_; }
 
 std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
 
-ProcessorType Camera::GetType() { return PROCESSOR_TYPE_CAMERA; }
+ProcessorType Camera::GetType() const { return PROCESSOR_TYPE_CAMERA; }
 
 bool Camera::Capture(cv::Mat &image) {
   if (stopped_) {
@@ -67,7 +68,7 @@ string Camera::GetCameraInfo() {
  * pan/tile the camera programmably.
  * TODO: A more general, and extendable way to unify this.
  *****************************************************************************/
-void Camera::MoveUp() { system((tile_up_command_ + " &").c_str()); }
-void Camera::MoveDown() { system((tile_down_command_ + " &").c_str()); }
-void Camera::MoveLeft() { system((pan_left_command_ + " &").c_str()); }
-void Camera::MoveRight() { system((pan_right_command_ + " &").c_str()); }
+void Camera::MoveUp() { ExecuteAndCheck(tile_up_command_ + " &"); }
+void Camera::MoveDown() { ExecuteAndCheck((tile_down_command_ + " &")); }
+void Camera::MoveLeft() { ExecuteAndCheck((pan_left_command_ + " &")); }
+void Camera::MoveRight() { ExecuteAndCheck((pan_right_command_ + " &")); }

@@ -1,7 +1,7 @@
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS regex system thread date_time REQUIRED)
 
-include_directories(${ZMQ_INCLUDE_DIRS})
+include_directories(SYSTEM ${ZMQ_INCLUDE_DIRS})
 
 # Macro to get sub directories
 MACRO(SUBDIRLIST result curdir)

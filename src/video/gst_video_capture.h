@@ -26,10 +26,10 @@ class GstVideoCapture {
   ~GstVideoCapture();
   cv::Mat TryGetFrame(DataBuffer *data_bufferp = nullptr);
   cv::Mat GetFrame(DataBuffer *data_bufferp = nullptr);
-  cv::Size GetOriginalFrameSize();
+  cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
-  bool IsConnected();
+  bool IsConnected() const;
 
   /**
    * @brief Set Gstreamer decoder element direclty. The caller should make sure
@@ -49,8 +49,8 @@ class GstVideoCapture {
  private:
   cv::Size original_size_;
   std::string caps_string_;
-  GstPipeline *pipeline_;
   GstAppSink *appsink_;
+  GstPipeline *pipeline_;
   GstBus *bus_;
   std::mutex capture_lock_;
   std::condition_variable capture_cv_;

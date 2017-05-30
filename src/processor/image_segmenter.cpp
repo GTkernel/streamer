@@ -45,7 +45,7 @@ void ImageSegmenter::Process() {
   // Get bytes to feed into the model
   std::vector<cv::Mat> output_channels;
   float *data = (float *)(model_->GetInputBuffer().GetBuffer());
-  for (int i = 0; i < input_shape_.channel; i++) {
+  for (decltype(input_shape_.channel) i = 0; i < input_shape_.channel; ++i) {
     cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
     output_channels.push_back(channel);
     data += input_shape_.width * input_shape_.height;
@@ -65,11 +65,11 @@ void ImageSegmenter::Process() {
   cv::Mat output_score =
       cv::Mat::zeros(output_shape.height, output_shape.width, CV_32F);
   float *output_data = (float *)output_buffer.GetBuffer();
-  for (int i = 0; i < output_shape.channel; i++) {
+  for (decltype(output_shape.channel) i = 0; i < output_shape.channel; ++i) {
     cv::Mat wrapper(input_shape_.height, input_shape_.width, CV_32FC1,
                     output_data);
-    for (int j = 0; j < input_shape_.height; j++) {
-      for (int k = 0; k < input_shape_.width; k++) {
+    for (decltype(input_shape_.height) j = 0; j < input_shape_.height; ++j) {
+      for (decltype(input_shape_.width) k = 0; k < input_shape_.width; ++k) {
         if (wrapper.at<float>(j, k) > output_score.at<float>(j, k)) {
           output_score.at<float>(j, k) = wrapper.at<float>(j, k);
           output_img.at<uchar>(j, k) = (uchar)i;
@@ -92,6 +92,6 @@ void ImageSegmenter::Process() {
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }
 
-ProcessorType ImageSegmenter::GetType() {
+ProcessorType ImageSegmenter::GetType() const {
   return PROCESSOR_TYPE_IMAGE_SEGMENTER;
 }

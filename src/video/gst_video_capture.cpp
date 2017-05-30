@@ -19,7 +19,7 @@
  * @param data User defined data pointer.
  * @return Always return OK as we want to continuously listen for new samples.
  */
-GstFlowReturn GstVideoCapture::NewSampleCB(GstAppSink *appsink, gpointer data) {
+GstFlowReturn GstVideoCapture::NewSampleCB(GstAppSink *, gpointer data) {
   CHECK(data != NULL) << "Callback is not passed in a capture";
   GstVideoCapture *capture = (GstVideoCapture *)data;
   capture->CheckBuffer();
@@ -118,7 +118,7 @@ GstVideoCapture::~GstVideoCapture() {
  * video capture is not connected, app should not pull from the capture anymore.
  * @return True if connected. False otherwise.
  */
-bool GstVideoCapture::IsConnected() { return connected_; }
+bool GstVideoCapture::IsConnected() const { return connected_; }
 
 /**
  * @brief Destroy the pipeline, free any resources allocated.
@@ -142,7 +142,7 @@ void GstVideoCapture::DestroyPipeline() {
  * @brief Get next frame from the pipeline, busy wait (which should be improved)
  * until frame available.
  */
-cv::Mat GstVideoCapture::GetFrame(DataBuffer *data_bufferp) {
+cv::Mat GstVideoCapture::GetFrame(DataBuffer *) {
   Timer timer;
   timer.Start();
   if (!connected_) return cv::Mat();
@@ -166,7 +166,7 @@ cv::Mat GstVideoCapture::GetFrame(DataBuffer *data_bufferp) {
  * @return The frame currently in the frames queue. An empty Mat if no frame
  * immediately available.
  */
-cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *data_bufferp) {
+cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *) {
   Timer timer;
   timer.Start();
   if (!connected_ || frames_.size() == 0) {
@@ -184,7 +184,7 @@ cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *data_bufferp) {
 /**
  * @brief Get the size of original frame.
  */
-cv::Size GstVideoCapture::GetOriginalFrameSize() { return original_size_; }
+cv::Size GstVideoCapture::GetOriginalFrameSize() const { return original_size_; }
 
 /**
  * @brief Create GStreamer pipeline.

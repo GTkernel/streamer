@@ -13,7 +13,7 @@ class ImageClassifier : public Processor {
  public:
   ImageClassifier(const ModelDesc &model_desc, Shape input_shape,
                   size_t batch_size);
-  virtual ProcessorType GetType() override;
+  virtual ProcessorType GetType() const override;
   void SetInputStream(int src_id, StreamPtr stream);
 
  protected:

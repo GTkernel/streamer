@@ -27,7 +27,7 @@ class GstVideoEncoder : public Processor {
    * @param encoder The name of the deocder gstreamer element.
    */
   void SetEncoderElement(const string &encoder);
-  virtual ProcessorType GetType() override;
+  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;
@@ -47,8 +47,8 @@ class GstVideoEncoder : public Processor {
   int height_;
   // Frame size in bytes
   size_t frame_size_bytes_;
-  string output_filename_;
   int port_;
+  string output_filename_;
   // Use tcp for streaming or not (udp)
   bool tcp_;
 

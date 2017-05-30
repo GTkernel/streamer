@@ -40,7 +40,7 @@ MetadataFrame::MetadataFrame(nlohmann::json j)
     nlohmann::json md_j = j.at("MetadataFrame");
     this->tags_ = md_j.at("tags").get<std::vector<std::string>>();
 
-    for (const auto bbox_j :
+    for (const auto& bbox_j :
          md_j.at("bboxes").get<std::vector<nlohmann::json>>()) {
       this->bboxes_.push_back(Rect(bbox_j));
     }
@@ -49,15 +49,15 @@ MetadataFrame::MetadataFrame(nlohmann::json j)
   }
 }
 
-std::vector<string> MetadataFrame::GetTags() { return tags_; }
-std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }
+std::vector<string> MetadataFrame::GetTags() const { return tags_; }
+std::vector<Rect> MetadataFrame::GetBboxes() const { return bboxes_; }
 
-nlohmann::json MetadataFrame::ToJson() {
+nlohmann::json MetadataFrame::ToJson() const {
   nlohmann::json md_j;
   md_j["tags"] = this->GetTags();
 
   std::vector<nlohmann::json> bboxes;
-  for (auto bbox : this->GetBboxes()) {
+  for (const auto& bbox : this->GetBboxes()) {
     bboxes.push_back(bbox.ToJson());
   }
   md_j["bboxes"] = bboxes;

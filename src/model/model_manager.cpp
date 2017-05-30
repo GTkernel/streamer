@@ -46,7 +46,7 @@ ModelManager::ModelManager() {
   // Get model descriptions
   auto model_values = root_value.find("model")->as<toml::Array>();
 
-  for (auto model_value : model_values) {
+  for (const auto& model_value : model_values) {
     string name = model_value.get<string>("name");
     string type_string = model_value.get<string>("type");
     ModelType type = MODEL_TYPE_INVALID;
@@ -96,6 +96,10 @@ bool ModelManager::HasModel(const string &name) const {
 std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
                                                  Shape input_shape,
                                                  size_t batch_size) {
+  // Silence compiler warnings when none of the #ifdefs below are active
+  (void)input_shape;
+  (void)batch_size;
+
   std::unique_ptr<Model> result;
   if (model_desc.GetModelType() == MODEL_TYPE_CAFFE) {
 #ifdef USE_CAFFE

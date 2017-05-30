@@ -27,7 +27,7 @@ class Camera : public Processor {
 
   virtual bool Capture(cv::Mat &image);
   virtual CameraType GetCameraType() const = 0;
-  virtual ProcessorType GetType() override;
+  virtual ProcessorType GetType() const override;
 
   // Camera controls
   virtual float GetExposure() = 0;

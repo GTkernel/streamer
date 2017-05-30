@@ -21,26 +21,26 @@ std::vector<StreamReader *> classifier_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
-  for (auto encoder : encoders) {
+  for (const auto &encoder : encoders) {
     if (encoder->IsStarted()) encoder->Stop();
   }
 
-  for (auto reader : classifier_output_readers) {
+  for (const auto &reader : classifier_output_readers) {
     reader->UnSubscribe();
   }
 
   if (classifier != nullptr && classifier->IsStarted()) classifier->Stop();
 
-  for (auto transformer : transformers) {
+  for (const auto &transformer : transformers) {
     if (transformer->IsStarted()) transformer->Stop();
   }
 
-  for (auto camera : cameras) {
+  for (const auto &camera : cameras) {
     if (camera->IsStarted()) camera->Stop();
   }
 }
 
-void SignalHandler(int signal) {
+void SignalHandler(int) {
   std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
   //  CleanUp();
 
@@ -60,21 +60,21 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   // Check options
   CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
                                             << " does not exist";
-  for (auto camera_name : camera_names) {
+  for (const auto &camera_name : camera_names) {
     CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
                                                  << " does not exist";
   }
 
   ////// Start cameras, processors
 
-  for (auto camera_name : camera_names) {
+  for (const auto &camera_name : camera_names) {
     auto camera = camera_manager.GetCamera(camera_name);
     cameras.push_back(camera);
   }
 
   // Do video stream classification
   std::vector<std::shared_ptr<Stream>> camera_streams;
-  for (auto camera : cameras) {
+  for (const auto &camera : cameras) {
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
@@ -83,9 +83,9 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
-  for (auto camera_stream : camera_streams) {
+  for (const auto &camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, CROP_TYPE_CENTER, true /* subtract mean */));
+        input_shape, true /* subtract mean */));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -96,18 +96,18 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   classifier.reset(
       new ImageClassifier(model_desc, input_shape, input_streams.size()));
 
-  for (size_t i = 0; i < input_streams.size(); i++) {
+  for (decltype(input_streams.size()) i = 0; i < input_streams.size(); ++i) {
     classifier->SetInputStream(i, input_streams[i]);
   }
 
   // classifier readers
-  for (size_t i = 0; i < input_streams.size(); i++) {
+  for (decltype(input_streams.size()) i = 0; i < input_streams.size(); ++i) {
     auto classifier_output = classifier->GetSink("output" + std::to_string(i));
     classifier_output_readers.push_back(classifier_output->Subscribe());
   }
 
   // encoders, encode each camera stream
-  for (int i = 0; i < batch_size; i++) {
+  for (decltype(batch_size) i = 0; i < batch_size; ++i) {
     string output_filename = camera_names[i] + ".mp4";
 
     std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
@@ -117,26 +117,26 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     encoders.push_back(encoder);
   }
 
-  for (auto camera : cameras) {
+  for (const auto &camera : cameras) {
     if (!camera->IsStarted()) {
       camera->Start();
     }
   }
 
-  for (auto transformer : transformers) {
+  for (const auto &transformer : transformers) {
     transformer->Start();
   }
 
   classifier->Start();
 
-  for (auto encoder : encoders) {
+  for (const auto &encoder : encoders) {
     encoder->Start();
   }
 
   //////// Processor started, display the results
 
   if (display) {
-    for (string camera_name : camera_names) {
+    for (const auto &camera_name : camera_names) {
       cv::namedWindow(camera_name);
     }
   }
@@ -146,7 +146,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   std::vector<string> label_to_show(camera_names.size());
   //  double fps_to_show = 0.0;
   while (true) {
-    for (int i = 0; i < camera_names.size(); i++) {
+    for (decltype(camera_names.size()) i = 0; i < camera_names.size(); i++) {
       double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
       auto reader = classifier_output_readers[i];
       auto md_frame = reader->PopFrame<MetadataFrame>();
