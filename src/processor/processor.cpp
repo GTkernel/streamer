@@ -42,12 +42,13 @@ bool Processor::Start() {
   CHECK(stopped_) << "Processor has already started";
 
   // Check sources are filled
-  for (const auto& source : sources_) {
-    CHECK(source.second != nullptr) << "Source: " << source.first << " is not set.";
+  for (const auto &source : sources_) {
+    CHECK(source.second != nullptr)
+        << "Source: " << source.first << " is not set.";
   }
 
   // Subscribe sources
-  for (auto& source : sources_) {
+  for (auto &source : sources_) {
     readers_.emplace(source.first, source.second->Subscribe());
   }
 
@@ -63,7 +64,7 @@ bool Processor::Stop() {
   process_thread_.join();
   bool result = OnStop();
 
-  for (auto& reader : readers_) {
+  for (auto &reader : readers_) {
     reader.second->UnSubscribe();
   }
 
@@ -78,7 +79,7 @@ void Processor::ProcessorLoop() {
   while (!stopped_) {
     // Cache source frames
     source_frame_cache_.clear();
-    for (auto& reader : readers_) {
+    for (auto &reader : readers_) {
       auto source_name = reader.first;
       auto source_stream = reader.second;
 

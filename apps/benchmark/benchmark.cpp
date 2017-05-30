@@ -2,8 +2,8 @@
  * @brief benchmark.cpp - Used to run various benchmark of the system.
  */
 
-#include "streamer.h"
 #include <boost/program_options.hpp>
+#include "streamer.h"
 
 namespace po = boost::program_options;
 using std::cout;

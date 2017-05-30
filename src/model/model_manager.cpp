@@ -46,7 +46,7 @@ ModelManager::ModelManager() {
   // Get model descriptions
   auto model_values = root_value.find("model")->as<toml::Array>();
 
-  for (const auto& model_value : model_values) {
+  for (const auto &model_value : model_values) {
     string name = model_value.get<string>("name");
     string type_string = model_value.get<string>("type");
     ModelType type = MODEL_TYPE_INVALID;
@@ -59,8 +59,8 @@ ModelManager::ModelManager() {
     } else if (type_string == "tensorflow") {
       type = MODEL_TYPE_TENSORFLOW;
     }
-    CHECK(type != MODEL_TYPE_INVALID) << "Type " << type_string
-                                      << " is not a valid mode type";
+    CHECK(type != MODEL_TYPE_INVALID)
+        << "Type " << type_string << " is not a valid mode type";
     string desc_path = model_value.get<string>("desc_path");
     string params_path = model_value.get<string>("params_path");
     int input_width = model_value.get<int>("input_width");
@@ -84,8 +84,8 @@ std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
 }
 ModelDesc ModelManager::GetModelDesc(const string &name) const {
   auto itr = model_descs_.find(name);
-  CHECK(itr != model_descs_.end()) << "Model description with name " << name
-                                   << " is not present";
+  CHECK(itr != model_descs_.end())
+      << "Model description with name " << name << " is not present";
   return itr->second;
 }
 

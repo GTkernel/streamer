@@ -3,8 +3,7 @@
 constexpr auto SINK = "output";
 
 FrameReceiver::FrameReceiver(std::string server_url)
-    : Processor({}, {SINK}), server_url_(server_url) {
-}
+    : Processor({}, {SINK}), server_url_(server_url) {}
 
 void FrameReceiver::RunServer(std::string server_url) {
   grpc::ServerBuilder builder;
@@ -45,7 +44,9 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext *,
   return grpc::Status::OK;
 }
 
-ProcessorType FrameReceiver::GetType() const { return PROCESSOR_TYPE_FRAME_RECEIVER; }
+ProcessorType FrameReceiver::GetType() const {
+  return PROCESSOR_TYPE_FRAME_RECEIVER;
+}
 
 StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }
 

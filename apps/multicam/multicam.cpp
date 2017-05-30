@@ -58,11 +58,11 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   ModelManager &model_manager = ModelManager::GetInstance();
 
   // Check options
-  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
-                                            << " does not exist";
+  CHECK(model_manager.HasModel(model_name))
+      << "Model " << model_name << " does not exist";
   for (const auto &camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                                 << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name))
+        << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -84,8 +84,8 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   // Transformers
   for (const auto &camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, true /* subtract mean */));
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(input_shape, true /* subtract mean */));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));

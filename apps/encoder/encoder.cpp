@@ -29,8 +29,8 @@ void Run(const string &camera_name, string &dst_file, int port) {
 
   CameraManager &camera_manager = CameraManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                               << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name))
+      << "Camera " << camera_name << " does not exist";
 
   camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
@@ -46,8 +46,8 @@ void Run(const string &camera_name, string &dst_file, int port) {
     encoder->SetSource("input", camera_stream);
   } else if (port != -1) {
     cout << "Stream video on port: " << port << endl;
-    encoder = std::shared_ptr<Processor>(
-        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), port, false));
+    encoder = std::shared_ptr<Processor>(new GstVideoEncoder(
+        camera->GetWidth(), camera->GetHeight(), port, false));
     encoder->SetSource("input", camera_stream);
     // Receive pipeline
     // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !

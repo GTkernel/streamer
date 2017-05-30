@@ -21,7 +21,8 @@ bool DummyNNProcessor::Init() {
   // Prepare fake input
   srand((unsigned)(15213));
   float *data = (float *)fake_input_.GetBuffer();
-  for (decltype(input_shape_.GetSize()) i = 0; i < input_shape_.GetSize(); ++i) {
+  for (decltype(input_shape_.GetSize()) i = 0; i < input_shape_.GetSize();
+       ++i) {
     data[i] = (float)(rand()) / (float)(RAND_MAX);
   }
 
@@ -39,4 +40,6 @@ bool DummyNNProcessor::OnStop() {
 
 void DummyNNProcessor::Process() { model_->Forward(); }
 
-ProcessorType DummyNNProcessor::GetType() const { return PROCESSOR_TYPE_DUMMY_NN; }
+ProcessorType DummyNNProcessor::GetType() const {
+  return PROCESSOR_TYPE_DUMMY_NN;
+}

@@ -21,17 +21,17 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
     continuous = mat.isContinuous();
   }
 
-  ar & cols & rows & type & continuous;
+  ar& cols& rows& type& continuous;
 
   if (Archive::is_loading::value) mat.create(rows, cols, type);
 
   if (continuous) {
     const unsigned int data_size = rows * cols * mat.elemSize();
-    ar & boost::serialization::make_array(mat.ptr(), data_size);
+    ar& boost::serialization::make_array(mat.ptr(), data_size);
   } else {
     const unsigned int row_size = cols * mat.elemSize();
     for (int i = 0; i < rows; i++) {
-      ar & boost::serialization::make_array(mat.ptr(i), row_size);
+      ar& boost::serialization::make_array(mat.ptr(i), row_size);
     }
   }
 }

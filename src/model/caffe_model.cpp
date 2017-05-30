@@ -94,10 +94,10 @@ void CaffeModel<DType>::Evaluate() {
 
   net_->Forward();
   // Copy the output of the network
-  const auto& output_blobs = net_->output_blobs();
+  const auto &output_blobs = net_->output_blobs();
   // TODO: consider doing it lazily, e.g. when we actually retrieve the output
   // data
-  for (const auto& output_blob : output_blobs) {
+  for (const auto &output_blob : output_blobs) {
     const DType *output_data = output_blob->mutable_cpu_data();
     Shape shape(output_blob->channels(), output_blob->width(),
                 output_blob->height());

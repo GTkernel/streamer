@@ -31,7 +31,8 @@ bool Camera::Capture(cv::Mat &image) {
   if (stopped_) {
     Start();
     auto reader = stream_->Subscribe();
-    // Pop the first 3 images, the first few shots of the camera might be garbage
+    // Pop the first 3 images, the first few shots of the camera might be
+    // garbage
     for (int i = 0; i < 3; i++) {
       reader->PopFrame();
     }

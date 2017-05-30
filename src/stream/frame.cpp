@@ -4,8 +4,8 @@
 
 #include "json/json.hpp"
 
-#include "frame.h"
 #include <opencv2/core/core.hpp>
+#include "frame.h"
 
 Frame::Frame(FrameType frame_type, cv::Mat original_image)
     : frame_type_(frame_type), original_image_(original_image) {}

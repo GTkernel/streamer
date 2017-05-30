@@ -5,8 +5,8 @@
 #include <gtest/gtest.h>
 #include <cppzmq/zhelper.hpp>
 
-#include "utils/utils.h"
 #include "processor/stream_publisher.h"
+#include "utils/utils.h"
 
 TEST(STREAM_PUBLISHER_TEST, TEST_PUBLISH_MDSTREAM) {
   StreamPtr stream(new Stream);

@@ -14,8 +14,7 @@ std::shared_ptr<Camera> camera;
 
 void SignalHandler(int) {
   std::cout << "Received SIGINT, stopping" << std::endl;
-  if (camera != nullptr)
-    camera->Stop();
+  if (camera != nullptr) camera->Stop();
 
   exit(0);
 }
@@ -23,8 +22,8 @@ void SignalHandler(int) {
 void Run(const string &camera_name) {
   CameraManager &camera_manager = CameraManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                               << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name))
+      << "Camera " << camera_name << " does not exist";
 
   camera = camera_manager.GetCamera(camera_name);
   auto reader = camera->GetStream()->Subscribe();
@@ -38,8 +37,7 @@ void Run(const string &camera_name) {
     cv::imshow(camera_name, img);
 
     unsigned char q = cv::waitKey(10);
-    if (q == 'q')
-      break;
+    if (q == 'q') break;
   }
 
   camera->Stop();

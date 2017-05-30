@@ -55,8 +55,7 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
   return processor;
 }
 
-Processor *ProcessorFactory::CreateCustomProcessor(
-    const FactoryParamsType &) {
+Processor *ProcessorFactory::CreateCustomProcessor(const FactoryParamsType &) {
   return nullptr;
 }
 std::shared_ptr<Camera> ProcessorFactory::CreateCamera(
@@ -105,8 +104,7 @@ Processor *ProcessorFactory::CreateImageClassifier(
     return nullptr;
   }
 }
-Processor *ProcessorFactory::CreateImageSegmenter(
-    const FactoryParamsType &) {
+Processor *ProcessorFactory::CreateImageSegmenter(const FactoryParamsType &) {
   return nullptr;
 }
 Processor *ProcessorFactory::CreateImageTransformer(
@@ -124,8 +122,7 @@ Processor *ProcessorFactory::CreateOpenCVFaceDetector(
     const FactoryParamsType &) {
   return nullptr;
 }
-Processor *ProcessorFactory::CreateDummyNNProcessor(
-    const FactoryParamsType &) {
+Processor *ProcessorFactory::CreateDummyNNProcessor(const FactoryParamsType &) {
   return nullptr;
 }
 

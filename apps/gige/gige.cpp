@@ -90,7 +90,8 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
   auto camera_reader = camera->GetSink("bgr_output")->Subscribe();
 
   auto bytes_stream = camera->GetSink("raw_output");
-  std::shared_ptr<GigeFileWriter> file_writer(new GigeFileWriter("", frames_per_file));
+  std::shared_ptr<GigeFileWriter> file_writer(
+      new GigeFileWriter("", frames_per_file));
   file_writer->SetSource("input", bytes_stream);
 
   camera->Start();
@@ -124,34 +125,40 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
                   std::to_string(camera->GetImageSize().height),
               row_idx++);
 
-      AddText(image_to_show, string() + "[E] Exposure: " +
-                                 std::to_string(camera->GetExposure()),
-              row_idx++);
-      AddText(image_to_show, string() + "[N] Gain: " +
-                                 std::to_string(camera->GetGain()) + "dB",
-              row_idx++);
+      AddText(
+          image_to_show,
+          string() + "[E] Exposure: " + std::to_string(camera->GetExposure()),
+          row_idx++);
+      AddText(
+          image_to_show,
+          string() + "[N] Gain: " + std::to_string(camera->GetGain()) + "dB",
+          row_idx++);
       AddText(image_to_show, "--------------------", row_idx++);
-      AddText(image_to_show, string() + "[S] Sharpness: " +
-                                 std::to_string(camera->GetSharpness()),
-              row_idx++);
+      AddText(
+          image_to_show,
+          string() + "[S] Sharpness: " + std::to_string(camera->GetSharpness()),
+          row_idx++);
 
-      AddText(image_to_show, string() + "[V] Hue: " +
-                                 std::to_string(camera->GetHue()) + " deg",
+      AddText(
+          image_to_show,
+          string() + "[V] Hue: " + std::to_string(camera->GetHue()) + " deg",
+          row_idx++);
+      AddText(image_to_show,
+              string() + "[U] Saturation: " +
+                  std::to_string(camera->GetSaturation()) + "%",
               row_idx++);
-      AddText(image_to_show, string() + "[U] Saturation: " +
-                                 std::to_string(camera->GetSaturation()) + "%",
-              row_idx++);
-      AddText(image_to_show, string() + "[B] Brightness: " +
-                                 std::to_string(camera->GetBrightness()) + "%",
+      AddText(image_to_show,
+              string() + "[B] Brightness: " +
+                  std::to_string(camera->GetBrightness()) + "%",
               row_idx++);
       AddText(image_to_show,
               string() + "[G] Gamma: " + std::to_string(camera->GetGamma()),
               row_idx++);
 
       AddText(image_to_show,
-              string() + "[O,P] WB " + "R:" +
-                  std::to_string((int)camera->GetWBRed()) + " B:" +
-                  std::to_string((int)camera->GetWBBlue()),
+              string() + "[O,P] WB " +
+                  "R:" + std::to_string((int)camera->GetWBRed()) +
+                  " B:" + std::to_string((int)camera->GetWBBlue()),
               row_idx++);
       AddText(
           image_to_show,

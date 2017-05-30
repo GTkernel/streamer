@@ -33,8 +33,7 @@ inline string GetDir(const string &filename) {
  * @return True on success, false otherwise
  */
 inline bool CreateDirs(const string &path) {
-  if (path == "")
-    return false;
+  if (path == "") return false;
   boost::filesystem::path bpath(path);
   return create_directories(bpath);
 }

@@ -5,7 +5,9 @@ constexpr auto SOURCE = "input";
 FrameSender::FrameSender(std::shared_ptr<grpc::Channel> channel)
     : Processor({SOURCE}, {}), stub_(Messenger::NewStub(channel)) {}
 
-ProcessorType FrameSender::GetType() const { return PROCESSOR_TYPE_FRAME_SENDER; }
+ProcessorType FrameSender::GetType() const {
+  return PROCESSOR_TYPE_FRAME_SENDER;
+}
 
 void FrameSender::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE, stream);

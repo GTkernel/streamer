@@ -6,10 +6,10 @@
 #include "processor/processor_factory.h"
 
 std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
-    const std::vector<SPLStatement> &spl_statements) {
+    const std::vector<SPLStatement>& spl_statements) {
   std::shared_ptr<Pipeline> pipeline(new Pipeline);
 
-  for (const auto &stmt : spl_statements) {
+  for (const auto& stmt : spl_statements) {
     switch (stmt.statement_type) {
       case SPL_STATEMENT_PROCESSOR: {
         std::shared_ptr<Processor> processor;
@@ -55,7 +55,7 @@ Pipeline::GetProcessors() {
   return processors_;
 }
 
-std::shared_ptr<Processor> Pipeline::GetProcessor(const string &name) {
+std::shared_ptr<Processor> Pipeline::GetProcessor(const string& name) {
   CHECK(processors_.count(name) != 0) << "Has no processor named: " << name;
 
   return processors_[name];

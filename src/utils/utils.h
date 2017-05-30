@@ -63,7 +63,8 @@ inline toml::Value ParseTomlFromFile(const string &filepath) {
 inline void ExecuteAndCheck(std::string command) {
   int exit_code = system(command.c_str());
   if (!exit_code) {
-    LOG(FATAL) << "Command \"" << command << "\"failed with exit code: " << exit_code;
+    LOG(FATAL) << "Command \"" << command
+               << "\"failed with exit code: " << exit_code;
   }
 }
 

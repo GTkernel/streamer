@@ -7,7 +7,9 @@
 
 const static char *ENCODER_SRC_NAME = "encoder_src";
 
-ProcessorType GstVideoEncoder::GetType() const { return PROCESSOR_TYPE_ENCODER; }
+ProcessorType GstVideoEncoder::GetType() const {
+  return PROCESSOR_TYPE_ENCODER;
+}
 
 GstVideoEncoder::GstVideoEncoder(int width, int height,
                                  const string &output_filename)
@@ -38,8 +40,7 @@ GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }
 
-void GstVideoEncoder::NeedDataCB(GstAppSrc *, guint ,
-                                 gpointer user_data) {
+void GstVideoEncoder::NeedDataCB(GstAppSrc *, guint, gpointer user_data) {
   if (user_data == nullptr) return;
 
   GstVideoEncoder *encoder = (GstVideoEncoder *)user_data;

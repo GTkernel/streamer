@@ -11,7 +11,7 @@
 
 namespace pt = boost::property_tree;
 
-StreamPublisher::StreamPublisher(const string &topic_name)
+StreamPublisher::StreamPublisher(const string& topic_name)
     : Processor({"input"}, {}),
       topic_name_(topic_name),
       zmq_publisher_(Context::GetContext().GetZMQPublisher()) {}

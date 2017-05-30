@@ -98,8 +98,8 @@ CameraManager::GetCameras() {
 
 std::shared_ptr<Camera> CameraManager::GetCamera(const string &name) {
   auto itr = cameras_.find(name);
-  CHECK(itr != cameras_.end()) << "Camera with name " << name
-                               << " is not present";
+  CHECK(itr != cameras_.end())
+      << "Camera with name " << name << " is not present";
   return itr->second;
 }
 

@@ -9,8 +9,8 @@
 #include "common/context.h"
 #include "utils/utils.h"
 /************************
-* GStreamer callbacks ***
-************************/
+ * GStreamer callbacks ***
+ ************************/
 /**
  * @brief Callback when there is new sample on the pipleline. First check the
  * buffer for new samples, then check the
@@ -184,7 +184,9 @@ cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *) {
 /**
  * @brief Get the size of original frame.
  */
-cv::Size GstVideoCapture::GetOriginalFrameSize() const { return original_size_; }
+cv::Size GstVideoCapture::GetOriginalFrameSize() const {
+  return original_size_;
+}
 
 /**
  * @brief Create GStreamer pipeline.

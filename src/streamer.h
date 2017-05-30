@@ -10,7 +10,6 @@
 #endif
 #include "processor/dummy_nn_processor.h"
 #include "processor/image_classifier.h"
-#include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
 #include "processor/opencv_face_detector.h"
