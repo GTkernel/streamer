@@ -29,7 +29,7 @@ set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
 SUBDIRLIST(APP_DIRS ${APPS_ROOT})
 
 if (USE_RPC)
-  include_directories(${CMAKE_BINARY_DIR}/src)
+  include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
 else ()
   list(REMOVE_ITEM APP_DIRS rpc_receiver rpc_sender)
 endif ()

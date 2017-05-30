@@ -1,6 +1,9 @@
 include_directories(SYSTEM ${gtest_SOURCE_DIR} ${gtest_SOURCE_DIR}/include)
 include_directories(SYSTEM ${gmock_SOURCE_DIR} ${gmock_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/test/include)
+if (USE_RPC)
+  include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
+endif ()
 
 file(GLOB_RECURSE TEST_SRCS ${PROJECT_SOURCE_DIR}/test/test*.cpp)
 

@@ -11,7 +11,7 @@ class FrameSender : public Processor {
  public:
   FrameSender(std::shared_ptr<grpc::Channel> channel);
 
-  ProcessorType GetType() override;
+  ProcessorType GetType() const override;
   void SetSource(StreamPtr stream);
   void SetSource(const string &name, StreamPtr stream) = delete;
 

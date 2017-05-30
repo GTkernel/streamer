@@ -12,7 +12,7 @@ namespace po = boost::program_options;
 
 std::shared_ptr<Camera> camera;
 
-void SignalHandler(int signal) {
+void SignalHandler(int) {
   std::cout << "Received SIGINT, stopping" << std::endl;
   if (camera != nullptr)
     camera->Stop();

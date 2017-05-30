@@ -45,7 +45,7 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext *,
   return grpc::Status::OK;
 }
 
-ProcessorType FrameReceiver::GetType() { return PROCESSOR_TYPE_FRAME_RECEIVER; }
+ProcessorType FrameReceiver::GetType() const { return PROCESSOR_TYPE_FRAME_RECEIVER; }
 
 StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }
 
