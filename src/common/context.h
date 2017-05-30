@@ -189,7 +189,6 @@ class Context {
   string config_dir_;
 
   zmq::context_t zmq_context_;
-  int default_publisher_port_;
   zmq::socket_t zmq_publisher_;
 
   std::unordered_map<string, int> int_values_;

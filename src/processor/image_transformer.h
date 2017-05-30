@@ -9,13 +9,10 @@
 #include "processor.h"
 #include "stream/stream.h"
 
-enum CropType { CROP_TYPE_INVALID = 0, CROP_TYPE_CENTER = 1 };
-
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(const Shape &target_shape, CropType crop_type,
-                   bool subtract_mean = true);
-  virtual ProcessorType GetType() override;
+  ImageTransformer(const Shape &target_shape, bool subtract_mean = true);
+  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;
@@ -25,7 +22,6 @@ class ImageTransformer : public Processor {
  private:
   Shape target_shape_;
   cv::Mat mean_image_;
-  CropType crop_type_;
   bool subtract_mean_;
 
   // Temporary mat for image processing, reduce memory (de)allocation

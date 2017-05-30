@@ -34,7 +34,7 @@ static void SetUpEndpoints(HttpServer &server) {
 
   // GET /hello
   server.resource["^/hello$"]["GET"] = [](HttpServerResponse response,
-                                          HttpServerRequest request) {
+                                          HttpServerRequest) {
     string content = "Hello from streamer";
     LOG(INFO) << "Here";
     Send200Response(response, content);
@@ -42,13 +42,12 @@ static void SetUpEndpoints(HttpServer &server) {
 
   // GET /cameras
   server.resource["^/cameras"]["GET"] = [&camera_manager](
-      HttpServerResponse response, HttpServerRequest request) {
-    ModelManager &model_manager = ModelManager::GetInstance();
+      HttpServerResponse response, HttpServerRequest) {
     std::vector<pt::ptree> cameras_node;
     auto cameras = camera_manager.GetCameras();
-    for (auto itr = cameras.begin(); itr != cameras.end(); itr++) {
+    for (const auto &camera : cameras) {
       pt::ptree node;
-      CameraToJson(itr->second.get(), node);
+      CameraToJson(camera.second.get(), node);
       cameras_node.push_back(node);
     }
 

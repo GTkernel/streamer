@@ -38,6 +38,7 @@ class StreamReader {
    * @param frame The frame to be pushed into the stream.
    */
   void PushFrame(std::shared_ptr<Frame> frame);
+  Stream *stream_;
   // Max size of the buffer to hold frames in the stream
   size_t max_buffer_size_;
   // The frame buffer
@@ -45,7 +46,6 @@ class StreamReader {
   // Stream synchronization
   std::mutex buffer_lock_;
   std::condition_variable buffer_cv_;
-  Stream *stream_;
 };
 
 /**

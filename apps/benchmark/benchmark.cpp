@@ -2,8 +2,8 @@
  * @brief benchmark.cpp - Used to run various benchmark of the system.
  */
 
-#include <boost/program_options.hpp>
 #include "streamer.h"
+#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 using std::cout;
@@ -60,17 +60,17 @@ void RunEndToEndExperiment() {
   auto &model_manager = ModelManager::GetInstance();
   auto &camera_manager = CameraManager::GetInstance();
 
-  int camera_size = CONFIG.camera_names.size();
+  auto camera_size = CONFIG.camera_names.size();
 
   // Camera streams
   std::vector<std::shared_ptr<Camera>> cameras;
-  for (auto camera_name : CONFIG.camera_names) {
+  for (const auto &camera_name : CONFIG.camera_names) {
     auto camera = camera_manager.GetCamera(camera_name);
     cameras.push_back(camera);
   }
 
   std::vector<std::shared_ptr<Stream>> camera_streams;
-  for (auto camera : cameras) {
+  for (const auto &camera : cameras) {
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
@@ -82,9 +82,9 @@ void RunEndToEndExperiment() {
   std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
   // transformers
-  for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, CROP_TYPE_CENTER, true /* subtract mean */));
+  for (const auto &camera_stream : camera_streams) {
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(input_shape, true /* subtract mean */));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -97,16 +97,16 @@ void RunEndToEndExperiment() {
     std::shared_ptr<ImageClassifier> classifier(
         new ImageClassifier(model_desc, input_shape, input_streams.size()));
 
-    for (size_t i = 0; i < input_streams.size(); i++) {
+    for (decltype(input_streams.size()) i = 0; i < input_streams.size(); ++i) {
       classifier->SetInputStream(i, input_streams[i]);
     }
     classifiers.push_back(classifier);
   } else {
     auto model_desc = model_manager.GetModelDesc(CONFIG.net);
-    for (size_t i = 0; i < input_streams.size(); i++) {
+    for (const auto &s : input_streams) {
       std::shared_ptr<ImageClassifier> classifier(
           new ImageClassifier(model_desc, input_shape, 1));
-      classifier->SetInputStream(0, input_streams[i]);
+      classifier->SetInputStream(0, s);
       classifiers.push_back(classifier);
     }
   }
@@ -115,7 +115,7 @@ void RunEndToEndExperiment() {
   if (CONFIG.store) {
     if (CONFIG.batch) {
       auto classifier = classifiers[0];
-      for (int i = 0; i < camera_size; i++) {
+      for (decltype(camera_size) i = 0; i < camera_size; ++i) {
         string output_filename = CONFIG.camera_names[i] + ".mp4";
 
         std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
@@ -125,7 +125,7 @@ void RunEndToEndExperiment() {
         encoders.push_back(encoder);
       }
     } else {
-      for (int i = 0; i < camera_size; i++) {
+      for (decltype(camera_size) i = 0; i < camera_size; ++i) {
         auto classifier = classifiers[i];
         string output_filename = CONFIG.camera_names[i] + ".mp4";
 
@@ -138,57 +138,57 @@ void RunEndToEndExperiment() {
     }
   }
 
-  for (auto camera : cameras) {
+  for (const auto &camera : cameras) {
     camera->Start();
   }
 
-  for (auto transformer : transformers) {
+  for (const auto &transformer : transformers) {
     transformer->Start();
   }
 
-  for (auto classifier : classifiers) {
+  for (const auto &classifier : classifiers) {
     classifier->Start();
   }
 
-  for (auto encoder : encoders) {
+  for (const auto &encoder : encoders) {
     encoder->Start();
   }
 
   /////////////// RUN
   SLEEP(CONFIG.time);
 
-  for (auto encoder : encoders) {
+  for (const auto &encoder : encoders) {
     encoder->Stop();
   }
 
-  for (auto classifier : classifiers) {
+  for (const auto &classifier : classifiers) {
     classifier->Stop();
   }
 
-  for (auto transformer : transformers) {
+  for (const auto &transformer : transformers) {
     transformer->Stop();
   }
 
-  for (auto camera : cameras) {
+  for (const auto &camera : cameras) {
     camera->Stop();
   }
 
   /////////////// PRINT STATS
-  for (int i = 0; i < cameras.size(); i++) {
+  for (decltype(cameras.size()) i = 0; i < cameras.size(); ++i) {
     cout << "-- camera[" << i << "] fps is " << cameras[i]->GetAvgFps() << endl;
   }
-  for (int i = 0; i < transformers.size(); i++) {
+  for (decltype(transformers.size()) i = 0; i < transformers.size(); ++i) {
     cout << "-- transformer[" << i << "] fps is "
          << transformers[i]->GetAvgFps() << endl;
   }
 
-  for (int i = 0; i < classifiers.size(); i++) {
+  for (decltype(classifiers.size()) i = 0; i < classifiers.size(); ++i) {
     cout << "-- classifier << " << i << " fps is "
          << classifiers[i]->GetAvgFps() << endl;
   }
 
   if (CONFIG.store) {
-    for (int i = 0; i < encoders.size(); i++) {
+    for (decltype(encoders.size()) i = 0; i < encoders.size(); ++i) {
       cout << "-- encoder[" << i << "] fps is " << encoders[i]->GetAvgFps()
            << endl;
     }

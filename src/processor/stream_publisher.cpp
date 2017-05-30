@@ -16,7 +16,7 @@ StreamPublisher::StreamPublisher(const string &topic_name)
       topic_name_(topic_name),
       zmq_publisher_(Context::GetContext().GetZMQPublisher()) {}
 
-ProcessorType StreamPublisher::GetType() {
+ProcessorType StreamPublisher::GetType() const {
   return PROCESSOR_TYPE_STREAM_PUBLISHER;
 }
 
@@ -46,13 +46,13 @@ void StreamPublisher::Process() {
 
       root.put("type", "metadata");
 
-      for (auto tag : md_frame->GetTags()) {
+      for (const auto& tag : md_frame->GetTags()) {
         pt::ptree tag_node;
         tag_node.put("", tag);
         tags_node.push_back({"", tag_node});
       }
 
-      for (auto bbox : md_frame->GetBboxes()) {
+      for (const auto& bbox : md_frame->GetBboxes()) {
         pt::ptree bbox_node;
         bbox_node.put("x", bbox.px);
         bbox_node.put("y", bbox.py);

@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     cv::Mat image = frame->GetOriginalImage();
     auto results = frame->GetBboxes();
     cv::Scalar box_color(255, 0, 0);
-    for (auto result : results) {
+    for (const auto &result : results) {
       cv::Rect rect(result.px, result.py, result.width, result.height);
       cv::rectangle(image, rect, box_color, 2);
     }

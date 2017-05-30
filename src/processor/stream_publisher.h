@@ -16,7 +16,7 @@
 class StreamPublisher : public Processor {
  public:
   StreamPublisher(const string &topic_name);
-  virtual ProcessorType GetType() override;
+  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;

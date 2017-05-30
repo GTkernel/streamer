@@ -5,8 +5,6 @@
 #ifndef STREAMER_OPENCV_FACE_DETECTOR_H
 #define STREAMER_OPENCV_FACE_DETECTOR_H
 
-using namespace std;
-
 #ifdef USE_CUDA
 #include <opencv2/gpu/gpu.hpp>
 #endif
@@ -20,7 +18,7 @@ class OpenCVFaceDetector : public Processor {
   OpenCVFaceDetector(
       string classifier_xml_path =
           "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml");
-  virtual ProcessorType GetType() override;
+  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;

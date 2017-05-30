@@ -12,7 +12,7 @@ ImageClassifier::ImageClassifier(const ModelDesc &model_desc, Shape input_shape,
       model_desc_(model_desc),
       input_shape_(input_shape),
       batch_size_(batch_size) {
-  for (size_t i = 0; i < batch_size; i++) {
+  for (decltype(batch_size) i = 0; i < batch_size; ++i) {
     sources_.insert({"input" + std::to_string(i), nullptr});
     sinks_.insert(
         {"output" + std::to_string(i), std::shared_ptr<Stream>(new Stream)});
@@ -63,7 +63,7 @@ void ImageClassifier::Process() {
 
   std::vector<std::shared_ptr<ImageFrame>> image_frames;
   float *data = (float *)input_buffer_.GetBuffer();
-  for (int i = 0; i < batch_size_; i++) {
+  for (decltype(batch_size_) i = 0; i < batch_size_; ++i) {
     auto image_frame = GetFrame<ImageFrame>(GET_SOURCE_NAME(i));
     image_frames.push_back(image_frame);
     cv::Mat img = image_frame->GetImage();
@@ -71,7 +71,7 @@ void ImageClassifier::Process() {
           img.size[0] == input_shape_.width &&
           img.size[1] == input_shape_.height);
     std::vector<cv::Mat> output_channels;
-    for (int j = 0; j < input_shape_.channel; j++) {
+    for (decltype(input_shape_.channel) j = 0; j < input_shape_.channel; ++j) {
       cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
       output_channels.push_back(channel);
       data += input_shape_.width * input_shape_.height;
@@ -81,13 +81,13 @@ void ImageClassifier::Process() {
 
   auto predictions = Classify(1);
 
-  for (int i = 0; i < batch_size_; i++) {
+  for (decltype(batch_size_) i = 0; i < batch_size_; ++i) {
     auto frame = image_frames[i];
     cv::Mat img = frame->GetOriginalImage();
     CHECK(!img.empty());
     string predict_label = predictions[i][0].first;
     PushFrame(GET_SINK_NAME(i), new MetadataFrame({predict_label}, img));
-    for (auto prediction : predictions[i]) {
+    for (const auto& prediction : predictions[i]) {
       LOG(INFO) << prediction.first << " " << prediction.second;
     }
   }
@@ -107,12 +107,12 @@ std::vector<std::vector<Prediction>> ImageClassifier::Classify(int N) {
       << "Classify model does not have one buffer";
   float *scores = (float *)model_->GetOutputBuffers()[0].GetBuffer();
   N = std::min<int>(labels_.size(), N);
-  for (int i = 0; i < batch_size_; i++) {
+  for (decltype(batch_size_) i = 0; i < batch_size_; ++i) {
     CHECK(model_->GetOutputShapes()[0].GetSize() == 1000);
     std::vector<int> maxN =
         Argmax(scores, model_->GetOutputShapes()[0].GetSize(), N);
     std::vector<Prediction> predictions;
-    for (int j = 0; j < N; ++j) {
+    for (decltype(N) j = 0; j < N; ++j) {
       int idx = maxN[j];
       predictions.push_back(std::make_pair(labels_[idx], scores[idx]));
     }
@@ -123,7 +123,7 @@ std::vector<std::vector<Prediction>> ImageClassifier::Classify(int N) {
   return results;
 }
 
-ProcessorType ImageClassifier::GetType() {
+ProcessorType ImageClassifier::GetType() const {
   return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
 }
 

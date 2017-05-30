@@ -71,7 +71,7 @@ void CaffeFp16Model::Evaluate() {
     DType *fp16data = (DType *)(network_input_buffer_.GetBuffer());
 
     size_t image_size = input_shape_.GetSize() * batch_size_;
-    for (size_t i = 0; i < image_size; i++) {
+    for (decltype(image_size) i = 0; i < image_size; ++i) {
       fp16data[i] = caffe::Get<DType>(fp32data[i]);
     }
   } else {
@@ -91,7 +91,7 @@ void CaffeFp16Model::Evaluate() {
 
   // Copy the output of the network
   auto output_blobs = net_->output_blobs();
-  for (auto output_blob : output_blobs) {
+  for (const auto &output_blob : output_blobs) {
     Shape shape(output_blob->channels(), output_blob->width(),
                 output_blob->height());
     DataBuffer output_buffer;
@@ -101,7 +101,7 @@ void CaffeFp16Model::Evaluate() {
       float *fp32data = (float *)output_buffer.GetBuffer();
       DType *fp16data = output_blob->mutable_cpu_data();
       size_t len = shape.GetSize() * batch_size_;
-      for (size_t i = 0; i < len; i++) {
+      for (decltype(len) i = 0; i < len; ++i) {
         fp32data[i] = caffe::Get<float>(fp16data[i]);
       }
     } else {

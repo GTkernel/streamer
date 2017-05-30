@@ -33,9 +33,6 @@ void AddText(cv::Mat &img, const string &text, int nrow) {
   const int START_Y = 20;
   const int TEXT_HEIGHT = 25;
 
-  int width = img.cols;
-  int height = img.rows;
-
   CHECK(nrow < MAX_LINE);
 
   cv::Point text_point(START_X, START_Y + (int)(TEXT_HEIGHT * nrow));
@@ -49,7 +46,6 @@ void AddText(cv::Mat &img, const string &text, int nrow) {
  * @param img The image to add text onto.
  */
 void AddGrayBackground(cv::Mat &img) {
-  int width = img.cols;
   int height = img.rows;
   cv::Mat roi = img(cv::Rect(0, 0, 300, height));
   cv::Mat color(roi.size(), CV_8UC3, cv::Scalar(0, 0, 0));

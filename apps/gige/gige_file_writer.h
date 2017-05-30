@@ -28,7 +28,7 @@ class GigeFileWriter : public Processor {
   string GetCurrentFilename() { return current_filename_; }
   string GetCurrentDirectory() { return directory_; }
   void SetDirectory(const string &directory) { directory_ = directory; }
-  virtual ProcessorType GetType() override;
+  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;

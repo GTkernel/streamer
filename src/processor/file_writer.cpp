@@ -50,4 +50,4 @@ void FileWriter::Process() {
   }
 }
 
-ProcessorType FileWriter::GetType() { return PROCESSOR_TYPE_FILE_WRITER; }
+ProcessorType FileWriter::GetType() const { return PROCESSOR_TYPE_FILE_WRITER; }

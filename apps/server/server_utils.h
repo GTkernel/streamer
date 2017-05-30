@@ -49,7 +49,7 @@ string ListToJson(const string &list_name,
 
   pt::ptree list_node;
 
-  for (auto &child : pt_list) {
+  for (const auto &child : pt_list) {
     list_node.push_back({"", child});
   }
 
@@ -66,10 +66,9 @@ string DirectoryToJson(const string &dir_path) {
 
   pt::ptree files_node;
 
-  fs::directory_iterator end_itr;
-  for (fs::directory_iterator itr(dir_path); itr != end_itr; itr++) {
-    if (!fs::is_directory(itr->status())) {
-      string filename = itr->path().filename().string();
+  for (const auto &file : fs::directory_iterator(dir_path)) {
+    if (!fs::is_directory(file.status())) {
+      string filename = file.path().filename().string();
       string filepath = dir_path + "/" + filename;
       pt::ptree file_node;
 

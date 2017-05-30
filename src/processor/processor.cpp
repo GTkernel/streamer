@@ -9,12 +9,12 @@ static const size_t SLIDING_WINDOW_SIZE = 25;
 
 Processor::Processor(const std::vector<string> &source_names,
                      const std::vector<string> &sink_names) {
-  for (auto &source_name : source_names) {
+  for (const auto &source_name : source_names) {
     sources_.insert({source_name, nullptr});
     source_frame_cache_.insert({source_name, nullptr});
   }
 
-  for (auto &sink_name : sink_names) {
+  for (const auto &sink_name : sink_names) {
     sinks_.insert({sink_name, StreamPtr(new Stream)});
   }
 
@@ -42,13 +42,13 @@ bool Processor::Start() {
   CHECK(stopped_) << "Processor has already started";
 
   // Check sources are filled
-  for (auto itr = sources_.begin(); itr != sources_.end(); itr++) {
-    CHECK(itr->second != nullptr) << "Source: " << itr->first << " is not set.";
+  for (const auto& source : sources_) {
+    CHECK(source.second != nullptr) << "Source: " << source.first << " is not set.";
   }
 
   // Subscribe sources
-  for (auto itr = sources_.begin(); itr != sources_.end(); itr++) {
-    readers_.emplace(itr->first, itr->second->Subscribe());
+  for (auto& source : sources_) {
+    readers_.emplace(source.first, source.second->Subscribe());
   }
 
   stopped_ = false;
@@ -63,8 +63,8 @@ bool Processor::Stop() {
   process_thread_.join();
   bool result = OnStop();
 
-  for (auto itr = readers_.begin(); itr != readers_.end(); itr++) {
-    itr->second->UnSubscribe();
+  for (auto& reader : readers_) {
+    reader.second->UnSubscribe();
   }
 
   readers_.clear();
@@ -78,9 +78,9 @@ void Processor::ProcessorLoop() {
   while (!stopped_) {
     // Cache source frames
     source_frame_cache_.clear();
-    for (auto itr = readers_.begin(); itr != readers_.end(); itr++) {
-      auto source_name = itr->first;
-      auto source_stream = itr->second;
+    for (auto& reader : readers_) {
+      auto source_name = reader.first;
+      auto source_stream = reader.second;
 
       while (true) {
         auto frame = source_stream->PopFrame(100);
@@ -118,13 +118,13 @@ void Processor::ProcessorLoop() {
   }
 }
 
-bool Processor::IsStarted() { return !stopped_; }
+bool Processor::IsStarted() const { return !stopped_; }
 
-double Processor::GetSlidingLatencyMs() { return sliding_latency_; }
+double Processor::GetSlidingLatencyMs() const { return sliding_latency_; }
 
-double Processor::GetAvgLatencyMs() { return avg_latency_; }
+double Processor::GetAvgLatencyMs() const { return avg_latency_; }
 
-double Processor::GetAvgFps() { return 1000.0 / avg_latency_; }
+double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
 
 void Processor::PushFrame(const string &sink_name, Frame *frame) {
   CHECK(sinks_.count(sink_name) != 0);

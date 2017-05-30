@@ -20,12 +20,14 @@ inline bool PairCompare(const std::pair<float, int> &lhs,
  */
 inline std::vector<int> Argmax(float *scores, int N, int K) {
   std::vector<std::pair<float, int>> pairs;
-  for (size_t i = 0; i < N; ++i) pairs.push_back(std::make_pair(scores[i], i));
+  for (decltype(N) i = 0; i < N; ++i)
+    pairs.push_back(std::make_pair(scores[i], i));
   std::partial_sort(pairs.begin(), pairs.begin() + K, pairs.end(), PairCompare);
 
   std::vector<int> result;
-  for (int i = 0; i < K; ++i) result.push_back(pairs[i].second);
+  for (decltype(K) i = 0; i < K; ++i)
+    result.push_back(pairs[i].second);
   return result;
 }
 
-#endif  // STREAMER_MATH_UTILS_H_H
+#endif // STREAMER_MATH_UTILS_H_H

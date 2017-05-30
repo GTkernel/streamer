@@ -29,7 +29,7 @@ void Stream::UnSubscribe(StreamReader *reader) {
 
 void Stream::PushFrame(std::shared_ptr<Frame> frame) {
   std::lock_guard<std::mutex> guard(stream_lock_);
-  for (auto reader : readers_) {
+  for (const auto& reader : readers_) {
     reader->PushFrame(frame);
   }
 }

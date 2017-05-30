@@ -60,31 +60,31 @@ class Processor {
    * @brief Check if the processor has started.
    * @return True if processor has started.
    */
-  bool IsStarted();
+  bool IsStarted() const;
 
   /**
    * @brief Get sliding window average latency of the processor.
    * @return Latency in ms.
    */
-  double GetSlidingLatencyMs();
+  double GetSlidingLatencyMs() const;
 
   /**
    * @brief Get overall average latency.
    * @return Latency in ms.
    */
-  double GetAvgLatencyMs();
+  double GetAvgLatencyMs() const;
 
   /**
    * @brief Get processing speed of the processor, measured in frames / sec. It
    * is simply computed as 1000.0 / GetLatencyMs().
    * @return FPS of the processor.
    */
-  double GetAvgFps();
+  double GetAvgFps() const;
 
   /**
    * @brief Get the type of the processor
    */
-  virtual ProcessorType GetType() = 0;
+  virtual ProcessorType GetType() const = 0;
 
  protected:
   /**

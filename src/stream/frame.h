@@ -42,9 +42,9 @@ class MetadataFrame : public Frame {
   MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
   MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
   MetadataFrame(nlohmann::json j);
-  std::vector<string> GetTags();
-  std::vector<Rect> GetBboxes();
-  nlohmann::json ToJson();
+  std::vector<string> GetTags() const;
+  std::vector<Rect> GetBboxes() const;
+  nlohmann::json ToJson() const;
 
  private:
   std::vector<string> tags_;

@@ -13,7 +13,7 @@ using std::endl;
 std::shared_ptr<Camera> camera;
 std::shared_ptr<Processor> encoder;
 
-void SignalHandler(int signal) {
+void SignalHandler(int) {
   std::cout << "Received SIGINT, stop encoder" << std::endl;
   if (encoder != nullptr) encoder->Stop();
   if (camera != nullptr) camera->Stop();

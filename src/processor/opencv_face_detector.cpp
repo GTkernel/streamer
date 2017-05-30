@@ -32,13 +32,13 @@ void OpenCVFaceDetector::Process() {
   cv::Mat obj_host;
   faces.colRange(0, num_face).download(obj_host);
   cv::Rect* cfaces = obj_host.ptr<cv::Rect>();
-  for (int i = 0; i < num_face; i++) {
+  for (decltype(num_face) i = 0; i < num_face; ++i) {
     results_rect.emplace_back(cfaces[i].x, cfaces[i].y, cfaces[i].width,
                               cfaces[i].height);
   }
 #else
   classifier_.detectMultiScale(image, results);
-  for (auto result : results) {
+  for (const auto& result : results) {
     results_rect.emplace_back(result.x, result.y, result.width, result.height);
   }
 #endif
@@ -47,6 +47,6 @@ void OpenCVFaceDetector::Process() {
             new MetadataFrame(results_rect, frame->GetOriginalImage()));
 }
 
-ProcessorType OpenCVFaceDetector::GetType() {
+ProcessorType OpenCVFaceDetector::GetType() const {
   return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
 }

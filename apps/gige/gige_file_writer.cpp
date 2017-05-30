@@ -61,4 +61,4 @@ void GigeFileWriter::Process() {
   frames_written_ += 1;
 }
 
-ProcessorType GigeFileWriter::GetType() { return PROCESSOR_TYPE_CUSTOM; }
+ProcessorType GigeFileWriter::GetType() const { return PROCESSOR_TYPE_CUSTOM; }

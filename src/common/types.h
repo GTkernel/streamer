@@ -58,7 +58,7 @@ struct Rect {
     }
   }
 
-  nlohmann::json ToJson() {
+  nlohmann::json ToJson() const {
     nlohmann::json rect_j;
     rect_j["px"] = px;
     rect_j["py"] = py;
