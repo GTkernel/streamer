@@ -45,6 +45,7 @@ class Context {
     SetEncoderDecoderInformation();
     SetDefaultDeviceInformation();
     SetupZMQ();
+    timer_.Start();
     bool_values_.insert({USEFP16, false});
   }
 
@@ -74,6 +75,8 @@ class Context {
     string_values_[key] = value;
   }
   void SetBool(const string &key, bool value) { bool_values_[key] = value; }
+
+  Timer GetTimer() { return timer_; }
 
   /**
    * @brief Reload the config dir, MUST call Init() after this.
@@ -197,6 +200,9 @@ class Context {
   std::unordered_map<string, bool> bool_values_;
 
   string zmq_publisher_addr_;
+
+  // Tracks time since start of Streamer
+  Timer timer_;
 };
 
 #endif

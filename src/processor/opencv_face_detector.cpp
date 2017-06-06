@@ -43,8 +43,8 @@ void OpenCVFaceDetector::Process() {
   }
 #endif
 
-  PushFrame("output",
-            new MetadataFrame(results_rect, frame->GetOriginalImage()));
+  PushFrame("output", new MetadataFrame(results_rect, frame->GetOriginalImage(),
+                                        frame->GetStartTime()));
 }
 
 ProcessorType OpenCVFaceDetector::GetType() const {

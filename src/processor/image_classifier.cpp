@@ -86,7 +86,8 @@ void ImageClassifier::Process() {
     cv::Mat img = frame->GetOriginalImage();
     CHECK(!img.empty());
     string predict_label = predictions[i][0].first;
-    PushFrame(GET_SINK_NAME(i), new MetadataFrame({predict_label}, img));
+    PushFrame(GET_SINK_NAME(i),
+              new MetadataFrame({predict_label}, img, frame->GetStartTime()));
     for (const auto &prediction : predictions[i]) {
       LOG(INFO) << prediction.first << " " << prediction.second;
     }

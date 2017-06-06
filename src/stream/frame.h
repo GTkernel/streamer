@@ -8,25 +8,31 @@
 #include "json/json.hpp"
 
 #include "common/common.h"
-#include "frame.h"
+#include "common/context.h"
 
 class Frame {
  public:
   Frame() = delete;
-  Frame(FrameType frame_type, cv::Mat original_image = cv::Mat());
+  Frame(FrameType frame_type, cv::Mat original_image,
+        double start_time = Context::GetContext().GetTimer().ElapsedMSec());
   virtual ~Frame(){};
   FrameType GetType();
   cv::Mat GetOriginalImage();
   void SetOriginalImage(cv::Mat original_image);
+  double GetStartTime();
 
  private:
   FrameType frame_type_;
   cv::Mat original_image_;
+  // Time since streamer context was started
+  double start_time_;
 };
 
 class ImageFrame : public Frame {
  public:
-  ImageFrame(cv::Mat image, cv::Mat original_image = cv::Mat());
+  ImageFrame(
+      cv::Mat image, cv::Mat original_image = cv::Mat(),
+      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
   Shape GetSize();
   cv::Mat GetImage();
   void SetImage(cv::Mat image);
@@ -39,8 +45,12 @@ class ImageFrame : public Frame {
 class MetadataFrame : public Frame {
  public:
   MetadataFrame() = delete;
-  MetadataFrame(std::vector<string> tags, cv::Mat original_image = cv::Mat());
-  MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat());
+  MetadataFrame(
+      std::vector<string> tags, cv::Mat original_image = cv::Mat(),
+      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
+  MetadataFrame(
+      std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat(),
+      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
   MetadataFrame(nlohmann::json j);
   std::vector<string> GetTags() const;
   std::vector<Rect> GetBboxes() const;
@@ -54,7 +64,9 @@ class MetadataFrame : public Frame {
 class BytesFrame : public Frame {
  public:
   BytesFrame() = delete;
-  BytesFrame(DataBuffer data_buffer, cv::Mat original_image = cv::Mat());
+  BytesFrame(
+      DataBuffer data_buffer, cv::Mat original_image = cv::Mat(),
+      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
   DataBuffer GetDataBuffer();
 
  private:

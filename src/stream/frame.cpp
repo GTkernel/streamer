@@ -7,8 +7,10 @@
 #include <opencv2/core/core.hpp>
 #include "frame.h"
 
-Frame::Frame(FrameType frame_type, cv::Mat original_image)
-    : frame_type_(frame_type), original_image_(original_image) {}
+Frame::Frame(FrameType frame_type, cv::Mat original_image, double start_time)
+    : frame_type_(frame_type),
+      original_image_(original_image),
+      start_time_(start_time) {}
 
 cv::Mat Frame::GetOriginalImage() { return original_image_; }
 
@@ -18,8 +20,10 @@ void Frame::SetOriginalImage(cv::Mat original_image) {
 
 FrameType Frame::GetType() { return frame_type_; }
 
-ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image)
-    : Frame(FRAME_TYPE_IMAGE, original_image),
+double Frame::GetStartTime() { return start_time_; }
+
+ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image, double start_time)
+    : Frame(FRAME_TYPE_IMAGE, original_image, start_time),
       image_(image),
       shape_(image.channels(), image.cols, image.rows) {}
 
@@ -29,10 +33,12 @@ cv::Mat ImageFrame::GetImage() { return image_; }
 
 void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
 
-MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), tags_(tags) {}
-MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {}
+MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image,
+                             double start_time)
+    : Frame(FRAME_TYPE_MD, original_image, start_time), tags_(tags) {}
+MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image,
+                             double start_time)
+    : Frame(FRAME_TYPE_MD, original_image, start_time), bboxes_(bboxes) {}
 
 MetadataFrame::MetadataFrame(nlohmann::json j)
     : Frame(FRAME_TYPE_MD, cv::Mat()) {
@@ -67,7 +73,9 @@ nlohmann::json MetadataFrame::ToJson() const {
   return j;
 }
 
-BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image)
-    : Frame(FRAME_TYPE_BYTES, original_image), data_buffer_(data_buffer) {}
+BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image,
+                       double start_time)
+    : Frame(FRAME_TYPE_BYTES, original_image, start_time),
+      data_buffer_(data_buffer) {}
 
 DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }

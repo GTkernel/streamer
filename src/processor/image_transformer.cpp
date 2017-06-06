@@ -70,7 +70,8 @@ void ImageTransformer::Process() {
   }
 
   PushFrame("output",
-            new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
+            new ImageFrame(sample_normalized_, frame->GetOriginalImage(),
+                           frame->GetStartTime()));
 }
 
 bool ImageTransformer::Init() { return true; }
