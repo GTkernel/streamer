@@ -2,6 +2,9 @@ find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS regex system thread date_time REQUIRED)
 
 include_directories(SYSTEM ${ZMQ_INCLUDE_DIRS})
+if (USE_RPC)
+  include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
+endif ()
 
 # Macro to get sub directories
 MACRO(SUBDIRLIST result curdir)
@@ -28,18 +31,16 @@ ENDMACRO()
 set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
 SUBDIRLIST(APP_DIRS ${APPS_ROOT})
 
-if (USE_RPC)
-  include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
-else ()
-  list(REMOVE_ITEM APP_DIRS rpc_receiver rpc_sender)
-endif ()
-
 add_custom_target(apps)
 
 foreach (app_dir ${APP_DIRS})
-  BUILD_APP(${app_dir})
-  get_filename_component(app_name ${app_dir} NAME_WE)
-  add_dependencies(apps ${app_name})
+  if (EXISTS ${PROJECT_SOURCE_DIR}/apps/${app_dir}/CMakeLists.txt)
+    add_subdirectory(${app_dir})
+  else ()
+    BUILD_APP(${app_dir})
+    get_filename_component(app_name ${app_dir} NAME_WE)
+    add_dependencies(apps ${app_name})
+  endif ()
 endforeach ()
 
 target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
