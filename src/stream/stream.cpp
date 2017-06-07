@@ -77,3 +77,4 @@ template std::shared_ptr<Frame> StreamReader::PopFrame(unsigned int);
 template std::shared_ptr<ImageFrame> StreamReader::PopFrame(unsigned int);
 template std::shared_ptr<MetadataFrame> StreamReader::PopFrame(unsigned int);
 template std::shared_ptr<BytesFrame> StreamReader::PopFrame(unsigned int);
+template std::shared_ptr<LayerFrame> StreamReader::PopFrame(unsigned int);

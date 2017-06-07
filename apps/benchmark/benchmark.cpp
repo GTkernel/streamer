@@ -33,10 +33,6 @@ struct Configurations {
   bool store;
   // Try to use fp16 or not
   bool usefp16;
-  // Enable batch or not
-  bool batch;
-  // Batch size for NN inference experiment
-  int batch_size;
 } CONFIG;
 
 void SLEEP(int sleep_time_in_s) {
@@ -91,50 +87,27 @@ void RunEndToEndExperiment() {
   }
 
   // classifier
+  auto model_desc = model_manager.GetModelDesc(CONFIG.net);
   std::vector<ProcessorPtr> classifiers;
-  if (CONFIG.batch) {
-    auto model_desc = model_manager.GetModelDesc(CONFIG.net);
+  for (const auto &input_stream : input_streams) {
     std::shared_ptr<ImageClassifier> classifier(
-        new ImageClassifier(model_desc, input_shape, input_streams.size()));
-
-    for (decltype(input_streams.size()) i = 0; i < input_streams.size(); ++i) {
-      classifier->SetInputStream(i, input_streams[i]);
-    }
+        new ImageClassifier(model_desc, input_shape, 1));
+    classifier->SetSource("input", input_stream);
     classifiers.push_back(classifier);
-  } else {
-    auto model_desc = model_manager.GetModelDesc(CONFIG.net);
-    for (const auto &s : input_streams) {
-      std::shared_ptr<ImageClassifier> classifier(
-          new ImageClassifier(model_desc, input_shape, 1));
-      classifier->SetInputStream(0, s);
-      classifiers.push_back(classifier);
-    }
   }
 
   // encoders, encode each camera stream
   if (CONFIG.store) {
-    if (CONFIG.batch) {
-      auto classifier = classifiers[0];
-      for (decltype(camera_size) i = 0; i < camera_size; ++i) {
-        string output_filename = CONFIG.camera_names[i] + ".mp4";
+    for (decltype(camera_size) i = 0; i < camera_size; ++i) {
+      auto classifier = classifiers.at(i);
+      string output_filename = CONFIG.camera_names.at(i) + ".mp4";
 
-        std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-            cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
-        encoder->SetSource("input",
-                           classifier->GetSink("output" + std::to_string(i)));
-        encoders.push_back(encoder);
-      }
-    } else {
-      for (decltype(camera_size) i = 0; i < camera_size; ++i) {
-        auto classifier = classifiers[i];
-        string output_filename = CONFIG.camera_names[i] + ".mp4";
-
-        std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-            cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
-        encoder->SetSource("input",
-                           classifier->GetSink("output" + std::to_string(0)));
-        encoders.push_back(encoder);
-      }
+      std::shared_ptr<GstVideoEncoder> encoder(
+          new GstVideoEncoder(cameras.at(i)->GetWidth(),
+                              cameras.at(i)->GetHeight(), output_filename));
+      encoder->SetSource("input",
+                         classifier->GetSink("output" + std::to_string(0)));
+      encoders.push_back(encoder);
     }
   }
 
@@ -175,21 +148,22 @@ void RunEndToEndExperiment() {
 
   /////////////// PRINT STATS
   for (decltype(cameras.size()) i = 0; i < cameras.size(); ++i) {
-    cout << "-- camera[" << i << "] fps is " << cameras[i]->GetAvgFps() << endl;
+    cout << "-- camera[" << i << "] fps is " << cameras.at(i)->GetAvgFps()
+         << endl;
   }
   for (decltype(transformers.size()) i = 0; i < transformers.size(); ++i) {
     cout << "-- transformer[" << i << "] fps is "
-         << transformers[i]->GetAvgFps() << endl;
+         << transformers.at(i)->GetAvgFps() << endl;
   }
 
   for (decltype(classifiers.size()) i = 0; i < classifiers.size(); ++i) {
     cout << "-- classifier << " << i << " fps is "
-         << classifiers[i]->GetAvgFps() << endl;
+         << classifiers.at(i)->GetAvgFps() << endl;
   }
 
   if (CONFIG.store) {
     for (decltype(encoders.size()) i = 0; i < encoders.size(); ++i) {
-      cout << "-- encoder[" << i << "] fps is " << encoders[i]->GetAvgFps()
+      cout << "-- encoder[" << i << "] fps is " << encoders.at(i)->GetAvgFps()
            << endl;
     }
   }
@@ -207,7 +181,7 @@ void RunNNInferenceExperiment() {
 
   auto model_desc = model_manager.GetModelDesc(CONFIG.net);
   std::shared_ptr<DummyNNProcessor> dummy_processor(
-      new DummyNNProcessor(model_desc, CONFIG.batch_size));
+      new DummyNNProcessor(model_desc));
 
   dummy_processor->Start();
 
@@ -250,14 +224,6 @@ int main(int argc, char *argv[]) {
   desc.add_options()(
       "pipeline,p", po::value<string>()->value_name("pipeline"),
       "The processor pipeline to run, separate processor with ,");
-  desc.add_options()(
-      "batch_size",
-      po::value<int>()->value_name("BATCH_SIZE")->default_value(1),
-      "The batch used to benchmark a network");
-  desc.add_options()(
-      "batch",
-      po::value<bool>()->value_name("ENABLE_BATCH")->default_value(false),
-      "Enable batch or not in end to end experiment");
   desc.add_options()("store", po::value<bool>()->default_value(false),
                      "Write video at the end of the pipeline or not");
 
@@ -323,9 +289,7 @@ int main(int argc, char *argv[]) {
   CONFIG.verbose = vm["verbose"].as<bool>();
   CONFIG.time = vm["time"].as<int>();
   CONFIG.device_number = vm["device"].as<int>();
-  CONFIG.batch_size = vm["batch_size"].as<int>();
   CONFIG.usefp16 = vm["fp16"].as<bool>();
-  CONFIG.batch = vm["batch"].as<bool>();
   Context::GetContext().SetInt(DEVICE_NUMBER, CONFIG.device_number);
   Context::GetContext().SetBool(USEFP16, CONFIG.usefp16);
 

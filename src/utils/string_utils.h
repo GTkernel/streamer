@@ -4,7 +4,11 @@
 
 #ifndef STREAMER_STRINGUTILS_H
 #define STREAMER_STRINGUTILS_H
+
+#include <sstream>
+
 #include <boost/algorithm/string.hpp>
+
 #include "common/common.h"
 
 /**
@@ -93,5 +97,15 @@ inline bool StringContains(const string &str, const string &substr) {
  * @return The converted integer.
  */
 inline int StringToInt(const string &str) { return atoi(str.c_str()); }
+
+inline size_t StringToSizet(const string &str) {
+  std::istringstream iss(str);
+  size_t s;
+  iss >> s;
+  if (iss.fail()) {
+    LOG(FATAL) << "Improperly formed size_t: " << str;
+  }
+  return s;
+}
 
 #endif  // STREAMER_STRINGUTILS_H

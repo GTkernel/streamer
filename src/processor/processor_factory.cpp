@@ -20,6 +20,8 @@
 #include "stream_publisher.h"
 #endif
 
+#include "utils/string_utils.h"
+
 std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     ProcessorType processor_type, FactoryParamsType params) {
   std::shared_ptr<Processor> processor;
@@ -56,6 +58,9 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
       break;
     case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
       processor.reset(CreateImageTransformer(params));
+      break;
+    case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
+      processor.reset(CreateNeuralNetEvaluator(params));
       break;
     case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
       processor.reset(CreateOpenCVFaceDetector(params));
@@ -136,14 +141,22 @@ Processor *ProcessorFactory::CreateFrameSender(
 
 Processor *ProcessorFactory::CreateImageClassifier(
     const FactoryParamsType &params) {
-  auto &model_manager = ModelManager::GetInstance();
-  if (model_manager.HasModel(params.at("model"))) {
-    auto model_desc = model_manager.GetModelDesc(params.at("model"));
-    return new ImageClassifier(
-        model_desc,
-        Shape(model_desc.GetInputWidth(), model_desc.GetInputHeight()), 1);
+  ModelManager &model_manager = ModelManager::GetInstance();
+  std::string model_name = params.at("model");
+  CHECK(model_manager.HasModel(model_name));
+  ModelDesc model_desc = model_manager.GetModelDesc(model_name);
+  size_t num_labels = StringToSizet(params.at("num_labels"));
+
+  auto num_channels_pair = params.find("num_channels");
+  if (num_channels_pair == params.end()) {
+    return new ImageClassifier(model_desc, num_labels);
   } else {
-    return nullptr;
+    // If num_channels is specified, then we need to use the constructor that
+    // creates a hidden NeuralNetEvaluator.
+    size_t num_channels = StringToSizet(num_channels_pair->second);
+    Shape input_shape = Shape(num_channels, model_desc.GetInputWidth(),
+                              model_desc.GetInputHeight());
+    return new ImageClassifier(model_desc, input_shape, num_labels);
   }
 }
 
@@ -162,6 +175,22 @@ Processor *ProcessorFactory::CreateImageTransformer(
     channel = atoi(params.at("channel").c_str());
 
   return new ImageTransformer(Shape(channel, width, height), true);
+}
+
+Processor *ProcessorFactory::CreateNeuralNetEvaluator(
+    const FactoryParamsType &params) {
+  ModelManager &model_manager = ModelManager::GetInstance();
+  std::string model_name = params.at("model");
+  CHECK(model_manager.HasModel(model_name));
+  ModelDesc model_desc = model_manager.GetModelDesc(model_name);
+
+  size_t num_channels = StringToSizet(params.at("num_channels"));
+  Shape input_shape = Shape(num_channels, model_desc.GetInputWidth(),
+                            model_desc.GetInputHeight());
+
+  std::vector<std::string> output_layer_names = {
+      params.at("output_layer_name")};
+  return new NeuralNetEvaluator(model_desc, input_shape, output_layer_names);
 }
 
 Processor *ProcessorFactory::CreateOpenCVFaceDetector(

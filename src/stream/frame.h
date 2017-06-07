@@ -73,4 +73,17 @@ class BytesFrame : public Frame {
   DataBuffer data_buffer_;
 };
 
+class LayerFrame : public Frame {
+ public:
+  LayerFrame() = delete;
+  LayerFrame(std::string layer_name, cv::Mat activations,
+             cv::Mat original_image = cv::Mat());
+  const std::string GetLayerName() const;
+  cv::Mat GetActivations() const;
+
+ private:
+  const std::string layer_name_;
+  cv::Mat activations_;
+};
+
 #endif  // STREAMER_FRAME_H

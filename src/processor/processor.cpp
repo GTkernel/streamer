@@ -44,7 +44,7 @@ bool Processor::Start() {
   // Check sources are filled
   for (const auto &source : sources_) {
     CHECK(source.second != nullptr)
-        << "Source: " << source.first << " is not set.";
+        << "Source \"" << source.first << "\" is not set.";
   }
 
   // Subscribe sources
@@ -144,4 +144,6 @@ template std::shared_ptr<ImageFrame> Processor::GetFrame(
 template std::shared_ptr<MetadataFrame> Processor::GetFrame(
     const string &source_name);
 template std::shared_ptr<BytesFrame> Processor::GetFrame(
+    const string &source_name);
+template std::shared_ptr<LayerFrame> Processor::GetFrame(
     const string &source_name);

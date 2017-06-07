@@ -88,6 +88,10 @@ void StreamPublisher::Process() {
       LOG(INFO) << "Sent";
       break;
     }
+    case FRAME_TYPE_LAYER: {
+      STREAMER_NOT_IMPLEMENTED;
+      break;
+    }
     case FRAME_TYPE_INVALID: {
       s_send(zmq_publisher_, topic_name_);
       s_send(zmq_publisher_, "INVALID");

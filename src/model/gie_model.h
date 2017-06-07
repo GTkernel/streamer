@@ -18,6 +18,8 @@ class GIEModel : public Model {
   virtual void Load();
   virtual void Evaluate();
   virtual void Forward();
+  virtual const std::vector<std::string> &GetLayerNames() const override;
+  virtual cv::Mat GetLayerOutput(const std::string &layer_name) const override;
 
  private:
   std::unique_ptr<GIEInferer<float>> inferer_;

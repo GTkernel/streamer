@@ -15,7 +15,7 @@
  */
 class DummyNNProcessor : public Processor {
  public:
-  DummyNNProcessor(const ModelDesc &model_desc, int batch_size);
+  DummyNNProcessor(const ModelDesc &model_desc);
   virtual ProcessorType GetType() const override;
 
  protected:
@@ -27,7 +27,6 @@ class DummyNNProcessor : public Processor {
   std::unique_ptr<Model> model_;
   ModelDesc model_desc_;
   Shape input_shape_;
-  int batch_size_;
   // The fake input of the network
   DataBuffer fake_input_;
 };

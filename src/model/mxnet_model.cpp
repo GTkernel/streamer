@@ -93,6 +93,14 @@ void MXNetModel::Evaluate() {
   output_buffers_.push_back(output_buffer);
 }
 
+const std::vector<std::string> &MXNetModel::GetLayerNames() const {
+  STREAMER_NOT_IMPLEMENTED;
+}
+
+cv::Mat MXNetModel::GetLayerOutput(const std::string &) const {
+  STREAMER_NOT_IMPLEMENTED;
+}
+
 MXNetModel::~MXNetModel() {
   // Release Predictor
   if (predictor_ != nullptr) {

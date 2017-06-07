@@ -63,6 +63,12 @@ class Model {
   // Run pure forward pass, copy no input or ouput, this is only supposed to be
   // used by experiment.
   virtual void Forward() = 0;
+  // Get the names of all layers in order. GetLayerNames().end() - 1 should be
+  // the output layer.
+  virtual const std::vector<std::string> &GetLayerNames() const = 0;
+  // Returns a matrix containing the activations corresponding to the specified
+  // layer.
+  virtual cv::Mat GetLayerOutput(const std::string &layer_name) const = 0;
   DataBuffer GetInputBuffer();
   std::vector<DataBuffer> GetOutputBuffers();
   std::vector<Shape> GetOutputShapes();

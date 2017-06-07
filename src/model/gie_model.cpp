@@ -45,4 +45,12 @@ void GIEModel::Evaluate() {
   output_buffers_.push_back(output_buffer);
 }
 
+const std::vector<std::string> &GIEModel::GetLayerNames() const {
+  STREAMER_NOT_IMPLEMENTED;
+}
+
+cv::Mat GIEModel::GetLayerOutput(const std::string &) const {
+  STREAMER_NOT_IMPLEMENTED;
+}
+
 GIEModel::~GIEModel() { inferer_->DestroyEngine(); }

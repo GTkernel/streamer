@@ -29,6 +29,7 @@ class ProcessorFactory {
   static Processor *CreateImageClassifier(const FactoryParamsType &params);
   static Processor *CreateImageSegmenter(const FactoryParamsType &params);
   static Processor *CreateImageTransformer(const FactoryParamsType &params);
+  static Processor *CreateNeuralNetEvaluator(const FactoryParamsType &params);
   static Processor *CreateOpenCVFaceDetector(const FactoryParamsType &params);
 #ifdef USE_ZMQ
   static Processor *CreateStreamPublisher(const FactoryParamsType &params);

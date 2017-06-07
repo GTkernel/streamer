@@ -6,6 +6,7 @@
 #define STREAMER_CAFFE_MODEL_H
 
 #include <caffe/caffe.hpp>
+
 #include "model.h"
 
 /**
@@ -20,9 +21,14 @@ class CaffeModel : public Model {
   virtual void Load();
   virtual void Evaluate();
   virtual void Forward();
+  virtual const std::vector<std::string> &GetLayerNames() const override;
+  virtual cv::Mat GetLayerOutput(const std::string &layer_name) const override;
 
  private:
   std::unique_ptr<caffe::Net<DType>> net_;
+
+  static cv::Mat BlobToMat2d(caffe::Blob<DType> *src);
+  static cv::Mat BlobToMat4d(caffe::Blob<DType> *src);
 };
 
 #endif  // STREAMER_CAFFE_MODEL_H

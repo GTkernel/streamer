@@ -17,6 +17,12 @@ void FrameSender::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE, stream);
 }
 
+void FrameSender::SetSource(const string &name, StreamPtr stream) {
+  CHECK(name == SOURCE) << "StreamSender has one source named \"" << SOURCE
+                        << "\"!";
+  Processor::SetSource(name, stream);
+}
+
 bool FrameSender::Init() { return true; }
 
 bool FrameSender::OnStop() { return true; }

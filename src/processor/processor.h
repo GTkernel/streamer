@@ -54,7 +54,7 @@ class Processor {
    * @param name Name of the source.
    * @param stream Stream to be set.
    */
-  void SetSource(const string &name, StreamPtr stream);
+  virtual void SetSource(const string &name, StreamPtr stream);
 
   /**
    * @brief Check if the processor has started.
@@ -66,20 +66,20 @@ class Processor {
    * @brief Get sliding window average latency of the processor.
    * @return Latency in ms.
    */
-  double GetSlidingLatencyMs() const;
+  virtual double GetSlidingLatencyMs() const;
 
   /**
    * @brief Get overall average latency.
    * @return Latency in ms.
    */
-  double GetAvgLatencyMs() const;
+  virtual double GetAvgLatencyMs() const;
 
   /**
    * @brief Get processing speed of the processor, measured in frames / sec. It
    * is simply computed as 1000.0 / GetLatencyMs().
    * @return FPS of the processor.
    */
-  double GetAvgFps() const;
+  virtual double GetAvgFps() const;
 
   /**
    * @brief Get the type of the processor
@@ -92,7 +92,7 @@ class Processor {
    */
   virtual bool Init() = 0;
   /**
-   * @brief Called after Prcessor#Stop() is called, do any clean up in this
+   * @brief Called after Processor#Stop() is called, do any clean up in this
    * method.
    * @return [description]
    */

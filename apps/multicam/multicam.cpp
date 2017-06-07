@@ -16,8 +16,8 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
-std::shared_ptr<ImageClassifier> classifier;
-std::vector<StreamReader *> classifier_output_readers;
+std::vector<std::shared_ptr<ImageClassifier>> classifiers;
+std::vector<StreamPtr> classifier_streams;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
@@ -25,11 +25,9 @@ void CleanUp() {
     if (encoder->IsStarted()) encoder->Stop();
   }
 
-  for (const auto &reader : classifier_output_readers) {
-    reader->UnSubscribe();
+  for (const auto &classifier : classifiers) {
+    if (classifier->IsStarted()) classifier->Stop();
   }
-
-  if (classifier != nullptr && classifier->IsStarted()) classifier->Stop();
 
   for (const auto &transformer : transformers) {
     if (transformer->IsStarted()) transformer->Stop();
@@ -53,7 +51,6 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   std::signal(SIGINT, SignalHandler);
 
-  int batch_size = camera_names.size();
   CameraManager &camera_manager = CameraManager::GetInstance();
   ModelManager &model_manager = ModelManager::GetInstance();
 
@@ -93,27 +90,23 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   // classifier
   auto model_desc = model_manager.GetModelDesc(model_name);
-  classifier.reset(
-      new ImageClassifier(model_desc, input_shape, input_streams.size()));
-
-  for (decltype(input_streams.size()) i = 0; i < input_streams.size(); ++i) {
-    classifier->SetInputStream(i, input_streams[i]);
-  }
-
-  // classifier readers
-  for (decltype(input_streams.size()) i = 0; i < input_streams.size(); ++i) {
-    auto classifier_output = classifier->GetSink("output" + std::to_string(i));
-    classifier_output_readers.push_back(classifier_output->Subscribe());
+  for (const auto &input_stream : input_streams) {
+    auto classifier =
+        std::make_shared<ImageClassifier>(model_desc, input_shape, 5);
+    classifiers.push_back(classifier);
+    classifier->SetSource("input", input_stream);
+    classifier_streams.push_back(classifier->GetSink("output"));
   }
 
   // encoders, encode each camera stream
-  for (decltype(batch_size) i = 0; i < batch_size; ++i) {
-    string output_filename = camera_names[i] + ".mp4";
+  for (decltype(classifier_streams.size()) i = 0; i < classifier_streams.size();
+       ++i) {
+    string output_filename = camera_names.at(i) + ".mp4";
 
-    std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-        cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
-    encoder->SetSource("input",
-                       classifier->GetSink("output" + std::to_string(i)));
+    std::shared_ptr<GstVideoEncoder> encoder(
+        new GstVideoEncoder(cameras.at(i)->GetWidth(),
+                            cameras.at(i)->GetHeight(), output_filename));
+    encoder->SetSource("input", classifier_streams.at(i));
     encoders.push_back(encoder);
   }
 
@@ -127,7 +120,9 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     transformer->Start();
   }
 
-  classifier->Start();
+  for (const auto &classifier : classifiers) {
+    classifier->Start();
+  }
 
   for (const auto &encoder : encoders) {
     encoder->Start();
@@ -146,15 +141,16 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   std::vector<string> label_to_show(camera_names.size());
   //  double fps_to_show = 0.0;
   while (true) {
-    for (decltype(camera_names.size()) i = 0; i < camera_names.size(); i++) {
+    for (decltype(camera_names.size()) i = 0; i < camera_names.size(); ++i) {
+      auto classifier = classifiers.at(i);
       double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
-      auto reader = classifier_output_readers[i];
+      auto reader = classifier_streams.at(i)->Subscribe();
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat img = md_frame->GetOriginalImage();
-        string label = md_frame->GetTags()[0];
+        string label = md_frame->GetTags().at(0);
         if (update_overlay == 1) {
-          label_to_show[i] = label;
+          label_to_show.at(i) = label;
           fps_to_show = classifier->GetAvgFps();
         }
 
@@ -164,10 +160,10 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
         cv::Scalar outline_color(0, 0, 0);
         cv::Scalar label_color(200, 200, 250);
 
-        cv::putText(img, label_to_show[i], label_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, outline_color, 8, CV_AA);
-        cv::putText(img, label_to_show[i], label_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, label_color, 2, CV_AA);
+        cv::putText(img, label_to_show.at(i), label_point,
+                    CV_FONT_HERSHEY_DUPLEX, font_size, outline_color, 8, CV_AA);
+        cv::putText(img, label_to_show.at(i), label_point,
+                    CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
 
         cv::Point fps_point(img.rows / 3, img.cols / 6);
 
@@ -178,7 +174,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
         cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
                     font_size, label_color, 2, CV_AA);
 
-        cv::imshow(camera_names[i], img);
+        cv::imshow(camera_names.at(i), img);
       }
     }
 

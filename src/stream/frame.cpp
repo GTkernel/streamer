@@ -1,10 +1,9 @@
 //
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
-
+#include <opencv2/core/core.hpp>
 #include "json/json.hpp"
 
-#include <opencv2/core/core.hpp>
 #include "frame.h"
 
 Frame::Frame(FrameType frame_type, cv::Mat original_image, double start_time)
@@ -79,3 +78,13 @@ BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image,
       data_buffer_(data_buffer) {}
 
 DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }
+
+LayerFrame::LayerFrame(std::string layer_name, cv::Mat activations,
+                       cv::Mat original_image)
+    : Frame(FRAME_TYPE_LAYER, original_image),
+      layer_name_(layer_name),
+      activations_(activations) {}
+
+const std::string LayerFrame::GetLayerName() const { return layer_name_; }
+
+cv::Mat LayerFrame::GetActivations() const { return activations_; }
