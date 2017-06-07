@@ -60,7 +60,8 @@ void Run(const std::vector<string> &camera_names,
          bool display, float scale, int min_size,
          float detector_idle_duration,
          const string &detector_targets,
-         float tracker_calibration_duration) {
+         float tracker_calibration_duration,
+         bool db_write_to_file) {
   cout << "Run tracker_struck demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -139,7 +140,7 @@ void Run(const std::vector<string> &camera_names,
     auto tracker_output = tracker->GetSink("output");
     tracker_output_readers.push_back(tracker_output->Subscribe());
 
-    std::shared_ptr<Processor> db_writer(new DbWriter(cameras[i]));
+    std::shared_ptr<Processor> db_writer(new DbWriter(cameras[i], db_write_to_file));
     db_writer->SetSource("input", tracker->GetSink("output"));
     db_writers.push_back(db_writer);
   }
@@ -261,6 +262,8 @@ int main(int argc, char *argv[]) {
                      "The name of the target to detect, separate with ,");
   desc.add_options()("tracker_calibration_duration", po::value<float>()->default_value(2.0),
                      "tracker calibration duration");
+  desc.add_options()("db_write_to_file", po::value<bool>()->default_value(false),
+                     "Enable db write to file or not");
 
   po::variables_map vm;
   try {
@@ -295,8 +298,9 @@ int main(int argc, char *argv[]) {
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
   auto detector_targets = vm["detector_targets"].as<string>();
   float tracker_calibration_duration = vm["tracker_calibration_duration"].as<float>();
+  bool db_write_to_file = vm["db_write_to_file"].as<bool>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_idle_duration, detector_targets, tracker_calibration_duration);
+      detector_idle_duration, detector_targets, tracker_calibration_duration, db_write_to_file);
 
   return 0;
 }

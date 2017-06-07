@@ -8,15 +8,23 @@
 #include <chrono>
 #include "db_writer.h"
 
-DbWriter::DbWriter(std::shared_ptr<Camera> camera) 
+DbWriter::DbWriter(std::shared_ptr<Camera> camera, bool write_to_file) 
     : Processor({"input"}, {}),
-      camera_(camera) {}
+      camera_(camera),
+      write_to_file_(write_to_file) {}
 
 bool DbWriter::Init() {
+  if (write_to_file_) {
+    ofs_.open("data_sample.csv");
+    CHECK(ofs_.is_open()) << "Error opening file";
+  }
   return true;
 }
 
 bool DbWriter::OnStop() {
+  if (write_to_file_) {
+    ofs_.close();
+  }
   return true;
 }
 
@@ -36,14 +44,54 @@ void DbWriter::Process() {
   auto struck_features = md_frame->GetStruckFeatures();
   //auto bboxes = md_frame->GetBboxes();
   CHECK(uuids.size() == tags.size());
+  if (write_to_file_)
+    WriteFile(camera_id, uuids, timestamp, tags, struck_features);
+  else
+    WriteAthena(camera_id, uuids, timestamp, tags, struck_features);
+}
+
+ProcessorType DbWriter::GetType() {
+  return PROCESSOR_TYPE_DB_WRITER;
+}
+
+void DbWriter::WriteFile(const std::string& camera_id,
+                         const std::vector<std::string>& uuids,
+                         unsigned long timestamp,
+                         const std::vector<string>& tags,
+                         const std::vector<std::vector<double>>& struck_features) {
+  for (size_t i = 0; i < uuids.size(); ++i) {
+    if (uuids.size() == struck_features.size()) {
+      ofs_ << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
+      bool flag = true;
+      for (const auto& m: struck_features[i]) {
+        if (flag) {
+          ofs_ << "," << m;
+          flag = false;
+        } else {
+          ofs_ << ";" << m;
+        }
+      }
+      ofs_ << "\n";
+    } else {
+      ofs_ << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
+      ofs_ << "\n";
+    }
+  }
+}
+
+void DbWriter::WriteAthena(const std::string& camera_id,
+                           const std::vector<std::string>& uuids,
+                           unsigned long timestamp,
+                           const std::vector<string>& tags,
+                           const std::vector<std::vector<double>>& struck_features) {
+  /*
   for (size_t i = 0; i < uuids.size(); ++i) {
     if (uuids.size() == struck_features.size())
       LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i] << "[struck_feature]";
     else
       LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
   }
-}
+  */
 
-ProcessorType DbWriter::GetType() {
-  return PROCESSOR_TYPE_DB_WRITER;
+  // Waiting for Athena API
 }

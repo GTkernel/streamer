@@ -14,7 +14,7 @@
 
 class DbWriter : public Processor {
   public:
-    DbWriter(std::shared_ptr<Camera> camera);
+    DbWriter(std::shared_ptr<Camera> camera, bool write_to_file = false);
     virtual ProcessorType GetType() override;
 
   protected:
@@ -23,7 +23,21 @@ class DbWriter : public Processor {
     virtual void Process() override;
 
   private:
+    void WriteFile(const std::string& camera_id,
+                   const std::vector<std::string>& uuids,
+                   unsigned long timestamp,
+                   const std::vector<string>& tags,
+                   const std::vector<std::vector<double>>& struck_features);
+    void WriteAthena(const std::string& camera_id,
+                     const std::vector<std::string>& uuids,
+                     unsigned long timestamp,
+                     const std::vector<string>& tags,
+                     const std::vector<std::vector<double>>& struck_features);
+
+  private:
     std::shared_ptr<Camera> camera_;
+    bool write_to_file_;
+    std::ofstream ofs_;
 };
 
 #endif // STREAMER_DB_WRITER_H
