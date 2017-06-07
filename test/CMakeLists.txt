@@ -7,6 +7,13 @@ endif ()
 
 file(GLOB_RECURSE TEST_SRCS ${PROJECT_SOURCE_DIR}/test/test*.cpp)
 
+if (USE_ZMQ)
+  include_directories(SYSTEM ${ZMQ_INCLUDE_DIRS})
+else ()
+  message(${TEST_SRCS})
+  list(REMOVE_ITEM TEST_SRCS ${PROJECT_SOURCE_DIR}/test/test_stream_publisher.cpp)
+endif ()
+
 add_library(streamer_gtest_main streamer_gtest_main.cpp)
 target_link_libraries(streamer_gtest_main streamer gtest)
 

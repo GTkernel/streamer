@@ -1,9 +1,11 @@
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS regex system thread date_time REQUIRED)
 
-include_directories(SYSTEM ${ZMQ_INCLUDE_DIRS})
 if (USE_RPC)
   include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
+endif ()
+if (USE_ZMQ)
+  include_directories(SYSTEM ${ZMQ_INCLUDE_DIRS})
 endif ()
 
 # Macro to get sub directories

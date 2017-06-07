@@ -11,8 +11,10 @@
 #include "image_transformer.h"
 #include "model/model_manager.h"
 #include "opencv_face_detector.h"
-#include "stream_publisher.h"
 #include "video/gst_video_encoder.h"
+#ifdef USE_ZMQ
+#include "stream_publisher.h"
+#endif
 
 std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     ProcessorType processor_type, FactoryParamsType params) {
@@ -42,9 +44,11 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     case PROCESSOR_TYPE_ENCODER:
       processor.reset(CreateEncoder(params));
       break;
+#ifdef USE_ZMQ
     case PROCESSOR_TYPE_STREAM_PUBLISHER:
       processor.reset(CreateStreamPublisher(params));
       break;
+#endif
     case PROCESSOR_TYPE_FILE_WRITER:
       processor.reset(CreateFileWriter(params));
       break;
@@ -126,10 +130,12 @@ Processor *ProcessorFactory::CreateDummyNNProcessor(const FactoryParamsType &) {
   return nullptr;
 }
 
+#ifdef USE_ZMQ
 Processor *ProcessorFactory::CreateStreamPublisher(
     const FactoryParamsType &params) {
   return new StreamPublisher(params.at("name"));
 }
+#endif
 
 Processor *ProcessorFactory::CreateFileWriter(const FactoryParamsType &params) {
   return new FileWriter(params.at("filename"));

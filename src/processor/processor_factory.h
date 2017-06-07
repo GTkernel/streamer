@@ -25,7 +25,9 @@ class ProcessorFactory {
   static Processor *CreateImageTransformer(const FactoryParamsType &params);
   static Processor *CreateOpenCVFaceDetector(const FactoryParamsType &params);
   static Processor *CreateDummyNNProcessor(const FactoryParamsType &params);
+#ifdef USE_ZMQ
   static Processor *CreateStreamPublisher(const FactoryParamsType &params);
+#endif
   static Processor *CreateFileWriter(const FactoryParamsType &params);
 };
 

@@ -27,7 +27,6 @@ find_package(Glog REQUIRED)
 find_package(GLIB REQUIRED gobject)
 find_package(Boost REQUIRED COMPONENTS system program_options filesystem serialization)
 find_package(JeMalloc)
-find_package(ZMQ REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # Determine if is on Tegra
@@ -135,6 +134,11 @@ if (USE_RPC)
   add_definitions("-D USE_RPC")
   message("Build RPC support")
 endif()
+
+option(USE_ZMQ "Build ZeroMQ support." OFF)
+if (USE_ZMQ)
+  find_package(ZMQ REQUIRED)
+endif ()
 
 # Common include paths
 include_directories(src)

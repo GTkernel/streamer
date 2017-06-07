@@ -3,7 +3,6 @@
 //
 
 #include "stream_publisher.h"
-#include "common/context.h"
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -11,10 +10,23 @@
 
 namespace pt = boost::property_tree;
 
-StreamPublisher::StreamPublisher(const string& topic_name)
+StreamPublisher::StreamPublisher(const string& topic_name,
+                                 const unsigned int port)
     : Processor({"input"}, {}),
       topic_name_(topic_name),
-      zmq_publisher_(Context::GetContext().GetZMQPublisher()) {}
+      zmq_context_{1},
+      zmq_publisher_{zmq_context_, ZMQ_PUB},
+      zmq_port_(port) {
+  // Bind the publisher socket
+  zmq_publisher_addr_ = "tcp://127.0.0.1:" + std::to_string(zmq_port_);
+  LOG(INFO) << zmq_publisher_addr_;
+  zmq_publisher_.bind(zmq_publisher_addr_);
+}
+
+StreamPublisher::~StreamPublisher() {
+  // Tear down the publisher socket
+  zmq_publisher_.unbind(zmq_publisher_addr_);
+}
 
 ProcessorType StreamPublisher::GetType() const {
   return PROCESSOR_TYPE_STREAM_PUBLISHER;

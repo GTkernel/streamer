@@ -10,12 +10,16 @@
 
 #include <cppzmq/zmq.hpp>
 
+static const int DEFAULT_PUBLISHER_PORT = 5536;
+
 /**
  * @brief A class for publising streamer's stream to network using ZMQ.
  */
 class StreamPublisher : public Processor {
  public:
-  StreamPublisher(const string &topic_name);
+  StreamPublisher(const string &topic_name,
+                  const unsigned int port = DEFAULT_PUBLISHER_PORT);
+  ~StreamPublisher();
   virtual ProcessorType GetType() const override;
 
  protected:
@@ -25,8 +29,10 @@ class StreamPublisher : public Processor {
 
  private:
   string topic_name_;
-
-  zmq::socket_t &zmq_publisher_;
+  zmq::context_t zmq_context_;
+  zmq::socket_t zmq_publisher_;
+  string zmq_publisher_addr_;
+  unsigned int zmq_port_;
 };
 
 #endif  // STREAMER_STREAMPUBLISHER_H

@@ -5,7 +5,6 @@
 #ifndef STREAMER_CONTEXT_H
 #define STREAMER_CONTEXT_H
 
-#include <cppzmq/zmq.hpp>
 #include <unordered_map>
 
 #include "common.h"
@@ -13,11 +12,10 @@
 
 const string H264_ENCODER_GST_ELEMENT = "h264_encoder_gst_element";
 const string H264_DECODER_GST_ELEMENT = "h264_decoder_gst_element";
-const string PUBLISHER_PORT = "publisher_port";
 const string DEVICE_NUMBER = "device_number";
 const string USEFP16 = "use_fp16";
 const int DEVICE_NUMBER_CPU_ONLY = -1;
-const int DEFAULT_PUBLISHER_PORT = 5536;
+
 /**
  * @brief Global single context, used to store and access various global
  * information.
@@ -33,18 +31,11 @@ class Context {
   }
 
  public:
-  Context()
-      : config_dir_("./config"),
-        zmq_context_{1},
-        zmq_publisher_{zmq_context_, ZMQ_PUB} {}
-  ~Context() {
-    // Tear down the publisher socket
-    zmq_publisher_.unbind(zmq_publisher_addr_);
-  }
+  Context() : config_dir_("./config") {}
+
   void Init() {
     SetEncoderDecoderInformation();
     SetDefaultDeviceInformation();
-    SetupZMQ();
     timer_.Start();
     bool_values_.insert({USEFP16, false});
   }
@@ -88,12 +79,6 @@ class Context {
   string GetConfigFile(const string &filename) {
     return config_dir_ + "/" + filename;
   }
-
-  zmq::context_t &GetZMQContext() { return zmq_context_; }
-
-  zmq::socket_t &GetZMQPublisher() { return zmq_publisher_; }
-
-  int GetZMQPublisherPort() { return GetInt(PUBLISHER_PORT); }
 
  private:
   string ValidateEncoderElement(const string &encoder) {
@@ -168,38 +153,13 @@ class Context {
     SetInt(DEVICE_NUMBER, DEVICE_NUMBER_CPU_ONLY);
   }
 
-  // Set the zmq context that will be used globally.
-  void SetupZMQ() {
-    string config_file = GetConfigFile("config.toml");
-    auto root_value = ParseTomlFromFile(config_file);
-    auto port_value = root_value.find(PUBLISHER_PORT);
-    if (port_value == nullptr) {
-      LOG(INFO) << "Using default publisher port " << DEFAULT_PUBLISHER_PORT;
-      SetInt(PUBLISHER_PORT, DEFAULT_PUBLISHER_PORT);
-    } else {
-      LOG(INFO) << "Using publisher port: " << port_value->as<int>();
-      SetInt(PUBLISHER_PORT, port_value->as<int>());
-    }
-
-    // Bind the publisher socket
-    zmq_publisher_addr_ =
-        "tcp://127.0.0.1:" + std::to_string(GetInt(PUBLISHER_PORT));
-    LOG(INFO) << zmq_publisher_addr_;
-    zmq_publisher_.bind(zmq_publisher_addr_);
-  }
-
  private:
   string config_dir_;
-
-  zmq::context_t zmq_context_;
-  zmq::socket_t zmq_publisher_;
 
   std::unordered_map<string, int> int_values_;
   std::unordered_map<string, string> string_values_;
   std::unordered_map<string, double> double_values_;
   std::unordered_map<string, bool> bool_values_;
-
-  string zmq_publisher_addr_;
 
   // Tracks time since start of Streamer
   Timer timer_;
