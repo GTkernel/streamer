@@ -119,8 +119,6 @@ if (USE_ZMQ)
   list(APPEND STREAMER_LIBRARIES ${ZMQ_LIBRARIES})
 endif ()
 
-message(${STREAMER_LIBRARIES})
-
 add_library(streamer SHARED ${STREAMER_SOURCE_FILES})
 target_link_libraries(streamer ${STREAMER_LIBRARIES})
 

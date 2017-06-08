@@ -1,5 +1,5 @@
 # MXNet package
-unset(NXNet_FOUND)
+unset(MXNet_FOUND)
 
 find_path(MXNet_INCLUDE_DIRS NAMES mxnet/io.h mxnet/kvstore.h mxnet/ndarray.h
   HINTS
