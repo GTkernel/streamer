@@ -138,6 +138,8 @@ endif()
 option(USE_ZMQ "Build ZeroMQ support." OFF)
 if (USE_ZMQ)
   find_package(ZMQ REQUIRED)
+  add_definitions("-D USE_ZMQ")
+  message("Build ZeroMQ support")
 endif ()
 
 # Common include paths
