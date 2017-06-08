@@ -19,8 +19,8 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const string &camera_name) {
-  CameraManager &camera_manager = CameraManager::GetInstance();
+void Run(const string& camera_name) {
+  CameraManager& camera_manager = CameraManager::GetInstance();
 
   CHECK(camera_manager.HasCamera(camera_name))
       << "Camera " << camera_name << " does not exist";
@@ -43,7 +43,7 @@ void Run(const string &camera_name) {
   camera->Stop();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;

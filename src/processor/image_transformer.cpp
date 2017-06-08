@@ -5,7 +5,7 @@
 #include "image_transformer.h"
 #include <streamer.h>
 
-ImageTransformer::ImageTransformer(const Shape &target_shape,
+ImageTransformer::ImageTransformer(const Shape& target_shape,
                                    bool subtract_mean)
     : Processor({"input"}, {"output"}),
       target_shape_(target_shape),

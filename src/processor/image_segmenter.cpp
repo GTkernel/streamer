@@ -1,14 +1,14 @@
 #include "image_segmenter.h"
 #include "model/model_manager.h"
 
-ImageSegmenter::ImageSegmenter(const ModelDesc &model_desc, Shape input_shape)
+ImageSegmenter::ImageSegmenter(const ModelDesc& model_desc, Shape input_shape)
     : Processor({"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape) {}
 
 bool ImageSegmenter::Init() {
   // Load model
-  auto &manager = ModelManager::GetInstance();
+  auto& manager = ModelManager::GetInstance();
   model_ = manager.CreateModel(model_desc_, input_shape_);
   model_->Load();
 
@@ -44,7 +44,7 @@ void ImageSegmenter::Process() {
 
   // Get bytes to feed into the model
   std::vector<cv::Mat> output_channels;
-  float *data = (float *)(model_->GetInputBuffer().GetBuffer());
+  float* data = (float*)(model_->GetInputBuffer().GetBuffer());
   for (decltype(input_shape_.channel) i = 0; i < input_shape_.channel; ++i) {
     cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
     output_channels.push_back(channel);
@@ -64,7 +64,7 @@ void ImageSegmenter::Process() {
       cv::Mat::zeros(output_shape.height, output_shape.width, CV_8U);
   cv::Mat output_score =
       cv::Mat::zeros(output_shape.height, output_shape.width, CV_32F);
-  float *output_data = (float *)output_buffer.GetBuffer();
+  float* output_data = (float*)output_buffer.GetBuffer();
   for (decltype(output_shape.channel) i = 0; i < output_shape.channel; ++i) {
     cv::Mat wrapper(input_shape_.height, input_shape_.width, CV_32FC1,
                     output_data);

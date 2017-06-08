@@ -8,7 +8,7 @@
 using std::cout;
 using std::endl;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
 
   if (string(argv[1]) == "-h" || argc < 2) {
     std::cerr << "THIS IS WORK IN PROGRESS\n";
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     cv::Mat image = frame->GetOriginalImage();
     auto results = frame->GetBboxes();
     cv::Scalar box_color(255, 0, 0);
-    for (const auto &result : results) {
+    for (const auto& result : results) {
       cv::Rect rect(result.px, result.py, result.width, result.height);
       cv::rectangle(image, rect, box_color, 2);
     }

@@ -5,14 +5,14 @@
 #include "gst_video_encoder.h"
 #include "common/context.h"
 
-const static char *ENCODER_SRC_NAME = "encoder_src";
+const static char* ENCODER_SRC_NAME = "encoder_src";
 
 ProcessorType GstVideoEncoder::GetType() const {
   return PROCESSOR_TYPE_ENCODER;
 }
 
 GstVideoEncoder::GstVideoEncoder(int width, int height,
-                                 const string &output_filename)
+                                 const string& output_filename)
     : Processor({"input"}, {"output"}),
       width_(width),
       height_(height),
@@ -40,18 +40,18 @@ GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }
 
-void GstVideoEncoder::NeedDataCB(GstAppSrc *, guint, gpointer user_data) {
+void GstVideoEncoder::NeedDataCB(GstAppSrc*, guint, gpointer user_data) {
   if (user_data == nullptr) return;
 
-  GstVideoEncoder *encoder = (GstVideoEncoder *)user_data;
+  GstVideoEncoder* encoder = (GstVideoEncoder*)user_data;
   if (encoder->IsStarted()) encoder->need_data_ = true;
 }
 
-void GstVideoEncoder::EnoughDataCB(GstAppSrc *, gpointer user_data) {
+void GstVideoEncoder::EnoughDataCB(GstAppSrc*, gpointer user_data) {
   DLOG(INFO) << "Received enough data signal";
   if (user_data == nullptr) return;
 
-  GstVideoEncoder *encoder = (GstVideoEncoder *)user_data;
+  GstVideoEncoder* encoder = (GstVideoEncoder*)user_data;
   encoder->need_data_ = false;
 }
 
@@ -114,7 +114,7 @@ bool GstVideoEncoder::Init() {
   g_main_loop_ = g_main_loop_new(NULL, FALSE);
 
   // Build Gst pipeline
-  GError *err = nullptr;
+  GError* err = nullptr;
   string pipeline_str = BuildPipelineString();
 
   gst_pipeline_ = GST_PIPELINE(gst_parse_launch(pipeline_str.c_str(), &err));
@@ -138,9 +138,9 @@ bool GstVideoEncoder::Init() {
 
   // Get the appsrc and connect callbacks
 
-  GstElement *appsrc_element =
+  GstElement* appsrc_element =
       gst_bin_get_by_name(GST_BIN(gst_pipeline_), ENCODER_SRC_NAME);
-  GstAppSrc *appsrc = GST_APP_SRC(appsrc_element);
+  GstAppSrc* appsrc = GST_APP_SRC(appsrc_element);
 
   if (appsrc == nullptr) {
     LOG(ERROR) << "Failed to get appsrc from pipeline";
@@ -166,7 +166,7 @@ bool GstVideoEncoder::Init() {
   callbacks.enough_data = GstVideoEncoder::EnoughDataCB;
   callbacks.need_data = GstVideoEncoder::NeedDataCB;
   callbacks.seek_data = NULL;
-  gst_app_src_set_callbacks(gst_appsrc_, &callbacks, (void *)this, NULL);
+  gst_app_src_set_callbacks(gst_appsrc_, &callbacks, (void*)this, NULL);
 
   // Play the pipeline
   GstStateChangeReturn result =
@@ -225,7 +225,7 @@ void GstVideoEncoder::Process() {
 
   // Give PTS to the buffer
   GstMapInfo info;
-  GstBuffer *buffer =
+  GstBuffer* buffer =
       gst_buffer_new_allocate(nullptr, frame_size_bytes_, nullptr);
   gst_buffer_map(buffer, &info, GST_MAP_WRITE);
   // Copy the image to gst buffer, should have better way such as using
@@ -251,7 +251,7 @@ void GstVideoEncoder::Process() {
 
   // Poll messages from the bus
   while (true) {
-    GstMessage *msg = gst_bus_pop(gst_bus_);
+    GstMessage* msg = gst_bus_pop(gst_bus_);
 
     if (!msg) break;
 
@@ -262,8 +262,8 @@ void GstVideoEncoder::Process() {
         DLOG(INFO) << "End of stream encountered";
         break;
       case GST_MESSAGE_ERROR: {
-        gchar *debug;
-        GError *error;
+        gchar* debug;
+        GError* error;
 
         gst_message_parse_error(msg, &error, &debug);
         g_free(debug);
@@ -273,8 +273,8 @@ void GstVideoEncoder::Process() {
         break;
       }
       case GST_MESSAGE_WARNING: {
-        gchar *debug;
-        GError *error;
+        gchar* debug;
+        GError* error;
         gst_message_parse_warning(msg, &error, &debug);
         g_free(debug);
 
@@ -316,6 +316,6 @@ void GstVideoEncoder::Process() {
   return;
 }
 
-void GstVideoEncoder::SetEncoderElement(const string &encoder) {
+void GstVideoEncoder::SetEncoderElement(const string& encoder) {
   encoder_element_ = encoder;
 }

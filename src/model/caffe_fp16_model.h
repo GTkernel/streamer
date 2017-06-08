@@ -19,13 +19,13 @@ class CaffeFp16Model : public Model {
   typedef CAFFE_FP16_MTYPE MType;
 
  public:
-  CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape,
+  CaffeFp16Model(const ModelDesc& model_desc, Shape input_shape,
                  int batch_size);
   virtual void Load();
   virtual void Evaluate();
   virtual void Forward();
-  virtual const std::vector<std::string> &GetLayerNames() const override;
-  virtual cv::Mat GetLayerOutput(const std::string &layer_name) const override;
+  virtual const std::vector<std::string>& GetLayerNames() const override;
+  virtual cv::Mat GetLayerOutput(const std::string& layer_name) const override;
 
  private:
   std::shared_ptr<caffe::Net<DType, MType>> net_;

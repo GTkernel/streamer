@@ -33,14 +33,14 @@ class DataBuffer {
    * @param data The pointer to data.
    * @param size Size of the buffer
    */
-  DataBuffer(void *data, size_t size) : size_(size), buffer_ptr_(data){};
+  DataBuffer(void* data, size_t size) : size_(size), buffer_ptr_(data){};
 
   /**
    * @brief Construct a data buffer from content of a file.
    * @param filename
    * @return
    */
-  DataBuffer(const std::string &filename) {
+  DataBuffer(const std::string& filename) {
     std::ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
     CHECK(ifs) << "Can't open the file. Please check " << filename;
 
@@ -51,18 +51,18 @@ class DataBuffer {
               << size_ << " bytes";
 
     AllocateBuffer(size_);
-    ifs.read((char *)buffer_ptr_, size_);
+    ifs.read((char*)buffer_ptr_, size_);
     ifs.close();
   }
   /**
    * @brief The pointer to the buffer.
    */
-  inline void *GetBuffer() { return buffer_ptr_; }
+  inline void* GetBuffer() { return buffer_ptr_; }
 
   /**
    * @brief Get a const pointer to the buffer.
    */
-  inline const void *GetBuffer() const { return buffer_ptr_; }
+  inline const void* GetBuffer() const { return buffer_ptr_; }
   /**
    * @brief Get size of the buffer.
    */
@@ -70,13 +70,13 @@ class DataBuffer {
   /**
    * @brief Clone another data buffer, deeply copy bytes.
    */
-  void Clone(const DataBuffer &data_buffer) {
+  void Clone(const DataBuffer& data_buffer) {
     CHECK(size_ == data_buffer.GetSize())
         << "Can't clone buffer of a different size";
     memcpy(buffer_ptr_, data_buffer.GetBuffer(), size_);
   }
 
-  void Clone(const void *src, size_t size) {
+  void Clone(const void* src, size_t size) {
     CHECK(size <= size_) << "Size exceeds the size of the data buffer";
     memcpy(buffer_ptr_, src, size);
   }
@@ -95,7 +95,7 @@ class DataBuffer {
  private:
   size_t size_;
   std::shared_ptr<char> buffer_;
-  void *buffer_ptr_;
+  void* buffer_ptr_;
 };
 
 #endif  // STREAMER_DATA_BUFFER_H

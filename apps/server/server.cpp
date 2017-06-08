@@ -29,8 +29,8 @@ void CleanUp() {
 #endif
 }
 
-static void SetUpEndpoints(HttpServer &server) {
-  auto &camera_manager = CameraManager::GetInstance();
+static void SetUpEndpoints(HttpServer& server) {
+  auto& camera_manager = CameraManager::GetInstance();
 
   // GET /hello
   server.resource["^/hello$"]["GET"] = [](HttpServerResponse response,
@@ -45,7 +45,7 @@ static void SetUpEndpoints(HttpServer &server) {
       [&camera_manager](HttpServerResponse response, HttpServerRequest) {
         std::vector<pt::ptree> cameras_node;
         auto cameras = camera_manager.GetCameras();
-        for (const auto &camera : cameras) {
+        for (const auto& camera : cameras) {
           pt::ptree node;
           CameraToJson(camera.second.get(), node);
           cameras_node.push_back(node);
@@ -140,7 +140,7 @@ static void SetUpEndpoints(HttpServer &server) {
             // Compress image to JPEG
             std::vector<uchar> buf;
             cv::imencode(".jpeg", image, buf);
-            SendBytes(server, response, (char *)buf.data(), buf.size(),
+            SendBytes(server, response, (char*)buf.data(), buf.size(),
                       "image/jpeg");
           }
         } else {
@@ -255,7 +255,7 @@ static void SetUpEndpoints(HttpServer &server) {
       };
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // Set up gstreamer and google-log
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;

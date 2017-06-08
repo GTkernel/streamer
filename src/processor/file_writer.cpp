@@ -5,7 +5,7 @@
 #include "file_writer.h"
 #include "utils/file_utils.h"
 
-FileWriter::FileWriter(const string &filename)
+FileWriter::FileWriter(const string& filename)
     : Processor({"input"}, {}), filename_(filename) {}
 
 bool FileWriter::Init() {
@@ -31,13 +31,13 @@ void FileWriter::Process() {
     case FRAME_TYPE_BYTES: {
       auto bytes_frame = std::dynamic_pointer_cast<BytesFrame>(frame);
       auto buffer = bytes_frame->GetDataBuffer();
-      file_.write((char *)buffer.GetBuffer(), buffer.GetSize());
+      file_.write((char*)buffer.GetBuffer(), buffer.GetSize());
       break;
     }
     case FRAME_TYPE_IMAGE: {
       auto image_frame = std::dynamic_pointer_cast<ImageFrame>(frame);
       auto image = image_frame->GetImage();
-      file_.write((char *)image.data, image.total() * image.elemSize());
+      file_.write((char*)image.data, image.total() * image.elemSize());
       break;
     }
     case FRAME_TYPE_MD: {

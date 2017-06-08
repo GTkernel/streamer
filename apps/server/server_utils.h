@@ -22,7 +22,7 @@ typedef std::shared_ptr<HttpServer::Request> HttpServerRequest;
 namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
-string CameraToJson(Camera *camera, pt::ptree &root) {
+string CameraToJson(Camera* camera, pt::ptree& root) {
   std::ostringstream ss;
 
   root.put("name", camera->GetName());
@@ -42,14 +42,14 @@ string CameraToJson(Camera *camera, pt::ptree &root) {
   return ss.str();
 }
 
-string ListToJson(const string &list_name,
-                  const std::vector<pt::ptree> &pt_list) {
+string ListToJson(const string& list_name,
+                  const std::vector<pt::ptree>& pt_list) {
   pt::ptree root;
   std::ostringstream ss;
 
   pt::ptree list_node;
 
-  for (const auto &child : pt_list) {
+  for (const auto& child : pt_list) {
     list_node.push_back({"", child});
   }
 
@@ -59,14 +59,14 @@ string ListToJson(const string &list_name,
   return ss.str();
 }
 
-string DirectoryToJson(const string &dir_path) {
+string DirectoryToJson(const string& dir_path) {
   pt::ptree root;
 
   std::ostringstream ss;
 
   pt::ptree files_node;
 
-  for (const auto &file : fs::directory_iterator(dir_path)) {
+  for (const auto& file : fs::directory_iterator(dir_path)) {
     if (!fs::is_directory(file.status())) {
       string filename = file.path().filename().string();
       string filepath = dir_path + "/" + filename;
@@ -78,7 +78,7 @@ string DirectoryToJson(const string &dir_path) {
       // Get file creation time
       struct stat stat_buf;
       CHECK(stat(filepath.c_str(), &stat_buf) == 0);
-      const struct tm *time = localtime(&stat_buf.st_mtime);
+      const struct tm* time = localtime(&stat_buf.st_mtime);
       char timestr[128];
       strftime(timestr, sizeof(timestr), "%Y-%m-%d+%H:%M:%S", time);
       file_node.put("created_at", string(timestr));
@@ -95,7 +95,7 @@ string DirectoryToJson(const string &dir_path) {
 #define RN "\r\n"
 #define RN2 "\r\n\r\n"
 
-void Send200Response(HttpServerResponse res, const string &content) {
+void Send200Response(HttpServerResponse res, const string& content) {
   *res << "HTTP/1.1 200 OK" << RN << "Content-Length: " << content.length()
        << RN2 << content;
 }
@@ -109,27 +109,27 @@ void SendResponseSuccess(HttpServerResponse res) {
   Send200Response(res, ss.str());
 }
 
-void Send400Response(HttpServerResponse res, const string &content) {
+void Send400Response(HttpServerResponse res, const string& content) {
   *res << "HTTP/1.1 400 Bad Request" << RN
        << "Content-Length: " << content.length() << RN2 << content;
 }
 
-void SendBytes(HttpServer &server, HttpServerResponse res, const char *buf,
-               size_t total, const string &content_type) {
+void SendBytes(HttpServer& server, HttpServerResponse res, const char* buf,
+               size_t total, const string& content_type) {
   *res << "HTTP/1.1 200 OK" << RN << "Content-Type: " << content_type << RN
        << "Content-Length: " << total << RN2;
 
   // TODO: Consider send in chunk
   res->write(buf, total);
-  server.send(res, [](const boost::system::error_code &ec) {
+  server.send(res, [](const boost::system::error_code& ec) {
     if (ec != nullptr) {
       LOG(ERROR) << "Can't send buffer";
     }
   });
 }
 
-void RecursiveSend(HttpServer &server, HttpServerResponse res,
-                   const std::shared_ptr<std::ifstream> &ifs) {
+void RecursiveSend(HttpServer& server, HttpServerResponse res,
+                   const std::shared_ptr<std::ifstream>& ifs) {
   const size_t BYTES_PER_TRANSFER = (1 << 16);
   std::vector<char> buf(BYTES_PER_TRANSFER);
   size_t read_length;
@@ -137,7 +137,7 @@ void RecursiveSend(HttpServer &server, HttpServerResponse res,
     res->write(&buf[0], read_length);
     if (read_length == buf.size()) {
       server.send(res,
-                  [&server, res, ifs](const boost::system::error_code &ec) {
+                  [&server, res, ifs](const boost::system::error_code& ec) {
                     if (!ec)
                       RecursiveSend(server, res, ifs);
                     else
@@ -147,8 +147,8 @@ void RecursiveSend(HttpServer &server, HttpServerResponse res,
   }
 }
 
-void SendFile(HttpServer &server, HttpServerResponse res,
-              const string &filepath, const string &content_type) {
+void SendFile(HttpServer& server, HttpServerResponse res,
+              const string& filepath, const string& content_type) {
   CHECK(FileExists(filepath)) << "File not found: " << filepath;
 
   auto ifs = std::make_shared<std::ifstream>();

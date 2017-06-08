@@ -6,8 +6,8 @@
 #define STREAMER_MATH_UTILS_H_H
 #include "common/common.h"
 
-inline bool PairCompare(const std::pair<float, int> &lhs,
-                        const std::pair<float, int> &rhs) {
+inline bool PairCompare(const std::pair<float, int>& lhs,
+                        const std::pair<float, int>& rhs) {
   return lhs.first > rhs.first;
 }
 
@@ -18,7 +18,7 @@ inline bool PairCompare(const std::pair<float, int> &lhs,
  * @param K Number of numbers to be selected
  * @return
  */
-inline std::vector<int> Argmax(float *scores, int N, int K) {
+inline std::vector<int> Argmax(float* scores, int N, int K) {
   std::vector<std::pair<float, int>> pairs;
   for (decltype(N) i = 0; i < N; ++i)
     pairs.push_back(std::make_pair(scores[i], i));

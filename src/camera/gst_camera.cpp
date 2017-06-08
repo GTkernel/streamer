@@ -4,7 +4,7 @@
 
 #include "gst_camera.h"
 
-GSTCamera::GSTCamera(const string &name, const string &video_uri, int width,
+GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
                      int height)
     : Camera(name, video_uri, width, height) {
   sinks_.insert({"raw_output", StreamPtr(new Stream)});

@@ -6,7 +6,7 @@
 #include "common/context.h"
 #include "utils/utils.h"
 
-CaffeFp16Model::CaffeFp16Model(const ModelDesc &model_desc, Shape input_shape,
+CaffeFp16Model::CaffeFp16Model(const ModelDesc& model_desc, Shape input_shape,
                                int batch_size)
     : Model(model_desc, input_shape, batch_size) {}
 
@@ -42,7 +42,7 @@ void CaffeFp16Model::Load() {
   CHECK(input_shape_.channel == 3 || input_shape_.channel == 1)
       << "Input layer should have 1 or 3 channels.";
 
-  caffe::Blob<DType, MType> *input_layer = net_->input_blobs()[0];
+  caffe::Blob<DType, MType>* input_layer = net_->input_blobs()[0];
 
   // Adjust input dimensions
   input_layer->Reshape(batch_size_, input_shape_.channel, input_shape_.height,
@@ -55,7 +55,7 @@ void CaffeFp16Model::Load() {
   input_buffer_ =
       DataBuffer(input_shape_.GetSize() * sizeof(float) * batch_size_);
 
-  DType *input_data = input_layer->mutable_cpu_data();
+  DType* input_data = input_layer->mutable_cpu_data();
   network_input_buffer_ = DataBuffer(
       input_data, input_shape_.GetSize() * sizeof(DType) * batch_size_);
 }
@@ -67,8 +67,8 @@ void CaffeFp16Model::Evaluate() {
   Timer timer;
   timer.Start();
   if (sizeof(DType) == 2) {
-    float *fp32data = (float *)input_buffer_.GetBuffer();
-    DType *fp16data = (DType *)(network_input_buffer_.GetBuffer());
+    float* fp32data = (float*)input_buffer_.GetBuffer();
+    DType* fp16data = (DType*)(network_input_buffer_.GetBuffer());
 
     size_t image_size = input_shape_.GetSize() * batch_size_;
     for (decltype(image_size) i = 0; i < image_size; ++i) {
@@ -91,15 +91,15 @@ void CaffeFp16Model::Evaluate() {
 
   // Copy the output of the network
   auto output_blobs = net_->output_blobs();
-  for (const auto &output_blob : output_blobs) {
+  for (const auto& output_blob : output_blobs) {
     Shape shape(output_blob->channels(), output_blob->width(),
                 output_blob->height());
     DataBuffer output_buffer;
     timer.Start();
     if (sizeof(DType) == 2) {
       output_buffer = DataBuffer(shape.GetSize() * sizeof(float) * batch_size_);
-      float *fp32data = (float *)output_buffer.GetBuffer();
-      DType *fp16data = output_blob->mutable_cpu_data();
+      float* fp32data = (float*)output_buffer.GetBuffer();
+      DType* fp16data = output_blob->mutable_cpu_data();
       size_t len = shape.GetSize() * batch_size_;
       for (decltype(len) i = 0; i < len; ++i) {
         fp32data[i] = caffe::Get<float>(fp16data[i]);
@@ -115,10 +115,10 @@ void CaffeFp16Model::Evaluate() {
   }
 }
 
-const std::vector<std::string> &CaffeFp16Model::GetLayerNames() const {
+const std::vector<std::string>& CaffeFp16Model::GetLayerNames() const {
   STREAMER_NOT_IMPLEMENTED;
 }
 
-cv::Mat CaffeFp16Model::GetLayerOutput(const std::string &) const {
+cv::Mat CaffeFp16Model::GetLayerOutput(const std::string&) const {
   STREAMER_NOT_IMPLEMENTED;
 }

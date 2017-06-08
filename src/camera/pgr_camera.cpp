@@ -17,7 +17,7 @@
     }                                        \
   } while (0)
 
-PGRCamera::PGRCamera(const string &name, const string &video_uri, int width,
+PGRCamera::PGRCamera(const string& name, const string& video_uri, int width,
                      int height, CameraModeType mode,
                      CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
@@ -73,9 +73,9 @@ bool PGRCamera::Init() {
   return true;
 }
 
-void PGRCamera::OnImageGrabbed(FlyCapture2::Image *raw_image,
-                               const void *user_data) {
-  PGRCamera *camera = (PGRCamera *)user_data;
+void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
+                               const void* user_data) {
+  PGRCamera* camera = (PGRCamera*)user_data;
 
   FlyCapture2::Image converted_image;
   DataBuffer image_bytes(raw_image->GetDataSize());

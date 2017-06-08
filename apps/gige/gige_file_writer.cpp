@@ -6,7 +6,7 @@
 
 #include <boost/filesystem.hpp>
 
-GigeFileWriter::GigeFileWriter(const string &directory, size_t frames_per_file)
+GigeFileWriter::GigeFileWriter(const string& directory, size_t frames_per_file)
     : Processor({"input"}, {}),
       directory_(directory),
       frames_written_(0),
@@ -55,7 +55,7 @@ void GigeFileWriter::Process() {
 
   auto frame = GetFrame<BytesFrame>("input");
 
-  current_file_.write((char *)frame->GetDataBuffer().GetBuffer(),
+  current_file_.write((char*)frame->GetDataBuffer().GetBuffer(),
                       frame->GetDataBuffer().GetSize());
 
   frames_written_ += 1;

@@ -9,7 +9,7 @@ SPLParser::SPLParser() {}
 // TODO: this is definitely going to be rewrite..
 class Tokenizer {
  public:
-  Tokenizer(const string &str) : str_(str), index_(0) {}
+  Tokenizer(const string& str) : str_(str), index_(0) {}
 
   bool HasNext() { return index_ != str_.length(); }
 
@@ -77,8 +77,8 @@ class Tokenizer {
     return false;                             \
   } while (0)
 
-bool SPLParser::Parse(const string &spl,
-                      std::vector<SPLStatement> &statements) {
+bool SPLParser::Parse(const string& spl,
+                      std::vector<SPLStatement>& statements) {
   DLOG(INFO) << "Parsing:" << std::endl << spl;
 
   Tokenizer tokenizer(spl);

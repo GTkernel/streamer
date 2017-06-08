@@ -17,9 +17,9 @@ void FrameReceiver::RunServer(const std::string listen_url) {
   server_->Wait();
 }
 
-grpc::Status FrameReceiver::SendFrame(grpc::ServerContext *,
-                                      const SingleFrame *frame_message,
-                                      google::protobuf::Empty *) {
+grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
+                                      const SingleFrame* frame_message,
+                                      google::protobuf::Empty*) {
   std::stringstream frame_string;
   frame_string << frame_message->frame();
 
@@ -31,7 +31,7 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext *,
   try {
     boost::archive::binary_iarchive ar(frame_string);
     ar >> image;
-  } catch (const boost::archive::archive_exception &e) {
+  } catch (const boost::archive::archive_exception& e) {
     std::ostringstream error_message;
     error_message << "Boost serialization error: " << e.what();
     LOG(INFO) << error_message.str();

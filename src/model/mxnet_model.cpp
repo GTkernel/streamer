@@ -4,7 +4,7 @@
 
 #include "mxnet_model.h"
 #include "common/context.h"
-MXNetModel::MXNetModel(const ModelDesc &model_desc, Shape input_shape,
+MXNetModel::MXNetModel(const ModelDesc& model_desc, Shape input_shape,
                        int batch_size)
     : Model(model_desc, input_shape, batch_size) {}
 
@@ -26,8 +26,8 @@ void MXNetModel::Load() {
 
   mx_uint num_input_nodes = 1;
   LOG(WARNING) << "Only one input named `data' is supported";
-  const char *input_key[1] = {"data"};
-  const char **input_keys = input_key;
+  const char* input_key[1] = {"data"};
+  const char** input_keys = input_key;
 
   const mx_uint input_shape_indptr[2] = {0, 4};
   const mx_uint input_shape_data[4] = {
@@ -35,8 +35,8 @@ void MXNetModel::Load() {
       static_cast<mx_uint>(input_shape_.width),
       static_cast<mx_uint>(input_shape_.height)};
 
-  int r = MXPredCreate((const char *)json_data.GetBuffer(),
-                       (const char *)param_data.GetBuffer(),
+  int r = MXPredCreate((const char*)json_data.GetBuffer(),
+                       (const char*)param_data.GetBuffer(),
                        static_cast<size_t>(param_data.GetSize()), dev_type,
                        dev_id, num_input_nodes, input_keys, input_shape_indptr,
                        input_shape_data, &predictor_);
@@ -56,13 +56,13 @@ void MXNetModel::Evaluate() {
   output_shapes_.clear();
   output_buffers_.clear();
 
-  MXPredSetInput(predictor_, "data", (mx_float *)input_buffer_.GetBuffer(),
+  MXPredSetInput(predictor_, "data", (mx_float*)input_buffer_.GetBuffer(),
                  input_buffer_.GetSize() / sizeof(mx_float));
   MXPredForward(predictor_);
 
   // Don't know how to get multiple output..
   mx_uint mx_output_index = 0;
-  mx_uint *mx_output_shape = 0;
+  mx_uint* mx_output_shape = 0;
   mx_uint mx_output_shape_len;
 
   // Get Output Result
@@ -88,16 +88,16 @@ void MXNetModel::Evaluate() {
   DataBuffer output_buffer(output_shape.GetSize() * sizeof(mx_float) *
                            batch_size_);
   MXPredGetOutput(predictor_, mx_output_index,
-                  (mx_float *)output_buffer.GetBuffer(),
+                  (mx_float*)output_buffer.GetBuffer(),
                   output_buffer.GetSize() / sizeof(mx_float));
   output_buffers_.push_back(output_buffer);
 }
 
-const std::vector<std::string> &MXNetModel::GetLayerNames() const {
+const std::vector<std::string>& MXNetModel::GetLayerNames() const {
   STREAMER_NOT_IMPLEMENTED;
 }
 
-cv::Mat MXNetModel::GetLayerOutput(const std::string &) const {
+cv::Mat MXNetModel::GetLayerOutput(const std::string&) const {
   STREAMER_NOT_IMPLEMENTED;
 }
 

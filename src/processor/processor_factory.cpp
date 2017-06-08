@@ -78,9 +78,9 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
 }
 
 std::shared_ptr<Camera> ProcessorFactory::CreateCamera(
-    const FactoryParamsType &params) {
+    const FactoryParamsType& params) {
   string camera_name = params.at("camera_name");
-  auto &camera_manager = CameraManager::GetInstance();
+  auto& camera_manager = CameraManager::GetInstance();
   if (camera_manager.HasCamera(camera_name)) {
     return camera_manager.GetCamera(camera_name);
   } else {
@@ -88,17 +88,17 @@ std::shared_ptr<Camera> ProcessorFactory::CreateCamera(
   }
 }
 
-Processor *ProcessorFactory::CreateCustomProcessor(const FactoryParamsType &) {
+Processor* ProcessorFactory::CreateCustomProcessor(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
 
-Processor *ProcessorFactory::CreateDummyNNProcessor(const FactoryParamsType &) {
+Processor* ProcessorFactory::CreateDummyNNProcessor(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
 
-Processor *ProcessorFactory::CreateEncoder(const FactoryParamsType &params) {
+Processor* ProcessorFactory::CreateEncoder(const FactoryParamsType& params) {
   int port = -1;
   string filename;
 
@@ -113,7 +113,7 @@ Processor *ProcessorFactory::CreateEncoder(const FactoryParamsType &params) {
   int width = atoi(params.at("width").c_str());
   int height = atoi(params.at("height").c_str());
 
-  GstVideoEncoder *encoder;
+  GstVideoEncoder* encoder;
   if (port > 0) {
     encoder = new GstVideoEncoder(width, height, port);
   } else {
@@ -123,25 +123,25 @@ Processor *ProcessorFactory::CreateEncoder(const FactoryParamsType &params) {
   return encoder;
 }
 
-Processor *ProcessorFactory::CreateFileWriter(const FactoryParamsType &params) {
+Processor* ProcessorFactory::CreateFileWriter(const FactoryParamsType& params) {
   return new FileWriter(params.at("filename"));
 }
 
 #ifdef USE_RPC
-Processor *ProcessorFactory::CreateFrameReceiver(
-    const FactoryParamsType &params) {
+Processor* ProcessorFactory::CreateFrameReceiver(
+    const FactoryParamsType& params) {
   return new FrameReceiver(params.at("list_url"));
 };
 
-Processor *ProcessorFactory::CreateFrameSender(
-    const FactoryParamsType &params) {
+Processor* ProcessorFactory::CreateFrameSender(
+    const FactoryParamsType& params) {
   return new FrameSender(params.at("server_url"));
 };
 #endif
 
-Processor *ProcessorFactory::CreateImageClassifier(
-    const FactoryParamsType &params) {
-  ModelManager &model_manager = ModelManager::GetInstance();
+Processor* ProcessorFactory::CreateImageClassifier(
+    const FactoryParamsType& params) {
+  ModelManager& model_manager = ModelManager::GetInstance();
   std::string model_name = params.at("model");
   CHECK(model_manager.HasModel(model_name));
   ModelDesc model_desc = model_manager.GetModelDesc(model_name);
@@ -160,13 +160,13 @@ Processor *ProcessorFactory::CreateImageClassifier(
   }
 }
 
-Processor *ProcessorFactory::CreateImageSegmenter(const FactoryParamsType &) {
+Processor* ProcessorFactory::CreateImageSegmenter(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
 
-Processor *ProcessorFactory::CreateImageTransformer(
-    const FactoryParamsType &params) {
+Processor* ProcessorFactory::CreateImageTransformer(
+    const FactoryParamsType& params) {
   int width = atoi(params.at("width").c_str());
   int height = atoi(params.at("height").c_str());
   // Default channel = 3
@@ -177,9 +177,9 @@ Processor *ProcessorFactory::CreateImageTransformer(
   return new ImageTransformer(Shape(channel, width, height), true);
 }
 
-Processor *ProcessorFactory::CreateNeuralNetEvaluator(
-    const FactoryParamsType &params) {
-  ModelManager &model_manager = ModelManager::GetInstance();
+Processor* ProcessorFactory::CreateNeuralNetEvaluator(
+    const FactoryParamsType& params) {
+  ModelManager& model_manager = ModelManager::GetInstance();
   std::string model_name = params.at("model");
   CHECK(model_manager.HasModel(model_name));
   ModelDesc model_desc = model_manager.GetModelDesc(model_name);
@@ -193,15 +193,15 @@ Processor *ProcessorFactory::CreateNeuralNetEvaluator(
   return new NeuralNetEvaluator(model_desc, input_shape, output_layer_names);
 }
 
-Processor *ProcessorFactory::CreateOpenCVFaceDetector(
-    const FactoryParamsType &) {
+Processor* ProcessorFactory::CreateOpenCVFaceDetector(
+    const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
 
 #ifdef USE_ZMQ
-Processor *ProcessorFactory::CreateStreamPublisher(
-    const FactoryParamsType &params) {
+Processor* ProcessorFactory::CreateStreamPublisher(
+    const FactoryParamsType& params) {
   if (params.count("listen_url") != 0) {
     auto url = params.at("listen_url");
     return new StreamPublisher(params.at("name"), url);

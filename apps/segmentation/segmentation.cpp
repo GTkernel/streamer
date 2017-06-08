@@ -4,7 +4,7 @@
 
 #include "streamer.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -14,8 +14,8 @@ int main(int argc, char *argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  ModelManager &model_manager = ModelManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
+  ModelManager& model_manager = ModelManager::GetInstance();
 
   if (argc != 5) {
     std::cout << argv[0] << " - Image segmentation example\n";

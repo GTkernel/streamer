@@ -5,7 +5,7 @@
 #include "dummy_nn_processor.h"
 #include "model/model_manager.h"
 
-DummyNNProcessor::DummyNNProcessor(const ModelDesc &model_desc)
+DummyNNProcessor::DummyNNProcessor(const ModelDesc& model_desc)
     : Processor({}, {}), model_desc_(model_desc) {
   input_shape_ =
       Shape(3, model_desc_.GetInputWidth(), model_desc_.GetInputHeight());
@@ -20,7 +20,7 @@ bool DummyNNProcessor::Init() {
 
   // Prepare fake input
   srand((unsigned)(15213));
-  float *data = (float *)fake_input_.GetBuffer();
+  float* data = (float*)fake_input_.GetBuffer();
   for (decltype(input_shape_.GetSize()) i = 0; i < input_shape_.GetSize();
        ++i) {
     data[i] = (float)(rand()) / (float)(RAND_MAX);

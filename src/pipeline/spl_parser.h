@@ -32,10 +32,10 @@ struct SPLStatement {
 class SPLParser {
  public:
   SPLParser();
-  bool Parse(const string &spl, std::vector<SPLStatement> &statements);
+  bool Parse(const string& spl, std::vector<SPLStatement>& statements);
 
  private:
-  bool ValidName(const string &str);
+  bool ValidName(const string& str);
 };
 
 #endif  // STREAMER_PARSER_H

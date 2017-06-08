@@ -19,7 +19,7 @@ class FileWriter : public Processor {
    * @brief FileWriter constructor
    * @param filename The name of the file.
    */
-  FileWriter(const string &filename);
+  FileWriter(const string& filename);
 
   virtual ProcessorType GetType() const override;
 

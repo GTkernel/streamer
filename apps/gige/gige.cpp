@@ -22,7 +22,7 @@ using std::endl;
  * @param text The text to be added.
  * @param nrow The row of the text in the image.
  */
-void AddText(cv::Mat &img, const string &text, int nrow) {
+void AddText(cv::Mat& img, const string& text, int nrow) {
   // Maximum lines of text
   const int MAX_LINE = 14;
   const int FONT_FACE = CV_FONT_HERSHEY_SIMPLEX;
@@ -45,7 +45,7 @@ void AddText(cv::Mat &img, const string &text, int nrow) {
  * salient.
  * @param img The image to add text onto.
  */
-void AddGrayBackground(cv::Mat &img) {
+void AddGrayBackground(cv::Mat& img) {
   int height = img.rows;
   cv::Mat roi = img(cv::Rect(0, 0, 300, height));
   cv::Mat color(roi.size(), CV_8UC3, cv::Scalar(0, 0, 0));
@@ -53,7 +53,7 @@ void AddGrayBackground(cv::Mat &img) {
   cv::addWeighted(color, alpha, roi, 1 - alpha, 0.0, roi);
 }
 
-void WriteCameraInfo(CameraPtr camera, const string &video_dir) {
+void WriteCameraInfo(CameraPtr camera, const string& video_dir) {
   STREAMER_SLEEP(100);
   string filename = video_dir + "/camera_parameters.txt";
   std::ofstream f(filename);
@@ -76,10 +76,10 @@ void CleanUp() {
 #endif
 }
 
-void Run(const string &camera_name, bool display, size_t frames_per_file) {
+void Run(const string& camera_name, bool display, size_t frames_per_file) {
   StartUp();
 
-  auto &camera_manager = CameraManager::GetInstance();
+  auto& camera_manager = CameraManager::GetInstance();
   auto camera = camera_manager.GetCamera(camera_name);
 
   CHECK(camera->GetCameraType() == CAMERA_TYPE_PTGRAY ||
@@ -263,7 +263,7 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
   CleanUp();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << endl;
     cout << desc << endl;
     return 1;

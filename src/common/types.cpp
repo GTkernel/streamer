@@ -8,7 +8,7 @@
 half Cpu_Float2Half(float f) {
   half ret;
 
-  unsigned x = *((int *)(void *)(&f));
+  unsigned x = *((int*)(void*)(&f));
   unsigned u = (x & 0x7fffffff), remainder, shift, lsb, lsb_s1, lsb_m1;
   unsigned sign, exponent, mantissa;
 
@@ -86,7 +86,7 @@ float Cpu_Half2Float(half h) {
 
   int temp = ((sign << 31) | (exponent << 23) | mantissa);
 
-  return *((float *)((void *)&temp));
+  return *((float*)((void*)&temp));
 }
 #endif  // USE_FP16
 

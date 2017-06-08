@@ -22,14 +22,14 @@
  */
 class CameraManager {
  public:
-  static CameraManager &GetInstance();
+  static CameraManager& GetInstance();
 
  public:
   CameraManager();
-  CameraManager(const CameraManager &other) = delete;
+  CameraManager(const CameraManager& other) = delete;
   std::unordered_map<string, std::shared_ptr<Camera>> GetCameras();
-  std::shared_ptr<Camera> GetCamera(const string &name);
-  bool HasCamera(const string &name) const;
+  std::shared_ptr<Camera> GetCamera(const string& name);
+  bool HasCamera(const string& name) const;
 
  private:
   std::unordered_map<string, std::shared_ptr<Camera>> cameras_;

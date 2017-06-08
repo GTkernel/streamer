@@ -6,7 +6,7 @@
 
 class ImageSegmenter : public Processor {
  public:
-  ImageSegmenter(const ModelDesc &model_desc, Shape input_shape);
+  ImageSegmenter(const ModelDesc& model_desc, Shape input_shape);
 
   virtual ProcessorType GetType() const override;
 

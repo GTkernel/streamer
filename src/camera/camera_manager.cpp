@@ -8,7 +8,7 @@
 // The path to the camera config file
 static const string CAMERA_TOML_FILENAME = "cameras.toml";
 
-CameraManager &CameraManager::GetInstance() {
+CameraManager& CameraManager::GetInstance() {
   static CameraManager manager;
   return manager;
 }
@@ -23,7 +23,7 @@ CameraManager::CameraManager() {
 
   auto cameras_value = root_value.find("camera")->as<toml::Array>();
 
-  for (const auto &camera_value : cameras_value) {
+  for (const auto& camera_value : cameras_value) {
     CHECK(camera_value.find("name") != nullptr);
     CHECK(camera_value.find("video_uri") != nullptr);
 
@@ -96,13 +96,13 @@ CameraManager::GetCameras() {
   return cameras_;
 }
 
-std::shared_ptr<Camera> CameraManager::GetCamera(const string &name) {
+std::shared_ptr<Camera> CameraManager::GetCamera(const string& name) {
   auto itr = cameras_.find(name);
   CHECK(itr != cameras_.end())
       << "Camera with name " << name << " is not present";
   return itr->second;
 }
 
-bool CameraManager::HasCamera(const string &name) const {
+bool CameraManager::HasCamera(const string& name) const {
   return cameras_.count(name) != 0;
 }

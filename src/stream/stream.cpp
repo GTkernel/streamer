@@ -8,7 +8,7 @@
 Stream::Stream() {}
 Stream::Stream(string name) : name_(name) {}
 
-StreamReader *Stream::Subscribe(size_t max_buffer_size) {
+StreamReader* Stream::Subscribe(size_t max_buffer_size) {
   std::lock_guard<std::mutex> guard(stream_lock_);
 
   std::shared_ptr<StreamReader> reader(new StreamReader(this, max_buffer_size));
@@ -18,7 +18,7 @@ StreamReader *Stream::Subscribe(size_t max_buffer_size) {
   return reader.get();
 }
 
-void Stream::UnSubscribe(StreamReader *reader) {
+void Stream::UnSubscribe(StreamReader* reader) {
   std::lock_guard<std::mutex> guard(stream_lock_);
 
   readers_.erase(std::remove_if(readers_.begin(), readers_.end(),
@@ -29,17 +29,17 @@ void Stream::UnSubscribe(StreamReader *reader) {
 
 void Stream::PushFrame(std::shared_ptr<Frame> frame) {
   std::lock_guard<std::mutex> guard(stream_lock_);
-  for (const auto &reader : readers_) {
+  for (const auto& reader : readers_) {
     reader->PushFrame(frame);
   }
 }
 
-void Stream::PushFrame(Frame *frame) {
+void Stream::PushFrame(Frame* frame) {
   PushFrame(std::shared_ptr<Frame>(frame));
 }
 
 /////// Stream Reader
-StreamReader::StreamReader(Stream *stream, size_t max_buffer_size)
+StreamReader::StreamReader(Stream* stream, size_t max_buffer_size)
     : stream_(stream), max_buffer_size_(max_buffer_size) {}
 
 template <typename FT>

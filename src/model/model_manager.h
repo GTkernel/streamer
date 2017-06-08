@@ -15,16 +15,16 @@
  */
 class ModelManager {
  public:
-  static ModelManager &GetInstance();
+  static ModelManager& GetInstance();
 
  public:
   ModelManager();
-  ModelManager(const ModelManager &other) = delete;
+  ModelManager(const ModelManager& other) = delete;
   std::vector<int> GetMeanColors() const;
   std::unordered_map<string, ModelDesc> GetModelDescs() const;
-  ModelDesc GetModelDesc(const string &name) const;
-  bool HasModel(const string &name) const;
-  std::unique_ptr<Model> CreateModel(const ModelDesc &model_desc,
+  ModelDesc GetModelDesc(const string& name) const;
+  bool HasModel(const string& name) const;
+  std::unique_ptr<Model> CreateModel(const ModelDesc& model_desc,
                                      Shape input_shape, size_t batch_size = 1);
 
  private:

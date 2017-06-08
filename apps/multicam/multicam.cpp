@@ -21,19 +21,19 @@ std::vector<StreamPtr> classifier_streams;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
-  for (const auto &encoder : encoders) {
+  for (const auto& encoder : encoders) {
     if (encoder->IsStarted()) encoder->Stop();
   }
 
-  for (const auto &classifier : classifiers) {
+  for (const auto& classifier : classifiers) {
     if (classifier->IsStarted()) classifier->Stop();
   }
 
-  for (const auto &transformer : transformers) {
+  for (const auto& transformer : transformers) {
     if (transformer->IsStarted()) transformer->Stop();
   }
 
-  for (const auto &camera : cameras) {
+  for (const auto& camera : cameras) {
     if (camera->IsStarted()) camera->Stop();
   }
 }
@@ -45,33 +45,33 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names, const string &model_name,
+void Run(const std::vector<string>& camera_names, const string& model_name,
          bool display) {
   cout << "Run multicam demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  ModelManager &model_manager = ModelManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
+  ModelManager& model_manager = ModelManager::GetInstance();
 
   // Check options
   CHECK(model_manager.HasModel(model_name))
       << "Model " << model_name << " does not exist";
-  for (const auto &camera_name : camera_names) {
+  for (const auto& camera_name : camera_names) {
     CHECK(camera_manager.HasCamera(camera_name))
         << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors
 
-  for (const auto &camera_name : camera_names) {
+  for (const auto& camera_name : camera_names) {
     auto camera = camera_manager.GetCamera(camera_name);
     cameras.push_back(camera);
   }
 
   // Do video stream classification
   std::vector<std::shared_ptr<Stream>> camera_streams;
-  for (const auto &camera : cameras) {
+  for (const auto& camera : cameras) {
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
@@ -80,7 +80,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
-  for (const auto &camera_stream : camera_streams) {
+  for (const auto& camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(
         new ImageTransformer(input_shape, true /* subtract mean */));
     transform_processor->SetSource("input", camera_stream);
@@ -90,7 +90,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   // classifier
   auto model_desc = model_manager.GetModelDesc(model_name);
-  for (const auto &input_stream : input_streams) {
+  for (const auto& input_stream : input_streams) {
     auto classifier =
         std::make_shared<ImageClassifier>(model_desc, input_shape, 5);
     classifiers.push_back(classifier);
@@ -110,28 +110,28 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     encoders.push_back(encoder);
   }
 
-  for (const auto &camera : cameras) {
+  for (const auto& camera : cameras) {
     if (!camera->IsStarted()) {
       camera->Start();
     }
   }
 
-  for (const auto &transformer : transformers) {
+  for (const auto& transformer : transformers) {
     transformer->Start();
   }
 
-  for (const auto &classifier : classifiers) {
+  for (const auto& classifier : classifiers) {
     classifier->Start();
   }
 
-  for (const auto &encoder : encoders) {
+  for (const auto& encoder : encoders) {
     encoder->Start();
   }
 
   //////// Processor started, display the results
 
   if (display) {
-    for (const auto &camera_name : camera_names) {
+    for (const auto& camera_name : camera_names) {
       cv::namedWindow(camera_name);
     }
   }
@@ -194,7 +194,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   cv::destroyAllWindows();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;

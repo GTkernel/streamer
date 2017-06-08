@@ -19,7 +19,7 @@
  *
  * @return True if the string ends with ending.
  */
-inline bool EndsWith(const string &str, const string &ending) {
+inline bool EndsWith(const string& str, const string& ending) {
   if (ending.size() > str.size()) return false;
   return std::equal(ending.rbegin(), ending.rend(), str.rbegin());
 }
@@ -32,19 +32,19 @@ inline bool EndsWith(const string &str, const string &ending) {
  *
  * @return True if the string starts with <code>start</code>.
  */
-inline bool StartsWith(const string &str, const string &start) {
+inline bool StartsWith(const string& str, const string& start) {
   if (start.size() > str.size()) return false;
   return std::equal(start.begin(), start.end(), str.begin());
 }
 
-inline string TrimSpaces(const string &str) {
+inline string TrimSpaces(const string& str) {
   size_t first = str.find_first_not_of(' ');
   size_t last = str.find_last_not_of(' ');
   return str.substr(first, (last - first + 1));
 }
 
-inline std::vector<std::string> SplitString(const string &str,
-                                            const string &delim) {
+inline std::vector<std::string> SplitString(const string& str,
+                                            const string& delim) {
   std::vector<string> results;
   boost::split(results, str, boost::is_any_of(delim));
   return results;
@@ -56,8 +56,8 @@ inline std::vector<std::string> SplitString(const string &str,
  * @param protocol The reference to store the protocol.
  * @param path The reference to store the path.
  */
-inline void ParseProtocolAndPath(const string &uri, string &protocol,
-                                 string &path) {
+inline void ParseProtocolAndPath(const string& uri, string& protocol,
+                                 string& path) {
   std::vector<string> results = SplitString(uri, ":");
   protocol = results[0];
   path = results[1].substr(2);
@@ -69,7 +69,7 @@ inline void ParseProtocolAndPath(const string &uri, string &protocol,
  * @param ip_str The ip address in a string
  * @return The ip address in integer
  */
-inline unsigned int GetIPAddrFromString(const string &ip_str) {
+inline unsigned int GetIPAddrFromString(const string& ip_str) {
   std::vector<string> sp = SplitString(ip_str, ".");
   unsigned int ip_val = 0;
   CHECK(sp.size() == 4) << ip_str << " is not a valid ip address";
@@ -87,7 +87,7 @@ inline unsigned int GetIPAddrFromString(const string &ip_str) {
  * @param substr The substring to be checked.
  * @return Wether the string has the substring or not.
  */
-inline bool StringContains(const string &str, const string &substr) {
+inline bool StringContains(const string& str, const string& substr) {
   return str.find(substr) != string::npos;
 }
 
@@ -96,9 +96,9 @@ inline bool StringContains(const string &str, const string &substr) {
  * @param str The string to be converted.
  * @return The converted integer.
  */
-inline int StringToInt(const string &str) { return atoi(str.c_str()); }
+inline int StringToInt(const string& str) { return atoi(str.c_str()); }
 
-inline size_t StringToSizet(const string &str) {
+inline size_t StringToSizet(const string& str) {
   std::istringstream iss(str);
   size_t s;
   iss >> s;

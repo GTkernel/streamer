@@ -10,7 +10,7 @@
 
 class GSTCamera : public Camera {
  public:
-  GSTCamera(const string &name, const string &video_uri, int width = -1,
+  GSTCamera(const string& name, const string& video_uri, int width = -1,
             int height = -1);
   virtual CameraType GetCameraType() const override;
 

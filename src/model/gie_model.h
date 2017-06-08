@@ -13,13 +13,13 @@
  */
 class GIEModel : public Model {
  public:
-  GIEModel(const ModelDesc &model_desc, Shape input_shape, int batch_size);
+  GIEModel(const ModelDesc& model_desc, Shape input_shape, int batch_size);
   ~GIEModel();
   virtual void Load();
   virtual void Evaluate();
   virtual void Forward();
-  virtual const std::vector<std::string> &GetLayerNames() const override;
-  virtual cv::Mat GetLayerOutput(const std::string &layer_name) const override;
+  virtual const std::vector<std::string>& GetLayerNames() const override;
+  virtual cv::Mat GetLayerOutput(const std::string& layer_name) const override;
 
  private:
   std::unique_ptr<GIEInferer<float>> inferer_;

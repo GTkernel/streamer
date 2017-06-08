@@ -17,7 +17,7 @@ void FrameSender::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE, stream);
 }
 
-void FrameSender::SetSource(const string &name, StreamPtr stream) {
+void FrameSender::SetSource(const string& name, StreamPtr stream) {
   CHECK(name == SOURCE) << "StreamSender has one source named \"" << SOURCE
                         << "\"!";
   Processor::SetSource(name, stream);
@@ -37,7 +37,7 @@ void FrameSender::Process() {
   try {
     boost::archive::binary_oarchive ar(frame_string);
     ar << image;
-  } catch (const boost::archive::archive_exception &e) {
+  } catch (const boost::archive::archive_exception& e) {
     LOG(INFO) << "Boost serialization error: " << e.what();
   }
 

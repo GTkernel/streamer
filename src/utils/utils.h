@@ -28,7 +28,7 @@ inline void STREAMER_SLEEP(int msecs) {
 template <typename T>
 class TaskQueue {
  public:
-  void Push(const T &t) {
+  void Push(const T& t) {
     std::lock_guard<std::mutex> lock(queue_lock_);
     queue_.push(t);
     queue_cv_.notify_all();
@@ -50,7 +50,7 @@ class TaskQueue {
 };
 
 //// TOML
-inline toml::Value ParseTomlFromFile(const string &filepath) {
+inline toml::Value ParseTomlFromFile(const string& filepath) {
   std::ifstream ifs(filepath);
   CHECK(!ifs.fail()) << "Can't open file " << filepath << " for read";
   toml::ParseResult pr = toml::parse(ifs);

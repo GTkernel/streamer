@@ -16,8 +16,8 @@ class NeuralNetEvaluator : public Processor {
  public:
   // If output_layer_names is empty, then by default the last layer is
   // published.
-  NeuralNetEvaluator(const ModelDesc &model_desc, const Shape &input_shape,
-                     const std::vector<std::string> &output_layer_names = {});
+  NeuralNetEvaluator(const ModelDesc& model_desc, const Shape& input_shape,
+                     const std::vector<std::string>& output_layer_names = {});
 
   virtual ProcessorType GetType() const override;
   // Adds layer_name to the list of the layers whose activations will be

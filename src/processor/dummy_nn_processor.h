@@ -15,7 +15,7 @@
  */
 class DummyNNProcessor : public Processor {
  public:
-  DummyNNProcessor(const ModelDesc &model_desc);
+  DummyNNProcessor(const ModelDesc& model_desc);
   virtual ProcessorType GetType() const override;
 
  protected:

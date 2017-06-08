@@ -6,7 +6,7 @@
 #include "utils/time_utils.h"
 #include "utils/utils.h"
 
-Camera::Camera(const string &name, const string &video_uri, int width,
+Camera::Camera(const string& name, const string& video_uri, int width,
                int height)
     : Processor({}, {"bgr_output"}),
       name_(name),
@@ -27,7 +27,7 @@ std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
 
 ProcessorType Camera::GetType() const { return PROCESSOR_TYPE_CAMERA; }
 
-bool Camera::Capture(cv::Mat &image) {
+bool Camera::Capture(cv::Mat& image) {
   if (stopped_) {
     Start();
     auto reader = stream_->Subscribe();

@@ -11,7 +11,7 @@
 
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(const Shape &target_shape, bool subtract_mean = true);
+  ImageTransformer(const Shape& target_shape, bool subtract_mean = true);
   virtual ProcessorType GetType() const override;
 
  protected:

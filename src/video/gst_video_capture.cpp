@@ -19,9 +19,9 @@
  * @param data User defined data pointer.
  * @return Always return OK as we want to continuously listen for new samples.
  */
-GstFlowReturn GstVideoCapture::NewSampleCB(GstAppSink *, gpointer data) {
+GstFlowReturn GstVideoCapture::NewSampleCB(GstAppSink*, gpointer data) {
   CHECK(data != NULL) << "Callback is not passed in a capture";
-  GstVideoCapture *capture = (GstVideoCapture *)data;
+  GstVideoCapture* capture = (GstVideoCapture*)data;
   capture->CheckBuffer();
   capture->CheckBus();
 
@@ -37,7 +37,7 @@ void GstVideoCapture::CheckBuffer() {
     return;
   }
 
-  GstSample *sample = gst_app_sink_pull_sample(appsink_);
+  GstSample* sample = gst_app_sink_pull_sample(appsink_);
 
   if (sample == NULL) {
     // No sample pulled
@@ -45,7 +45,7 @@ void GstVideoCapture::CheckBuffer() {
     return;
   }
 
-  GstBuffer *buffer = gst_sample_get_buffer(sample);
+  GstBuffer* buffer = gst_sample_get_buffer(sample);
   if (buffer == NULL) {
     // No buffer
     LOG(INFO) << "GST sample has NULL buffer, ignoring";
@@ -62,7 +62,7 @@ void GstVideoCapture::CheckBuffer() {
 
   CHECK_NE(original_size_.area(), 0)
       << "Capture should have got frame size information but not";
-  cv::Mat frame_(original_size_, CV_8UC3, (char *)map.data, cv::Mat::AUTO_STEP);
+  cv::Mat frame_(original_size_, CV_8UC3, (char*)map.data, cv::Mat::AUTO_STEP);
   // Copy the data out
   cv::Mat frame = frame_.clone();
 
@@ -87,7 +87,7 @@ void GstVideoCapture::CheckBuffer() {
  */
 void GstVideoCapture::CheckBus() {
   while (true) {
-    GstMessage *msg = gst_bus_pop(bus_);
+    GstMessage* msg = gst_bus_pop(bus_);
     if (msg == NULL) {
       break;
     }
@@ -142,7 +142,7 @@ void GstVideoCapture::DestroyPipeline() {
  * @brief Get next frame from the pipeline, busy wait (which should be improved)
  * until frame available.
  */
-cv::Mat GstVideoCapture::GetFrame(DataBuffer *) {
+cv::Mat GstVideoCapture::GetFrame(DataBuffer*) {
   Timer timer;
   timer.Start();
   if (!connected_) return cv::Mat();
@@ -166,7 +166,7 @@ cv::Mat GstVideoCapture::GetFrame(DataBuffer *) {
  * @return The frame currently in the frames queue. An empty Mat if no frame
  * immediately available.
  */
-cv::Mat GstVideoCapture::TryGetFrame(DataBuffer *) {
+cv::Mat GstVideoCapture::TryGetFrame(DataBuffer*) {
   Timer timer;
   timer.Start();
   if (!connected_ || frames_.size() == 0) {
@@ -217,7 +217,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
     LOG(FATAL) << "Video uri: " << video_uri << " is not valid";
   }
 
-  gchar *descr =
+  gchar* descr =
       g_strdup_printf("%s", (video_pipeline +
                              " ! videoconvert "
                              "! capsfilter caps=video/x-raw,format=(string)BGR "
@@ -225,10 +225,10 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
                                 .c_str());
   LOG(INFO) << "Capture video pipeline: " << descr;
 
-  GError *error = NULL;
+  GError* error = NULL;
 
   // Create pipeline
-  GstElement *pipeline = gst_parse_launch(descr, &error);
+  GstElement* pipeline = gst_parse_launch(descr, &error);
   LOG(INFO) << "GStreamer pipeline launched";
   g_free(descr);
 
@@ -239,14 +239,14 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   }
 
   // Get sink
-  GstAppSink *sink =
+  GstAppSink* sink =
       GST_APP_SINK(gst_bin_get_by_name(GST_BIN(pipeline), "sink"));
   gst_app_sink_set_emit_signals(sink, true);
   gst_app_sink_set_drop(sink, true);
   gst_app_sink_set_max_buffers(sink, 1);
 
   // Get bus
-  GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+  GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
   if (bus == NULL) {
     LOG(ERROR) << "Can't get bus from pipeline";
     return false;
@@ -263,7 +263,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   }
 
   // Get caps, and other stream info
-  GstSample *sample = gst_app_sink_pull_sample(sink);
+  GstSample* sample = gst_app_sink_pull_sample(sink);
   if (sample == NULL) {
     LOG(INFO) << "The video stream encounters EOS";
     gst_element_set_state(pipeline, GST_STATE_NULL);
@@ -271,10 +271,10 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
     return false;
   }
 
-  GstCaps *caps = gst_sample_get_caps(sample);
+  GstCaps* caps = gst_sample_get_caps(sample);
   gst_sample_unref(sample);
-  gchar *caps_str = gst_caps_to_string(caps);
-  GstStructure *structure = gst_caps_get_structure(caps, 0);
+  gchar* caps_str = gst_caps_to_string(caps);
+  GstStructure* structure = gst_caps_get_structure(caps, 0);
   int width, height;
 
   if (!gst_structure_get_int(structure, "width", &width) ||
@@ -289,7 +289,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   this->original_size_ = cv::Size(width, height);
   this->caps_string_ = std::string(caps_str);
   g_free(caps_str);
-  this->pipeline_ = (GstPipeline *)pipeline;
+  this->pipeline_ = (GstPipeline*)pipeline;
   this->appsink_ = sink;
   this->connected_ = true;
 
@@ -305,7 +305,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   callbacks.eos = NULL;
   callbacks.new_preroll = NULL;
   callbacks.new_sample = GstVideoCapture::NewSampleCB;
-  gst_app_sink_set_callbacks(sink, &callbacks, (void *)this, NULL);
+  gst_app_sink_set_callbacks(sink, &callbacks, (void*)this, NULL);
 
   if (gst_element_set_state(pipeline, GST_STATE_PLAYING) ==
       GST_STATE_CHANGE_FAILURE) {
@@ -322,6 +322,6 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   return true;
 }
 
-void GstVideoCapture::SetDecoderElement(const string &decoder) {
+void GstVideoCapture::SetDecoderElement(const string& decoder) {
   decoder_element_ = decoder;
 }

@@ -24,8 +24,8 @@ class GstVideoCapture {
  public:
   GstVideoCapture();
   ~GstVideoCapture();
-  cv::Mat TryGetFrame(DataBuffer *data_bufferp = nullptr);
-  cv::Mat GetFrame(DataBuffer *data_bufferp = nullptr);
+  cv::Mat TryGetFrame(DataBuffer* data_bufferp = nullptr);
+  cv::Mat GetFrame(DataBuffer* data_bufferp = nullptr);
   cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
@@ -37,10 +37,10 @@ class GstVideoCapture {
    *
    * @param decoder The name of the deocder gstreamer element.
    */
-  void SetDecoderElement(const string &decoder);
+  void SetDecoderElement(const string& decoder);
 
  private:
-  static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);
+  static GstFlowReturn NewSampleCB(GstAppSink* appsink, gpointer data);
 
  private:
   void CheckBuffer();
@@ -49,9 +49,9 @@ class GstVideoCapture {
  private:
   cv::Size original_size_;
   std::string caps_string_;
-  GstAppSink *appsink_;
-  GstPipeline *pipeline_;
-  GstBus *bus_;
+  GstAppSink* appsink_;
+  GstPipeline* pipeline_;
+  GstBus* bus_;
   std::mutex capture_lock_;
   std::condition_variable capture_cv_;
   std::deque<cv::Mat> frames_;

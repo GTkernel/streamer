@@ -5,11 +5,11 @@
 constexpr auto SOURCE_NAME = "input";
 
 NeuralNetEvaluator::NeuralNetEvaluator(
-    const ModelDesc &model_desc, const Shape &input_shape,
-    const std::vector<std::string> &output_layer_names)
+    const ModelDesc& model_desc, const Shape& input_shape,
+    const std::vector<std::string>& output_layer_names)
     : Processor({SOURCE_NAME}, {}), input_shape_(input_shape) {
   // Load model.
-  auto &manager = ModelManager::GetInstance();
+  auto& manager = ModelManager::GetInstance();
   model_ = manager.CreateModel(model_desc, input_shape_, 1);
   model_->Load();
 
@@ -19,7 +19,7 @@ NeuralNetEvaluator::NeuralNetEvaluator(
     LOG(INFO) << "No output layer specified, defaulting to: " << layer;
     PublishLayer(layer);
   } else {
-    for (const auto &layer : output_layer_names) {
+    for (const auto& layer : output_layer_names) {
       PublishLayer(layer);
     }
   }
@@ -42,7 +42,7 @@ void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
 
 const std::vector<std::string> NeuralNetEvaluator::GetSinkNames() const {
   std::vector<std::string> sink_names;
-  for (const auto &sink_pair : sinks_) {
+  for (const auto& sink_pair : sinks_) {
     sink_names.push_back(sink_pair.first);
   }
   return sink_names;
@@ -54,7 +54,7 @@ bool NeuralNetEvaluator::OnStop() { return true; }
 
 void NeuralNetEvaluator::Process() {
   // Prepare the image for inference by splitting its channels.
-  float *data = (float *)input_buffer_.GetBuffer();
+  float* data = (float*)input_buffer_.GetBuffer();
   auto image_frame = GetFrame<ImageFrame>(SOURCE_NAME);
   cv::Mat img = image_frame->GetImage();
   CHECK(img.channels() == input_shape_.channel &&
@@ -74,7 +74,7 @@ void NeuralNetEvaluator::Process() {
   auto layer_outputs = Evaluate();
 
   // Push the activations for each published layer to their respective sink.
-  for (const auto &layer_pair : layer_outputs) {
+  for (const auto& layer_pair : layer_outputs) {
     // TODO: Populate the layer_name parameter.
     auto layer_frame =
         new LayerFrame("", layer_pair.second, image_frame->GetOriginalImage());
@@ -89,7 +89,7 @@ std::unordered_map<std::string, cv::Mat> NeuralNetEvaluator::Evaluate() {
   model_->Evaluate();
 
   std::unordered_map<std::string, cv::Mat> layer_to_acts;
-  for (const auto &sink_pair : sinks_) {
+  for (const auto& sink_pair : sinks_) {
     layer_to_acts[sink_pair.first] = model_->GetLayerOutput(sink_pair.first);
   }
   return layer_to_acts;

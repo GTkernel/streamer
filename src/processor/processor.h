@@ -27,8 +27,8 @@ class Processor {
   friend class VimbaCameeraFrameObserver;
 #endif
  public:
-  Processor(const std::vector<string> &source_names,
-            const std::vector<string> &sink_names);
+  Processor(const std::vector<string>& source_names,
+            const std::vector<string>& sink_names);
   virtual ~Processor();
   /**
    * @brief Start processing, drain frames from sources and send output to
@@ -47,14 +47,14 @@ class Processor {
    * @param name Name of the sink.
    * @return Stream with the name.
    */
-  StreamPtr GetSink(const string &name);
+  StreamPtr GetSink(const string& name);
 
   /**
    * @brief Set the source of the processor by name.
    * @param name Name of the source.
    * @param stream Stream to be set.
    */
-  virtual void SetSource(const string &name, StreamPtr stream);
+  virtual void SetSource(const string& name, StreamPtr stream);
 
   /**
    * @brief Check if the processor has started.
@@ -106,8 +106,8 @@ class Processor {
   virtual void Process() = 0;
 
   template <typename FT = Frame>
-  std::shared_ptr<FT> GetFrame(const string &source_name);
-  void PushFrame(const string &sink_name, Frame *frame);
+  std::shared_ptr<FT> GetFrame(const string& source_name);
+  void PushFrame(const string& sink_name, Frame* frame);
   void Init_();
 
   void ProcessorLoop();
@@ -115,7 +115,7 @@ class Processor {
   std::unordered_map<string, std::shared_ptr<Frame>> source_frame_cache_;
   std::unordered_map<string, StreamPtr> sources_;
   std::unordered_map<string, StreamPtr> sinks_;
-  std::unordered_map<string, StreamReader *> readers_;
+  std::unordered_map<string, StreamReader*> readers_;
 
   std::thread process_thread_;
   bool stopped_;

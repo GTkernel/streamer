@@ -13,12 +13,12 @@ class FrameReceiver final : public Processor, public Messenger::Service {
 
   ProcessorType GetType() const override;
   StreamPtr GetSink();
-  StreamPtr GetSink(const string &name) = delete;
+  StreamPtr GetSink(const string& name) = delete;
 
   void RunServer(const std::string listen_url);
-  grpc::Status SendFrame(grpc::ServerContext *context,
-                         const SingleFrame *frame_message,
-                         google::protobuf::Empty *ignored) override;
+  grpc::Status SendFrame(grpc::ServerContext* context,
+                         const SingleFrame* frame_message,
+                         google::protobuf::Empty* ignored) override;
 
  protected:
   bool Init() override;

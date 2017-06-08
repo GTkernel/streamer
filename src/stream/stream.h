@@ -21,7 +21,7 @@ class StreamReader {
   friend class Stream;
 
  public:
-  StreamReader(Stream *stream, size_t max_buffer_size = 5);
+  StreamReader(Stream* stream, size_t max_buffer_size = 5);
 
   /**
    * @brief Pop a frame, and timeout if no frame available for a given time
@@ -38,7 +38,7 @@ class StreamReader {
    * @param frame The frame to be pushed into the stream.
    */
   void PushFrame(std::shared_ptr<Frame> frame);
-  Stream *stream_;
+  Stream* stream_;
   // Max size of the buffer to hold frames in the stream
   size_t max_buffer_size_;
   // The frame buffer
@@ -65,7 +65,7 @@ class Stream {
    * @brief Push a raw pointer of the frame into the stream.
    * @param frame The frame to be pushed into the stream.
    */
-  void PushFrame(Frame *frame);
+  void PushFrame(Frame* frame);
   /**
    * @brief Get the name of the stream.
    */
@@ -75,12 +75,12 @@ class Stream {
    * @brief Get a reader from the stream.
    * @param max_buffer_size The buffer size limit of the reader.
    */
-  StreamReader *Subscribe(size_t max_buffer_size = 5);
+  StreamReader* Subscribe(size_t max_buffer_size = 5);
 
   /**
    * @brief Unsubscribe from the stream
    */
-  void UnSubscribe(StreamReader *reader);
+  void UnSubscribe(StreamReader* reader);
 
  private:
   // Stream name for profiling and debugging

@@ -17,13 +17,13 @@
  */
 class MXNetModel : public Model {
  public:
-  MXNetModel(const ModelDesc &model_desc, Shape input_shape, int batch_size);
+  MXNetModel(const ModelDesc& model_desc, Shape input_shape, int batch_size);
   ~MXNetModel();
   virtual void Load() override;
   virtual void Evaluate() override;
   virtual void Forward();
-  virtual const std::vector<std::string> &GetLayerNames() const override;
-  virtual cv::Mat GetLayerOutput(const std::string &layer_name) const override;
+  virtual const std::vector<std::string>& GetLayerNames() const override;
+  virtual cv::Mat GetLayerOutput(const std::string& layer_name) const override;
 
  private:
   PredictorHandle predictor_;

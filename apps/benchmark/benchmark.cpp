@@ -53,20 +53,20 @@ void RunEndToEndExperiment() {
   CHECK(CONFIG.camera_names.size() != 0) << "You must give at least one camera";
   CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
 
-  auto &model_manager = ModelManager::GetInstance();
-  auto &camera_manager = CameraManager::GetInstance();
+  auto& model_manager = ModelManager::GetInstance();
+  auto& camera_manager = CameraManager::GetInstance();
 
   auto camera_size = CONFIG.camera_names.size();
 
   // Camera streams
   std::vector<std::shared_ptr<Camera>> cameras;
-  for (const auto &camera_name : CONFIG.camera_names) {
+  for (const auto& camera_name : CONFIG.camera_names) {
     auto camera = camera_manager.GetCamera(camera_name);
     cameras.push_back(camera);
   }
 
   std::vector<std::shared_ptr<Stream>> camera_streams;
-  for (const auto &camera : cameras) {
+  for (const auto& camera : cameras) {
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
@@ -78,7 +78,7 @@ void RunEndToEndExperiment() {
   std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
   // transformers
-  for (const auto &camera_stream : camera_streams) {
+  for (const auto& camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(
         new ImageTransformer(input_shape, true /* subtract mean */));
     transform_processor->SetSource("input", camera_stream);
@@ -89,7 +89,7 @@ void RunEndToEndExperiment() {
   // classifier
   auto model_desc = model_manager.GetModelDesc(CONFIG.net);
   std::vector<ProcessorPtr> classifiers;
-  for (const auto &input_stream : input_streams) {
+  for (const auto& input_stream : input_streams) {
     std::shared_ptr<ImageClassifier> classifier(
         new ImageClassifier(model_desc, input_shape, 1));
     classifier->SetSource("input", input_stream);
@@ -111,38 +111,38 @@ void RunEndToEndExperiment() {
     }
   }
 
-  for (const auto &camera : cameras) {
+  for (const auto& camera : cameras) {
     camera->Start();
   }
 
-  for (const auto &transformer : transformers) {
+  for (const auto& transformer : transformers) {
     transformer->Start();
   }
 
-  for (const auto &classifier : classifiers) {
+  for (const auto& classifier : classifiers) {
     classifier->Start();
   }
 
-  for (const auto &encoder : encoders) {
+  for (const auto& encoder : encoders) {
     encoder->Start();
   }
 
   /////////////// RUN
   SLEEP(CONFIG.time);
 
-  for (const auto &encoder : encoders) {
+  for (const auto& encoder : encoders) {
     encoder->Stop();
   }
 
-  for (const auto &classifier : classifiers) {
+  for (const auto& classifier : classifiers) {
     classifier->Stop();
   }
 
-  for (const auto &transformer : transformers) {
+  for (const auto& transformer : transformers) {
     transformer->Stop();
   }
 
-  for (const auto &camera : cameras) {
+  for (const auto& camera : cameras) {
     camera->Stop();
   }
 
@@ -177,7 +177,7 @@ void RunNNInferenceExperiment() {
   // Check argument
   CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
 
-  auto &model_manager = ModelManager::GetInstance();
+  auto& model_manager = ModelManager::GetInstance();
 
   auto model_desc = model_manager.GetModelDesc(CONFIG.net);
   std::shared_ptr<DummyNNProcessor> dummy_processor(
@@ -191,7 +191,7 @@ void RunNNInferenceExperiment() {
   cout << "-- processor fps is " << dummy_processor->GetAvgFps() << endl;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // Set up glog
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << endl;
     cout << desc << endl;
     return 1;

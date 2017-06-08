@@ -25,7 +25,7 @@
 
 static const string MODEL_TOML_FILENAME = "models.toml";
 
-ModelManager &ModelManager::GetInstance() {
+ModelManager& ModelManager::GetInstance() {
   static ModelManager manager;
   return manager;
 }
@@ -46,7 +46,7 @@ ModelManager::ModelManager() {
   // Get model descriptions
   auto model_values = root_value.find("model")->as<toml::Array>();
 
-  for (const auto &model_value : model_values) {
+  for (const auto& model_value : model_values) {
     string name = model_value.get<string>("name");
     string type_string = model_value.get<string>("type");
     ModelType type = MODEL_TYPE_INVALID;
@@ -82,18 +82,18 @@ std::vector<int> ModelManager::GetMeanColors() const { return mean_colors_; }
 std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
   return model_descs_;
 }
-ModelDesc ModelManager::GetModelDesc(const string &name) const {
+ModelDesc ModelManager::GetModelDesc(const string& name) const {
   auto itr = model_descs_.find(name);
   CHECK(itr != model_descs_.end())
       << "Model description with name " << name << " is not present";
   return itr->second;
 }
 
-bool ModelManager::HasModel(const string &name) const {
+bool ModelManager::HasModel(const string& name) const {
   return model_descs_.count(name) != 0;
 }
 
-std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc &model_desc,
+std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
                                                  Shape input_shape,
                                                  size_t batch_size) {
   // Silence compiler warnings when none of the #ifdefs below are active

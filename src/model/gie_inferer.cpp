@@ -6,10 +6,10 @@
 #include <cuda_runtime_api.h>
 
 template <typename DType>
-GIEInferer<DType>::GIEInferer(const string &deploy_file,
-                              const string &model_file,
-                              const string &input_blob_name,
-                              const string &output_blob_name, int batch_size,
+GIEInferer<DType>::GIEInferer(const string& deploy_file,
+                              const string& model_file,
+                              const string& input_blob_name,
+                              const string& output_blob_name, int batch_size,
                               bool fp16_mode)
     : deploy_file_(deploy_file),
       model_file_(model_file),
@@ -22,7 +22,7 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file,
       batch_size_(batch_size),
       fp16_mode_(fp16_mode) {
   if (fp16_mode) {
-    IBuilder *builder = createInferBuilder(logger_);
+    IBuilder* builder = createInferBuilder(logger_);
     bool supportFp16 = builder->platformHasFastFp16();
     builder->destroy();
     CHECK(supportFp16) << "Platform does not support fp16 but GIEInferer is "
@@ -37,7 +37,7 @@ GIEInferer<DType>::GIEInferer(const string &deploy_file,
  */
 template <typename DType>
 void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
-                                    const char *msg) {
+                                    const char* msg) {
   switch (severity) {
     case Severity::kERROR:
       LOG(ERROR) << "GIE: " << msg;
@@ -63,30 +63,30 @@ void GIEInferer<DType>::Logger::log(ILogger::Severity severity,
  * @param gie_model_stream The stream to GIE model.
  */
 template <typename DType>
-void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
-                                        const string &model_file,
-                                        const std::vector<string> &outputs,
+void GIEInferer<DType>::CaffeToGIEModel(const string& deploy_file,
+                                        const string& model_file,
+                                        const std::vector<string>& outputs,
                                         unsigned int max_batch_size,
-                                        std::ostream &gie_model_stream) {
+                                        std::ostream& gie_model_stream) {
   // Create API root class - must span the lifetime of the engine usage.
-  IBuilder *builder = createInferBuilder(logger_);
-  INetworkDefinition *network = builder->createNetwork();
+  IBuilder* builder = createInferBuilder(logger_);
+  INetworkDefinition* network = builder->createNetwork();
 
   // Parse the caffe model to populate the network, then set the outputs
-  ICaffeParser *parser = createCaffeParser();
+  ICaffeParser* parser = createCaffeParser();
 
   // Determine data type
   LOG(INFO) << "GIE use FP16: " << (fp16_mode_ ? "YES" : "NO");
 
   // Get blob:tensor name mappings
   DataType model_data_type = fp16_mode_ ? DataType::kHALF : DataType::kFLOAT;
-  const IBlobNameToTensor *blob_name_to_tensor = parser->parse(
+  const IBlobNameToTensor* blob_name_to_tensor = parser->parse(
       deploy_file.c_str(), model_file.c_str(), *network, model_data_type);
   CHECK(blob_name_to_tensor != nullptr)
       << "Map from blob name to tensor is null";
 
   // Mark outputs
-  for (auto &s : outputs) {
+  for (auto& s : outputs) {
     network->markOutput(*blob_name_to_tensor->find(s.c_str()));
   }
 
@@ -97,7 +97,7 @@ void GIEInferer<DType>::CaffeToGIEModel(const string &deploy_file,
   // Set up the network for paired-fp16 format.
   if (fp16_mode_) builder->setHalf2Mode(true);
 
-  ICudaEngine *engine = builder->buildCudaEngine(*network);
+  ICudaEngine* engine = builder->buildCudaEngine(*network);
   CHECK(engine != nullptr) << "GIE can't build engine";
 
   // We don't need the network any more, and we can destroy the parser
@@ -135,15 +135,15 @@ void GIEInferer<DType>::CreateEngine() {
   input_size_ = batch_size_ * input_shape_.GetSize() * sizeof(DType);
   output_size_ = batch_size_ * output_shape_.GetSize() * sizeof(DType);
 
-  CHECK_EQ(cudaMalloc((void **)(&d_input_buffer_), input_size_), cudaSuccess)
+  CHECK_EQ(cudaMalloc((void**)(&d_input_buffer_), input_size_), cudaSuccess)
       << "Can't malloc device input buffer";
-  CHECK_EQ(cudaMalloc((void **)(&d_output_buffer_), output_size_), cudaSuccess)
+  CHECK_EQ(cudaMalloc((void**)(&d_output_buffer_), output_size_), cudaSuccess)
       << "Can't malloc device output buffer";
 }
 
 template <typename DType>
-void GIEInferer<DType>::DoInference(DType *input, DType *output) {
-  IExecutionContext *context = engine_->createExecutionContext();
+void GIEInferer<DType>::DoInference(DType* input, DType* output) {
+  IExecutionContext* context = engine_->createExecutionContext();
   CHECK(context != nullptr) << "GIE error, can't create context";
   CHECK(input != nullptr) << "Input is invalid: nullptr";
   CHECK(output != nullptr) << "Output is invalid, nullptr";
@@ -151,7 +151,7 @@ void GIEInferer<DType>::DoInference(DType *input, DType *output) {
   CHECK(d_output_buffer_ != nullptr) << "Device output buffer is not allocated";
   CHECK(engine_->getNbBindings() == 2);
 
-  void *buffers[2];
+  void* buffers[2];
 
   int inputIndex = engine_->getBindingIndex(input_blob_name_.c_str()),
       outputIndex = engine_->getBindingIndex(output_blob_name_.c_str());

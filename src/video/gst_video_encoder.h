@@ -17,7 +17,7 @@
  */
 class GstVideoEncoder : public Processor {
  public:
-  GstVideoEncoder(int width, int height, const string &output_filename);
+  GstVideoEncoder(int width, int height, const string& output_filename);
   GstVideoEncoder(int width, int height, int port, bool tcp = true);
 
   /**
@@ -26,7 +26,7 @@ class GstVideoEncoder : public Processor {
    *
    * @param encoder The name of the deocder gstreamer element.
    */
-  void SetEncoderElement(const string &encoder);
+  void SetEncoderElement(const string& encoder);
   virtual ProcessorType GetType() const override;
 
  protected:
@@ -39,8 +39,8 @@ class GstVideoEncoder : public Processor {
   string BuildCapsString();
 
   // GST Callbacks
-  static void NeedDataCB(GstAppSrc *appsrc, guint size, gpointer user_data);
-  static void EnoughDataCB(GstAppSrc *appsrc, gpointer userdata);
+  static void NeedDataCB(GstAppSrc* appsrc, guint size, gpointer user_data);
+  static void EnoughDataCB(GstAppSrc* appsrc, gpointer userdata);
 
   // Video attributes
   int width_;
@@ -53,11 +53,11 @@ class GstVideoEncoder : public Processor {
   bool tcp_;
 
   // Gst elements
-  GstBus *gst_bus_;
-  GstPipeline *gst_pipeline_;
-  GstAppSrc *gst_appsrc_;
-  GstCaps *gst_caps_;
-  GMainLoop *g_main_loop_;
+  GstBus* gst_bus_;
+  GstPipeline* gst_pipeline_;
+  GstAppSrc* gst_appsrc_;
+  GstCaps* gst_caps_;
+  GMainLoop* g_main_loop_;
 
   // States
   bool need_data_;

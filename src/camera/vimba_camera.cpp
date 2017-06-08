@@ -11,7 +11,7 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
   friend class VimbaCamera;
 
  public:
-  VimbaCameraFrameObserver(VimbaCamera *vimba_camera)
+  VimbaCameraFrameObserver(VimbaCamera* vimba_camera)
       : VmbAPI::IFrameObserver(vimba_camera->camera_),
         vimba_camera_(vimba_camera) {}
 
@@ -37,8 +37,8 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
     destinationImage.Size = sizeof(destinationImage);
 
     // attach the data buffers
-    VmbUchar_t *input_buffer;
-    VmbUchar_t *output_buffer = dest_bgr_mat.data;
+    VmbUchar_t* input_buffer;
+    VmbUchar_t* output_buffer = dest_bgr_mat.data;
     CHECK_VIMBA(pFrame->GetBuffer(input_buffer));
 
     sourceImage.Data = input_buffer;
@@ -69,7 +69,7 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         // Copy the data of the frame
 
         VmbUint32_t buffer_size;
-        VmbUchar_t *vmb_buffer;
+        VmbUchar_t* vmb_buffer;
         // We don't use CHECK_VIMBA here because we don't want to crash for
         // unsuccessful image grab
         if (VmbErrorSuccess != pFrame->GetBufferSize(buffer_size)) {
@@ -99,10 +99,10 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
   }
 
  private:
-  VimbaCamera *vimba_camera_;
+  VimbaCamera* vimba_camera_;
 };
 
-VimbaCamera::VimbaCamera(const string &name, const string &video_uri, int width,
+VimbaCamera::VimbaCamera(const string& name, const string& video_uri, int width,
                          int height, CameraModeType mode,
                          CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
@@ -330,7 +330,7 @@ void VimbaCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
 }
 
 CameraPixelFormatType VimbaCamera::VimbaPfmt2CameraPfmt(
-    const string &vmb_pfmt) {
+    const string& vmb_pfmt) {
   if (vmb_pfmt == "Mono8") {
     return CAMERA_PIXEL_FORMAT_MONO8;
   } else if (vmb_pfmt == "BayerRG8" || vmb_pfmt == "BayerGB8" ||

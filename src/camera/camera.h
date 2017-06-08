@@ -17,7 +17,7 @@ class Camera : public Processor {
   friend class CameraManager;
 
  public:
-  Camera(const string &name, const string &video_uri, int width = -1,
+  Camera(const string& name, const string& video_uri, int width = -1,
          int height = -1);  // Just a nonsense default value
   string GetName() const;
   string GetVideoURI() const;
@@ -25,7 +25,7 @@ class Camera : public Processor {
   int GetWidth();
   int GetHeight();
 
-  virtual bool Capture(cv::Mat &image);
+  virtual bool Capture(cv::Mat& image);
   virtual CameraType GetCameraType() const = 0;
   virtual ProcessorType GetType() const override;
 

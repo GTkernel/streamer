@@ -7,14 +7,14 @@
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
 
-Processor::Processor(const std::vector<string> &source_names,
-                     const std::vector<string> &sink_names) {
-  for (const auto &source_name : source_names) {
+Processor::Processor(const std::vector<string>& source_names,
+                     const std::vector<string>& sink_names) {
+  for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
     source_frame_cache_.insert({source_name, nullptr});
   }
 
-  for (const auto &sink_name : sink_names) {
+  for (const auto& sink_name : sink_names) {
     sinks_.insert({sink_name, StreamPtr(new Stream)});
   }
 
@@ -23,9 +23,9 @@ Processor::Processor(const std::vector<string> &source_names,
 
 Processor::~Processor() {}
 
-StreamPtr Processor::GetSink(const string &name) { return sinks_[name]; }
+StreamPtr Processor::GetSink(const string& name) { return sinks_[name]; }
 
-void Processor::SetSource(const string &name, StreamPtr stream) {
+void Processor::SetSource(const string& name, StreamPtr stream) {
   sources_[name] = stream;
 }
 
@@ -42,13 +42,13 @@ bool Processor::Start() {
   CHECK(stopped_) << "Processor has already started";
 
   // Check sources are filled
-  for (const auto &source : sources_) {
+  for (const auto& source : sources_) {
     CHECK(source.second != nullptr)
         << "Source \"" << source.first << "\" is not set.";
   }
 
   // Subscribe sources
-  for (auto &source : sources_) {
+  for (auto& source : sources_) {
     readers_.emplace(source.first, source.second->Subscribe());
   }
 
@@ -64,7 +64,7 @@ bool Processor::Stop() {
   process_thread_.join();
   bool result = OnStop();
 
-  for (auto &reader : readers_) {
+  for (auto& reader : readers_) {
     reader.second->UnSubscribe();
   }
 
@@ -79,7 +79,7 @@ void Processor::ProcessorLoop() {
   while (!stopped_) {
     // Cache source frames
     source_frame_cache_.clear();
-    for (auto &reader : readers_) {
+    for (auto& reader : readers_) {
       auto source_name = reader.first;
       auto source_stream = reader.second;
 
@@ -127,23 +127,23 @@ double Processor::GetAvgLatencyMs() const { return avg_latency_; }
 
 double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
 
-void Processor::PushFrame(const string &sink_name, Frame *frame) {
+void Processor::PushFrame(const string& sink_name, Frame* frame) {
   CHECK(sinks_.count(sink_name) != 0);
   sinks_[sink_name]->PushFrame(frame);
 }
 
 template <typename FT>
-std::shared_ptr<FT> Processor::GetFrame(const string &source_name) {
+std::shared_ptr<FT> Processor::GetFrame(const string& source_name) {
   CHECK(source_frame_cache_.count(source_name) != 0);
   return std::dynamic_pointer_cast<FT>(source_frame_cache_[source_name]);
 }
 
-template std::shared_ptr<Frame> Processor::GetFrame(const string &source_name);
+template std::shared_ptr<Frame> Processor::GetFrame(const string& source_name);
 template std::shared_ptr<ImageFrame> Processor::GetFrame(
-    const string &source_name);
+    const string& source_name);
 template std::shared_ptr<MetadataFrame> Processor::GetFrame(
-    const string &source_name);
+    const string& source_name);
 template std::shared_ptr<BytesFrame> Processor::GetFrame(
-    const string &source_name);
+    const string& source_name);
 template std::shared_ptr<LayerFrame> Processor::GetFrame(
-    const string &source_name);
+    const string& source_name);

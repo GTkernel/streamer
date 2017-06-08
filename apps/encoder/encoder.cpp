@@ -21,13 +21,13 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const string &camera_name, string &dst_file, int port) {
+void Run(const string& camera_name, string& dst_file, int port) {
   if (dst_file == "" && port == -1) {
     cout << "Specify output_filename or port" << endl;
     return;
   }
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
 
   CHECK(camera_manager.HasCamera(camera_name))
       << "Camera " << camera_name << " does not exist";
@@ -65,7 +65,7 @@ void Run(const string &camera_name, string &dst_file, int port) {
   camera->Stop();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << endl;
     cout << desc << endl;
     return 1;

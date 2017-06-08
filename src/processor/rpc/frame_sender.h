@@ -13,7 +13,7 @@ class FrameSender : public Processor {
 
   ProcessorType GetType() const override;
   void SetSource(StreamPtr stream);
-  void SetSource(const string &name, StreamPtr stream) override;
+  void SetSource(const string& name, StreamPtr stream) override;
 
  protected:
   bool Init() override;

@@ -26,7 +26,7 @@ struct Configurations {
 void Run() {
   // Set up camera
   auto camera_name = CONFIG.camera_name;
-  auto &camera_manager = CameraManager::GetInstance();
+  auto& camera_manager = CameraManager::GetInstance();
   CHECK(camera_manager.HasCamera(camera_name))
       << "Camera " << camera_name << " does not exist";
   auto camera = camera_manager.GetCamera(camera_name);
@@ -44,7 +44,7 @@ void Run() {
   frame_sender->Stop();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;

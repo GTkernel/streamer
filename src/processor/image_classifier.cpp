@@ -5,8 +5,8 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
-ImageClassifier::ImageClassifier(const ModelDesc &model_desc,
-                                 const Shape &input_shape, size_t num_labels)
+ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
+                                 const Shape& input_shape, size_t num_labels)
     : NeuralNetConsumer(model_desc, input_shape, {}, {SOURCE_NAME},
                         {SINK_NAME}),
       num_labels_(num_labels),
@@ -22,7 +22,7 @@ ImageClassifier::ImageClassifier(const ModelDesc &model_desc,
   Processor::SetSource(SOURCE_NAME, stream);
 }
 
-ImageClassifier::ImageClassifier(const ModelDesc &model_desc, size_t num_labels)
+ImageClassifier::ImageClassifier(const ModelDesc& model_desc, size_t num_labels)
     : NeuralNetConsumer({SOURCE_NAME}, {SINK_NAME}),
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {}
@@ -39,11 +39,11 @@ void ImageClassifier::Process() {
   // Assign labels.
   std::vector<Prediction> predictions;
   cv::Mat output = layer_frame->GetActivations();
-  float *scores;
+  float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
   if (output.isContinuous()) {
-    scores = (float *)(output.data);
+    scores = (float*)(output.data);
   } else {
     LOG(FATAL)
         << "Non-contiguous allocation of cv::Mat is currently not supported";
@@ -59,7 +59,7 @@ void ImageClassifier::Process() {
 
   // Create and push a MetadataFrame.
   std::vector<std::string> tags;
-  for (const auto &pred : predictions) {
+  for (const auto& pred : predictions) {
     tags.push_back(pred.first);
   }
   cv::Mat original_image = layer_frame->GetOriginalImage();
@@ -68,7 +68,7 @@ void ImageClassifier::Process() {
 }
 
 std::vector<std::string> ImageClassifier::LoadLabels(
-    const ModelDesc &model_desc) {
+    const ModelDesc& model_desc) {
   // Load labels
   std::string labels_filepath = model_desc.GetLabelFilePath();
   CHECK(labels_filepath != "") << "Empty label file: " << labels_filepath;

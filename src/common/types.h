@@ -69,7 +69,7 @@ struct Rect {
     return j;
   }
 
-  bool operator==(const Rect &rhs) const {
+  bool operator==(const Rect& rhs) const {
     return (px == rhs.px) && (py == rhs.py) && (width == rhs.width) &&
            (height == rhs.height);
   }
@@ -178,7 +178,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_INVALID
 };
 
-inline ProcessorType GetProcessorTypeByString(const std::string &str) {
+inline ProcessorType GetProcessorTypeByString(const std::string& str) {
   if (str == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
   } else if (str == "Custom") {
@@ -222,7 +222,7 @@ float Cpu_Half2Float(half h);
 struct float16 {
   inline float16() { data.x = 0; }
 
-  inline float16(const float &rhs) { data = Cpu_Float2Half(rhs); }
+  inline float16(const float& rhs) { data = Cpu_Float2Half(rhs); }
 
   inline operator float() const { return Cpu_Half2Float(data); }
 

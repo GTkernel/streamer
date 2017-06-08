@@ -5,7 +5,7 @@
 #include "gie_model.h"
 #include "common/context.h"
 
-GIEModel::GIEModel(const ModelDesc &model_desc, Shape input_shape,
+GIEModel::GIEModel(const ModelDesc& model_desc, Shape input_shape,
                    int batch_size)
     : Model(model_desc, input_shape, batch_size) {}
 
@@ -28,8 +28,8 @@ void GIEModel::Load() {
 void GIEModel::Forward() {
   DataBuffer output_buffer = DataBuffer(inferer_->GetOutputShape().GetSize() *
                                         sizeof(float) * batch_size_);
-  inferer_->DoInference((float *)input_buffer_.GetBuffer(),
-                        (float *)output_buffer.GetBuffer());
+  inferer_->DoInference((float*)input_buffer_.GetBuffer(),
+                        (float*)output_buffer.GetBuffer());
 }
 
 void GIEModel::Evaluate() {
@@ -38,18 +38,18 @@ void GIEModel::Evaluate() {
 
   DataBuffer output_buffer = DataBuffer(inferer_->GetOutputShape().GetSize() *
                                         sizeof(float) * batch_size_);
-  inferer_->DoInference((float *)input_buffer_.GetBuffer(),
-                        (float *)output_buffer.GetBuffer());
+  inferer_->DoInference((float*)input_buffer_.GetBuffer(),
+                        (float*)output_buffer.GetBuffer());
 
   output_shapes_.push_back(inferer_->GetOutputShape());
   output_buffers_.push_back(output_buffer);
 }
 
-const std::vector<std::string> &GIEModel::GetLayerNames() const {
+const std::vector<std::string>& GIEModel::GetLayerNames() const {
   STREAMER_NOT_IMPLEMENTED;
 }
 
-cv::Mat GIEModel::GetLayerOutput(const std::string &) const {
+cv::Mat GIEModel::GetLayerOutput(const std::string&) const {
   STREAMER_NOT_IMPLEMENTED;
 }
 

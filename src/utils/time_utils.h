@@ -8,7 +8,7 @@
 #include <ctime>
 #include "common/common.h"
 
-inline string GetCurrentTimeString(const string &time_format) {
+inline string GetCurrentTimeString(const string& time_format) {
   std::time_t t = std::time(nullptr);
   char timestr[128];
 

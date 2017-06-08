@@ -6,7 +6,7 @@
 #include "common/context.h"
 
 template <typename DType>
-CaffeModel<DType>::CaffeModel(const ModelDesc &model_desc, Shape input_shape,
+CaffeModel<DType>::CaffeModel(const ModelDesc& model_desc, Shape input_shape,
                               int batch_size)
     : Model(model_desc, input_shape, batch_size) {}
 
@@ -65,7 +65,7 @@ void CaffeModel<DType>::Load() {
   CHECK(input_shape_.channel == 3 || input_shape_.channel == 1)
       << "Input layer should have 1 or 3 channels.";
 
-  caffe::Blob<DType> *input_layer = net_->input_blobs().at(0);
+  caffe::Blob<DType>* input_layer = net_->input_blobs().at(0);
   // Adjust input dimensions
   input_layer->Reshape(batch_size_, input_shape_.channel, input_shape_.height,
                        input_shape_.width);
@@ -73,7 +73,7 @@ void CaffeModel<DType>::Load() {
   net_->Reshape();
   // Prepare input buffer
   input_layer = net_->input_blobs().at(0);
-  DType *input_data = input_layer->mutable_cpu_data();
+  DType* input_data = input_layer->mutable_cpu_data();
 
   input_buffer_ = DataBuffer(
       input_data, batch_size_ * input_shape_.GetSize() * sizeof(DType));
@@ -89,11 +89,11 @@ void CaffeModel<DType>::Evaluate() {
 
   net_->Forward();
   // Copy the output of the network
-  const auto &output_blobs = net_->output_blobs();
+  const auto& output_blobs = net_->output_blobs();
   // TODO: consider doing it lazily, e.g. when we actually retrieve the output
   // data
-  for (const auto &output_blob : output_blobs) {
-    const DType *output_data = output_blob->mutable_cpu_data();
+  for (const auto& output_blob : output_blobs) {
+    const DType* output_data = output_blob->mutable_cpu_data();
     Shape shape(output_blob->channels(), output_blob->width(),
                 output_blob->height());
     output_shapes_.push_back(shape);
@@ -110,13 +110,13 @@ void CaffeModel<DType>::Forward() {
 }
 
 template <typename DType>
-const std::vector<std::string> &CaffeModel<DType>::GetLayerNames() const {
+const std::vector<std::string>& CaffeModel<DType>::GetLayerNames() const {
   return net_->layer_names();
 }
 
 template <typename DType>
-cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string &layer_name) const {
-  const std::vector<std::vector<caffe::Blob<DType> *>> layer_outputs =
+cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string& layer_name) const {
+  const std::vector<std::vector<caffe::Blob<DType>*>> layer_outputs =
       net_->top_vecs();
   // Find the correct layer to extract
   std::vector<std::string> layer_names = GetLayerNames();
@@ -126,7 +126,7 @@ cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string &layer_name) const {
     LOG(FATAL) << "Layer \"" << layer_name << "\" does not exist";
   }
   int idx = layer_idx - layer_names.begin();
-  caffe::Blob<DType> *myblob = layer_outputs.at(idx).at(0);
+  caffe::Blob<DType>* myblob = layer_outputs.at(idx).at(0);
   // The last layer is often 2-dimensional (batch, 1D array of probabilities)
   // Intermediate layers are always 4-dimensional
   if (myblob->num_axes() == 2) {
@@ -140,7 +140,7 @@ cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string &layer_name) const {
 }
 
 template <typename DType>
-cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType> *src) {
+cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src) {
   int batch_size = src->shape(0);
   CHECK(batch_size == 1) << "Batch size must be 1, but it is " << batch_size;
 
@@ -163,7 +163,7 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType> *src) {
 }
 
 template <typename DType>
-cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType> *src) {
+cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src) {
   int batch_size = src->shape(0);
   CHECK(batch_size == 1) << "Batch size must be 1, but it is " << batch_size;
 

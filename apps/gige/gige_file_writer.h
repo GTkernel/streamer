@@ -22,12 +22,12 @@ class GigeFileWriter : public Processor {
    * {frame_count / frames_per_file}.dat
    * @param frames_per_file Number of frames per file.
    */
-  GigeFileWriter(const string &directory, size_t frames_per_file);
+  GigeFileWriter(const string& directory, size_t frames_per_file);
 
   size_t GetFramesWritten() { return frames_written_; }
   string GetCurrentFilename() { return current_filename_; }
   string GetCurrentDirectory() { return directory_; }
-  void SetDirectory(const string &directory) { directory_ = directory; }
+  void SetDirectory(const string& directory) { directory_ = directory; }
   virtual ProcessorType GetType() const override;
 
  protected:
