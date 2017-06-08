@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("config_dir,C", po::value<string>(),
                      "The directory to find streamer's configuration");
-  desc.add_options()("server_address,s", po::value<string>()->required(),
+  desc.add_options()("listen_url,l", po::value<string>()->required(),
                      "address:port to listen on (e.g., 0.0.0.0:4444)");
 
   po::variables_map vm;
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  CONFIG.server = vm["server_address"].as<string>();
+  CONFIG.server = vm["listen_url"].as<string>();
 
   Run();
 }

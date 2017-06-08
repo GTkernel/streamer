@@ -2,8 +2,12 @@
 
 constexpr auto SOURCE = "input";
 
-FrameSender::FrameSender(std::shared_ptr<grpc::Channel> channel)
-    : Processor({SOURCE}, {}), stub_(Messenger::NewStub(channel)) {}
+FrameSender::FrameSender(const std::string server_url)
+    : Processor({SOURCE}, {}), server_url_(server_url) {
+  auto channel =
+      grpc::CreateChannel(server_url_, grpc::InsecureChannelCredentials());
+  stub_ = Messenger::NewStub(channel);
+}
 
 ProcessorType FrameSender::GetType() const {
   return PROCESSOR_TYPE_FRAME_SENDER;

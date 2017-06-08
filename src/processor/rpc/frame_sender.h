@@ -9,7 +9,7 @@
 
 class FrameSender : public Processor {
  public:
-  FrameSender(std::shared_ptr<grpc::Channel> channel);
+  FrameSender(const std::string server_url);
 
   ProcessorType GetType() const override;
   void SetSource(StreamPtr stream);
@@ -21,6 +21,7 @@ class FrameSender : public Processor {
   void Process() override;
 
  private:
+  std::string server_url_;
   std::unique_ptr<Messenger::Stub> stub_;
 };
 

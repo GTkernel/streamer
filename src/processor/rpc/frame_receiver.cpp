@@ -2,18 +2,18 @@
 
 constexpr auto SINK = "output";
 
-FrameReceiver::FrameReceiver(std::string server_url)
-    : Processor({}, {SINK}), server_url_(server_url) {}
+FrameReceiver::FrameReceiver(const std::string listen_url)
+    : Processor({}, {SINK}), listen_url_(listen_url) {}
 
-void FrameReceiver::RunServer(std::string server_url) {
+void FrameReceiver::RunServer(const std::string listen_url) {
   grpc::ServerBuilder builder;
 
   // TODO:  Use secure credentials (e.g., SslCredentials)
-  builder.AddListeningPort(server_url, grpc::InsecureServerCredentials());
+  builder.AddListeningPort(listen_url, grpc::InsecureServerCredentials());
   builder.RegisterService(this);
 
   server_ = builder.BuildAndStart();
-  LOG(INFO) << "gRPC server started at " << server_url;
+  LOG(INFO) << "gRPC server started at " << listen_url;
   server_->Wait();
 }
 
@@ -51,7 +51,7 @@ ProcessorType FrameReceiver::GetType() const {
 StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }
 
 bool FrameReceiver::Init() {
-  std::thread server_thread([this]() { this->RunServer(this->server_url_); });
+  std::thread server_thread([this]() { this->RunServer(this->listen_url_); });
   server_thread.detach();
   return true;
 }

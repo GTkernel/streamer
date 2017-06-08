@@ -32,8 +32,7 @@ void Run() {
   auto camera = camera_manager.GetCamera(camera_name);
 
   // Set up FrameSender (sends frames over RPC)
-  auto frame_sender = new FrameSender(
-      grpc::CreateChannel(CONFIG.server, grpc::InsecureChannelCredentials()));
+  auto frame_sender = new FrameSender(CONFIG.server);
   frame_sender->SetSource(camera->GetStream());
 
   frame_sender->Start();
@@ -55,8 +54,8 @@ int main(int argc, char *argv[]) {
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("config_dir,C", po::value<string>(),
                      "The directory to find streamer's configuration");
-  desc.add_options()("server_address,s", po::value<string>()->required(),
-                     "address:port to connect to (e.g., example.com:4444)");
+  desc.add_options()("server_url,s", po::value<string>()->required(),
+                     "host:port to connect to (e.g., example.com:4444)");
   desc.add_options()("camera,c", po::value<string>()->required(),
                      "The name of the camera to use");
   desc.add_options()("duration,d", po::value<unsigned int>()->default_value(5),
@@ -86,7 +85,7 @@ int main(int argc, char *argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  CONFIG.server = vm["server_address"].as<string>();
+  CONFIG.server = vm["server_url"].as<string>();
   CONFIG.camera_name = vm["camera"].as<string>();
   CONFIG.duration = vm["duration"].as<unsigned int>();
 

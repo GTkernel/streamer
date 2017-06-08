@@ -10,22 +10,19 @@
 
 namespace pt = boost::property_tree;
 
-StreamPublisher::StreamPublisher(const string& topic_name,
-                                 const std::string address,
-                                 const unsigned int port)
+StreamPublisher::StreamPublisher(const std::string topic_name,
+                                 const std::string listen_url)
     : Processor({"input"}, {}),
       topic_name_(topic_name),
       zmq_context_{1},
       zmq_publisher_{zmq_context_, ZMQ_PUB},
-      zmq_address_(address),
-      zmq_port_(port) {
+      zmq_listen_url_(listen_url) {
   // Bind the publisher socket
-  zmq_publisher_addr_ =
-      "tcp://" + zmq_address_ + ":" + std::to_string(zmq_port_);
+  zmq_publisher_addr_ = "tcp://" + zmq_listen_url_;
   LOG(INFO) << zmq_publisher_addr_;
   try {
     zmq_publisher_.bind(zmq_publisher_addr_);
-  } catch (const zmq::error_t &e) {
+  } catch (const zmq::error_t& e) {
     LOG(FATAL) << "ZMQ bind error: " << e.what();
   }
 }

@@ -160,45 +160,46 @@ enum FrameType {
 
 //// Processor types
 enum ProcessorType {
-  PROCESSOR_TYPE_INVALID = 0,
+  PROCESSOR_TYPE_CAMERA = 0,
+  PROCESSOR_TYPE_CUSTOM,
+  PROCESSOR_TYPE_DUMMY_NN,
+  PROCESSOR_TYPE_ENCODER,
+  PROCESSOR_TYPE_FILE_WRITER,
+  PROCESSOR_TYPE_FRAME_RECEIVER,
+  PROCESSOR_TYPE_FRAME_SENDER,
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
+  PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
-  PROCESSOR_TYPE_DUMMY_NN,
-  PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_STREAM_PUBLISHER,
-  PROCESSOR_TYPE_FILE_WRITER,
-  PROCESSOR_TYPE_CUSTOM,
-
-  PROCESSOR_TYPE_CAMERA,
-  PROCESSOR_TYPE_ENCODER,
-  PROCESSOR_TYPE_DECODER,
-
-  PROCESSOR_TYPE_FRAME_SENDER,
-  PROCESSOR_TYPE_FRAME_RECEIVER
+  PROCESSOR_TYPE_INVALID
 };
 
 inline ProcessorType GetProcessorTypeByString(const std::string &str) {
-  if (str == "ImageClassifier") {
-    return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
-  } else if (str == "ImageTransformer") {
-    return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
-  } else if (str == "OpenCVFaceDetector") {
-    return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
-  } else if (str == "DummyNN") {
-    return PROCESSOR_TYPE_DUMMY_NN;
+  if (str == "Camera") {
+    return PROCESSOR_TYPE_CAMERA;
   } else if (str == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
-  } else if (str == "Camera") {
-    return PROCESSOR_TYPE_CAMERA;
+  } else if (str == "DummyNN") {
+    return PROCESSOR_TYPE_DUMMY_NN;
   } else if (str == "Encoder" || str == "VideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
   } else if (str == "FileWriter") {
     return PROCESSOR_TYPE_FILE_WRITER;
-  } else if (str == "FrameSender") {
-    return PROCESSOR_TYPE_FRAME_SENDER;
   } else if (str == "FrameReceiver") {
     return PROCESSOR_TYPE_FRAME_RECEIVER;
+  } else if (str == "FrameSender") {
+    return PROCESSOR_TYPE_FRAME_SENDER;
+  } else if (str == "ImageClassifier") {
+    return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
+  } else if (str == "ImageSegmenter") {
+    return PROCESSOR_TYPE_IMAGE_SEGMENTER;
+  } else if (str == "ImageTransformer") {
+    return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
+  } else if (str == "OpenCVFaceDetector") {
+    return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+  } else if (str == "StreamPublisher") {
+    return PROCESSOR_TYPE_STREAM_PUBLISHER;
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
