@@ -10,7 +10,8 @@
 
 #include <cppzmq/zmq.hpp>
 
-static const int DEFAULT_PUBLISHER_PORT = 5536;
+static const std::string DEFAULT_PUBLISHER_ADDRESS = "127.0.0.1";
+static const unsigned int DEFAULT_PUBLISHER_PORT = 5536;
 
 /**
  * @brief A class for publising streamer's stream to network using ZMQ.
@@ -18,6 +19,7 @@ static const int DEFAULT_PUBLISHER_PORT = 5536;
 class StreamPublisher : public Processor {
  public:
   StreamPublisher(const string &topic_name,
+                  const std::string address = DEFAULT_PUBLISHER_ADDRESS,
                   const unsigned int port = DEFAULT_PUBLISHER_PORT);
   ~StreamPublisher();
   virtual ProcessorType GetType() const override;
@@ -32,6 +34,7 @@ class StreamPublisher : public Processor {
   zmq::context_t zmq_context_;
   zmq::socket_t zmq_publisher_;
   string zmq_publisher_addr_;
+  std::string zmq_address_;
   unsigned int zmq_port_;
 };
 
