@@ -10,7 +10,7 @@ file(GLOB_RECURSE TEST_SRCS ${PROJECT_SOURCE_DIR}/test/test_*.cpp)
 if (USE_CAFFE)
   include_directories(SYSTEM ${Caffe_INCLUDE_DIRS})
 else ()
-  list(REMOVE_ITEM TEST_SRCS ${PROJECT_SOURCE_DIR}/test/test_nn_caffe.cpp)
+  list(REMOVE_ITEM TEST_SRCS ${PROJECT_SOURCE_DIR}/test/test_nne_caffe.cpp)
 endif ()
 
 if (USE_ZMQ)
