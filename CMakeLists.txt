@@ -5,15 +5,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra")
 
 # See https://github.com/opencv/opencv/issues/6542
-set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
-
-# If you want to make clion faster, uncomment this following line
-# See https://intellij-support.jetbrains.com/hc/en-us/community/posts/207110289-Best-practices-for-CMake-files-for-use-in-CLion
-set(CMAKE_CONFIGURATION_TYPES "Debug")
-
+set(CUDA_USE_STATIC_CUDA_RUNTIME false)
 
 if (APPLE)
-  set(CMAKE_MACOSX_RPATH 1)
+  set(CMAKE_MACOSX_RPATH true)
 endif ()
 
 # Prevent cmake from caching Caffe paths
@@ -41,9 +36,9 @@ if (APPLE)
 endif ()
 
 # Different backends
-set(USE_CUDA off)
-set(USE_OPENCL off)
-set(USE_CPU off)
+set(USE_CUDA false)
+set(USE_OPENCL false)
+set(USE_CPU false)
 
 option(BACKEND "device backend to run the program: cpu, cuda or opencl" cpu)
 if (BACKEND STREQUAL "cuda")
@@ -56,8 +51,7 @@ elseif (BACKEND STREQUAL "opencl")
   set(USE_OPENCL true)
   add_definitions("-D USE_OPENCL")
 elseif (BACKEND STREQUAL "cpu")
-  set(USE_CUDA off)
-  set(USE_OPENCL off)
+  set(USE_CPU true)
   add_definitions("-D CPU_ONLY")
 else ()
   message(FATAL_ERROR "Backend ${BACKEND} is invalid")
