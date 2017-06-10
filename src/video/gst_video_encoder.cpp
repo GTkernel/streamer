@@ -3,17 +3,15 @@
 //
 
 #include "gst_video_encoder.h"
+
 #include "common/context.h"
+#include "common/types.h"
 
 const static char* ENCODER_SRC_NAME = "encoder_src";
 
-ProcessorType GstVideoEncoder::GetType() const {
-  return PROCESSOR_TYPE_ENCODER;
-}
-
 GstVideoEncoder::GstVideoEncoder(int width, int height,
                                  const string& output_filename)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_ENCODER, {"input"}, {"output"}),
       width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),
@@ -27,7 +25,7 @@ GstVideoEncoder::GstVideoEncoder(int width, int height,
 }
 
 GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_ENCODER, {"input"}, {"output"}),
       width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),

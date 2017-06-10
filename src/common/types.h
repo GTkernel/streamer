@@ -172,7 +172,6 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
-  PROCESSOR_TYPE_NEURAL_NET_CONSUMER,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
   PROCESSOR_TYPE_STREAM_PUBLISHER,
   PROCESSOR_TYPE_INVALID
@@ -201,8 +200,6 @@ inline ProcessorType GetProcessorTypeByString(const std::string& str) {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
   } else if (str == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
-  } else if (str == "NeuralNetConsumer") {
-    return PROCESSOR_TYPE_NEURAL_NET_CONSUMER;
   } else if (str == "OpenCVFaceDetector") {
     return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
   } else if (str == "StreamPublisher") {

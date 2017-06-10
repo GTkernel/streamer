@@ -7,7 +7,8 @@ constexpr auto SOURCE_NAME = "input";
 NeuralNetEvaluator::NeuralNetEvaluator(
     const ModelDesc& model_desc, const Shape& input_shape,
     const std::vector<std::string>& output_layer_names)
-    : Processor({SOURCE_NAME}, {}), input_shape_(input_shape) {
+    : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME}, {}),
+      input_shape_(input_shape) {
   // Load model.
   auto& manager = ModelManager::GetInstance();
   model_ = manager.CreateModel(model_desc, input_shape_, 1);
@@ -26,10 +27,6 @@ NeuralNetEvaluator::NeuralNetEvaluator(
 
   // Prepare data buffer.
   input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float));
-}
-
-ProcessorType NeuralNetEvaluator::GetType() const {
-  return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
 }
 
 void NeuralNetEvaluator::PublishLayer(std::string layer_name) {

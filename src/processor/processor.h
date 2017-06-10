@@ -27,7 +27,7 @@ class Processor {
   friend class VimbaCameeraFrameObserver;
 #endif
  public:
-  Processor(const std::vector<string>& source_names,
+  Processor(ProcessorType type, const std::vector<string>& source_names,
             const std::vector<string>& sink_names);
   virtual ~Processor();
   /**
@@ -84,7 +84,7 @@ class Processor {
   /**
    * @brief Get the type of the processor
    */
-  virtual ProcessorType GetType() const = 0;
+  ProcessorType GetType() const;
 
  protected:
   /**
@@ -129,6 +129,9 @@ class Processor {
   // Processor stats
   // Number of processed frames
   size_t n_processed_;
+
+ private:
+  const ProcessorType type_;
 };
 
 #endif  // STREAMER_PROCESSOR_H

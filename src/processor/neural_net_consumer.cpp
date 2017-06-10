@@ -3,23 +3,19 @@
 #include "utils/utils.h"
 
 NeuralNetConsumer::NeuralNetConsumer(
-    const ModelDesc& model_desc, const Shape& input_shape,
+    ProcessorType type, const ModelDesc& model_desc, const Shape& input_shape,
     const std::vector<std::string>& output_layer_names,
     const std::vector<std::string>& source_names,
     const std::vector<std::string>& sink_names)
-    : Processor(source_names, sink_names),
+    : Processor(type, source_names, sink_names),
       output_layer_names_(output_layer_names),
       nne_(new NeuralNetEvaluator(model_desc, input_shape,
                                   output_layer_names)) {}
 
 NeuralNetConsumer::NeuralNetConsumer(
-    const std::vector<std::string>& source_names,
+    ProcessorType type, const std::vector<std::string>& source_names,
     const std::vector<std::string>& sink_names)
-    : Processor(source_names, sink_names) {}
-
-ProcessorType NeuralNetConsumer::GetType() const {
-  return PROCESSOR_TYPE_NEURAL_NET_CONSUMER;
-}
+    : Processor(type, source_names, sink_names) {}
 
 void NeuralNetConsumer::SetSource(const string& name, StreamPtr stream) {
   if (NneIsPrivate()) {

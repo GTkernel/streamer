@@ -3,12 +3,14 @@
 //
 
 #include "camera.h"
+
+#include "common/types.h"
 #include "utils/time_utils.h"
 #include "utils/utils.h"
 
 Camera::Camera(const string& name, const string& video_uri, int width,
                int height)
-    : Processor({}, {"bgr_output"}),
+    : Processor(PROCESSOR_TYPE_CAMERA, {}, {"bgr_output"}),
       name_(name),
       video_uri_(video_uri),
       width_(width),
@@ -24,8 +26,6 @@ int Camera::GetWidth() { return width_; }
 int Camera::GetHeight() { return height_; }
 
 std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
-
-ProcessorType Camera::GetType() const { return PROCESSOR_TYPE_CAMERA; }
 
 bool Camera::Capture(cv::Mat& image) {
   if (stopped_) {

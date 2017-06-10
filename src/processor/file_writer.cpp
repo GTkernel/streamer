@@ -3,10 +3,13 @@
 //
 
 #include "file_writer.h"
+
+#include "common/types.h"
 #include "utils/file_utils.h"
 
 FileWriter::FileWriter(const string& filename)
-    : Processor({"input"}, {}), filename_(filename) {}
+    : Processor(PROCESSOR_TYPE_FILE_WRITER, {"input"}, {}),
+      filename_(filename) {}
 
 bool FileWriter::Init() {
   // Create the directory of the file if not exist
@@ -49,5 +52,3 @@ void FileWriter::Process() {
     default: { STREAMER_NOT_IMPLEMENTED; }
   }
 }
-
-ProcessorType FileWriter::GetType() const { return PROCESSOR_TYPE_FILE_WRITER; }

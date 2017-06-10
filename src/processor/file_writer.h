@@ -21,8 +21,6 @@ class FileWriter : public Processor {
    */
   FileWriter(const string& filename);
 
-  virtual ProcessorType GetType() const override;
-
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;

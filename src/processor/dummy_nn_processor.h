@@ -16,7 +16,6 @@
 class DummyNNProcessor : public Processor {
  public:
   DummyNNProcessor(const ModelDesc& model_desc);
-  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;

@@ -1,5 +1,7 @@
 
 #include "processor/image_classifier.h"
+
+#include "common/types.h"
 #include "utils/math_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
@@ -7,8 +9,8 @@ constexpr auto SINK_NAME = "output";
 
 ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
                                  const Shape& input_shape, size_t num_labels)
-    : NeuralNetConsumer(model_desc, input_shape, {}, {SOURCE_NAME},
-                        {SINK_NAME}),
+    : NeuralNetConsumer(PROCESSOR_TYPE_IMAGE_CLASSIFIER, model_desc,
+                        input_shape, {}, {SOURCE_NAME}, {SINK_NAME}),
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {
   // The NeuralNetEvaluator only has one sink, but we don't know what it's
@@ -23,13 +25,10 @@ ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
 }
 
 ImageClassifier::ImageClassifier(const ModelDesc& model_desc, size_t num_labels)
-    : NeuralNetConsumer({SOURCE_NAME}, {SINK_NAME}),
+    : NeuralNetConsumer(PROCESSOR_TYPE_IMAGE_CLASSIFIER, {SOURCE_NAME},
+                        {SINK_NAME}),
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {}
-
-ProcessorType ImageClassifier::GetType() const {
-  return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
-}
 
 bool ImageClassifier::Init() { return NeuralNetConsumer::Init(); }
 

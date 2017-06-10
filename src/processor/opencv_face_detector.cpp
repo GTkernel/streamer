@@ -4,8 +4,10 @@
 
 #include "opencv_face_detector.h"
 
+#include "common/types.h"
+
 OpenCVFaceDetector::OpenCVFaceDetector(string classifier_xml_path)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR, {"input"}, {"output"}),
       classifier_xml_path_(classifier_xml_path) {}
 
 bool OpenCVFaceDetector::Init() {
@@ -45,8 +47,4 @@ void OpenCVFaceDetector::Process() {
 
   PushFrame("output", new MetadataFrame(results_rect, frame->GetOriginalImage(),
                                         frame->GetStartTime()));
-}
-
-ProcessorType OpenCVFaceDetector::GetType() const {
-  return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
 }

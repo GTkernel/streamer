@@ -1,9 +1,12 @@
 #include "frame_receiver.h"
 
+#include "common/types.h"
+
 constexpr auto SINK = "output";
 
 FrameReceiver::FrameReceiver(const std::string listen_url)
-    : Processor({}, {SINK}), listen_url_(listen_url) {}
+    : Processor(PROCESSOR_TYPE_FRAME_RECEIVER, {}, {SINK}),
+      listen_url_(listen_url) {}
 
 void FrameReceiver::RunServer(const std::string listen_url) {
   grpc::ServerBuilder builder;
@@ -42,10 +45,6 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
   PushFrame(SINK, new ImageFrame(image, image));
 
   return grpc::Status::OK;
-}
-
-ProcessorType FrameReceiver::GetType() const {
-  return PROCESSOR_TYPE_FRAME_RECEIVER;
 }
 
 StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }

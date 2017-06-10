@@ -17,16 +17,17 @@ class NeuralNetConsumer : public Processor {
  public:
   // Automatically constructs a NeuralNetEvaluator, which will be hidden and
   // managed automatically.
-  NeuralNetConsumer(const ModelDesc& model_desc, const Shape& input_shape,
+  NeuralNetConsumer(ProcessorType type, const ModelDesc& model_desc,
+                    const Shape& input_shape,
                     const std::vector<std::string>& output_layer_names = {},
                     const std::vector<std::string>& source_names = {},
                     const std::vector<std::string>& sink_names = {});
   // Assumes that the calling code will construct and connect a
   // NeuralNetEvaluator, which will not be managed automatically.
-  NeuralNetConsumer(const std::vector<std::string>& source_names = {},
+  NeuralNetConsumer(ProcessorType type,
+                    const std::vector<std::string>& source_names = {},
                     const std::vector<std::string>& sink_names = {});
 
-  virtual ProcessorType GetType() const override;
   virtual void SetSource(const std::string& name, StreamPtr stream) override;
   virtual double GetSlidingLatencyMs() const override;
   virtual double GetAvgLatencyMs() const override;

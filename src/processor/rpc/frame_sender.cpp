@@ -1,16 +1,15 @@
 #include "frame_sender.h"
 
+#include "common/types.h"
+
 constexpr auto SOURCE = "input";
 
 FrameSender::FrameSender(const std::string server_url)
-    : Processor({SOURCE}, {}), server_url_(server_url) {
+    : Processor(PROCESSOR_TYPE_FRAME_SENDER, {SOURCE}, {}),
+      server_url_(server_url) {
   auto channel =
       grpc::CreateChannel(server_url_, grpc::InsecureChannelCredentials());
   stub_ = Messenger::NewStub(channel);
-}
-
-ProcessorType FrameSender::GetType() const {
-  return PROCESSOR_TYPE_FRAME_SENDER;
 }
 
 void FrameSender::SetSource(StreamPtr stream) {

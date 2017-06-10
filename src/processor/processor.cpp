@@ -7,8 +7,10 @@
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
 
-Processor::Processor(const std::vector<string>& source_names,
-                     const std::vector<string>& sink_names) {
+Processor::Processor(ProcessorType type,
+                     const std::vector<string>& source_names,
+                     const std::vector<string>& sink_names)
+    : type_(type) {
   for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
     source_frame_cache_.insert({source_name, nullptr});
@@ -126,6 +128,8 @@ double Processor::GetSlidingLatencyMs() const { return sliding_latency_; }
 double Processor::GetAvgLatencyMs() const { return avg_latency_; }
 
 double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
+
+ProcessorType Processor::GetType() const { return type_; }
 
 void Processor::PushFrame(const string& sink_name, Frame* frame) {
   CHECK(sinks_.count(sink_name) != 0);

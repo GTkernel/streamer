@@ -8,11 +8,13 @@
 #include <boost/property_tree/ptree.hpp>
 #include <cppzmq/zhelper.hpp>
 
+#include "common/types.h"
+
 namespace pt = boost::property_tree;
 
 StreamPublisher::StreamPublisher(const std::string topic_name,
                                  const std::string listen_url)
-    : Processor({"input"}, {}),
+    : Processor(PROCESSOR_TYPE_STREAM_PUBLISHER, {"input"}, {}),
       topic_name_(topic_name),
       zmq_context_{1},
       zmq_publisher_{zmq_context_, ZMQ_PUB},
@@ -30,10 +32,6 @@ StreamPublisher::StreamPublisher(const std::string topic_name,
 StreamPublisher::~StreamPublisher() {
   // Tear down the publisher socket
   zmq_publisher_.unbind(zmq_publisher_addr_);
-}
-
-ProcessorType StreamPublisher::GetType() const {
-  return PROCESSOR_TYPE_STREAM_PUBLISHER;
 }
 
 bool StreamPublisher::Init() { return true; }

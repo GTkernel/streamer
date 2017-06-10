@@ -20,7 +20,6 @@ class StreamPublisher : public Processor {
   StreamPublisher(const std::string topic_name,
                   const std::string listen_url = DEFAULT_ZMQ_LISTEN_URL);
   ~StreamPublisher();
-  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;

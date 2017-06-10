@@ -20,8 +20,6 @@ class ImageClassifier : public NeuralNetConsumer {
   // NeuralNetEvaluator, which is not managed automatically.
   ImageClassifier(const ModelDesc& model_desc, size_t num_labels = 5);
 
-  virtual ProcessorType GetType() const override;
-
  protected:
   virtual bool Init() override;
   virtual void Process() override;

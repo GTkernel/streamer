@@ -7,7 +7,7 @@
 
 ImageTransformer::ImageTransformer(const Shape& target_shape,
                                    bool subtract_mean)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {"input"}, {"output"}),
       target_shape_(target_shape),
       subtract_mean_(subtract_mean) {
   auto mean_colors = ModelManager::GetInstance().GetMeanColors();
@@ -76,7 +76,3 @@ void ImageTransformer::Process() {
 
 bool ImageTransformer::Init() { return true; }
 bool ImageTransformer::OnStop() { return true; }
-
-ProcessorType ImageTransformer::GetType() const {
-  return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
-}

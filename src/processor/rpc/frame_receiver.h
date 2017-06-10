@@ -11,7 +11,6 @@ class FrameReceiver final : public Processor, public Messenger::Service {
  public:
   FrameReceiver(const std::string listen_url);
 
-  ProcessorType GetType() const override;
   StreamPtr GetSink();
   StreamPtr GetSink(const string& name) = delete;
 

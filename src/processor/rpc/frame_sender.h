@@ -11,7 +11,6 @@ class FrameSender : public Processor {
  public:
   FrameSender(const std::string server_url);
 
-  ProcessorType GetType() const override;
   void SetSource(StreamPtr stream);
   void SetSource(const string& name, StreamPtr stream) override;
 

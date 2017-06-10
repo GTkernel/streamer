@@ -8,8 +8,6 @@ class ImageSegmenter : public Processor {
  public:
   ImageSegmenter(const ModelDesc& model_desc, Shape input_shape);
 
-  virtual ProcessorType GetType() const override;
-
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;

@@ -18,7 +18,6 @@ class OpenCVFaceDetector : public Processor {
   OpenCVFaceDetector(
       string classifier_xml_path =
           "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml");
-  virtual ProcessorType GetType() const override;
 
  protected:
   virtual bool Init() override;

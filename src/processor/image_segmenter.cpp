@@ -1,8 +1,11 @@
+
 #include "image_segmenter.h"
+
+#include "common/types.h"
 #include "model/model_manager.h"
 
 ImageSegmenter::ImageSegmenter(const ModelDesc& model_desc, Shape input_shape)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_IMAGE_SEGMENTER, {"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape) {}
 
@@ -90,8 +93,4 @@ void ImageSegmenter::Process() {
   PushFrame("output", new ImageFrame(colored_output, frame->GetOriginalImage(),
                                      frame->GetStartTime()));
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
-}
-
-ProcessorType ImageSegmenter::GetType() const {
-  return PROCESSOR_TYPE_IMAGE_SEGMENTER;
 }
