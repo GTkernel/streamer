@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/26/16.
 //
 
-#ifndef STREAMER_STREAM_H
-#define STREAMER_STREAM_H
+#ifndef STREAMER_STREAM_STREAM_H_
+#define STREAMER_STREAM_STREAM_H_
 
 #include "common/common.h"
 #include "frame.h"
@@ -91,4 +91,4 @@ class Stream {
   std::mutex stream_lock_;
 };
 
-#endif  // STREAMER_STREAM_H
+#endif  // STREAMER_STREAM_STREAM_H_

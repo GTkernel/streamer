@@ -2,8 +2,8 @@
 // Created by Ran Xian on 8/5/16.
 //
 
-#ifndef STREAMER_DATA_BUFFER_H
-#define STREAMER_DATA_BUFFER_H
+#ifndef STREAMER_COMMON_DATA_BUFFER_H_
+#define STREAMER_COMMON_DATA_BUFFER_H_
 
 #include <glog/logging.h>
 #include <cstdlib>
@@ -98,4 +98,4 @@ class DataBuffer {
   void* buffer_ptr_;
 };
 
-#endif  // STREAMER_DATA_BUFFER_H
+#endif  // STREAMER_COMMON_DATA_BUFFER_H_

@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/6/16.
 //
 
-#ifndef STREAMER_VIMBA_CAMERA_H
-#define STREAMER_VIMBA_CAMERA_H
+#ifndef STREAMER_CAMERA_VIMBA_CAMERA_H_
+#define STREAMER_CAMERA_VIMBA_CAMERA_H_
 
 #include "camera.h"
 
@@ -84,4 +84,4 @@ class VimbaCamera : public Camera {
   VmbAPI::CameraPtr camera_;
 };
 
-#endif  // STREAMER_VIMBA_CAMERA_H
+#endif  // STREAMER_CAMERA_VIMBA_CAMERA_H_

@@ -5,8 +5,8 @@
 #include "camera/camera.h"
 #include "processor.h"
 
-#ifndef STREAMER_PROCESSOR_FACTORY_H
-#define STREAMER_PROCESSOR_FACTORY_H
+#ifndef STREAMER_PROCESSOR_PROCESSOR_FACTORY_H_
+#define STREAMER_PROCESSOR_PROCESSOR_FACTORY_H_
 
 class ProcessorFactory {
  public:
@@ -36,4 +36,4 @@ class ProcessorFactory {
 #endif
 };
 
-#endif  // STREAMER_PROCESSOR_FACTORY_H
+#endif  // STREAMER_PROCESSOR_PROCESSOR_FACTORY_H_

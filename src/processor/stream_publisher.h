@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/9/16.
 //
 
-#ifndef STREAMER_STREAMPUBLISHER_H
-#define STREAMER_STREAMPUBLISHER_H
+#ifndef STREAMER_PROCESSOR_STREAM_PUBLISHER_H_
+#define STREAMER_PROCESSOR_STREAM_PUBLISHER_H_
 
 #include "common/common.h"
 #include "processor.h"
@@ -34,4 +34,4 @@ class StreamPublisher : public Processor {
   std::string zmq_listen_url_;
 };
 
-#endif  // STREAMER_STREAMPUBLISHER_H
+#endif  // STREAMER_PROCESSOR_STREAM_PUBLISHER_H_

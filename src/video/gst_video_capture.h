@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/22/16.
 //
 
-#ifndef TX1_DNN_GSTVIDEOCAPTURE_H
-#define TX1_DNN_GSTVIDEOCAPTURE_H
+#ifndef STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_
+#define STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_
 
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
@@ -60,4 +60,4 @@ class GstVideoCapture {
   string decoder_element_;
 };
 
-#endif  // TX1_DNN_GSTVIDEOCAPTURE_H
+#endif  // STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_

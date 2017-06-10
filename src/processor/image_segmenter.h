@@ -1,8 +1,8 @@
 #include "model/model.h"
 #include "processor.h"
 
-#ifndef STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
-#define STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
+#ifndef STREAMER_PROCESSOR_IMAGE_SEGMENTER_H_
+#define STREAMER_PROCESSOR_IMAGE_SEGMENTER_H_
 
 class ImageSegmenter : public Processor {
  public:
@@ -21,4 +21,4 @@ class ImageSegmenter : public Processor {
   cv::Mat mean_image_;
 };
 
-#endif
+#endif  // STREAMER_PROCESSOR_IMAGE_SEGMENTER_H_

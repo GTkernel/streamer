@@ -1,5 +1,6 @@
-#ifndef STREAMER_FRAME_RECEIVER_H
-#define STREAMER_FRAME_RECEIVER_H
+
+#ifndef STREAMER_PROCESSOR_RPC_FRAME_RECEIVER_H_
+#define STREAMER_PROCESSOR_RPC_FRAME_RECEIVER_H_
 
 #include <grpc++/grpc++.h>
 
@@ -29,4 +30,4 @@ class FrameReceiver final : public Processor, public Messenger::Service {
   std::unique_ptr<grpc::Server> server_;
 };
 
-#endif  // STREAMER_FRAME_RECEIVER_H
+#endif  // STREAMER_PROCESSOR_RPC_FRAME_RECEIVER_H_

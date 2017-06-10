@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/24/16.
 //
 
-#ifndef STREAMER_MODEL_CONTROLLER_H
-#define STREAMER_MODEL_CONTROLLER_H
+#ifndef STREAMER_MODEL_MODEL_MANAGER_H_
+#define STREAMER_MODEL_MODEL_MANAGER_H_
 
 #include "common/common.h"
 #include "model.h"
@@ -33,4 +33,4 @@ class ModelManager {
   std::unordered_map<string, ModelDesc> model_descs_;
 };
 
-#endif  // STREAMER_MODEL_CONTROLLER_H
+#endif  // STREAMER_MODEL_MODEL_MANAGER_H_

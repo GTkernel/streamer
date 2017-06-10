@@ -1,6 +1,6 @@
 
-#ifndef STREAMER_IMAGE_CLASSIFIER_H
-#define STREAMER_IMAGE_CLASSIFIER_H
+#ifndef STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_
+#define STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_
 
 #include "common/types.h"
 #include "model/model.h"
@@ -35,4 +35,4 @@ class ImageClassifier : public NeuralNetConsumer {
   std::vector<std::string> labels_;
 };
 
-#endif  // STREAMER_IMAGE_CLASSIFIER_H
+#endif  // STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_

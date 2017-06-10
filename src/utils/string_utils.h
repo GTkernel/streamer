@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/25/16.
 //
 
-#ifndef STREAMER_STRINGUTILS_H
-#define STREAMER_STRINGUTILS_H
+#ifndef STREAMER_UTILS_STRING_UTILS_H_
+#define STREAMER_UTILS_STRING_UTILS_H_
 
 #include <sstream>
 
@@ -108,4 +108,4 @@ inline size_t StringToSizet(const string& str) {
   return s;
 }
 
-#endif  // STREAMER_STRINGUTILS_H
+#endif  // STREAMER_UTILS_STRING_UTILS_H_

@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_CUDA_UTILS_H
-#define STREAMER_CUDA_UTILS_H
+#ifndef STREAMER_UTILS_CUDA_UTILS_H_
+#define STREAMER_UTILS_CUDA_UTILS_H_
 
 #include "common/common.h"
 
@@ -35,4 +35,4 @@ inline void GetCUDAGpus(std::vector<int>& gpus) {
   }
 }
 
-#endif  // STREAMER_CUDA_UTILS_H
+#endif  // STREAMER_UTILS_CUDA_UTILS_H_

@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/5/16.
 //
 
-#ifndef STREAMER_PIPELINE_H
-#define STREAMER_PIPELINE_H
+#ifndef STREAMER_PIPELINE_PIPELINE_H_
+#define STREAMER_PIPELINE_PIPELINE_H_
 
 #include "common/common.h"
 #include "processor/processor.h"
@@ -46,4 +46,4 @@ class Pipeline {
       reverse_dependency_graph_;
 };
 
-#endif  // STREAMER_PIPELINE_H
+#endif  // STREAMER_PIPELINE_PIPELINE_H_

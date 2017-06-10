@@ -1,5 +1,6 @@
-#ifndef STREAMER_FRAME_SENDER_H
-#define STREAMER_FRAME_SENDER_H
+
+#ifndef STREAMER_PROCESSOR_RPC_FRAME_SENDER_H_
+#define STREAMER_PROCESSOR_RPC_FRAME_SENDER_H_
 
 #include <grpc++/grpc++.h>
 
@@ -24,4 +25,4 @@ class FrameSender : public Processor {
   std::unique_ptr<Messenger::Stub> stub_;
 };
 
-#endif  // STREAMER_FRAME_SENDER_H
+#endif  // STREAMER_PROCESSOR_RPC_FRAME_SENDER_H_

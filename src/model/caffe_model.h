@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/29/16.
 //
 
-#ifndef STREAMER_CAFFE_MODEL_H
-#define STREAMER_CAFFE_MODEL_H
+#ifndef STREAMER_MODEL_CAFFE_MODEL_H_
+#define STREAMER_MODEL_CAFFE_MODEL_H_
 
 #include <caffe/caffe.hpp>
 
@@ -31,4 +31,4 @@ class CaffeModel : public Model {
   static cv::Mat BlobToMat4d(caffe::Blob<DType>* src);
 };
 
-#endif  // STREAMER_CAFFE_MODEL_H
+#endif  // STREAMER_MODEL_CAFFE_MODEL_H_

@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
 
-#ifndef STREAMER_FRAME_H
-#define STREAMER_FRAME_H
+#ifndef STREAMER_STREAM_FRAME_H_
+#define STREAMER_STREAM_FRAME_H_
 
 #include "json/json.hpp"
 
@@ -86,4 +86,4 @@ class LayerFrame : public Frame {
   cv::Mat activations_;
 };
 
-#endif  // STREAMER_FRAME_H
+#endif  // STREAMER_STREAM_FRAME_H_

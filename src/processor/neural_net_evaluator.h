@@ -1,5 +1,6 @@
-#ifndef STREAMER_NEURAL_NET_EVALUATOR_H
-#define STREAMER_NEURAL_NET_EVALUATOR_H
+
+#ifndef STREAMER_PROCESSOR_NEURAL_NET_EVALUATOR_H_
+#define STREAMER_PROCESSOR_NEURAL_NET_EVALUATOR_H_
 
 #include "common/types.h"
 #include "model/model.h"
@@ -44,4 +45,4 @@ class NeuralNetEvaluator : public Processor {
   std::unique_ptr<Model> model_;
 };
 
-#endif  // STREAMER_NEURAL_NET_EVALUATOR_H
+#endif  // STREAMER_PROCESSOR_NEURAL_NET_EVALUATOR_H_

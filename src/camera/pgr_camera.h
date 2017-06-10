@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/25/16.
 //
 
-#ifndef STREAMER_PGR_CAMERA_H
-#define STREAMER_PGR_CAMERA_H
+#ifndef STREAMER_CAMERA_PGR_CAMERA_H_
+#define STREAMER_CAMERA_PGR_CAMERA_H_
 
 #include <flycapture/FlyCapture2.h>
 
@@ -80,4 +80,4 @@ class PGRCamera : public Camera {
   std::mutex camera_lock_;
 };
 
-#endif  // STREAMER_PGR_CAMERA_H
+#endif  // STREAMER_CAMERA_PGR_CAMERA_H_

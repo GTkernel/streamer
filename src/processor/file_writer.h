@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/13/16.
 //
 
-#ifndef STREAMER_FILE_WRITER_H
-#define STREAMER_FILE_WRITER_H
+#ifndef STREAMER_PROCESSOR_FILE_WRITER_H_
+#define STREAMER_PROCESSOR_FILE_WRITER_H_
 
 #include <stdlib.h>
 #include <fstream>
@@ -31,4 +31,4 @@ class FileWriter : public Processor {
   std::ofstream file_;
 };
 
-#endif  // STREAMER_FILE_WRITER_H
+#endif  // STREAMER_PROCESSOR_FILE_WRITER_H_

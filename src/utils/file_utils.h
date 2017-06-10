@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/16/16.
 //
 
-#ifndef STREAMER_FILE_UTILS_H
-#define STREAMER_FILE_UTILS_H
+#ifndef STREAMER_UTILS_FILE_UTILS_H_
+#define STREAMER_UTILS_FILE_UTILS_H_
 
 #include <boost/filesystem.hpp>
 
@@ -52,4 +52,4 @@ inline size_t GetFileSize(const string& path) {
   return size;
 }
 
-#endif  // STREAMER_FILE_UTILS_H
+#endif  // STREAMER_UTILS_FILE_UTILS_H_

@@ -1,5 +1,6 @@
-#ifndef STREAMER_RPC_SERIALIZATION_H
-#define STREAMER_RPC_SERIALIZATION_H
+
+#ifndef STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
+#define STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -39,4 +40,4 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
 }  // namespace serialization
 }  // namespace boost
 
-#endif  // STREAMER_RPC_SERIALIZATION_H
+#endif  // STREAMER_PROCESSOR_RPC_SERIALIZATION_H_

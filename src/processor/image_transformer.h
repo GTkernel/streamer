@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_IMAGETRANSFORMPROCESSOR_H
-#define STREAMER_IMAGETRANSFORMPROCESSOR_H
+#ifndef STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_
+#define STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_
 
 #include "common/types.h"
 #include "processor.h"
@@ -31,4 +31,4 @@ class ImageTransformer : public Processor {
   cv::Mat sample_normalized_;
 };
 
-#endif  // STREAMER_IMAGETRANSFORMPROCESSOR_H
+#endif  // STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_

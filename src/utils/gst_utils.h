@@ -2,8 +2,9 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/16/16.
 //
 
-#ifndef STREAMER_GST_UTILS_H
-#define STREAMER_GST_UTILS_H
+#ifndef STREAMER_UTILS_GST_UTILS_H_
+#define STREAMER_UTILS_GST_UTILS_H_
+
 #include <gst/gst.h>
 #include "common/common.h"
 
@@ -19,4 +20,4 @@ inline bool IsGstElementExists(const string& element) {
   return exists;
 }
 
-#endif  // STREAMER_FILE_UTILS_H
+#endif  // STREAMER_UTILS_GST_UTILS_H_

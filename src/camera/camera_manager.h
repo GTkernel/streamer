@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
 //
 
-#ifndef STREAMER_CAMERA_MANAGER_H
-#define STREAMER_CAMERA_MANAGER_H
+#ifndef STREAMER_CAMERA_CAMERA_MANAGER_H_
+#define STREAMER_CAMERA_CAMERA_MANAGER_H_
 
 #include <unordered_map>
 #include "camera/camera.h"
@@ -35,4 +35,4 @@ class CameraManager {
   std::unordered_map<string, std::shared_ptr<Camera>> cameras_;
 };
 
-#endif  // STREAMER_CAMERA_MANAGER_H
+#endif  // STREAMER_CAMERA_CAMERA_MANAGER_H_

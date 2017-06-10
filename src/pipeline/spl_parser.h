@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/5/16.
 //
 
-#ifndef STREAMER_PARSER_H
-#define STREAMER_PARSER_H
+#ifndef STREAMER_PIPELINE_SPL_PARSER_H_
+#define STREAMER_PIPELINE_SPL_PARSER_H_
 
 #include "common/common.h"
 
@@ -38,4 +38,4 @@ class SPLParser {
   bool ValidName(const string& str);
 };
 
-#endif  // STREAMER_PARSER_H
+#endif  // STREAMER_PIPELINE_SPL_PARSER_H_

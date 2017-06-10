@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_UTILS_H
-#define STREAMER_UTILS_H
+#ifndef STREAMER_UTILS_UTILS_H_
+#define STREAMER_UTILS_UTILS_H_
 
 #include "cuda_utils.h"
 #include "file_utils.h"
@@ -68,4 +68,4 @@ inline void ExecuteAndCheck(std::string command) {
   }
 }
 
-#endif  // STREAMER_UTILS_H
+#endif  // STREAMER_UTILS_UTILS_H_

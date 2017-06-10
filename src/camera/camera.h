@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
 //
 
-#ifndef STREAMER_CAMERA_H
-#define STREAMER_CAMERA_H
+#ifndef STREAMER_CAMERA_CAMERA_H_
+#define STREAMER_CAMERA_CAMERA_H_
 
 #include "common/common.h"
 #include "processor/processor.h"
@@ -77,4 +77,4 @@ class Camera : public Processor {
   std::shared_ptr<Stream> stream_;
 };
 
-#endif  // STREAMER_CAMERA_H
+#endif  // STREAMER_CAMERA_CAMERA_H_

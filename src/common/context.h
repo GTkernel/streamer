@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/16/16.
 //
 
-#ifndef STREAMER_CONTEXT_H
-#define STREAMER_CONTEXT_H
+#ifndef STREAMER_COMMON_CONTEXT_H_
+#define STREAMER_COMMON_CONTEXT_H_
 
 #include <unordered_map>
 
@@ -165,4 +165,4 @@ class Context {
   Timer timer_;
 };
 
-#endif
+#endif  // STREAMER_COMMON_CONTEXT_H_

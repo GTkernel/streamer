@@ -1,6 +1,6 @@
 
-#ifndef STREAMER_NEURAL_NET_CONSUMER_H
-#define STREAMER_NEURAL_NET_CONSUMER_H
+#ifndef STREAMER_PROCESSOR_NEURAL_NET_CONSUMER_H_
+#define STREAMER_PROCESSOR_NEURAL_NET_CONSUMER_H_
 
 #include "common/types.h"
 #include "model/model.h"
@@ -45,4 +45,4 @@ class NeuralNetConsumer : public Processor {
   NeuralNetEvaluator* nne_;
 };
 
-#endif  // STREAMER_NEURAL_NET_CONSUMER_H
+#endif  // STREAMER_PROCESSOR_NEURAL_NET_CONSUMER_H_

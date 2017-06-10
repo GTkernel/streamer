@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/25/16.
 //
 
-#ifndef STREAMER_IP_CAMERA_H
-#define STREAMER_IP_CAMERA_H
+#ifndef STREAMER_CAMERA_GST_CAMERA_H_
+#define STREAMER_CAMERA_GST_CAMERA_H_
 
 #include "camera.h"
 #include "video/gst_video_capture.h"
@@ -47,4 +47,4 @@ class GSTCamera : public Camera {
   GstVideoCapture capture_;
 };
 
-#endif  // STREAMER_IP_CAMERA_H
+#endif  // STREAMER_CAMERA_GST_CAMERA_H_

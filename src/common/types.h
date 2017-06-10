@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/26/16.
 //
 
-#ifndef STREAMER_TYPE_H
-#define STREAMER_TYPE_H
+#ifndef STREAMER_COMMON_TYPE_H_
+#define STREAMER_COMMON_TYPE_H_
 
 #include <cstdlib>
 #include <memory>
@@ -227,4 +227,4 @@ struct float16 {
 };
 #endif
 
-#endif  // STREAMER_TYPE_H
+#endif  // STREAMER_COMMON_TYPE_H_

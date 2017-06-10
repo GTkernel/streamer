@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_PROCESSOR_H
-#define STREAMER_PROCESSOR_H
+#ifndef STREAMER_PROCESSOR_PROCESSOR_H_
+#define STREAMER_PROCESSOR_PROCESSOR_H_
 
 #include <atomic>
 #include <thread>
@@ -134,4 +134,4 @@ class Processor {
   const ProcessorType type_;
 };
 
-#endif  // STREAMER_PROCESSOR_H
+#endif  // STREAMER_PROCESSOR_PROCESSOR_H_

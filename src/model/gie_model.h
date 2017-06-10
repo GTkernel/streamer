@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/29/16.
 //
 
-#ifndef STREAMER_GIE_MODEL_H
-#define STREAMER_GIE_MODEL_H
+#ifndef STREAMER_MODEL_GIE_MODEL_H_
+#define STREAMER_MODEL_GIE_MODEL_H_
 
 #include "gie_inferer.h"
 #include "model.h"
@@ -25,4 +25,4 @@ class GIEModel : public Model {
   std::unique_ptr<GIEInferer<float>> inferer_;
 };
 
-#endif  // STREAMER_GIE_MODEL_H
+#endif  // STREAMER_MODEL_GIE_MODEL_H_

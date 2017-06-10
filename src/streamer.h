@@ -1,3 +1,7 @@
+
+#ifndef STREAMER_STREAMER_H_
+#define STREAMER_STREAMER_H_
+
 #include "camera/camera_manager.h"
 #include "common/common.h"
 #include "common/context.h"
@@ -17,3 +21,5 @@
 #include "processor/processor_factory.h"
 #include "utils/utils.h"
 #include "video/gst_video_encoder.h"
+
+#endif  // STREAMER_STREAMER_H_

@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/24/16.
 //
 
-#ifndef STREAMER_MODEL_H
-#define STREAMER_MODEL_H
+#ifndef STREAMER_MODEL_MODEL_H_
+#define STREAMER_MODEL_MODEL_H_
 
 #include <common/data_buffer.h>
 #include "common/common.h"
@@ -82,4 +82,4 @@ class Model {
   size_t batch_size_;
 };
 
-#endif  // STREAMER_MODEL_H
+#endif  // STREAMER_MODEL_MODEL_H_
