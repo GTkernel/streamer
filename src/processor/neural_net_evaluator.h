@@ -27,6 +27,9 @@ class NeuralNetEvaluator : public Processor {
   // the names of the layers that it is publishing.
   const std::vector<std::string> GetSinkNames() const;
 
+  static std::shared_ptr<NeuralNetEvaluator> Create(
+      const FactoryParamsType& params);
+
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;

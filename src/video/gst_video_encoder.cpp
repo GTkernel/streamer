@@ -4,8 +4,10 @@
 
 #include "gst_video_encoder.h"
 
+#include <stdlib.h>
+
 #include "common/context.h"
-#include "common/types.h"
+#include "utils/string_utils.h"
 
 const static char* ENCODER_SRC_NAME = "encoder_src";
 
@@ -36,6 +38,31 @@ GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
   CHECK(width > 0 && height > 0) << "Width or height is invalid";
   // Encoder
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
+}
+
+std::shared_ptr<GstVideoEncoder> GstVideoEncoder::Create(
+    const FactoryParamsType& params) {
+  int port = -1;
+  string filename;
+
+  if (params.count("port") != 0) {
+    port = atoi(params.at("port").c_str());
+  } else if (params.count("filename") != 0) {
+    filename = params.at("filename");
+  } else {
+    LOG(FATAL) << "At least port or filename is needed for encoder";
+  }
+
+  int width = atoi(params.at("width").c_str());
+  int height = atoi(params.at("height").c_str());
+  CHECK(width >= 0 && height >= 0) << "Width (" << width << ") and height ("
+                                   << height << ") must not be negative.";
+
+  if (port > 0) {
+    return std::make_shared<GstVideoEncoder>(width, height, port);
+  } else {
+    return std::make_shared<GstVideoEncoder>(width, height, filename);
+  }
 }
 
 void GstVideoEncoder::NeedDataCB(GstAppSrc*, guint, gpointer user_data) {

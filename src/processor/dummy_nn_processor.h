@@ -5,8 +5,9 @@
 #ifndef STREAMER_PROCESSOR_DUMMY_NN_PROCESSOR_H_
 #define STREAMER_PROCESSOR_DUMMY_NN_PROCESSOR_H_
 
+#include "common/types.h"
 #include "model/model.h"
-#include "processor.h"
+#include "processor/processor.h"
 
 /**
  * @brief A processor that only runs the forward pass of a given network, do
@@ -16,6 +17,9 @@
 class DummyNNProcessor : public Processor {
  public:
   DummyNNProcessor(const ModelDesc& model_desc);
+
+  static std::shared_ptr<DummyNNProcessor> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

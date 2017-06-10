@@ -1,6 +1,5 @@
-#include "frame_receiver.h"
 
-#include "common/types.h"
+#include "frame_receiver.h"
 
 constexpr auto SINK = "output";
 
@@ -45,6 +44,11 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
   PushFrame(SINK, new ImageFrame(image, image));
 
   return grpc::Status::OK;
+}
+
+std::shared_ptr<FrameReceiver> FrameReceiver::Create(
+    const FactoryParamsType& params) {
+  return std::make_shared<FrameReceiver>(params.at("listen_url"));
 }
 
 StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }

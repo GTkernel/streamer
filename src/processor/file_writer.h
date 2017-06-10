@@ -8,7 +8,8 @@
 #include <stdlib.h>
 #include <fstream>
 
-#include "processor.h"
+#include "common/types.h"
+#include "processor/processor.h"
 
 /**
  * @brief A file writer that writes raw bytes to a file.
@@ -20,6 +21,8 @@ class FileWriter : public Processor {
    * @param filename The name of the file.
    */
   FileWriter(const string& filename);
+
+  static std::shared_ptr<FileWriter> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

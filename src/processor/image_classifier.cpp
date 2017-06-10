@@ -1,8 +1,9 @@
 
-#include "processor/image_classifier.h"
+#include "image_classifier.h"
 
-#include "common/types.h"
+#include "model/model_manager.h"
 #include "utils/math_utils.h"
+#include "utils/string_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
@@ -29,6 +30,28 @@ ImageClassifier::ImageClassifier(const ModelDesc& model_desc, size_t num_labels)
                         {SINK_NAME}),
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {}
+
+std::shared_ptr<ImageClassifier> ImageClassifier::Create(
+    const FactoryParamsType& params) {
+  ModelManager& model_manager = ModelManager::GetInstance();
+  std::string model_name = params.at("model");
+  CHECK(model_manager.HasModel(model_name));
+  ModelDesc model_desc = model_manager.GetModelDesc(model_name);
+  size_t num_labels = StringToSizet(params.at("num_labels"));
+
+  auto num_channels_pair = params.find("num_channels");
+  if (num_channels_pair == params.end()) {
+    return std::make_shared<ImageClassifier>(model_desc, num_labels);
+  } else {
+    // If num_channels is specified, then we need to use the constructor that
+    // creates a hidden NeuralNetEvaluator.
+    size_t num_channels = StringToSizet(num_channels_pair->second);
+    Shape input_shape = Shape(num_channels, model_desc.GetInputWidth(),
+                              model_desc.GetInputHeight());
+    return std::make_shared<ImageClassifier>(model_desc, input_shape,
+                                             num_labels);
+  }
+}
 
 bool ImageClassifier::Init() { return NeuralNetConsumer::Init(); }
 

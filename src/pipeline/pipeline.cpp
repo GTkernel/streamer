@@ -13,8 +13,7 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
     switch (stmt.statement_type) {
       case SPL_STATEMENT_PROCESSOR: {
         std::shared_ptr<Processor> processor;
-        processor =
-            ProcessorFactory::CreateInstance(stmt.processor_type, stmt.params);
+        processor = ProcessorFactory::Create(stmt.processor_type, stmt.params);
         pipeline->processors_.insert({stmt.processor_name, processor});
         pipeline->dependency_graph_.insert({processor.get(), {}});
         pipeline->reverse_dependency_graph_.insert({processor.get(), {}});

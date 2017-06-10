@@ -10,7 +10,8 @@
 #endif  // USE_CUDA
 #include <opencv2/objdetect/objdetect.hpp>
 #include "common/common.h"
-#include "processor.h"
+#include "common/types.h"
+#include "processor/processor.h"
 
 class OpenCVFaceDetector : public Processor {
  public:
@@ -18,6 +19,9 @@ class OpenCVFaceDetector : public Processor {
   OpenCVFaceDetector(
       string classifier_xml_path =
           "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml");
+
+  static std::shared_ptr<OpenCVFaceDetector> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

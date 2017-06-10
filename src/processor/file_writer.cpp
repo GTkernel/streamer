@@ -4,12 +4,16 @@
 
 #include "file_writer.h"
 
-#include "common/types.h"
 #include "utils/file_utils.h"
 
 FileWriter::FileWriter(const string& filename)
     : Processor(PROCESSOR_TYPE_FILE_WRITER, {"input"}, {}),
       filename_(filename) {}
+
+std::shared_ptr<FileWriter> FileWriter::Create(
+    const FactoryParamsType& params) {
+  return std::make_shared<FileWriter>(params.at("filename"));
+}
 
 bool FileWriter::Init() {
   // Create the directory of the file if not exist

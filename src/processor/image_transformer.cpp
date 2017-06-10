@@ -3,7 +3,10 @@
 //
 
 #include "image_transformer.h"
-#include <streamer.h>
+
+#include <stdlib.h>
+
+#include "model/model_manager.h"
 
 ImageTransformer::ImageTransformer(const Shape& target_shape,
                                    bool subtract_mean)
@@ -15,6 +18,25 @@ ImageTransformer::ImageTransformer(const Shape& target_shape,
       cv::Mat(cv::Size(target_shape.width, target_shape.height),
               target_shape.channel == 3 ? CV_32FC3 : CV_32FC1,
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
+}
+
+std::shared_ptr<ImageTransformer> ImageTransformer::Create(
+    const FactoryParamsType& params) {
+  int width = atoi(params.at("width").c_str());
+  int height = atoi(params.at("height").c_str());
+
+  // Default channel = 3
+  int num_channels = 3;
+  if (params.count("channels") != 0) {
+    num_channels = atoi(params.at("channels").c_str());
+  }
+  CHECK(width >= 0 && height >= 0 && num_channels >= 0)
+      << "Width (" << width << "), height (" << height
+      << "), and number of channels (" << num_channels
+      << ") must not be negative.";
+
+  return std::make_shared<ImageTransformer>(Shape(num_channels, width, height),
+                                            true);
 }
 
 void ImageTransformer::Process() {

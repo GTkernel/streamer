@@ -4,8 +4,9 @@
 
 #include <grpc++/grpc++.h>
 
+#include "common/types.h"
 #include "processor/processor.h"
-#include "serialization.h"
+#include "processor/rpc/serialization.h"
 #include "streamer_rpc.grpc.pb.h"
 
 class FrameReceiver final : public Processor, public Messenger::Service {
@@ -19,6 +20,8 @@ class FrameReceiver final : public Processor, public Messenger::Service {
   grpc::Status SendFrame(grpc::ServerContext* context,
                          const SingleFrame* frame_message,
                          google::protobuf::Empty* ignored) override;
+
+  static std::shared_ptr<FrameReceiver> Create(const FactoryParamsType& params);
 
  protected:
   bool Init() override;

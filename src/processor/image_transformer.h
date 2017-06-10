@@ -6,12 +6,15 @@
 #define STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_
 
 #include "common/types.h"
-#include "processor.h"
+#include "processor/processor.h"
 #include "stream/stream.h"
 
 class ImageTransformer : public Processor {
  public:
   ImageTransformer(const Shape& target_shape, bool subtract_mean = true);
+
+  static std::shared_ptr<ImageTransformer> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

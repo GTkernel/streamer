@@ -5,13 +5,16 @@
 #ifndef STREAMER_VIDEO_GST_VIDEO_ENCODER_H_
 #define STREAMER_VIDEO_GST_VIDEO_ENCODER_H_
 
-#include "common/common.h"
+#include <mutex>
+
 #include "gst/app/gstappsrc.h"
 #include "gst/gst.h"
 #include "gst/gstbuffer.h"
+
+#include "common/common.h"
+#include "common/types.h"
 #include "processor/processor.h"
 
-#include <mutex>
 /**
  * @brief Video encoder utilizing GStreamer pipeline
  */
@@ -27,6 +30,9 @@ class GstVideoEncoder : public Processor {
    * @param encoder The name of the deocder gstreamer element.
    */
   void SetEncoderElement(const string& encoder);
+
+  static std::shared_ptr<GstVideoEncoder> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

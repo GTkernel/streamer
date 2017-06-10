@@ -5,10 +5,11 @@
 #ifndef STREAMER_PROCESSOR_STREAM_PUBLISHER_H_
 #define STREAMER_PROCESSOR_STREAM_PUBLISHER_H_
 
-#include "common/common.h"
-#include "processor.h"
-
 #include <cppzmq/zmq.hpp>
+
+#include "common/common.h"
+#include "common/types.h"
+#include "processor/processor.h"
 
 static const std::string DEFAULT_ZMQ_LISTEN_URL = "127.0.0.1:5536";
 
@@ -20,6 +21,9 @@ class StreamPublisher : public Processor {
   StreamPublisher(const std::string topic_name,
                   const std::string listen_url = DEFAULT_ZMQ_LISTEN_URL);
   ~StreamPublisher();
+
+  static std::shared_ptr<StreamPublisher> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

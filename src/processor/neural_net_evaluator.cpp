@@ -1,6 +1,8 @@
 
-#include "processor/neural_net_evaluator.h"
+#include "neural_net_evaluator.h"
+
 #include "model/model_manager.h"
+#include "utils/string_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
 
@@ -43,6 +45,23 @@ const std::vector<std::string> NeuralNetEvaluator::GetSinkNames() const {
     sink_names.push_back(sink_pair.first);
   }
   return sink_names;
+}
+
+std::shared_ptr<NeuralNetEvaluator> NeuralNetEvaluator::Create(
+    const FactoryParamsType& params) {
+  ModelManager& model_manager = ModelManager::GetInstance();
+  std::string model_name = params.at("model");
+  CHECK(model_manager.HasModel(model_name));
+  ModelDesc model_desc = model_manager.GetModelDesc(model_name);
+
+  size_t num_channels = StringToSizet(params.at("num_channels"));
+  Shape input_shape = Shape(num_channels, model_desc.GetInputWidth(),
+                            model_desc.GetInputHeight());
+
+  std::vector<std::string> output_layer_names = {
+      params.at("output_layer_names")};
+  return std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+                                              output_layer_names);
 }
 
 bool NeuralNetEvaluator::Init() { return true; }

@@ -4,7 +4,6 @@
 
 #include "dummy_nn_processor.h"
 
-#include "common/types.h"
 #include "model/model_manager.h"
 
 DummyNNProcessor::DummyNNProcessor(const ModelDesc& model_desc)
@@ -12,6 +11,12 @@ DummyNNProcessor::DummyNNProcessor(const ModelDesc& model_desc)
   input_shape_ =
       Shape(3, model_desc_.GetInputWidth(), model_desc_.GetInputHeight());
   fake_input_ = DataBuffer(input_shape_.GetSize() * sizeof(float) * 1);
+}
+
+std::shared_ptr<DummyNNProcessor> DummyNNProcessor::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
 }
 
 bool DummyNNProcessor::Init() {

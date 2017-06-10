@@ -4,11 +4,15 @@
 
 #include "opencv_face_detector.h"
 
-#include "common/types.h"
-
 OpenCVFaceDetector::OpenCVFaceDetector(string classifier_xml_path)
     : Processor(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR, {"input"}, {"output"}),
       classifier_xml_path_(classifier_xml_path) {}
+
+std::shared_ptr<OpenCVFaceDetector> OpenCVFaceDetector::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
 
 bool OpenCVFaceDetector::Init() {
   return classifier_.load(classifier_xml_path_);

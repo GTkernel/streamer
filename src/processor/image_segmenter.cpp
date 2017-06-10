@@ -1,13 +1,18 @@
 
 #include "image_segmenter.h"
 
-#include "common/types.h"
 #include "model/model_manager.h"
 
 ImageSegmenter::ImageSegmenter(const ModelDesc& model_desc, Shape input_shape)
     : Processor(PROCESSOR_TYPE_IMAGE_SEGMENTER, {"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape) {}
+
+std::shared_ptr<ImageSegmenter> ImageSegmenter::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
 
 bool ImageSegmenter::Init() {
   // Load model

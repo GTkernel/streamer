@@ -8,8 +8,6 @@
 #include <boost/property_tree/ptree.hpp>
 #include <cppzmq/zhelper.hpp>
 
-#include "common/types.h"
-
 namespace pt = boost::property_tree;
 
 StreamPublisher::StreamPublisher(const std::string topic_name,
@@ -32,6 +30,15 @@ StreamPublisher::StreamPublisher(const std::string topic_name,
 StreamPublisher::~StreamPublisher() {
   // Tear down the publisher socket
   zmq_publisher_.unbind(zmq_publisher_addr_);
+}
+
+std::shared_ptr<StreamPublisher> StreamPublisher::Create(
+    const FactoryParamsType& params) {
+  string name = params.at("name");
+  if (params.count("listen_url") != 0) {
+    return std::make_shared<StreamPublisher>(name, params.at("listen_url"));
+  }
+  return std::make_shared<StreamPublisher>(name);
 }
 
 bool StreamPublisher::Init() { return true; }
