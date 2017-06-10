@@ -15,10 +15,10 @@
 #ifdef USE_RPC
 #include "rpc/frame_receiver.h"
 #include "rpc/frame_sender.h"
-#endif
+#endif  // USE_RPC
 #ifdef USE_ZMQ
 #include "stream_publisher.h"
-#endif
+#endif  // USE_ZMQ
 
 #include "utils/string_utils.h"
 
@@ -49,7 +49,7 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     case PROCESSOR_TYPE_FRAME_SENDER:
       processor.reset(CreateFrameSender(params));
       break;
-#endif
+#endif  // USE_RPC
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       processor.reset(CreateImageClassifier(params));
       break;
@@ -69,7 +69,7 @@ std::shared_ptr<Processor> ProcessorFactory::CreateInstance(
     case PROCESSOR_TYPE_STREAM_PUBLISHER:
       processor.reset(CreateStreamPublisher(params));
       break;
-#endif
+#endif  // USE_ZMQ
     default:
       LOG(FATAL) << "Unknown processor type";
   }
@@ -137,7 +137,7 @@ Processor* ProcessorFactory::CreateFrameSender(
     const FactoryParamsType& params) {
   return new FrameSender(params.at("server_url"));
 };
-#endif
+#endif  // USE_RPC
 
 Processor* ProcessorFactory::CreateImageClassifier(
     const FactoryParamsType& params) {
@@ -208,4 +208,4 @@ Processor* ProcessorFactory::CreateStreamPublisher(
   }
   return new StreamPublisher(params.at("name"));
 }
-#endif
+#endif  // USE_ZMQ

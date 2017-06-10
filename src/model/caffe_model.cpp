@@ -46,7 +46,7 @@ void CaffeModel<DType>::Load() {
 #else
     LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
                   "configured rather than -1";
-#endif
+#endif  // USE_OPENCL
   }
 
 // Load the network.
@@ -56,7 +56,7 @@ void CaffeModel<DType>::Load() {
 #else
   net_.reset(
       new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST));
-#endif
+#endif  // USE_OPENCL
   net_->CopyTrainedLayersFrom(model_desc_.GetModelParamsPath());
 
   CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";

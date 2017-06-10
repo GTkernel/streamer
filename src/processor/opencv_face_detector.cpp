@@ -43,7 +43,7 @@ void OpenCVFaceDetector::Process() {
   for (const auto& result : results) {
     results_rect.emplace_back(result.x, result.y, result.width, result.height);
   }
-#endif
+#endif  // USE_CUDA
 
   PushFrame("output", new MetadataFrame(results_rect, frame->GetOriginalImage(),
                                         frame->GetStartTime()));

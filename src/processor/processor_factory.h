@@ -25,7 +25,7 @@ class ProcessorFactory {
 #ifdef USE_RPC
   static Processor* CreateFrameReceiver(const FactoryParamsType& params);
   static Processor* CreateFrameSender(const FactoryParamsType& params);
-#endif
+#endif  // USE_RPC
   static Processor* CreateImageClassifier(const FactoryParamsType& params);
   static Processor* CreateImageSegmenter(const FactoryParamsType& params);
   static Processor* CreateImageTransformer(const FactoryParamsType& params);
@@ -33,7 +33,7 @@ class ProcessorFactory {
   static Processor* CreateOpenCVFaceDetector(const FactoryParamsType& params);
 #ifdef USE_ZMQ
   static Processor* CreateStreamPublisher(const FactoryParamsType& params);
-#endif
+#endif  // USE_ZMQ
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_FACTORY_H_

@@ -67,7 +67,7 @@ CameraManager::CameraManager() {
       LOG(WARNING) << "Not built with PtGray FlyCapture SDK, camera: " << name
                    << " is not loaded";
       continue;
-#endif
+#endif  // USE_PTGRAY
     } else if (video_protocol == "vmb") {
 #ifdef USE_VIMBA
       camera.reset(new VimbaCamera(name, video_uri, width, height));
@@ -75,7 +75,7 @@ CameraManager::CameraManager() {
       LOG(WARNING) << "Not built with AlliedVision Vimba SDK, camera: " << name
                    << " is not loaded";
       continue;
-#endif
+#endif  // USE_VIMBA
     } else {
       LOG(WARNING) << "Unknown video protocol: " << video_protocol
                    << ". Ignored";

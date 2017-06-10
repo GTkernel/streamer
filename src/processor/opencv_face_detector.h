@@ -7,7 +7,7 @@
 
 #ifdef USE_CUDA
 #include <opencv2/gpu/gpu.hpp>
-#endif
+#endif  // USE_CUDA
 #include <opencv2/objdetect/objdetect.hpp>
 #include "common/common.h"
 #include "processor.h"
@@ -30,7 +30,7 @@ class OpenCVFaceDetector : public Processor {
   cv::gpu::CascadeClassifier_GPU classifier_;
 #else
   cv::CascadeClassifier classifier_;
-#endif
+#endif  // USE_CUDA
 };
 
 #endif  // STREAMER_PROCESSOR_OPENCV_FACE_DETECTOR_H_

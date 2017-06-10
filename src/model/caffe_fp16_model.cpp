@@ -32,7 +32,7 @@ void CaffeFp16Model::Load() {
 #else
     LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
                   "configured rather than -1";
-#endif
+#endif  // USE_CUDA
   }
   // Load the network.
   net_.reset(new caffe::Net<DType, MType>(model_desc_.GetModelDescPath(),

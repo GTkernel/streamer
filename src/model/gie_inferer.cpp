@@ -207,4 +207,4 @@ Shape GIEInferer<DType>::GetOutputShape() {
 template class GIEInferer<float>;
 #ifdef USE_FP16
 template class GIEInferer<float16>;
-#endif
+#endif  // USE_FP16

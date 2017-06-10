@@ -14,7 +14,7 @@ class Pipeline;
 
 #ifdef USE_VIMBA
 class VimbaCameraFrameObserver;
-#endif
+#endif  // USE_VIMBA
 
 /**
  * @brief Processor is the core computation unit in the system. It accepts
@@ -25,7 +25,7 @@ class Processor {
   friend class Pipeline;
 #ifdef USE_VIMBA
   friend class VimbaCameeraFrameObserver;
-#endif
+#endif  // USE_VIMBA
  public:
   Processor(ProcessorType type, const std::vector<string>& source_names,
             const std::vector<string>& sink_names);

@@ -15,7 +15,7 @@
 #include <driver_types.h>
 
 #include <cuda_fp16.h>
-#endif
+#endif  // USE_FP16
 
 #include "json/json.hpp"
 
@@ -225,6 +225,6 @@ struct float16 {
 
   half data;
 };
-#endif
+#endif  // USE_FP16
 
 #endif  // STREAMER_COMMON_TYPE_H_

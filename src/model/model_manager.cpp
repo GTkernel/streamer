@@ -12,16 +12,16 @@
 #include "caffe_fp16_model.h"
 #else
 #include "caffe_model.h"
-#endif
-#endif
+#endif  // USE_FP16
+#endif  // USE_CAFFE
 
 #ifdef USE_GIE
 #include "gie_model.h"
-#endif
+#endif  // USE_GIE
 
 #ifdef USE_MXNET
 #include "mxnet_model.h"
-#endif
+#endif  // USE_MXNET
 
 static const string MODEL_TOML_FILENAME = "models.toml";
 
@@ -107,10 +107,10 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
     result.reset(new CaffeFp16Model(model_desc, input_shape, batch_size));
 #else
     result.reset(new CaffeModel<float>(model_desc, input_shape, batch_size));
-#endif
+#endif  // USE_FP16
 #else
     LOG(FATAL) << "Not build with Caffe, failed to initialize classifier";
-#endif
+#endif  // USE_CAFFE
   }
 
   if (model_desc.GetModelType() == MODEL_TYPE_GIE) {
@@ -118,7 +118,7 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
     result.reset(new GIEModel(model_desc, input_shape, batch_size));
 #else
     LOG(FATAL) << "Not build with GIE, failed to initialize classifier";
-#endif
+#endif  // USE_GIE
   }
 
   if (model_desc.GetModelType() == MODEL_TYPE_MXNET) {
@@ -126,7 +126,7 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
     result.reset(new MXNetModel(model_desc, input_shape, batch_size));
 #else
     LOG(FATAL) << "Not build with MXNet, failed to initialize classifier";
-#endif
+#endif  // USE_MXNET
   }
   return result;
 }
