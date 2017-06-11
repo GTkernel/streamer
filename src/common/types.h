@@ -181,35 +181,36 @@ enum ProcessorType {
   PROCESSOR_TYPE_INVALID
 };
 
-inline ProcessorType GetProcessorTypeByString(const std::string& str) {
-  if (str == "Camera") {
+// Returns the ProcessorType enum value corresponding to the string.
+inline ProcessorType GetProcessorTypeByString(const std::string& type) {
+  if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
-  } else if (str == "Custom") {
+  } else if (type == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
-  } else if (str == "DummyNN") {
+  } else if (type == "DummyNNProcessor") {
     return PROCESSOR_TYPE_DUMMY_NN;
-  } else if (str == "Encoder" || str == "VideoEncoder") {
+  } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
-  } else if (str == "FileWriter") {
+  } else if (type == "FileWriter") {
     return PROCESSOR_TYPE_FILE_WRITER;
 #ifdef USE_RPC
-  } else if (str == "FrameReceiver") {
+  } else if (type == "FrameReceiver") {
     return PROCESSOR_TYPE_FRAME_RECEIVER;
-  } else if (str == "FrameSender") {
+  } else if (type == "FrameSender") {
     return PROCESSOR_TYPE_FRAME_SENDER;
 #endif  // USE_RPC
-  } else if (str == "ImageClassifier") {
+  } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
-  } else if (str == "ImageSegmenter") {
+  } else if (type == "ImageSegmenter") {
     return PROCESSOR_TYPE_IMAGE_SEGMENTER;
-  } else if (str == "ImageTransformer") {
+  } else if (type == "ImageTransformer") {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
-  } else if (str == "NeuralNetEvaluator") {
+  } else if (type == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
-  } else if (str == "OpenCVFaceDetector") {
+  } else if (type == "OpenCVFaceDetector") {
     return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
 #ifdef USE_ZMQ
-  } else if (str == "StreamPublisher") {
+  } else if (type == "StreamPublisher") {
     return PROCESSOR_TYPE_STREAM_PUBLISHER;
 #endif  // USE_ZMQ
   } else {

@@ -136,7 +136,7 @@ class Camera:
     STREAM_VIDEO_SPL = \
         """
         camera = camera({name})
-        video_encoder = processor(VideoEncoder, port={port}, width={width}, height={height})
+        video_encoder = processor(GstVideoEncoder, port={port}, width={width}, height={height})
         video_encoder[input] = camera[bgr_output]
         """.format(name=self.name, port=random_port, width=width, height=height)
     pipeline = Pipeline("stream_{}_{}".format(self.name, random_port),
@@ -168,7 +168,7 @@ class Camera:
       RECORD_VIDEO_SPL = \
           """
             camera = camera({name})
-            video_encoder = processor(VideoEncoder, filename={filename}, width={width}, height={height})
+            video_encoder = processor(GstVideoEncoder, filename={filename}, width={width}, height={height})
 
             video_encoder[input] = camera[bgr_output]
             """.format(name=self.name, filename=filename, width=self.width, height=self.height)
