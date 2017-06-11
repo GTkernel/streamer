@@ -166,47 +166,96 @@ enum ProcessorType {
   PROCESSOR_TYPE_DUMMY_NN,
   PROCESSOR_TYPE_ENCODER,
   PROCESSOR_TYPE_FILE_WRITER,
+#ifdef USE_RPC
   PROCESSOR_TYPE_FRAME_RECEIVER,
   PROCESSOR_TYPE_FRAME_SENDER,
+#endif  // USE_RPC
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
+#ifdef USE_ZMQ
   PROCESSOR_TYPE_STREAM_PUBLISHER,
+#endif  // USE_ZMQ
   PROCESSOR_TYPE_INVALID
 };
 
-inline ProcessorType GetProcessorTypeByString(const std::string& str) {
-  if (str == "Camera") {
+// Returns the ProcessorType enum value corresponding to the string.
+inline ProcessorType GetProcessorTypeByString(const std::string& type) {
+  if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
-  } else if (str == "Custom") {
+  } else if (type == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
-  } else if (str == "DummyNN") {
+  } else if (type == "DummyNNProcessor") {
     return PROCESSOR_TYPE_DUMMY_NN;
-  } else if (str == "Encoder" || str == "VideoEncoder") {
+  } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
-  } else if (str == "FileWriter") {
+  } else if (type == "FileWriter") {
     return PROCESSOR_TYPE_FILE_WRITER;
-  } else if (str == "FrameReceiver") {
+#ifdef USE_RPC
+  } else if (type == "FrameReceiver") {
     return PROCESSOR_TYPE_FRAME_RECEIVER;
-  } else if (str == "FrameSender") {
+  } else if (type == "FrameSender") {
     return PROCESSOR_TYPE_FRAME_SENDER;
-  } else if (str == "ImageClassifier") {
+#endif  // USE_RPC
+  } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
-  } else if (str == "ImageSegmenter") {
+  } else if (type == "ImageSegmenter") {
     return PROCESSOR_TYPE_IMAGE_SEGMENTER;
-  } else if (str == "ImageTransformer") {
+  } else if (type == "ImageTransformer") {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
-  } else if (str == "NeuralNetEvaluator") {
+  } else if (type == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
-  } else if (str == "OpenCVFaceDetector") {
+  } else if (type == "OpenCVFaceDetector") {
     return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
-  } else if (str == "StreamPublisher") {
+#ifdef USE_ZMQ
+  } else if (type == "StreamPublisher") {
     return PROCESSOR_TYPE_STREAM_PUBLISHER;
+#endif  // USE_ZMQ
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
+}
+
+// Returns a human-readable string corresponding to the provided ProcessorType.
+inline std::string GetStringForProcessorType(ProcessorType type) {
+  switch (type) {
+    case PROCESSOR_TYPE_CAMERA:
+      return "Camera";
+    case PROCESSOR_TYPE_CUSTOM:
+      return "Custom";
+    case PROCESSOR_TYPE_DUMMY_NN:
+      return "DummyNNProcessor";
+    case PROCESSOR_TYPE_ENCODER:
+      return "GstVideoEncoder";
+    case PROCESSOR_TYPE_FILE_WRITER:
+      return "FileWriter";
+#ifdef USE_RPC
+    case PROCESSOR_TYPE_FRAME_RECEIVER:
+      return "FrameReceiver";
+    case PROCESSOR_TYPE_FRAME_SENDER:
+      return "FrameSender";
+#endif  // USE_RPC
+    case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
+      return "ImageClassifier";
+    case PROCESSOR_TYPE_IMAGE_SEGMENTER:
+      return "ImageSegmenter";
+    case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
+      return "ImageTransformer";
+    case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
+      return "NeuralNetEvaluator";
+    case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
+      return "OpenCVFaceDetector";
+#ifdef USE_ZMQ
+    case PROCESSOR_TYPE_STREAM_PUBLISHER:
+      return "StreamPublisher";
+#endif  // USE_ZMQ
+    case PROCESSOR_TYPE_INVALID:
+      return "Invalid";
+  }
+
+  LOG(FATAL) << "Unhandled ProcessorType: " << type;
 }
 
 #ifdef USE_FP16
