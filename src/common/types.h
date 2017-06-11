@@ -166,14 +166,18 @@ enum ProcessorType {
   PROCESSOR_TYPE_DUMMY_NN,
   PROCESSOR_TYPE_ENCODER,
   PROCESSOR_TYPE_FILE_WRITER,
+#ifdef USE_RPC
   PROCESSOR_TYPE_FRAME_RECEIVER,
   PROCESSOR_TYPE_FRAME_SENDER,
+#endif  // USE_RPC
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
+#ifdef USE_ZMQ
   PROCESSOR_TYPE_STREAM_PUBLISHER,
+#endif  // USE_ZMQ
   PROCESSOR_TYPE_INVALID
 };
 
@@ -188,10 +192,12 @@ inline ProcessorType GetProcessorTypeByString(const std::string& str) {
     return PROCESSOR_TYPE_ENCODER;
   } else if (str == "FileWriter") {
     return PROCESSOR_TYPE_FILE_WRITER;
+#ifdef USE_RPC
   } else if (str == "FrameReceiver") {
     return PROCESSOR_TYPE_FRAME_RECEIVER;
   } else if (str == "FrameSender") {
     return PROCESSOR_TYPE_FRAME_SENDER;
+#endif  // USE_RPC
   } else if (str == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
   } else if (str == "ImageSegmenter") {
@@ -202,11 +208,53 @@ inline ProcessorType GetProcessorTypeByString(const std::string& str) {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
   } else if (str == "OpenCVFaceDetector") {
     return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+#ifdef USE_ZMQ
   } else if (str == "StreamPublisher") {
     return PROCESSOR_TYPE_STREAM_PUBLISHER;
+#endif  // USE_ZMQ
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
+}
+
+// Returns a human-readable string corresponding to the provided ProcessorType.
+inline std::string GetStringForProcessorType(ProcessorType type) {
+  switch (type) {
+    case PROCESSOR_TYPE_CAMERA:
+      return "Camera";
+    case PROCESSOR_TYPE_CUSTOM:
+      return "Custom";
+    case PROCESSOR_TYPE_DUMMY_NN:
+      return "DummyNNProcessor";
+    case PROCESSOR_TYPE_ENCODER:
+      return "GstVideoEncoder";
+    case PROCESSOR_TYPE_FILE_WRITER:
+      return "FileWriter";
+#ifdef USE_RPC
+    case PROCESSOR_TYPE_FRAME_RECEIVER:
+      return "FrameReceiver";
+    case PROCESSOR_TYPE_FRAME_SENDER:
+      return "FrameSender";
+#endif  // USE_RPC
+    case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
+      return "ImageClassifier";
+    case PROCESSOR_TYPE_IMAGE_SEGMENTER:
+      return "ImageSegmenter";
+    case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
+      return "ImageTransformer";
+    case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
+      return "NeuralNetEvaluator";
+    case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
+      return "OpenCVFaceDetector";
+#ifdef USE_ZMQ
+    case PROCESSOR_TYPE_STREAM_PUBLISHER:
+      return "StreamPublisher";
+#endif  // USE_ZMQ
+    case PROCESSOR_TYPE_INVALID:
+      return "Invalid";
+  }
+
+  LOG(FATAL) << "Unknown ProcessorType: " << type;
 }
 
 #ifdef USE_FP16
