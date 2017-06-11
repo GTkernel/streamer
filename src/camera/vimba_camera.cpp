@@ -118,6 +118,8 @@ CameraType VimbaCamera::GetCameraType() const { return CAMERA_TYPE_VIMBA; }
 bool VimbaCamera::Init() {
   string protocol, ip;
   ParseProtocolAndPath(video_uri_, protocol, ip);
+  
+  CHECK_VIMBA(vimba_system_.Startup());
 
   if (StringContains(ip, ".")) {
     // Looks like an IP
@@ -156,6 +158,8 @@ bool VimbaCamera::OnStop() {
   }
 
   StopCapture();
+
+  CHECK_VIMBA(vimba_system_.Shutdown());
 }
 
 void VimbaCamera::Process() {
