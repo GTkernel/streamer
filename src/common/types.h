@@ -254,7 +254,7 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "Invalid";
   }
 
-  LOG(FATAL) << "Unknown ProcessorType: " << type;
+  LOG(FATAL) << "Unhandled ProcessorType: " << type;
 }
 
 #ifdef USE_FP16

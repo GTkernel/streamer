@@ -55,7 +55,11 @@ std::shared_ptr<Processor> ProcessorFactory::Create(
     case PROCESSOR_TYPE_STREAM_PUBLISHER:
       return StreamPublisher::Create(params);
 #endif  // USE_ZMQ
-    default:
-      LOG(FATAL) << "Unknown processor type.";
+    case PROCESSOR_TYPE_INVALID:
+      LOG(FATAL) << "Cannot instantiate a Processor of type: "
+                 << GetStringForProcessorType(processor_type);
   }
+
+  LOG(FATAL) << "Unhandled ProcessorType: "
+             << GetStringForProcessorType(processor_type);
 }
