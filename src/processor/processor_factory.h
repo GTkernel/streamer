@@ -7,7 +7,7 @@
 
 class ProcessorFactory {
  public:
-  static std::shared_ptr<Processor> Create(ProcessorType processor_type,
+  static std::shared_ptr<Processor> Create(ProcessorType type,
                                            FactoryParamsType params);
 };
 

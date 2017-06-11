@@ -21,9 +21,9 @@
 #endif  // USE_ZMQ
 #include "video/gst_video_encoder.h"
 
-std::shared_ptr<Processor> ProcessorFactory::Create(
-    ProcessorType processor_type, FactoryParamsType params) {
-  switch (processor_type) {
+std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
+                                                    FactoryParamsType params) {
+  switch (type) {
     case PROCESSOR_TYPE_CAMERA:
       return CameraManager::GetInstance().GetCamera(params.at("camera_name"));
     case PROCESSOR_TYPE_CUSTOM:
@@ -57,9 +57,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(
 #endif  // USE_ZMQ
     case PROCESSOR_TYPE_INVALID:
       LOG(FATAL) << "Cannot instantiate a Processor of type: "
-                 << GetStringForProcessorType(processor_type);
+                 << GetStringForProcessorType(type);
   }
 
-  LOG(FATAL) << "Unhandled ProcessorType: "
-             << GetStringForProcessorType(processor_type);
+  LOG(FATAL) << "Unhandled ProcessorType: " << GetStringForProcessorType(type);
 }
