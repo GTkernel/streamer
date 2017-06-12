@@ -18,9 +18,9 @@ template <typename DType>
 class CaffeModel : public Model {
  public:
   CaffeModel(const ModelDesc& model_desc, Shape input_shape, int batch_size);
-  virtual void Load();
-  virtual void Evaluate();
-  virtual void Forward();
+  virtual void Load() override;
+  virtual void Evaluate() override;
+  virtual void Forward() override;
   virtual const std::vector<std::string>& GetLayerNames() const override;
   virtual cv::Mat GetLayerOutput(const std::string& layer_name) const override;
 
