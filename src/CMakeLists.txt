@@ -121,6 +121,7 @@ endif ()
 
 add_library(streamer SHARED ${STREAMER_SOURCE_FILES})
 target_link_libraries(streamer ${STREAMER_LIBRARIES})
+ADD_BUILD_REQS(streamer)
 
 if (USE_CAFFE)
   add_caffe_cflags(streamer)

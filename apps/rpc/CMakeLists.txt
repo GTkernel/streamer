@@ -8,6 +8,7 @@ MACRO(BUILD_ONE app)
   endif ()
   target_link_libraries(${app} streamer ${Boost_PROGRAM_OPTIONS_LIBRARY})
   add_dependencies(apps ${app})
+  ADD_BUILD_REQS(${app})
 ENDMACRO()
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../")

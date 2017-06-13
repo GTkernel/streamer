@@ -21,6 +21,7 @@ endif ()
 
 add_library(streamer_gtest_main streamer_gtest_main.cpp)
 target_link_libraries(streamer_gtest_main streamer gtest)
+ADD_BUILD_REQS(streamer_gtest_main)
 
 add_custom_target(tests)
 set(TEST_CONFIG_DIR ${PROJECT_BINARY_DIR}/test/config)
@@ -30,6 +31,7 @@ foreach (f ${TEST_SRCS})
   target_link_libraries(${basename} streamer gtest streamer_gtest_main gmock gmock_main)
   add_test(${basename} ${basename} ${TEST_CONFIG_DIR})
   add_dependencies(tests ${basename})
+  ADD_BUILD_REQS(${basename})
 endforeach ()
 
 file(GLOB TEST_CONFIG_FILES ${PROJECT_SOURCE_DIR}/test/config/*.toml)
