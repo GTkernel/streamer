@@ -118,7 +118,7 @@ CameraType VimbaCamera::GetCameraType() const { return CAMERA_TYPE_VIMBA; }
 bool VimbaCamera::Init() {
   string protocol, ip;
   ParseProtocolAndPath(video_uri_, protocol, ip);
-  
+
   CHECK_VIMBA(vimba_system_.Startup());
 
   if (StringContains(ip, ".")) {
