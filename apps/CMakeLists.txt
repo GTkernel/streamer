@@ -28,6 +28,7 @@ MACRO(BUILD_APP app_dir)
     target_link_libraries(${app_name} ${JAMALLOC_LIBRARIES})
   endif ()
   target_link_libraries(${app_name} streamer ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  ADD_BUILD_REQS(${app_name})
 ENDMACRO()
 
 set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
