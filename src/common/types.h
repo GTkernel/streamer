@@ -184,6 +184,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
   PROCESSOR_TYPE_STRUCK_TRACKER,
   PROCESSOR_TYPE_DB_WRITER,
+  PROCESSOR_TYPE_SSD_DETECTOR,
 
   PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_ENCODER,
@@ -215,6 +216,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string &str) {
     return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
   } else if (str == "StruckTracker") {
     return PROCESSOR_TYPE_STRUCK_TRACKER;
+  } else if (str == "SsdDetector") {
+    return PROCESSOR_TYPE_SSD_DETECTOR;
   } else if (str == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
   } else if (str == "Encoder" || str == "VideoEncoder") {
