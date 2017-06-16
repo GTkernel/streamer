@@ -185,6 +185,13 @@ void Run(const std::vector<string> &camera_names,
   }
 
   //  double fps_to_show = 0.0;
+  const std::vector<cv::Scalar> colors = GetColors(32);
+  int color_count = 0;
+  std::map<std::string, int> tags_colors;
+  int fontface = cv::FONT_HERSHEY_SIMPLEX;
+  double d_scale = 1;
+  int thickness = 2;
+  int baseline = 0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
       auto reader = tracker_output_readers[i];
@@ -192,29 +199,49 @@ void Run(const std::vector<string> &camera_names,
       if (display) {
         cv::Mat image = md_frame->GetOriginalImage();
         auto bboxes = md_frame->GetBboxes();
-        for(const auto& m: bboxes) {
-          cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
-        }
+        //for(const auto& m: bboxes) {
+        //  cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
+        //}
         auto face_landmarks = md_frame->GetFaceLandmarks();
         for(const auto& m: face_landmarks) {
           for(int j=0;j<5;j++)
             cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
         }
         auto tags = md_frame->GetTags();
-        auto confidences = md_frame->GetConfidences();
+        //auto confidences = md_frame->GetConfidences();
         auto uuids = md_frame->GetUuids();
         for (size_t j = 0; j < tags.size(); ++j) {
+          // Get the color
+          int color_index;
+          auto it = tags_colors.find(tags[j]);
+          if (it == tags_colors.end()) {
+            tags_colors.insert(std::make_pair(tags[j], color_count++));
+            color_index = tags_colors.find(tags[j])->second;
+          } else {
+            color_index = it->second;
+          }
+          const cv::Scalar& color = colors[color_index];
+
+          // Draw bboxes
+          cv::Point top_left_pt(bboxes[j].px, bboxes[j].py);
+          cv::Point bottom_right_pt(bboxes[j].px+bboxes[j].width, bboxes[j].py+bboxes[j].height);
+          cv::rectangle(image, top_left_pt, bottom_right_pt, color, 4);
+          cv::Point bottom_left_pt(bboxes[j].px, bboxes[j].py+bboxes[j].height);
           std::ostringstream text;
           text << tags[j];
-          if (tags.size() == confidences.size())
-            text << "  :  " << confidences[j];
+          //if (tags.size() == confidences.size())
+          //  text << "  :  " << confidences[j];
           if (tags.size() == uuids.size()) {
             std::size_t pos = uuids[j].size();
             auto sheared_uuid = uuids[j].substr(pos-5);
-            text << "  :  " << sheared_uuid;
+            text << ": " << sheared_uuid;
           }
-          
-          cv::putText(image, text.str() , cv::Point(bboxes[j].px,bboxes[j].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
+          cv::Size text_size = cv::getTextSize(text.str().c_str(), fontface, d_scale, thickness, &baseline);
+          cv::rectangle(
+            image, bottom_left_pt + cv::Point(0, 0),
+            bottom_left_pt + cv::Point(text_size.width, -text_size.height-baseline),
+            color, CV_FILLED);
+          cv::putText(image, text.str(), bottom_left_pt - cv::Point(0, baseline), fontface , d_scale , CV_RGB(0, 0, 0), thickness, 8);
         }  
         cv::imshow(camera_names[i], image);
       }
