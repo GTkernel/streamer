@@ -19,6 +19,7 @@
 #include "processor/opencv_motion_detector.h"
 #include "processor/struck_tracker.h"
 #include "processor/db_writer.h"
+#include "processor/ssd_detector.h"
 #include "processor/processor.h"
 #include "processor/processor_factory.h"
 #include "utils/utils.h"

@@ -58,6 +58,7 @@ void Run(const std::vector<string> &camera_names,
          const string &detector_type,
          const string &detector_model,
          bool display, float scale, int min_size,
+         float detector_confidence_threshold,
          float detector_idle_duration,
          const string &detector_targets,
          float tracker_calibration_duration,
@@ -123,6 +124,14 @@ void Run(const std::vector<string> &camera_names,
     } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
       auto model_description = model_manager.GetModelDescription(detector_model);
       detector.reset(new MtcnnFaceDetector(model_description, min_size, detector_idle_duration));
+    } else if (p == PROCESSOR_TYPE_SSD_DETECTOR) {
+      auto model_desc = model_manager.GetModelDesc(detector_model);
+      auto t = SplitString(detector_targets, ",");
+      std::set<std::string> targets;
+      for (const auto& m: t) {
+        if (!m.empty()) targets.insert(m);
+      }
+      detector.reset(new SsdDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
     } else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
@@ -255,6 +264,8 @@ int main(int argc, char *argv[]) {
                      "scale factor before mtcnn");
   desc.add_options()("min_size", po::value<int>()->default_value(40),
                      "face minimum size");
+  desc.add_options()("detector_confidence_threshold", po::value<float>()->default_value(0.5),
+                     "detector confidence threshold");
   desc.add_options()("detector_idle_duration", po::value<float>()->default_value(1.0),
                      "detector idle duration");
   desc.add_options()("detector_targets",
@@ -295,12 +306,13 @@ int main(int argc, char *argv[]) {
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
+  float detector_confidence_threshold = vm["detector_confidence_threshold"].as<float>();
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
   auto detector_targets = vm["detector_targets"].as<string>();
   float tracker_calibration_duration = vm["tracker_calibration_duration"].as<float>();
   bool db_write_to_file = vm["db_write_to_file"].as<bool>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_idle_duration, detector_targets, tracker_calibration_duration, db_write_to_file);
+      detector_confidence_threshold, detector_idle_duration, detector_targets, tracker_calibration_duration, db_write_to_file);
 
   return 0;
 }
