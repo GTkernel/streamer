@@ -11,19 +11,19 @@ find_path(Vimba_INCLUDE_DIRS NAMES
   VimbaC/Include/VimbaC.h
   VimbaImageTransform/Include/VmbTransform.h
   HINTS
-  ${Vimba_HOME}/include)
+  ${Vimba_HOME})
 
 find_library(Vimba_CPP_LIBRARY NAMES VimbaCPP
   HINTS
-  ${Vimba_HOME}/lib)
+  ${Vimba_HOME}/VimbaCPP/DynamicLib/x86_64bit)
 
 find_library(Vimba_C_LIBRARY NAMES VimbaC
   HINTS
-  ${Vimba_HOME}/lib)
+  ${Vimba_HOME}/VimbaC/DynamicLib/x86_64bit)
 
 find_library(Vimba_ImageTransform_LIBRARY NAMES VimbaImageTransform
   HINTS
-  ${Vimba_HOME}/lib)
+  ${Vimba_HOME}/VimbaImageTransform/DynamicLib/x86_64bit)
 
 set(Vimba_LIBRARIES ${Vimba_CPP_LIBRARY} ${Vimba_C_LIBRARY} ${Vimba_ImageTransform_LIBRARY})
 message(${Vimba_LIBRARIES})
