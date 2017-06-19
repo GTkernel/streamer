@@ -41,6 +41,7 @@ CMakeScripts
 Makefile
 cmake_install.cmake
 install_manifest.txt
+compile_commands.json
 
 # Shared objects (inc. Windows DLLs)
 *.so.*
