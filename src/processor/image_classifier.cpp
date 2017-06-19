@@ -85,8 +85,7 @@ void ImageClassifier::Process() {
     tags.push_back(pred.first);
   }
   cv::Mat original_image = layer_frame->GetOriginalImage();
-  PushFrame(SINK_NAME, new MetadataFrame(tags, original_image,
-                                         layer_frame->GetStartTime()));
+  PushFrame(SINK_NAME, new MetadataFrame(tags, original_image));
 }
 
 std::vector<std::string> ImageClassifier::LoadLabels(

@@ -130,7 +130,7 @@ class Processor {
   std::queue<double> latencies_;
   double latency_sum_;
   double sliding_latency_;
-  double q_latency_sum_;
+  double queue_latency_sum__;
   double avg_latency_;
 
   // Processor stats
