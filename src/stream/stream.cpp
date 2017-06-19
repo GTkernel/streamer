@@ -64,9 +64,9 @@ std::shared_ptr<FT> StreamReader::PopFrame(unsigned int timeout_ms) {
 
 void StreamReader::PushFrame(std::shared_ptr<Frame> frame) {
   std::lock_guard<std::mutex> lock(buffer_lock_);
-  frame_buffer_.push(frame);
-  while (frame_buffer_.size() > max_buffer_size_) {
-    frame_buffer_.pop();
+  // If buffer is full, the frame is dropped
+  if (frame_buffer_.size() < max_buffer_size_) {
+    frame_buffer_.push(frame);
   }
   buffer_cv_.notify_all();
 }
