@@ -75,6 +75,12 @@ class Processor {
   virtual double GetAvgLatencyMs() const;
 
   /**
+   * @brief Get overall average queue latency.
+   * @return queue latency in ms.
+   */
+  virtual double GetAvgQueueLatencyMs() const;
+
+  /**
    * @brief Get processing speed of the processor, measured in frames / sec. It
    * is simply computed as 1000.0 / GetLatencyMs().
    * @return FPS of the processor.
@@ -124,6 +130,7 @@ class Processor {
   std::queue<double> latencies_;
   double latency_sum_;
   double sliding_latency_;
+  double q_latency_sum_;
   double avg_latency_;
 
   // Processor stats

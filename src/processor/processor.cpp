@@ -36,6 +36,7 @@ void Processor::Init_() {
   latency_sum_ = 0.0;
   sliding_latency_ = 99999.0;
   avg_latency_ = 0.0;
+  q_latency_sum_ = 0.0;
   n_processed_ = 0;
 }
 
@@ -96,6 +97,9 @@ void Processor::ProcessorLoop() {
           }
         } else {
           source_frame_cache_.insert({source_name, frame});
+          double start = frame->GetStartTime();
+          double end = Context::GetContext().GetTimer().ElapsedMSec();
+          q_latency_sum_ += end - start;
           break;
         }
       }
@@ -126,6 +130,8 @@ bool Processor::IsStarted() const { return !stopped_; }
 double Processor::GetSlidingLatencyMs() const { return sliding_latency_; }
 
 double Processor::GetAvgLatencyMs() const { return avg_latency_; }
+
+double Processor::GetAvgQueueLatencyMs() const { return q_latency_sum_ / n_processed_; }
 
 double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
 
