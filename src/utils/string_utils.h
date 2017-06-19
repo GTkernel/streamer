@@ -5,6 +5,7 @@
 #ifndef STREAMER_UTILS_STRING_UTILS_H_
 #define STREAMER_UTILS_STRING_UTILS_H_
 
+#include <regex>
 #include <sstream>
 
 #include <boost/algorithm/string.hpp>
@@ -17,7 +18,7 @@
  * @param str The string to check.
  * @param ending The suffix.
  *
- * @return True if the string ends with ending.
+ * @return True if the string ends with <code>ending</code>.
  */
 inline bool EndsWith(const string& str, const string& ending) {
   if (ending.size() > str.size()) return false;
@@ -25,7 +26,7 @@ inline bool EndsWith(const string& str, const string& ending) {
 }
 
 /**
- * @brief Determine if a string ends with certain prefix.
+ * @brief Determine if a string starts with certain prefix.
  *
  * @param str The string to check.
  * @param ending The prefix.
@@ -58,9 +59,13 @@ inline std::vector<std::string> SplitString(const string& str,
  */
 inline void ParseProtocolAndPath(const string& uri, string& protocol,
                                  string& path) {
-  std::vector<string> results = SplitString(uri, ":");
-  protocol = results[0];
-  path = results[1].substr(2);
+  std::regex re("(.+?)://(.+)");
+  std::smatch results;
+  if (!std::regex_match(uri, results, re)) {
+    LOG(FATAL) << "Cannot parse URI: " << uri;
+  }
+  protocol = results[1];
+  path = results[2];
 }
 
 /**

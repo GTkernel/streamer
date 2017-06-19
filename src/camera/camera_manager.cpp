@@ -56,7 +56,8 @@ CameraManager::CameraManager() {
     }
 
     std::shared_ptr<Camera> camera;
-    string video_protocol = SplitString(video_uri, ":")[0];
+    string video_protocol, video_path;
+    ParseProtocolAndPath(video_uri, video_protocol, video_path);
     if (video_protocol == "gst" || video_protocol == "rtsp" ||
         video_protocol == "file") {
       camera.reset(new GSTCamera(name, video_uri, width, height));
