@@ -1,6 +1,3 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 11/6/16.
-//
 
 #include "processor_factory.h"
 
@@ -12,6 +9,7 @@
 #include "processor/image_transformer.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_face_detector.h"
+#include "processor/throttler.h"
 #ifdef USE_RPC
 #include "processor/rpc/frame_receiver.h"
 #include "processor/rpc/frame_sender.h"
@@ -51,6 +49,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return NeuralNetEvaluator::Create(params);
     case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
       return OpenCVFaceDetector::Create(params);
+    case PROCESSOR_TYPE_THROTTLER:
+      return Throttler::Create(params);
 #ifdef USE_ZMQ
     case PROCESSOR_TYPE_STREAM_PUBLISHER:
       return StreamPublisher::Create(params);

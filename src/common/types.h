@@ -175,6 +175,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
+  PROCESSOR_TYPE_THROTTLER,
 #ifdef USE_ZMQ
   PROCESSOR_TYPE_STREAM_PUBLISHER,
 #endif  // USE_ZMQ
@@ -209,6 +210,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
   } else if (type == "OpenCVFaceDetector") {
     return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+  } else if (type == "Throttler") {
+    return PROCESSOR_TYPE_THROTTLER;
 #ifdef USE_ZMQ
   } else if (type == "StreamPublisher") {
     return PROCESSOR_TYPE_STREAM_PUBLISHER;
@@ -247,6 +250,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "NeuralNetEvaluator";
     case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
       return "OpenCVFaceDetector";
+    case PROCESSOR_TYPE_THROTTLER:
+      return "Throttler";
 #ifdef USE_ZMQ
     case PROCESSOR_TYPE_STREAM_PUBLISHER:
       return "StreamPublisher";
