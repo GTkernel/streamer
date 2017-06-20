@@ -95,7 +95,6 @@ void ImageSegmenter::Process() {
   cv::resize(colored_output, colored_output,
              cv::Size(original_image.cols, original_image.rows));
 
-  PushFrame("output", new ImageFrame(colored_output, frame->GetOriginalImage(),
-                                     frame->GetStartTime()));
+  PushFrame("output", new ImageFrame(colored_output, frame->GetOriginalImage()));
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }

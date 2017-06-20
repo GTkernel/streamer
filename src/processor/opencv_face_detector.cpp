@@ -49,6 +49,5 @@ void OpenCVFaceDetector::Process() {
   }
 #endif  // USE_CUDA
 
-  PushFrame("output", new MetadataFrame(results_rect, frame->GetOriginalImage(),
-                                        frame->GetStartTime()));
+  PushFrame("output", new MetadataFrame(results_rect, frame->GetOriginalImage()));
 }

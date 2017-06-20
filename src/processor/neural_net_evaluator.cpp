@@ -93,7 +93,7 @@ void NeuralNetEvaluator::Process() {
   for (const auto& layer_pair : layer_outputs) {
     // TODO: Populate the layer_name parameter.
     auto layer_frame =
-        new LayerFrame("", layer_pair.second, image_frame->GetOriginalImage());
+        new LayerFrame("", layer_pair.second);
     PushFrame(layer_pair.first, layer_frame);
   }
 }
