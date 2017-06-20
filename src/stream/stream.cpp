@@ -38,6 +38,10 @@ void Stream::PushFrame(Frame* frame) {
   PushFrame(std::shared_ptr<Frame>(frame));
 }
 
+void Stream::PushFrame(NewFrame* frame) {
+  PushFrame(std::shared_ptr<NewFrame>(frame));
+}
+
 /////// Stream Reader
 StreamReader::StreamReader(Stream* stream, size_t max_buffer_size)
     : stream_(stream), max_buffer_size_(max_buffer_size) {}
@@ -71,6 +75,16 @@ void StreamReader::PushFrame(std::shared_ptr<Frame> frame) {
   buffer_cv_.notify_all();
 }
 
+void StreamReader::PushFrame(std::shared_ptr<NewFrame> frame) {
+  std::lock_guard<std::mutex> lock(buffer_lock_);
+  // If buffer is full, the frame is dropped
+  if (new_frame_buffer_.size() < max_buffer_size_) {
+    new_frame_buffer_.push(frame);
+  }
+  buffer_cv_.notify_all();
+}
+
+
 void StreamReader::UnSubscribe() { stream_->UnSubscribe(this); }
 
 template std::shared_ptr<Frame> StreamReader::PopFrame(unsigned int);
@@ -78,3 +92,4 @@ template std::shared_ptr<ImageFrame> StreamReader::PopFrame(unsigned int);
 template std::shared_ptr<MetadataFrame> StreamReader::PopFrame(unsigned int);
 template std::shared_ptr<BytesFrame> StreamReader::PopFrame(unsigned int);
 template std::shared_ptr<LayerFrame> StreamReader::PopFrame(unsigned int);
+template std::shared_ptr<NewFrame> StreamReader::PopFrame(unsigned int);

@@ -1,4 +1,5 @@
 //
+//
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
 
@@ -7,8 +8,10 @@
 
 #include "json/json.hpp"
 
+#include "boost/variant.hpp"
 #include "common/common.h"
 #include "common/context.h"
+
 
 class Frame {
  public:
@@ -26,6 +29,18 @@ class Frame {
   cv::Mat original_image_;
   // Time since streamer context was started
   double start_time_;
+};
+
+class NewFrame {
+ public:
+  NewFrame();
+  virtual ~NewFrame(){};
+  //FrameType GetType();
+  cv::Mat GetOriginalImage(){ return cv::Mat();}
+  using field_types = boost::variant<int, std::string, float, cv::Mat>;
+
+ private:
+  std::unordered_map<std::string, field_types> frame_data_;
 };
 
 class ImageFrame : public Frame {

@@ -29,6 +29,7 @@ std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
 
 bool Camera::Capture(cv::Mat& image) {
   if (stopped_) {
+    LOG(WARNING) << "stopped.";
     Start();
     auto reader = stream_->Subscribe();
     // Pop the first 3 images, the first few shots of the camera might be
@@ -40,6 +41,7 @@ bool Camera::Capture(cv::Mat& image) {
     reader->UnSubscribe();
     Stop();
   } else {
+    LOG(WARNING) << "not stopped.";
     auto reader = stream_->Subscribe();
     image = reader->PopFrame<ImageFrame>()->GetOriginalImage();
     reader->UnSubscribe();

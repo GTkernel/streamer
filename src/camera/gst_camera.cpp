@@ -26,7 +26,7 @@ bool GSTCamera::OnStop() {
 }
 void GSTCamera::Process() {
   cv::Mat frame = capture_.GetFrame();
-  PushFrame("bgr_output", new ImageFrame(frame, frame));
+  PushFrame("bgr_output", new NewFrame());
   PushFrame("raw_output", new BytesFrame(DataBuffer(
                               frame.data, frame.total() * frame.elemSize())));
 }
