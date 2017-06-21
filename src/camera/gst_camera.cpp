@@ -28,14 +28,14 @@ void GSTCamera::Process() {
   cv::Mat pixels = capture_.GetPixels();
 
   Frame* image_frame = new Frame();
-  Frame* raw_frame = new Frame();
-
   image_frame->SetOriginalImage(pixels);
   image_frame->SetImage(pixels);
+  image_frame->SetValue<unsigned int>("hello", 1);
+  PushFrame("bgr_output", image_frame);
 
+  Frame* raw_frame = new Frame();
   raw_frame->SetOriginalImage(pixels);
   raw_frame->SetDataBuffer(DataBuffer(pixels.data, pixels.total() * pixels.elemSize()));
-  PushFrame("bgr_output", image_frame);
   PushFrame("raw_output", raw_frame);
 }
 
