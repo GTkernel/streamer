@@ -30,7 +30,6 @@ void GSTCamera::Process() {
   Frame* image_frame = new Frame();
   image_frame->SetOriginalImage(pixels);
   image_frame->SetImage(pixels);
-  image_frame->SetValue<unsigned int>("hello", 1);
   PushFrame("bgr_output", image_frame);
 
   Frame* raw_frame = new Frame();
