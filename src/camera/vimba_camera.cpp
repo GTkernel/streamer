@@ -87,10 +87,17 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         // Transform to BGR image
         cv::Mat bgr_output = TransformToBGRImage(pFrame);
 
-        vimba_camera_->PushFrame("raw_output",
-                                 new BytesFrame(data_buffer, bgr_output));
-        vimba_camera_->PushFrame("bgr_output",
-                                 new ImageFrame(bgr_output, bgr_output));
+        Frame* image_frame = new Frame();
+        Frame* raw_frame = new Frame();
+
+        image_frame->SetOriginalImage(bgr_output);
+        image_frame->SetImage(bgr_output);
+
+        raw_frame->SetDataBuffer(data_buffer);
+        raw_frame->SetOriginalImage(bgr_output);
+
+        vimba_camera_->PushFrame("bgr_output", image_frame);
+        vimba_camera_->PushFrame("raw_output", raw_frame);
       } else {
         LOG(ERROR) << "Can't get frame successfully: " << eReceiveStatus;
       }  // Validate eReceiveStatus

@@ -28,6 +28,13 @@ class DataBuffer {
     buffer_ptr_ = buffer_.get();
   }
 
+  DataBuffer(const DataBuffer& src) {
+    size_ = src.GetSize();
+    buffer_ =
+        std::shared_ptr<char>(new char[size_], std::default_delete<char[]>());
+    buffer_ptr_ = buffer_.get();
+    Clone(src);
+  }
   /**
    * @brief Construct a data buffer from existing data pointer.
    * @param data The pointer to data.

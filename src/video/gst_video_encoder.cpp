@@ -240,8 +240,13 @@ void GstVideoEncoder::Process() {
 
   cv::resize(original_image, image, cv::Size(width_, height_));
 
+  Frame* image_frame = new Frame();
+
+  image_frame->SetOriginalImage(original_image);
+  image_frame->SetImage(image);
+
   // Forward the input image to output
-  PushFrame("output", new ImageFrame(image, original_image));
+  PushFrame("output", image_frame);
 
   // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);

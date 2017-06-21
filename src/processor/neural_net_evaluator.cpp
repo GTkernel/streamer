@@ -71,7 +71,7 @@ bool NeuralNetEvaluator::OnStop() { return true; }
 void NeuralNetEvaluator::Process() {
   // Prepare the image for inference by splitting its channels.
   float* data = (float*)input_buffer_.GetBuffer();
-  auto image_frame = GetFrame<ImageFrame>(SOURCE_NAME);
+  auto image_frame = GetFrame(SOURCE_NAME);
   cv::Mat img = image_frame->GetImage();
   CHECK(img.channels() == input_shape_.channel &&
         img.size[0] == input_shape_.width &&
@@ -92,8 +92,12 @@ void NeuralNetEvaluator::Process() {
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
     // TODO: Populate the layer_name parameter.
-    auto layer_frame =
-        new LayerFrame("", layer_pair.second);
+    auto layer_frame = new Frame();
+    layer_frame->SetActivations(layer_pair.second);
+    // TODO NEWFRAME?: Why was the original image removed from layerframes? (question mostly for Chris)
+    // I added it back in for now - Thomas
+    layer_frame->SetOriginalImage(img);
+    layer_frame->SetLayerName(layer_pair.first);
     PushFrame(layer_pair.first, layer_frame);
   }
 }

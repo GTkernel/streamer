@@ -59,7 +59,6 @@ void StreamPublisher::Process() {
     case FRAME_TYPE_MD: {
       // TODO: Move the serialization function to the logic of frame class
       s_sendmore(zmq_publisher_, topic_name_);
-      auto md_frame = std::dynamic_pointer_cast<MetadataFrame>(frame);
 
       pt::ptree root;
       pt::ptree tags_node;
@@ -67,13 +66,13 @@ void StreamPublisher::Process() {
 
       root.put("type", "metadata");
 
-      for (const auto& tag : md_frame->GetTags()) {
+      for (const auto& tag : frame->GetTags()) {
         pt::ptree tag_node;
         tag_node.put("", tag);
         tags_node.push_back({"", tag_node});
       }
 
-      for (const auto& bbox : md_frame->GetBboxes()) {
+      for (const auto& bbox : frame->GetBboxes()) {
         pt::ptree bbox_node;
         bbox_node.put("x", bbox.px);
         bbox_node.put("y", bbox.py);

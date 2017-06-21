@@ -56,7 +56,7 @@ std::shared_ptr<ImageClassifier> ImageClassifier::Create(
 bool ImageClassifier::Init() { return NeuralNetConsumer::Init(); }
 
 void ImageClassifier::Process() {
-  std::shared_ptr<LayerFrame> layer_frame = GetFrame<LayerFrame>(SOURCE_NAME);
+  auto layer_frame = GetFrame(SOURCE_NAME);
 
   // Assign labels.
   std::vector<Prediction> predictions;
@@ -85,7 +85,10 @@ void ImageClassifier::Process() {
     tags.push_back(pred.first);
   }
   cv::Mat original_image = layer_frame->GetOriginalImage();
-  PushFrame(SINK_NAME, new MetadataFrame(tags, original_image));
+  Frame* metadata_frame = new Frame();
+  metadata_frame->SetTags(tags);
+  metadata_frame->SetOriginalImage(original_image);
+  PushFrame(SINK_NAME, metadata_frame);
 }
 
 std::vector<std::string> ImageClassifier::LoadLabels(

@@ -32,7 +32,7 @@ bool FrameSender::OnStop() { return true; }
 
 void FrameSender::Process() {
   // TODO:  Support more than just ImageFrame
-  auto frame = this->GetFrame<ImageFrame>(SOURCE);
+  auto frame = this->GetFrame(SOURCE);
   cv::Mat image = frame->GetImage();
 
   // serialize

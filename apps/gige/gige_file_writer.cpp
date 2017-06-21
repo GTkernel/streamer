@@ -53,7 +53,7 @@ void GigeFileWriter::Process() {
     current_filename_ = filename;
   }
 
-  auto frame = GetFrame<BytesFrame>("input");
+  auto frame = GetFrame("input");
 
   current_file_.write((char*)frame->GetDataBuffer().GetBuffer(),
                       frame->GetDataBuffer().GetSize());

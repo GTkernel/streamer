@@ -7,98 +7,47 @@
 #define STREAMER_STREAM_FRAME_H_
 
 #include "json/json.hpp"
+#include "common/types.h"
 
 #include "boost/variant.hpp"
 #include "common/common.h"
 #include "common/context.h"
 
+// TODO: What's the right solution for this?
+#define ORIGINAL_IMAGE_KEY "OriginalImage"
+#define DATABUFFER_KEY "DataBuffer"
+#define IMAGE_KEY "Image"
+#define TAGS_KEY "Tags"
+#define BBOXES_KEY "Bboxes"
+#define ACTIVATIONS_KEY "Activations"
+#define START_TIME_KEY "StartTime"
+#define LAYER_NAME_KEY "LayerName"
 
 class Frame {
  public:
-  Frame() = delete;
-  Frame(FrameType frame_type, cv::Mat original_image,
-        double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  virtual ~Frame(){};
-  FrameType GetType();
-  cv::Mat GetOriginalImage();
+  Frame(double start_time = Context::GetContext().GetTimer().ElapsedMSec());
+  FrameType GetType() const;
   void SetOriginalImage(cv::Mat original_image);
-  double GetStartTime();
-
- private:
-  FrameType frame_type_;
-  cv::Mat original_image_;
-  // Time since streamer context was started
-  double start_time_;
-};
-
-class NewFrame {
- public:
-  NewFrame();
-  virtual ~NewFrame(){};
-  //FrameType GetType();
-  cv::Mat GetOriginalImage(){ return cv::Mat();}
-  using field_types = boost::variant<int, std::string, float, cv::Mat>;
+  cv::Mat GetOriginalImage() const;
+  void SetDataBuffer(const DataBuffer& buf);
+  DataBuffer GetDataBuffer() const;
+  void SetImage(cv::Mat image);
+  cv::Mat GetImage() const;
+  void SetTags(std::vector<std::string> tags);
+  std::vector<std::string> GetTags() const;
+  void SetBboxes(std::vector<Rect> bboxes);
+  std::vector<Rect> GetBboxes() const;
+  void SetActivations(cv::Mat activations);
+  cv::Mat GetActivations() const;
+  void SetStartTime(double start_time);
+  double GetStartTime() const;
+  void SetLayerName(std::string layer_name);
+  std::string GetLayerName() const;
+  nlohmann::json ToJson() const;
+  using field_types = boost::variant<int, std::string, float, double, cv::Mat, DataBuffer,
+                                      std::vector<std::string>, std::vector<Rect>>;
 
  private:
   std::unordered_map<std::string, field_types> frame_data_;
 };
-
-class ImageFrame : public Frame {
- public:
-  ImageFrame(
-      cv::Mat image, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  Shape GetSize();
-  cv::Mat GetImage();
-  void SetImage(cv::Mat image);
-
- private:
-  cv::Mat image_;
-  Shape shape_;
-};
-
-class MetadataFrame : public Frame {
- public:
-  MetadataFrame() = delete;
-  MetadataFrame(
-      std::vector<string> tags, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  MetadataFrame(
-      std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  MetadataFrame(nlohmann::json j);
-  std::vector<string> GetTags() const;
-  std::vector<Rect> GetBboxes() const;
-  nlohmann::json ToJson() const;
-
- private:
-  std::vector<string> tags_;
-  std::vector<Rect> bboxes_;
-};
-
-class BytesFrame : public Frame {
- public:
-  BytesFrame() = delete;
-  BytesFrame(
-      DataBuffer data_buffer, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  DataBuffer GetDataBuffer();
-
- private:
-  DataBuffer data_buffer_;
-};
-
-class LayerFrame : public Frame {
- public:
-  LayerFrame() = delete;
-  LayerFrame(std::string layer_name, cv::Mat activations,
-             cv::Mat original_image = cv::Mat());
-  const std::string GetLayerName() const;
-  cv::Mat GetActivations() const;
-
- private:
-  const std::string layer_name_;
-  cv::Mat activations_;
-};
-
 #endif  // STREAMER_STREAM_FRAME_H_

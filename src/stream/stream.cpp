@@ -34,20 +34,16 @@ void Stream::PushFrame(std::shared_ptr<Frame> frame) {
   }
 }
 
+// TODO NEWFRAME: can we get rid of these?
 void Stream::PushFrame(Frame* frame) {
   PushFrame(std::shared_ptr<Frame>(frame));
-}
-
-void Stream::PushFrame(NewFrame* frame) {
-  PushFrame(std::shared_ptr<NewFrame>(frame));
 }
 
 /////// Stream Reader
 StreamReader::StreamReader(Stream* stream, size_t max_buffer_size)
     : stream_(stream), max_buffer_size_(max_buffer_size) {}
 
-template <typename FT>
-std::shared_ptr<FT> StreamReader::PopFrame(unsigned int timeout_ms) {
+std::shared_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
   std::unique_lock<std::mutex> lk(buffer_lock_);
   if (timeout_ms > 0) {
     buffer_cv_.wait_for(lk, std::chrono::milliseconds(timeout_ms),
@@ -59,7 +55,7 @@ std::shared_ptr<FT> StreamReader::PopFrame(unsigned int timeout_ms) {
   if (frame_buffer_.size() != 0) {
     std::shared_ptr<Frame> frame = frame_buffer_.front();
     frame_buffer_.pop();
-    return std::dynamic_pointer_cast<FT>(frame);
+    return frame;
   } else {
     // Can't get frame within timeout
     return nullptr;
@@ -75,21 +71,4 @@ void StreamReader::PushFrame(std::shared_ptr<Frame> frame) {
   buffer_cv_.notify_all();
 }
 
-void StreamReader::PushFrame(std::shared_ptr<NewFrame> frame) {
-  std::lock_guard<std::mutex> lock(buffer_lock_);
-  // If buffer is full, the frame is dropped
-  if (new_frame_buffer_.size() < max_buffer_size_) {
-    new_frame_buffer_.push(frame);
-  }
-  buffer_cv_.notify_all();
-}
-
-
 void StreamReader::UnSubscribe() { stream_->UnSubscribe(this); }
-
-template std::shared_ptr<Frame> StreamReader::PopFrame(unsigned int);
-template std::shared_ptr<ImageFrame> StreamReader::PopFrame(unsigned int);
-template std::shared_ptr<MetadataFrame> StreamReader::PopFrame(unsigned int);
-template std::shared_ptr<BytesFrame> StreamReader::PopFrame(unsigned int);
-template std::shared_ptr<LayerFrame> StreamReader::PopFrame(unsigned int);
-template std::shared_ptr<NewFrame> StreamReader::PopFrame(unsigned int);

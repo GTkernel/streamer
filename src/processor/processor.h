@@ -111,8 +111,7 @@ class Processor {
    */
   virtual void Process() = 0;
 
-  template <typename FT = Frame>
-  std::shared_ptr<FT> GetFrame(const string& source_name);
+  std::shared_ptr<Frame> GetFrame(const string& source_name);
   void PushFrame(const string& sink_name, Frame* frame);
   void Init_();
 

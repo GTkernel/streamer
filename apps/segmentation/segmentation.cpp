@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
   auto reader = seg_stream->Subscribe();
 
   while (true) {
-    auto frame = reader->PopFrame<ImageFrame>();
+    auto frame = reader->PopFrame();
     if (display) {
       cv::imshow("Result", frame->GetImage());
       cv::imshow("Camera", frame->GetOriginalImage());

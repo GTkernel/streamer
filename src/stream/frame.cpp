@@ -1,63 +1,138 @@
 //
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
-#include <opencv2/core/core.hpp>
-#include "json/json.hpp"
-
 #include "frame.h"
 
-Frame::Frame(FrameType frame_type, cv::Mat original_image, double start_time)
-    : frame_type_(frame_type),
-      original_image_(original_image),
-      start_time_(start_time) {}
+#include <opencv2/core/core.hpp>
 
-cv::Mat Frame::GetOriginalImage() { return original_image_; }
+#include "json/json.hpp"
+#include "common/types.h"
 
-void Frame::SetOriginalImage(cv::Mat original_image) {
-  original_image_ = original_image;
+Frame::Frame(double start_time) {
+  frame_data_[START_TIME_KEY] = start_time;
 }
 
-FrameType Frame::GetType() { return frame_type_; }
-
-double Frame::GetStartTime() { return start_time_; }
-
-ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image, double start_time)
-    : Frame(FRAME_TYPE_IMAGE, original_image, start_time),
-      image_(image),
-      shape_(image.channels(), image.cols, image.rows) {}
-
-Shape ImageFrame::GetSize() { return shape_; }
-
-cv::Mat ImageFrame::GetImage() { return image_; }
-
-void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
-
-MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image,
-                             double start_time)
-    : Frame(FRAME_TYPE_MD, original_image, start_time), tags_(tags) {}
-MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image,
-                             double start_time)
-    : Frame(FRAME_TYPE_MD, original_image, start_time), bboxes_(bboxes) {}
-
-MetadataFrame::MetadataFrame(nlohmann::json j)
-    : Frame(FRAME_TYPE_MD, cv::Mat()) {
-  try {
-    nlohmann::json md_j = j.at("MetadataFrame");
-    this->tags_ = md_j.at("tags").get<std::vector<std::string>>();
-
-    for (const auto& bbox_j :
-         md_j.at("bboxes").get<std::vector<nlohmann::json>>()) {
-      this->bboxes_.push_back(Rect(bbox_j));
-    }
-  } catch (std::out_of_range) {
-    LOG(FATAL) << "Malformed MetadataFrame JSON: " << j.dump();
+FrameType Frame::GetType() const {
+  if(frame_data_.count(DATABUFFER_KEY) > 0) {
+    return FRAME_TYPE_BYTES;
+  } else if(frame_data_.count(ACTIVATIONS_KEY) > 0) {
+    return FRAME_TYPE_LAYER;
+  } else if(frame_data_.count(ORIGINAL_IMAGE_KEY) > 0) {
+    return FRAME_TYPE_IMAGE;
+  } else if(frame_data_.count(TAGS_KEY) > 0 || frame_data_.count(BBOXES_KEY) > 0) {
+    return FRAME_TYPE_MD;  
+  } else {
+    return FRAME_TYPE_INVALID;
   }
 }
 
-std::vector<string> MetadataFrame::GetTags() const { return tags_; }
-std::vector<Rect> MetadataFrame::GetBboxes() const { return bboxes_; }
+void Frame::SetOriginalImage(cv::Mat original_image) {
+  frame_data_[ORIGINAL_IMAGE_KEY] = original_image;
+}
 
-nlohmann::json MetadataFrame::ToJson() const {
+cv::Mat Frame::GetOriginalImage() const {
+  auto it = frame_data_.find(ORIGINAL_IMAGE_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<cv::Mat>(it->second);
+  } else {
+    throw std::runtime_error("No original image in Frame\n");
+  }
+}
+
+void Frame::SetDataBuffer(const DataBuffer& buf) {
+  frame_data_[DATABUFFER_KEY] = buf;
+}
+
+// Databuffer is often used in conjunction with pointer aliasing
+// so const really doesn't mean that much here.
+DataBuffer Frame::GetDataBuffer() const {
+  auto it = frame_data_.find(DATABUFFER_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<DataBuffer>(it->second);
+  } else {
+    throw std::runtime_error("No raw image in Frame\n");
+  }
+}
+
+void Frame::SetImage(cv::Mat image) {
+  frame_data_[IMAGE_KEY] = image;
+}
+
+cv::Mat Frame::GetImage() const {
+  auto it = frame_data_.find(IMAGE_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<cv::Mat>(it->second);
+  } else {
+    throw std::runtime_error("No image in Frame\n");
+  }
+}
+
+void Frame::SetTags(std::vector<std::string> tags) {
+  frame_data_[TAGS_KEY] = tags;
+}
+
+std::vector<std::string> Frame::GetTags() const {
+  auto it = frame_data_.find(TAGS_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<std::vector<std::string>>(it->second);
+  } else {
+    return {};
+  }
+}
+
+void Frame::SetBboxes(std::vector<Rect> bboxes) {
+  frame_data_[BBOXES_KEY] = bboxes;
+}
+
+std::vector<Rect> Frame::GetBboxes() const {
+  auto it = frame_data_.find(BBOXES_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<std::vector<Rect>>(it->second);
+  } else {
+    return {};
+  }
+}
+
+void Frame::SetActivations(cv::Mat activations) {
+  frame_data_[ACTIVATIONS_KEY] = activations;
+}
+
+cv::Mat Frame::GetActivations() const {
+  auto it = frame_data_.find(ACTIVATIONS_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<cv::Mat>(it->second);
+  } else {
+    throw std::runtime_error("No activations in Frame\n");
+  }
+}
+
+void Frame::SetStartTime(double start_time) {
+  frame_data_[START_TIME_KEY] = start_time;
+}
+
+double Frame::GetStartTime() const {
+  auto it = frame_data_.find(START_TIME_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<double>(it->second);
+  } else {
+    throw std::runtime_error("No start time in Frame\n");
+  }
+}
+
+void Frame::SetLayerName(std::string layer_name) {
+  frame_data_[LAYER_NAME_KEY] = layer_name;
+}
+
+std::string Frame::GetLayerName() const {
+  auto it = frame_data_.find(LAYER_NAME_KEY);
+  if(it != frame_data_.end()) {
+    return boost::get<std::string>(it->second);
+  } else {
+    throw std::runtime_error("No start time in Frame\n");
+  }
+}
+
+nlohmann::json Frame::ToJson() const {
   nlohmann::json md_j;
   md_j["tags"] = this->GetTags();
 
@@ -72,19 +147,3 @@ nlohmann::json MetadataFrame::ToJson() const {
   return j;
 }
 
-BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image,
-                       double start_time)
-    : Frame(FRAME_TYPE_BYTES, original_image, start_time),
-      data_buffer_(data_buffer) {}
-
-DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }
-
-LayerFrame::LayerFrame(std::string layer_name, cv::Mat activations,
-                       cv::Mat original_image)
-    : Frame(FRAME_TYPE_LAYER, original_image),
-      layer_name_(layer_name),
-      activations_(activations) {}
-
-const std::string LayerFrame::GetLayerName() const { return layer_name_; }
-
-cv::Mat LayerFrame::GetActivations() const { return activations_; }

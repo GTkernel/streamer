@@ -101,7 +101,7 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
     cv::namedWindow("Camera");
   }
   while (true) {
-    cv::Mat image = camera_reader->PopFrame<ImageFrame>()->GetOriginalImage();
+    cv::Mat image = camera_reader->PopFrame()->GetOriginalImage();
     cv::Mat image_to_show;
     if (display) {
       int width = image.cols;

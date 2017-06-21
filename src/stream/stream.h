@@ -27,8 +27,7 @@ class StreamReader {
    * @brief Pop a frame, and timeout if no frame available for a given time
    * @param timeout_ms Time out threshold, 0 for forever
    */
-  template <typename FT = Frame>
-  std::shared_ptr<FT> PopFrame(unsigned int timeout_ms = 0);
+  std::shared_ptr<Frame> PopFrame(unsigned int timeout_ms = 0);
 
   void UnSubscribe();
 
@@ -38,13 +37,11 @@ class StreamReader {
    * @param frame The frame to be pushed into the stream.
    */
   void PushFrame(std::shared_ptr<Frame> frame);
-  void PushFrame(std::shared_ptr<NewFrame> frame);
   Stream* stream_;
   // Max size of the buffer to hold frames in the stream
   size_t max_buffer_size_;
   // The frame buffer
   std::queue<std::shared_ptr<Frame>> frame_buffer_;
-  std::queue<std::shared_ptr<NewFrame>> new_frame_buffer_;
   // Stream synchronization
   std::mutex buffer_lock_;
   std::condition_variable buffer_cv_;
@@ -64,7 +61,7 @@ class Stream {
    */
   void PushFrame(std::shared_ptr<Frame> frame);
 
-  void PushFrame(NewFrame* frame);
+// TODO NEWFRAME: can we get rid of these?
   /**
    * @brief Push a raw pointer of the frame into the stream.
    * @param frame The frame to be pushed into the stream.

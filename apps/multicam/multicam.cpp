@@ -145,7 +145,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       auto classifier = classifiers.at(i);
       double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
       auto reader = classifier_streams.at(i)->Subscribe();
-      auto md_frame = reader->PopFrame<MetadataFrame>();
+      auto md_frame = reader->PopFrame();
       if (display) {
         cv::Mat img = md_frame->GetOriginalImage();
         string label = md_frame->GetTags().at(0);

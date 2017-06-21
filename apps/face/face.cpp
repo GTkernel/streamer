@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
   auto output_reader = output_stream->Subscribe();
   if (display_on) cv::namedWindow("Image");
   while (true) {
-    auto frame = output_reader->PopFrame<MetadataFrame>();
+    auto frame = output_reader->PopFrame();
     cv::Mat image = frame->GetOriginalImage();
     auto results = frame->GetBboxes();
     cv::Scalar box_color(255, 0, 0);

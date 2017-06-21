@@ -87,6 +87,7 @@ void Processor::ProcessorLoop() {
       auto source_stream = reader.second;
 
       while (true) {
+        // TODO: Why is the timeout hardcoded and so large?
         auto frame = source_stream->PopFrame(100);
         if (frame == nullptr) {
           if (stopped_) {
@@ -145,18 +146,7 @@ void Processor::PushFrame(const string& sink_name, Frame* frame) {
   sinks_[sink_name]->PushFrame(frame);
 }
 
-template <typename FT>
-std::shared_ptr<FT> Processor::GetFrame(const string& source_name) {
+std::shared_ptr<Frame> Processor::GetFrame(const string& source_name) {
   CHECK(source_frame_cache_.count(source_name) != 0);
-  return std::dynamic_pointer_cast<FT>(source_frame_cache_[source_name]);
+  return source_frame_cache_[source_name];
 }
-
-template std::shared_ptr<Frame> Processor::GetFrame(const string& source_name);
-template std::shared_ptr<ImageFrame> Processor::GetFrame(
-    const string& source_name);
-template std::shared_ptr<MetadataFrame> Processor::GetFrame(
-    const string& source_name);
-template std::shared_ptr<BytesFrame> Processor::GetFrame(
-    const string& source_name);
-template std::shared_ptr<LayerFrame> Processor::GetFrame(
-    const string& source_name);

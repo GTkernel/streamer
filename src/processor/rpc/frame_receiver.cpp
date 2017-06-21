@@ -40,8 +40,10 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
     return grpc::Status(grpc::StatusCode::ABORTED, error_message.str());
   }
 
-  // TODO:  Support more than just ImageFrame
-  PushFrame(SINK, new ImageFrame(image, image));
+  Frame* output_frame = new Frame();
+  output_frame->SetOriginalImage(image);
+  output_frame->SetImage(image);
+  PushFrame(SINK, output_frame);
 
   return grpc::Status::OK;
 }
