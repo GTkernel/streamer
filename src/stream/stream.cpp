@@ -27,22 +27,24 @@ void Stream::UnSubscribe(StreamReader* reader) {
                                 }));
 }
 
-void Stream::PushFrame(std::shared_ptr<Frame> frame) {
+void Stream::PushFrame(std::unique_ptr<Frame> frame) {
   std::lock_guard<std::mutex> guard(stream_lock_);
+  auto num_readers = readers_.size();
   for (const auto& reader : readers_) {
-    reader->PushFrame(frame);
+    if(num_readers == 1) {
+      reader->PushFrame(std::move(frame));
+    } else {
+      reader->PushFrame(std::make_unique<Frame>(frame));
+    }
+    num_readers -= 1;
   }
-}
-
-void Stream::PushFrame(Frame* frame) {
-  PushFrame(std::shared_ptr<Frame>(frame));
 }
 
 /////// Stream Reader
 StreamReader::StreamReader(Stream* stream, size_t max_buffer_size)
     : stream_(stream), max_buffer_size_(max_buffer_size) {}
 
-std::shared_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
+std::unique_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
   std::unique_lock<std::mutex> lk(buffer_lock_);
   if (timeout_ms > 0) {
     buffer_cv_.wait_for(lk, std::chrono::milliseconds(timeout_ms),
@@ -52,20 +54,20 @@ std::shared_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
   }
 
   if (frame_buffer_.size() != 0) {
-    std::shared_ptr<Frame> frame = frame_buffer_.front();
+    std::unique_ptr<Frame> frame = std::move(frame_buffer_.front());
     frame_buffer_.pop();
     return frame;
   } else {
     // Can't get frame within timeout
-    return nullptr;
+    return std::unique_ptr<Frame>();
   }
 }
 
-void StreamReader::PushFrame(std::shared_ptr<Frame> frame) {
+void StreamReader::PushFrame(std::unique_ptr<Frame> frame) {
   std::lock_guard<std::mutex> lock(buffer_lock_);
   // If buffer is full, the frame is dropped
   if (frame_buffer_.size() < max_buffer_size_) {
-    frame_buffer_.push(frame);
+    frame_buffer_.push(std::move(frame));
   }
   buffer_cv_.notify_all();
 }

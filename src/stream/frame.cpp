@@ -12,15 +12,28 @@ Frame::Frame(double start_time) {
   frame_data_[START_TIME_KEY] = start_time;
 }
 
+Frame::Frame(const Frame& frame) {
+  frame_data_ = frame.frame_data_;
+  // Deep copy the databuffer
+  auto it = frame.frame_data_.find(DATABUFFER_KEY);
+  if(it != frame.frame_data_.end()) {
+    DataBuffer newbuf(boost::get<DataBuffer>(it->second));
+    frame_data_[DATABUFFER_KEY] = newbuf;
+  }
+}
+
+Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {
+}
+
 FrameType Frame::GetType() const {
   if(frame_data_.count(DATABUFFER_KEY) > 0) {
     return FRAME_TYPE_BYTES;
   } else if(frame_data_.count(ACTIVATIONS_KEY) > 0) {
     return FRAME_TYPE_LAYER;
-  } else if(frame_data_.count(ORIGINAL_IMAGE_KEY) > 0) {
-    return FRAME_TYPE_IMAGE;
   } else if(frame_data_.count(TAGS_KEY) > 0 || frame_data_.count(BBOXES_KEY) > 0) {
     return FRAME_TYPE_MD;  
+  } else if(frame_data_.count(ORIGINAL_IMAGE_KEY) > 0) {
+    return FRAME_TYPE_IMAGE;
   } else {
     return FRAME_TYPE_INVALID;
   }

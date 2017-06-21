@@ -40,10 +40,10 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
     return grpc::Status(grpc::StatusCode::ABORTED, error_message.str());
   }
 
-  Frame* output_frame = new Frame();
+  std::unique_ptr<Frame> output_frame = std::make_unique<Frame>();
   output_frame->SetOriginalImage(image);
   output_frame->SetImage(image);
-  PushFrame(SINK, output_frame);
+  PushFrame(SINK, std::move(output_frame));
 
   return grpc::Status::OK;
 }

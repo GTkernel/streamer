@@ -13,7 +13,7 @@ Processor::Processor(ProcessorType type,
     : type_(type) {
   for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
-    source_frame_cache_.insert({source_name, nullptr});
+    source_frame_cache_[source_name] = std::make_unique<Frame>();
   }
 
   for (const auto& sink_name : sink_names) {
@@ -87,7 +87,6 @@ void Processor::ProcessorLoop() {
       auto source_stream = reader.second;
 
       while (true) {
-        // TODO: Why is the timeout hardcoded and so large?
         auto frame = source_stream->PopFrame(100);
         if (frame == nullptr) {
           if (stopped_) {
@@ -97,7 +96,7 @@ void Processor::ProcessorLoop() {
             continue;
           }
         } else {
-          source_frame_cache_.insert({source_name, frame});
+          source_frame_cache_[source_name] = std::move(frame);
           // Calculate queue latency
           double start = frame->GetStartTime();
           double end = Context::GetContext().GetTimer().ElapsedMSec();
@@ -141,12 +140,12 @@ double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
 
 ProcessorType Processor::GetType() const { return type_; }
 
-void Processor::PushFrame(const string& sink_name, Frame* frame) {
+void Processor::PushFrame(const string& sink_name, std::unique_ptr<Frame> frame) {
   CHECK(sinks_.count(sink_name) != 0);
-  sinks_[sink_name]->PushFrame(frame);
+  sinks_[sink_name]->PushFrame(std::move(frame));
 }
 
-std::shared_ptr<Frame> Processor::GetFrame(const string& source_name) {
+std::unique_ptr<Frame> Processor::GetFrame(const string& source_name) {
   CHECK(source_frame_cache_.count(source_name) != 0);
-  return source_frame_cache_[source_name];
+  return std::move(source_frame_cache_[source_name]);
 }

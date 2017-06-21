@@ -84,11 +84,10 @@ void ImageClassifier::Process() {
   for (const auto& pred : predictions) {
     tags.push_back(pred.first);
   }
-  cv::Mat original_image = layer_frame->GetOriginalImage();
-  Frame* metadata_frame = new Frame();
-  metadata_frame->SetTags(tags);
-  metadata_frame->SetOriginalImage(original_image);
-  PushFrame(SINK_NAME, metadata_frame);
+  // TODO: do we want to clean up the unnecessary keys in the
+  // map? IE: get rid of Activations before pushing
+  layer_frame->SetTags(tags);
+  PushFrame(SINK_NAME, std::move(layer_frame));
 }
 
 std::vector<std::string> ImageClassifier::LoadLabels(

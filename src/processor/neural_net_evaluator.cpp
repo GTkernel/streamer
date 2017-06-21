@@ -91,11 +91,10 @@ void NeuralNetEvaluator::Process() {
 
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
-    auto layer_frame = new Frame();
+    std::unique_ptr<Frame> layer_frame = std::make_unique<Frame>(image_frame);
     layer_frame->SetActivations(layer_pair.second);
-    layer_frame->SetOriginalImage(img);
     layer_frame->SetLayerName(layer_pair.first);
-    PushFrame(layer_pair.first, layer_frame);
+    PushFrame(layer_pair.first, std::move(layer_frame));
   }
 }
 

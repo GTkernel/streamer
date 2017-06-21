@@ -91,10 +91,8 @@ void ImageTransformer::Process() {
     cv::subtract(sample_float_, mean_image_, sample_normalized_);
   }
 
-  Frame* output_frame = new Frame();
-  output_frame->SetImage(sample_normalized_);
-  output_frame->SetOriginalImage(frame->GetOriginalImage());
-  PushFrame("output", output_frame);
+  frame->SetImage(sample_normalized_);
+  PushFrame("output", std::move(frame));
 }
 
 bool ImageTransformer::Init() { return true; }

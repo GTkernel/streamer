@@ -26,6 +26,8 @@
 class Frame {
  public:
   Frame(double start_time = Context::GetContext().GetTimer().ElapsedMSec());
+  Frame(const std::unique_ptr<Frame>& frame);
+  Frame(const Frame& frame);
   FrameType GetType() const;
   template<typename T>
   void SetValue(std::string key, const T& val);
