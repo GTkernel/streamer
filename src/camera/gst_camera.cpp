@@ -25,16 +25,16 @@ bool GSTCamera::OnStop() {
   return true;
 }
 void GSTCamera::Process() {
-  cv::Mat frame = capture_.GetFrame();
+  cv::Mat pixels = capture_.GetPixels();
 
   Frame* image_frame = new Frame();
   Frame* raw_frame = new Frame();
 
-  image_frame->SetOriginalImage(frame);
-  image_frame->SetImage(frame);
-  
-  raw_frame->SetOriginalImage(frame);
-  raw_frame->SetDataBuffer(DataBuffer(frame.data, frame.total() * frame.elemSize()));
+  image_frame->SetOriginalImage(pixels);
+  image_frame->SetImage(pixels);
+
+  raw_frame->SetOriginalImage(pixels);
+  raw_frame->SetDataBuffer(DataBuffer(pixels.data, pixels.total() * pixels.elemSize()));
   PushFrame("bgr_output", image_frame);
   PushFrame("raw_output", raw_frame);
 }

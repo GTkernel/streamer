@@ -16,7 +16,7 @@
 /**
  * @brief Video capture for reading frames from GStreamer. Return frames in
  * OpenCV BGR Mat. Internally the video capture is using GStreamer-1.0's
- * appsink to `intercept' frame buffers. When the <code>GetFrame()</code>
+ * appsink to `intercept' frame buffers. When the <code>GetPixels()</code>
  * method is called, The video capture will issue a <code>pre_preroll</code>
  * signal to the GStreamer pipeline.
  */
@@ -24,8 +24,8 @@ class GstVideoCapture {
  public:
   GstVideoCapture();
   ~GstVideoCapture();
-  cv::Mat TryGetFrame(DataBuffer* data_bufferp = nullptr);
-  cv::Mat GetFrame(DataBuffer* data_bufferp = nullptr);
+  cv::Mat TryGetPixels(DataBuffer* data_bufferp = nullptr);
+  cv::Mat GetPixels(DataBuffer* data_bufferp = nullptr);
   cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
