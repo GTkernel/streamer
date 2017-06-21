@@ -26,6 +26,21 @@ FrameType Frame::GetType() const {
   }
 }
 
+template <typename T>
+T Frame::GetValue(std::string key) {
+  auto it = frame_data_.find(key);
+  if (it != frame_data_.end()) {
+    return boost::get<T>(it->second);
+  } else {
+    throw std::runtime_error("No original image in Frame\n");
+  }
+}
+
+template <typename T>
+void Frame::SetValue(std::string key, const T& val) {
+  frame_data_[key] = val;
+}
+
 void Frame::SetOriginalImage(cv::Mat original_image) {
   frame_data_[ORIGINAL_IMAGE_KEY] = original_image;
 }
@@ -147,3 +162,17 @@ nlohmann::json Frame::ToJson() const {
   return j;
 }
 
+// Types declared in field_types of frame
+template void Frame::SetValue(std::string, const double&);
+template void Frame::SetValue(std::string, const float&);
+template void Frame::SetValue(std::string, const int&);
+template void Frame::SetValue(std::string, const std::string&);
+template void Frame::SetValue(std::string, const std::vector<std::string>&);
+template void Frame::SetValue(std::string, const cv::Mat&);
+
+template double Frame::GetValue(std::string);
+template float Frame::GetValue(std::string);
+template int Frame::GetValue(std::string);
+template std::string Frame::GetValue(std::string);
+template std::vector<std::string> Frame::GetValue(std::string);
+template cv::Mat Frame::GetValue(std::string);

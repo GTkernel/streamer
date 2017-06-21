@@ -27,6 +27,10 @@ class Frame {
  public:
   Frame(double start_time = Context::GetContext().GetTimer().ElapsedMSec());
   FrameType GetType() const;
+  template<typename T>
+  void SetValue(std::string key, const T& val);
+  template <typename T>
+  T GetValue(std::string key);
   void SetOriginalImage(cv::Mat original_image);
   cv::Mat GetOriginalImage() const;
   void SetDataBuffer(const DataBuffer& buf);
