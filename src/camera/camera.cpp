@@ -37,13 +37,13 @@ bool Camera::Capture(cv::Mat& image) {
     for (int i = 0; i < 3; i++) {
       reader->PopFrame();
     }
-    image = reader->PopFrame()->GetOriginalImage();
+    image = reader->PopFrame()->GetValue<cv::Mat>("OriginalImage");
     reader->UnSubscribe();
     Stop();
   } else {
     LOG(WARNING) << "not stopped.";
     auto reader = stream_->Subscribe();
-    image = reader->PopFrame()->GetOriginalImage();
+    image = reader->PopFrame()->GetValue<cv::Mat>("OriginalImage");
     reader->UnSubscribe();
   }
 

@@ -60,7 +60,7 @@ void ImageClassifier::Process() {
 
   // Assign labels.
   std::vector<Prediction> predictions;
-  cv::Mat output = frame->GetActivations();
+  cv::Mat output = frame->GetValue<cv::Mat>("Activations");
   float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
@@ -84,7 +84,7 @@ void ImageClassifier::Process() {
   for (const auto& pred : predictions) {
     tags.push_back(pred.first);
   }
-  frame->SetTags(tags);
+  frame->SetValue("Tags", tags);
   PushFrame(SINK_NAME, std::move(frame));
 }
 

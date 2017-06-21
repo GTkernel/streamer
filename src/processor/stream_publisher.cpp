@@ -66,13 +66,13 @@ void StreamPublisher::Process() {
 
       root.put("type", "metadata");
 
-      for (const auto& tag : frame->GetTags()) {
+      for (const auto& tag : frame->GetValue("Tags",)) {
         pt::ptree tag_node;
         tag_node.put("", tag);
         tags_node.push_back({"", tag_node});
       }
 
-      for (const auto& bbox : frame->GetBboxes()) {
+      for (const auto& bbox : frame->GetValue<std::vector<Rect>>("Bboxes")) {
         pt::ptree bbox_node;
         bbox_node.put("x", bbox.px);
         bbox_node.put("y", bbox.py);

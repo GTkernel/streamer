@@ -95,11 +95,11 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
   auto image_frame = std::make_unique<Frame>;
   auto raw_frame = std::make_unique<Frame>;
 
-  image_frame->SetOriginalImage(output_image);
-  image_frame->SetImage(output_image);
+  image_frame->SetValue("OriginalImage", output_image);
+  image_frame->SetValue("Image", output_image);
 
-  raw_frame->SetDataBuffer(image_bytes);
-  raw_frame->SetOriginalImage(output_image);
+  raw_frame->SetValue("DataBuffer", image_bytes);
+  raw_frame->SetValue("OriginalImage", output_image);
 
   camera->PushFrame("bgr_output", std::move(image_frame));
   camera->PushFrame("raw_output", std::move(raw_frame));

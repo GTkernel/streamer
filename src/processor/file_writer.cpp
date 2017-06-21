@@ -36,12 +36,12 @@ void FileWriter::Process() {
   auto frame = GetFrame("input");
   switch (frame->GetType()) {
     case FRAME_TYPE_BYTES: {
-      auto buffer = frame->GetDataBuffer();
+      auto buffer = frame->GetValue<DataBuffer>("DataBuffer");
       file_.write((char*)buffer.GetBuffer(), buffer.GetSize());
       break;
     }
     case FRAME_TYPE_IMAGE: {
-      auto image = frame->GetImage();
+      auto image = frame->GetValue<cv::Mat>("Image");
       file_.write((char*)image.data, image.total() * image.elemSize());
       break;
     }

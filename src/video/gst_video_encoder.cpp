@@ -236,11 +236,11 @@ void GstVideoEncoder::Process() {
 
   // Resize the image
   cv::Mat image;
-  cv::Mat original_image = input_frame->GetOriginalImage();
+  cv::Mat original_image = input_frame->GetValue<cv::Mat>("OriginalImage");
 
   cv::resize(original_image, image, cv::Size(width_, height_));
 
-  input_frame->SetImage(image);
+  input_frame->SetValue("Image", image);
 
   // Forward the input image to output
   PushFrame("output", std::move(input_frame));

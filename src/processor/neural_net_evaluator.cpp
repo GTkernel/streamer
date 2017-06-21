@@ -72,7 +72,7 @@ void NeuralNetEvaluator::Process() {
   // Prepare the image for inference by splitting its channels.
   float* data = (float*)input_buffer_.GetBuffer();
   auto image_frame = GetFrame(SOURCE_NAME);
-  cv::Mat img = image_frame->GetImage();
+  cv::Mat img = image_frame->GetValue<cv::Mat>("Image");
   CHECK(img.channels() == input_shape_.channel &&
         img.size[0] == input_shape_.width &&
         img.size[1] == input_shape_.height);
@@ -92,8 +92,8 @@ void NeuralNetEvaluator::Process() {
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
     auto layer_frame = std::make_unique<Frame>(image_frame);
-    layer_frame->SetActivations(layer_pair.second);
-    layer_frame->SetLayerName(layer_pair.first);
+    layer_frame->SetValue("Activations", layer_pair.second);
+    layer_frame->SetValue("LayerName", layer_pair.first);
     PushFrame(layer_pair.first, std::move(layer_frame));
   }
 }

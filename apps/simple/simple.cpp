@@ -33,7 +33,7 @@ void Run(const string& camera_name) {
 
   while (true) {
     auto frame = reader->PopFrame();
-    cv::Mat img = frame->GetOriginalImage();
+    cv::Mat img = frame->GetValue<cv::Mat>("OriginalImage");
     cv::imshow(camera_name, img);
 
     unsigned char q = cv::waitKey(10);

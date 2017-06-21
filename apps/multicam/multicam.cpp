@@ -147,8 +147,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       auto reader = classifier_streams.at(i)->Subscribe();
       auto md_frame = reader->PopFrame();
       if (display) {
-        cv::Mat img = md_frame->GetOriginalImage();
-        string label = md_frame->GetTags().at(0);
+        cv::Mat img = md_frame->GetValue<cv::Mat>("OriginalImage");
+        string label = md_frame->GetValue<std::vector<std::string>>("Tags").at(0);
         if (update_overlay == 1) {
           label_to_show.at(i) = label;
           fps_to_show = classifier->GetAvgFps();

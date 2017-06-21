@@ -90,11 +90,11 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         auto image_frame = std::make_unique<Frame>();
         auto raw_frame = std::make_unique<Frame>();
 
-        image_frame->SetOriginalImage(bgr_output);
-        image_frame->SetImage(bgr_output);
+        image_frame->SetValue("OriginalImage", bgr_output);
+        image_frame->SetValue("Image", bgr_output);
 
-        raw_frame->SetDataBuffer(data_buffer);
-        raw_frame->SetOriginalImage(bgr_output);
+        raw_frame->SetValue("DataBuffer", data_buffer);
+        raw_frame->SetValue("OriginalImage", bgr_output);
 
         vimba_camera_->PushFrame("bgr_output", std::move(image_frame));
         vimba_camera_->PushFrame("raw_output", std::move(raw_frame));

@@ -41,8 +41,8 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
   }
 
   auto output_frame = std::make_unique<Frame>();
-  output_frame->SetOriginalImage(image);
-  output_frame->SetImage(image);
+  output_frame->SetValue("OriginalImage", image);
+  output_frame->SetValue("Image", image);
   PushFrame(SINK, std::move(output_frame));
 
   return grpc::Status::OK;
