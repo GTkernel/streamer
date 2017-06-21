@@ -96,10 +96,10 @@ void Processor::ProcessorLoop() {
             continue;
           }
         } else {
-          source_frame_cache_[source_name] = std::move(frame);
           // Calculate queue latency
           double start = frame->GetStartTime();
           double end = Context::GetContext().GetTimer().ElapsedMSec();
+          source_frame_cache_[source_name] = std::move(frame);
           queue_latency_sum_ += end - start;
           break;
         }

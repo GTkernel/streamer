@@ -56,11 +56,11 @@ std::shared_ptr<ImageClassifier> ImageClassifier::Create(
 bool ImageClassifier::Init() { return NeuralNetConsumer::Init(); }
 
 void ImageClassifier::Process() {
-  auto layer_frame = GetFrame(SOURCE_NAME);
+  auto frame = GetFrame(SOURCE_NAME);
 
   // Assign labels.
   std::vector<Prediction> predictions;
-  cv::Mat output = layer_frame->GetActivations();
+  cv::Mat output = frame->GetActivations();
   float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
@@ -84,10 +84,8 @@ void ImageClassifier::Process() {
   for (const auto& pred : predictions) {
     tags.push_back(pred.first);
   }
-  // TODO: do we want to clean up the unnecessary keys in the
-  // map? IE: get rid of Activations before pushing
-  layer_frame->SetTags(tags);
-  PushFrame(SINK_NAME, std::move(layer_frame));
+  frame->SetTags(tags);
+  PushFrame(SINK_NAME, std::move(frame));
 }
 
 std::vector<std::string> ImageClassifier::LoadLabels(
