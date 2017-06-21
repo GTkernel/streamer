@@ -92,8 +92,8 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
   cv::Mat output_image;
   output_image = image.clone();
 
-  std::unique_ptr<Frame> image_frame = std::make_unique<Frame>;
-  std::unique_ptr<Frame> raw_frame = std::make_unique<Frame>;
+  auto image_frame = std::make_unique<Frame>;
+  auto raw_frame = std::make_unique<Frame>;
 
   image_frame->SetOriginalImage(output_image);
   image_frame->SetImage(output_image);

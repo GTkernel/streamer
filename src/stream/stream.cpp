@@ -54,7 +54,7 @@ std::unique_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
   }
 
   if (frame_buffer_.size() != 0) {
-    std::unique_ptr<Frame> frame = std::move(frame_buffer_.front());
+    auto frame = std::move(frame_buffer_.front());
     frame_buffer_.pop();
     return frame;
   } else {

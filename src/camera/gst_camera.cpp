@@ -27,11 +27,11 @@ bool GSTCamera::OnStop() {
 void GSTCamera::Process() {
   cv::Mat pixels = capture_.GetPixels();
 
-  std::unique_ptr<Frame> image_frame = std::make_unique<Frame>();
+  auto image_frame = std::make_unique<Frame>();
   image_frame->SetOriginalImage(pixels);
   image_frame->SetImage(pixels);
 
-  std::unique_ptr<Frame> raw_frame =std::make_unique<Frame>();
+  auto raw_frame =std::make_unique<Frame>();
   raw_frame->SetOriginalImage(pixels);
   raw_frame->SetDataBuffer(DataBuffer(pixels.data, pixels.total() * pixels.elemSize()));
   

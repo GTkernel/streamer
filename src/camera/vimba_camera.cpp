@@ -87,8 +87,8 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         // Transform to BGR image
         cv::Mat bgr_output = TransformToBGRImage(pFrame);
 
-        std::unique_ptr<Frame> image_frame = std::make_unique<Frame>();
-        std::unique_ptr<Frame> raw_frame = std::make_unique<Frame>();
+        auto image_frame = std::make_unique<Frame>();
+        auto raw_frame = std::make_unique<Frame>();
 
         image_frame->SetOriginalImage(bgr_output);
         image_frame->SetImage(bgr_output);
