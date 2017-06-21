@@ -32,7 +32,7 @@ T Frame::GetValue(std::string key) {
   if (it != frame_data_.end()) {
     return boost::get<T>(it->second);
   } else {
-    throw std::runtime_error("No original image in Frame\n");
+    throw std::runtime_error("No key " + key + " in Frame\n");
   }
 }
 
