@@ -91,11 +91,8 @@ void NeuralNetEvaluator::Process() {
 
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
-    // TODO: Populate the layer_name parameter.
     auto layer_frame = new Frame();
     layer_frame->SetActivations(layer_pair.second);
-    // TODO NEWFRAME?: Why was the original image removed from layerframes? (question mostly for Chris)
-    // I added it back in for now - Thomas
     layer_frame->SetOriginalImage(img);
     layer_frame->SetLayerName(layer_pair.first);
     PushFrame(layer_pair.first, layer_frame);

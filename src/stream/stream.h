@@ -61,7 +61,6 @@ class Stream {
    */
   void PushFrame(std::shared_ptr<Frame> frame);
 
-// TODO NEWFRAME: can we get rid of these?
   /**
    * @brief Push a raw pointer of the frame into the stream.
    * @param frame The frame to be pushed into the stream.

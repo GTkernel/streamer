@@ -34,7 +34,6 @@ void Stream::PushFrame(std::shared_ptr<Frame> frame) {
   }
 }
 
-// TODO NEWFRAME: can we get rid of these?
 void Stream::PushFrame(Frame* frame) {
   PushFrame(std::shared_ptr<Frame>(frame));
 }
