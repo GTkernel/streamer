@@ -66,7 +66,8 @@ void StreamPublisher::Process() {
 
       root.put("type", "metadata");
 
-      for (const auto& tag : frame->GetValue("Tags",)) {
+      for (const auto& tag :
+           frame->GetValue<std::vector<std::string>>("Tags")) {
         pt::ptree tag_node;
         tag_node.put("", tag);
         tags_node.push_back({"", tag_node});

@@ -32,7 +32,7 @@ void Run() {
   while (true) {
     auto frame = reader->PopFrame(30);
     if (frame != nullptr) {
-      cv::Mat img = frame->GetValue("Image",);
+      cv::Mat img = frame->GetValue<cv::Mat>("Image");
       cv::imshow(window_name, img);
     }
 
