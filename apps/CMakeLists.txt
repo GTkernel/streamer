@@ -46,5 +46,9 @@ foreach (app_dir ${APP_DIRS})
   endif ()
 endforeach ()
 
+if(USE_LITESQL)
+  target_link_libraries(multicam "litesql")
+  add_definitions("-D USE_LITESQL")
+endif()
+
 target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(multicam "litesql")

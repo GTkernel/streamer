@@ -1,13 +1,16 @@
 #ifndef STREAMER_PROCESSOR_DB_FILE_WRITER_H_
 #define STREAMER_PROCESSOR_DB_FILE_WRITER_H_
 
+
 #include <chrono>
 #include <stdlib.h>
 #include <fstream>
 
 #include "common/types.h"
 #include "processor/processor.h"
+#ifdef USE_LITESQL
 #include "litesql.hpp"
+#endif // USE_LITESQL
 
 class DBFileWriter : public Processor {
  public:

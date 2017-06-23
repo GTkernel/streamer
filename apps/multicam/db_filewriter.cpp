@@ -12,18 +12,19 @@
 #include "sys/stat.h"
 
 // TODO: this will change to take in the frame after the metadata is added to the frame
-void DoWriteDB(std::string filename, time_t cur_time) {
+void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& frame) {
+#ifdef USE_LITESQL
   // assumes database has been created
     FramesDatabase db("sqlite3", "database=frames.db");
     try {
       db.create();
-    } catch (...) {
-    }
+    } catch (...) { }
     db.verbose = true;
-    FrameEntry frame(db);
-    frame.path = filename;
-    frame.date = cur_time;
-    frame.update();
+    FrameEntry fe(db);
+    fe.path = filename;
+    fe.date = cur_time;
+    fe.update();
+#endif // USE_LITESQL
 }
 
 DBFileWriter::DBFileWriter(const string& root_dir)
@@ -130,5 +131,5 @@ void DBFileWriter::Process() {
     imwrite(filename.str(), image, params);
   }
   // Write to DB
-  DoWriteDB(filename.str(), now);
+  DoWriteDB(filename.str(), now, frame);
 }
