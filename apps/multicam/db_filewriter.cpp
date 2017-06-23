@@ -23,6 +23,15 @@ void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& fr
     FrameEntry fe(db);
     fe.path = filename;
     fe.date = cur_time;
+    fe.exposure = frame->GetValue<float>("CameraGettings.Exposure");
+    fe.sharpness = frame->GetValue<float>("CameraSettings.Sharpness");
+    fe.brightness = frame->GetValue<float>("CameraSettings.Brightness");
+    fe.saturation = frame->GetValue<float>("CameraSettings.Saturation");
+    fe.hue = frame->GetValue<float>("CameraSettings.Hue");
+    fe.gain = frame->GetValue<float>("CameraSettings.Gain");
+    fe.gamma = frame->GetValue<float>("CameraSettings.Gamma");
+    fe.wbred = frame->GetValue<float>("CameraSettings.WBRed");
+    fe.wbblue = frame->GetValue<float>("CameraSettings.WBBlue");
     fe.update();
 #endif // USE_LITESQL
 }
@@ -110,14 +119,14 @@ void DBFileWriter::Process() {
 
   nlohmann::json metadata_json;
   metadata_json["Exposure"] = frame->GetValue<float>("CameraGettings.Exposure");
-  metadata_json["Sharpness"] = frame->SetValue<float>("CameraSettings.Sharpness");
-  metadata_json["Brightness"] = frame->SetValue<float>("CameraSettings.Brightness");
-  metadata_json["Saturation"] = frame->SetValue<float>("CameraSettings.Saturation");
-  metadata_json["Hue"] = frame->SetValue<float>("CameraSettings.Hue");
-  metadata_json["Gain"] = frame->SetValue<float>("CameraSettings.Gain");
-  metadata_json["Gamma"] = frame->SetValue<float>("CameraSettings.Gamma");
-  metadata_json["WBRed"] = frame->SetValue<float>("CameraSettings.WBRed");
-  metadata_json["WBBlue"] = frame->SetValue<float>("CameraSettings.WBBlue");
+  metadata_json["Sharpness"] = frame->GetValue<float>("CameraSettings.Sharpness");
+  metadata_json["Brightness"] = frame->GetValue<float>("CameraGettings.Brightness");
+  metadata_json["Saturation"] = frame->GetValue<float>("CameraSettings.Saturation");
+  metadata_json["Hue"] = frame->GetValue<float>("CameraSettings.Hue");
+  metadata_json["Gain"] = frame->GetValue<float>("CameraSettings.Gain");
+  metadata_json["Gamma"] = frame->GetValue<float>("CameraSettings.Gamma");
+  metadata_json["WBRed"] = frame->GetValue<float>("CameraSettings.WBRed");
+  metadata_json["WBBlue"] = frame->GetValue<float>("CameraSettings.WBBlue");
 
 
   nlohmann::json j;

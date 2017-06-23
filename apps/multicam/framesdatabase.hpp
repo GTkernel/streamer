@@ -20,6 +20,24 @@ public:
     litesql::Field<std::string> path;
     static const litesql::FieldType Date;
     litesql::Field<litesql::DateTime> date;
+    static const litesql::FieldType Exposure;
+    litesql::Field<float> exposure;
+    static const litesql::FieldType Sharpness;
+    litesql::Field<float> sharpness;
+    static const litesql::FieldType Brightness;
+    litesql::Field<float> brightness;
+    static const litesql::FieldType Saturation;
+    litesql::Field<float> saturation;
+    static const litesql::FieldType Hue;
+    litesql::Field<float> hue;
+    static const litesql::FieldType Gain;
+    litesql::Field<float> gain;
+    static const litesql::FieldType Gamma;
+    litesql::Field<float> gamma;
+    static const litesql::FieldType Wbred;
+    litesql::Field<float> wbred;
+    static const litesql::FieldType Wbblue;
+    litesql::Field<float> wbblue;
     static void initValues();
 protected:
     void defaults();
