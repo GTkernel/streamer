@@ -66,6 +66,18 @@ string Camera::GetCameraInfo() {
   return ss.str();
 }
 
+void Camera::MetadataToFrame(std::unique_ptr<Frame>& frame) {
+  frame->SetValue<float>("CameraSettings.Exposure", GetExposure());
+  frame->SetValue<float>("CameraSettings.Sharpness", GetSharpness());
+  frame->SetValue<float>("CameraSettings.Brightness", GetBrightness());
+  frame->SetValue<float>("CameraSettings.Saturation", GetSaturation());
+  frame->SetValue<float>("CameraSettings.Hue", GetHue());
+  frame->SetValue<float>("CameraSettings.Gain", GetGain());
+  frame->SetValue<float>("CameraSettings.Gamma", GetGamma());
+  frame->SetValue<float>("CameraSettings.WBRed", GetWBRed());
+  frame->SetValue<float>("CameraSettings.WBBlue", GetWBBlue());
+}
+
 /*****************************************************************************
  * Pan/Tile, the implementation is ugly, but it is ok to show that we can
  * pan/tile the camera programmably.

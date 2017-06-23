@@ -57,6 +57,9 @@ class Camera : public Processor {
   void MoveLeft();
   void MoveRight();
 
+  // Update metadata in frame
+  virtual void MetadataToFrame(std::unique_ptr<Frame>& frame);
+
   string GetCameraInfo();
 
  protected:
