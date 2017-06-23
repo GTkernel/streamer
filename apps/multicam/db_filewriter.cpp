@@ -19,6 +19,7 @@ void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& fr
     try {
       db.create();
     } catch (...) { }
+    db.begin();
     db.verbose = true;
     FrameEntry fe(db);
     fe.path = filename;
@@ -33,6 +34,8 @@ void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& fr
     fe.wbred = frame->GetValue<float>("CameraSettings.WBRed");
     fe.wbblue = frame->GetValue<float>("CameraSettings.WBBlue");
     fe.update();
+    db.commit();
+    
 #endif // USE_LITESQL
 }
 
