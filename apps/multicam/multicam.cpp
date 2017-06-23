@@ -113,7 +113,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
   }
 
   auto* db_fw = new DBFileWriter("./garbage/");
-  db_fw->SetSource("input", input_streams[0]);
+  db_fw->SetSource("input", cameras[0]->GetSink("raw_output"));
   db_fw->Start();
 
   for (const auto& camera : cameras) {

@@ -72,7 +72,8 @@ bool DBFileWriter::OnStop() {
 
 void DBFileWriter::Process() {
   auto frame = GetFrame("input");
-  cv::Mat image = frame->GetValue<cv::Mat>("Image");
+  cv::Mat image = frame->GetValue<cv::Mat>("OriginalImage");
+  DataBuffer raw_image = frame->GetValue<DataBuffer>("DataBuffer");
   // TODO?: These should probably come from the frame, but not sure what format
   struct tm local_time;
   std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
@@ -107,15 +108,19 @@ void DBFileWriter::Process() {
   CreateDirs(directory_name.str());
 
   std::stringstream filename;
-  std::stringstream metadata_filename;
   filename << directory_name.str() << "/";
   filename << std::setw(2) << std::setfill('0') << hour << "_";
   filename << std::setw(2) << std::setfill('0') << min << "-";
   filename << std::setw(2) << std::setfill('0') << sec << "_";
   filename << std::setw(3) << std::setfill('0') << ms;
 
+  std::stringstream metadata_filename;
   metadata_filename << filename.str() << ".json";
-  filename << ".png";
+
+  std::stringstream raw_filename;
+  raw_filename << filename.str() << ".raw";
+
+  filename << ".jpg";
 
   nlohmann::json metadata_json;
   metadata_json["Exposure"] = frame->GetValue<float>("CameraSettings.Exposure");
@@ -135,14 +140,21 @@ void DBFileWriter::Process() {
   std::string json_string = j.dump();
 
   // write out metadata
-  std::ofstream file;
-  file.open(metadata_filename.str());
-  file << json_string;
-  file.close();
+  std::ofstream metadata_file;
+  metadata_file.open(metadata_filename.str());
+  metadata_file << json_string;
+  metadata_file.close();
+
+  std::ofstream raw_file;
+  raw_file.open(raw_filename.str(), std::ios::binary);
+  raw_file.write((char*)raw_image.GetBuffer(), raw_image.GetSize());
+  raw_file.close();
 
   std::vector<int> params;
+  /*
   params.push_back(CV_IMWRITE_PNG_COMPRESSION);
   params.push_back(0);
+  */
   struct stat buf;
   // Write out file
   if(stat (filename.str().c_str(), &buf) != 0) {
