@@ -22,7 +22,8 @@ void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& fr
     db.begin();
     db.verbose = true;
     FrameEntry fe(db);
-    fe.path = filename;
+    boost::filesystem::path filename_path(filename);
+    fe.path = boost::filesystem::canonical(filename_path).string();
     fe.date = cur_time;
     fe.exposure = frame->GetValue<float>("CameraSettings.Exposure");
     fe.sharpness = frame->GetValue<float>("CameraSettings.Sharpness");
