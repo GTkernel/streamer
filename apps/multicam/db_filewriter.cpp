@@ -23,7 +23,7 @@ void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& fr
     FrameEntry fe(db);
     fe.path = filename;
     fe.date = cur_time;
-    fe.exposure = frame->GetValue<float>("CameraGettings.Exposure");
+    fe.exposure = frame->GetValue<float>("CameraSettings.Exposure");
     fe.sharpness = frame->GetValue<float>("CameraSettings.Sharpness");
     fe.brightness = frame->GetValue<float>("CameraSettings.Brightness");
     fe.saturation = frame->GetValue<float>("CameraSettings.Saturation");
