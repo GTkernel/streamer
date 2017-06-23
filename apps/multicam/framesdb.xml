@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!DOCTYPE database SYSTEM "litesql.dtd"> 
+<database name="FramesDatabase">
+    <object name="FrameEntry">
+        <field name="path" type="string"/>
+        <field name="date" type="datetime"/>
+    </object>
+</database>

@@ -47,3 +47,4 @@ foreach (app_dir ${APP_DIRS})
 endforeach ()
 
 target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(multicam "litesql")
