@@ -109,7 +109,16 @@ void DBFileWriter::Process() {
   filename << ".png";
 
   nlohmann::json metadata_json;
-  metadata_json["test"] = "test";
+  metadata_json["Exposure"] = frame->GetValue<float>("CameraGettings.Exposure");
+  metadata_json["Sharpness"] = frame->SetValue<float>("CameraSettings.Sharpness");
+  metadata_json["Brightness"] = frame->SetValue<float>("CameraSettings.Brightness");
+  metadata_json["Saturation"] = frame->SetValue<float>("CameraSettings.Saturation");
+  metadata_json["Hue"] = frame->SetValue<float>("CameraSettings.Hue");
+  metadata_json["Gain"] = frame->SetValue<float>("CameraSettings.Gain");
+  metadata_json["Gamma"] = frame->SetValue<float>("CameraSettings.Gamma");
+  metadata_json["WBRed"] = frame->SetValue<float>("CameraSettings.WBRed");
+  metadata_json["WBBlue"] = frame->SetValue<float>("CameraSettings.WBBlue");
+
 
   nlohmann::json j;
   j["Metadata"] = metadata_json;

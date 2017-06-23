@@ -1,8 +1,9 @@
 //
 // Created by Ran Xian (xranthoar@gmail.com) on 10/25/16.
 //
-
 #include "gst_camera.h"
+
+#include <chrono>
 
 GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
                      int height)
@@ -31,7 +32,7 @@ void GSTCamera::Process() {
   image_frame->SetValue("OriginalImage", pixels);
   image_frame->SetValue("Image", pixels);
 
-  auto raw_frame =std::make_unique<Frame>();
+  auto raw_frame = std::make_unique<Frame>();
   raw_frame->SetValue("OriginalImage", pixels);
   raw_frame->SetValue("DataBuffer", DataBuffer(pixels.data, pixels.total() * pixels.elemSize()));
   
