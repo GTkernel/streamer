@@ -8,8 +8,11 @@
 
 #include "json/json.hpp"
 #include "utils/file_utils.h"
-#include "framesdatabase.hpp"
 #include "sys/stat.h"
+
+#ifdef USE_LITESQL
+#include "framesdatabase.hpp"
+#endif
 
 // TODO: this will change to take in the frame after the metadata is added to the frame
 void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& frame) {
