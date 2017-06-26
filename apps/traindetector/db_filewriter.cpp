@@ -21,25 +21,32 @@ void DoWriteDB(std::string filename, time_t cur_time,
   FramesDatabase db("sqlite3", database_path);
   try {
     db.create();
-  } catch (...) {
+    LOG(INFO) << "Created new database";
+  } catch (litesql::Except e) {
+    std::cout << e.what();
+    LOG(INFO) << "Using existing database";
   }
-  db.begin();
-  db.verbose = true;
-  FrameEntry fe(db);
-  boost::filesystem::path filename_path(filename);
-  fe.path = boost::filesystem::canonical(filename_path).string();
-  fe.date = cur_time;
-  fe.exposure = frame->GetValue<float>("CameraSettings.Exposure");
-  fe.sharpness = frame->GetValue<float>("CameraSettings.Sharpness");
-  fe.brightness = frame->GetValue<float>("CameraSettings.Brightness");
-  fe.saturation = frame->GetValue<float>("CameraSettings.Saturation");
-  fe.hue = frame->GetValue<float>("CameraSettings.Hue");
-  fe.gain = frame->GetValue<float>("CameraSettings.Gain");
-  fe.gamma = frame->GetValue<float>("CameraSettings.Gamma");
-  fe.wbred = frame->GetValue<float>("CameraSettings.WBRed");
-  fe.wbblue = frame->GetValue<float>("CameraSettings.WBBlue");
-  fe.update();
-  db.commit();
+  try {
+    db.begin();
+    db.verbose = true;
+    FrameEntry fe(db);
+    boost::filesystem::path filename_path(filename);
+    fe.path = boost::filesystem::canonical(filename_path).string();
+    fe.date = cur_time;
+    fe.exposure = frame->GetValue<float>("CameraSettings.Exposure");
+    fe.sharpness = frame->GetValue<float>("CameraSettings.Sharpness");
+    fe.brightness = frame->GetValue<float>("CameraSettings.Brightness");
+    fe.saturation = frame->GetValue<float>("CameraSettings.Saturation");
+    fe.hue = frame->GetValue<float>("CameraSettings.Hue");
+    fe.gain = frame->GetValue<float>("CameraSettings.Gain");
+    fe.gamma = frame->GetValue<float>("CameraSettings.Gamma");
+    fe.wbred = frame->GetValue<float>("CameraSettings.WBRed");
+    fe.wbblue = frame->GetValue<float>("CameraSettings.WBBlue");
+    fe.update();
+    db.commit();
+  } catch (litesql::Except e) {
+    LOG(FATAL) << database_path << " doesn't appear to be a valid sqlite3 database.\n" << e.what();
+  }
 }
 
 DBFileWriter::DBFileWriter(const string& root_dir)
