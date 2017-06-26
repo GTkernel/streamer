@@ -1,0 +1,3 @@
+[submodule "3rdparty/litesql"]
+	path = 3rdparty/litesql
+	url = git@github.com:louiz/litesql.git
