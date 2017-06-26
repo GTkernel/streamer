@@ -195,6 +195,53 @@ void VimbaCamera::SetExposure(float exposure) {
   CHECK_VIMBA(pFeature->SetValue((double)exposure));
 }
 
+float VimbaCamera::GetFrameRate() {
+  VmbAPI::FeaturePtr pFeature;
+  VmbErrorType error = camera_->GetFeatureByName("TriggerSelector", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Trigger selector not found";
+  }
+
+  error = camera_->GetFeatureByName("TriggerSource", pFeature);
+  if (error == VmbErrorNotFound ) {
+    LOG(WARNING) << "Feature not found Trigger Source";
+  }
+
+  error = camera_->GetFeatureByName("AcquisitionFrameRateAbs", pFeature);
+  if (error == VmbErrorNotFound ) {
+    LOG(WARNING) << "Feature not found AcquisitionFrameRateAbs";
+    return -1;
+  }
+
+  double frame_rate;
+  CHECK_VIMBA(pFeature->GetValue(frame_rate));
+  return (float)frame_rate;
+}
+
+void VimbaCamera::SetFrameRate(float frame_rate) {
+  VmbAPI::FeaturePtr pFeature;
+  VmbErrorType error = camera_->GetFeatureByName("TriggerSelector", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Trigger selector not found";
+  }
+
+  CHECK_VIMBA(pFeature->SetValue("FrameStart"));
+  error = camera_->GetFeatureByName("TriggerSource", pFeature);
+  if (error == VmbErrorNotFound ) {
+    LOG(WARNING) << "Feature not found Trigger Source";
+  }
+
+  CHECK_VIMBA(pFeature->SetValue("FixedRate"));
+
+  error = (camera_->GetFeatureByName("AcquisitionFrameRateAbs", pFeature));
+  if (error == VmbErrorNotFound ) {
+    LOG(WARNING) << "Feature not found AcquisitionFrameRateAbs";
+  }
+
+  LOG(WARNING) << "Setting Frame Rate to " << frame_rate;
+  CHECK_VIMBA(pFeature->SetValue(frame_rate));
+}
+
 float VimbaCamera::GetSharpness() { return 0; }
 void VimbaCamera::SetSharpness(float sharpness) {}
 Shape VimbaCamera::GetImageSize() {

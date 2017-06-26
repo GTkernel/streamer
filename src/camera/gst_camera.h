@@ -37,6 +37,8 @@ class GSTCamera : public Camera {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode) override;
   virtual CameraPixelFormatType GetPixelFormat() override;
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) override;
+  virtual void SetFrameRate(float f) override;
+  virtual float GetFrameRate() override;
 
  protected:
   virtual bool Init() override;

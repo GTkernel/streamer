@@ -52,6 +52,8 @@ class Camera : public Processor {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode) = 0;
   virtual CameraPixelFormatType GetPixelFormat() = 0;
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) = 0;
+  virtual float GetFrameRate() = 0;
+  virtual void SetFrameRate(float f) = 0;
   void MoveUp();
   void MoveDown();
   void MoveLeft();
