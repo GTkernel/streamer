@@ -17,24 +17,8 @@ using std::endl;
 
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
-std::vector<std::shared_ptr<Processor>> transformers;
-std::vector<std::shared_ptr<ImageClassifier>> classifiers;
-std::vector<StreamPtr> classifier_streams;
-std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
-  for (const auto& encoder : encoders) {
-    if (encoder->IsStarted()) encoder->Stop();
-  }
-
-  for (const auto& classifier : classifiers) {
-    if (classifier->IsStarted()) classifier->Stop();
-  }
-
-  for (const auto& transformer : transformers) {
-    if (transformer->IsStarted()) transformer->Stop();
-  }
-
   for (const auto& camera : cameras) {
     if (camera->IsStarted()) camera->Stop();
   }
@@ -47,72 +31,27 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string>& camera_names, const string& model_name,
-         bool display) {
-  cout << "Run multicam demo" << endl;
+void Run(const std::vector<string>& camera_names, std::string root_dir) {
+  cout << "Detect Trains" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
   CameraManager& camera_manager = CameraManager::GetInstance();
-  ModelManager& model_manager = ModelManager::GetInstance();
 
   // Check options
-  CHECK(model_manager.HasModel(model_name))
-      << "Model " << model_name << " does not exist";
   for (const auto& camera_name : camera_names) {
     CHECK(camera_manager.HasCamera(camera_name))
         << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors
-
   for (const auto& camera_name : camera_names) {
     auto camera = camera_manager.GetCamera(camera_name);
     cameras.push_back(camera);
   }
 
   // Do video stream classification
-  std::vector<std::shared_ptr<Stream>> camera_streams;
-  for (const auto& camera : cameras) {
-    auto camera_stream = camera->GetStream();
-    camera_streams.push_back(camera_stream);
-  }
-
-  Shape input_shape(3, 227, 227);
-  std::vector<std::shared_ptr<Stream>> input_streams;
-  
-  // Transformers
-  for (const auto& camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(
-        new ImageTransformer(input_shape, true /* subtract mean */));
-    transform_processor->SetSource("input", camera_stream);
-    transformers.push_back(transform_processor);
-    input_streams.push_back(transform_processor->GetSink("output"));
-  }
-
-  // classifier
-  auto model_desc = model_manager.GetModelDesc(model_name);
-  for (const auto& input_stream : input_streams) {
-    auto classifier =
-        std::make_shared<ImageClassifier>(model_desc, input_shape, 5);
-    classifiers.push_back(classifier);
-    classifier->SetSource("input", input_stream);
-    classifier_streams.push_back(classifier->GetSink("output"));
-  }
-
-  // encoders, encode each camera stream
-  for (decltype(classifier_streams.size()) i = 0; i < classifier_streams.size();
-       ++i) {
-    string output_filename = camera_names.at(i) + ".mp4";
-
-    std::shared_ptr<GstVideoEncoder> encoder(
-        new GstVideoEncoder(cameras.at(i)->GetWidth(),
-                            cameras.at(i)->GetHeight(), output_filename));
-    encoder->SetSource("input", classifier_streams.at(i));
-    encoders.push_back(encoder);
-  }
-
-  auto* db_fw = new DBFileWriter("./garbage/");
+  auto* db_fw = new DBFileWriter(root_dir);
   db_fw->SetSource("input", cameras[0]->GetSink("raw_output"));
   db_fw->Start();
 
@@ -122,82 +61,9 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     }
   }
 
-  for (const auto& transformer : transformers) {
-    transformer->Start();
-  }
-
-  for (const auto& classifier : classifiers) {
-    classifier->Start();
-  }
-
-  for (const auto& encoder : encoders) {
-    encoder->Start();
-  }
-
-  //////// Processor started, display the results
-
-  if (display) {
-    for (const auto& camera_name : camera_names) {
-      cv::namedWindow(camera_name);
-    }
-  }
-
-  int update_overlay = 0;
-  const int UPDATE_OVERLAY_INTERVAL = 10;
-  std::vector<string> label_to_show(camera_names.size());
-  //  double fps_to_show = 0.0;
-  while (true) {
-    for (decltype(camera_names.size()) i = 0; i < camera_names.size(); ++i) {
-      auto classifier = classifiers.at(i);
-      double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
-      auto reader = classifier_streams.at(i)->Subscribe();
-      auto md_frame = reader->PopFrame();
-      if (display) {
-        cv::Mat img = md_frame->GetValue<cv::Mat>("OriginalImage");
-        string label = md_frame->GetValue<std::vector<std::string>>("Tags").at(0);
-        if (update_overlay == 1) {
-          label_to_show.at(i) = label;
-          fps_to_show = classifier->GetAvgFps();
-        }
-
-        // Overlay FPS label and classification label
-        double font_size = 0.8 * img.size[0] / 320.0;
-        cv::Point label_point(img.rows / 6, img.cols / 3);
-        cv::Scalar outline_color(0, 0, 0);
-        cv::Scalar label_color(200, 200, 250);
-
-        cv::putText(img, label_to_show.at(i), label_point,
-                    CV_FONT_HERSHEY_DUPLEX, font_size, outline_color, 8, CV_AA);
-        cv::putText(img, label_to_show.at(i), label_point,
-                    CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
-
-        cv::Point fps_point(img.rows / 3, img.cols / 6);
-
-        char fps_string[256];
-        sprintf(fps_string, "%.2lffps", fps_to_show);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, outline_color, 8, CV_AA);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, label_color, 2, CV_AA);
-
-        cv::imshow(camera_names.at(i), img);
-      }
-    }
-
-    if (display) {
-      int q = cv::waitKey(10);
-      if (q == 'q') break;
-    }
-
-    update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
-  }
+  while (true);
 
   LOG(INFO) << "Done";
-
-  //////// Clean up
-
-  CleanUp();
-  cv::destroyAllWindows();
 }
 
 int main(int argc, char* argv[]) {
@@ -208,18 +74,16 @@ int main(int argc, char* argv[]) {
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
 
-  po::options_description desc("Multi-camera end to end video ingestion demo");
+  po::options_description desc("Trains");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("model,m",
-                     po::value<string>()->value_name("MODEL")->required(),
-                     "The name of the model to run");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
                      "cameras to be used, separate with ,");
-  desc.add_options()("display,d", "Enable display or not");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
+  desc.add_options()("rootdir", po::value<string>()->value_name("ROOTDIR")->required(),
+                     "Root directory for the directory tree containing all of the images");
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
@@ -246,12 +110,11 @@ int main(int argc, char* argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
   int device_number = vm["device"].as<int>();
+  std::string root_dir = vm["rootdir"].as<std::string>();
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
-  auto model = vm["model"].as<string>();
-  bool display = vm.count("display") != 0;
-  Run(camera_names, model, display);
+  Run(camera_names, root_dir);
 
   return 0;
 }
