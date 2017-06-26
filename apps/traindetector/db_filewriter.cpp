@@ -15,9 +15,10 @@
 // TODO: this will change to take in the frame after the metadata is added to
 // the frame
 void DoWriteDB(std::string filename, time_t cur_time,
-               std::unique_ptr<Frame>& frame) {
+               std::unique_ptr<Frame>& frame, std::string root_dir) {
   // assumes database has been created
-  FramesDatabase db("sqlite3", "database=frames.db");
+  std::string database_path = "database=" + root_dir + "/frames.db";
+  FramesDatabase db("sqlite3", database_path);
   try {
     db.create();
   } catch (...) {
@@ -164,5 +165,5 @@ void DBFileWriter::Process() {
     imwrite(filename.str(), image, params);
   }
   // Write to DB
-  DoWriteDB(filename.str(), now, frame);
+  DoWriteDB(filename.str(), now, frame, root_dir_);
 }
