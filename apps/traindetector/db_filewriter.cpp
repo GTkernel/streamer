@@ -17,7 +17,9 @@
 void DoWriteDB(std::string filename, time_t cur_time,
                std::unique_ptr<Frame>& frame) {
   // assumes database has been created
+  LOG(INFO) << "Creating database";
   FramesDatabase db("sqlite3", "database=frames.db");
+  LOG(INFO) << "Created database";
   try {
     db.create();
   } catch (...) {
@@ -54,12 +56,8 @@ std::shared_ptr<DBFileWriter> DBFileWriter::Create(
   return std::make_shared<DBFileWriter>(params.at("filename"));
 }
 
-void DBFileWriter::SetRate(int rate) {
-  if (rate == 0) {
-    delay_ms_ = 0;
-  } else {
-    delay_ms_ = 1000 / rate;
-  }
+void DBFileWriter::SetDelay(int delay_ms) {
+  delay_ms_ = delay_ms;
   expected_timestamp_ = 0;
 }
 

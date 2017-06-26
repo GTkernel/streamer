@@ -27,14 +27,14 @@ void Run(const string& camera_name) {
 
   camera = camera_manager.GetCamera(camera_name);
   auto reader = camera->GetStream()->Subscribe();
-  cv::namedWindow(camera_name);
+  //cv::namedWindow(camera_name);
 
   camera->Start();
 
   while (true) {
     auto frame = reader->PopFrame();
     cv::Mat img = frame->GetValue<cv::Mat>("OriginalImage");
-    cv::imshow(camera_name, img);
+    //cv::imshow(camera_name, img);
 
     unsigned char q = cv::waitKey(10);
     if (q == 'q') break;

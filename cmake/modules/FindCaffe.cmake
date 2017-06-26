@@ -8,8 +8,10 @@ find_path(Caffe_INCLUDE_DIRS NAMES caffe/caffe.hpp
 
 find_library(Caffe_LIBRARIES NAMES caffe-nv caffe
   HINTS
-  ${CAFFE_HOME}/lib
+  ${CAFFE_HOME}/build/lib
   /usr/local/lib)
+
+include_directories(${CAFFE_HOME}/build/src)
 
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Caffe DEFAULT_MSG
