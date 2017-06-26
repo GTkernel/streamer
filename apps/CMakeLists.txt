@@ -55,9 +55,9 @@ foreach (app_dir ${APP_DIRS})
 endforeach ()
 
 if(USE_LITESQL)
-  target_link_libraries(multicam "litesql")
+  target_link_libraries(traindetector "litesql")
   add_definitions("-D USE_LITESQL")
-  execute_process(COMMAND litesql-gen -t c++ --output-dir=${PROJECT_SOURCE_DIR}/apps/multicam/ ${PROJECT_SOURCE_DIR}/apps/multicam/framesdb.xml)
+  execute_process(COMMAND litesql-gen -t c++ --output-dir=${PROJECT_SOURCE_DIR}/apps/traindetector/ ${PROJECT_SOURCE_DIR}/apps/multicam/framesdb.xml)
 endif()
 
 target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
