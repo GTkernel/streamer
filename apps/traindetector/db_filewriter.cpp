@@ -7,46 +7,44 @@
 #include <fstream>
 
 #include "json/json.hpp"
-#include "utils/file_utils.h"
 #include "sys/stat.h"
+#include "utils/file_utils.h"
 
-#ifdef USE_LITESQL
 #include "framesdatabase.hpp"
-#endif
 
-// TODO: this will change to take in the frame after the metadata is added to the frame
-void DoWriteDB(std::string filename, time_t cur_time, std::unique_ptr<Frame>& frame) {
-#ifdef USE_LITESQL
+// TODO: this will change to take in the frame after the metadata is added to
+// the frame
+void DoWriteDB(std::string filename, time_t cur_time,
+               std::unique_ptr<Frame>& frame) {
   // assumes database has been created
-    FramesDatabase db("sqlite3", "database=frames.db");
-    try {
-      db.create();
-    } catch (...) { }
-    db.begin();
-    db.verbose = true;
-    FrameEntry fe(db);
-    boost::filesystem::path filename_path(filename);
-    fe.path = boost::filesystem::canonical(filename_path).string();
-    fe.date = cur_time;
-    fe.exposure = frame->GetValue<float>("CameraSettings.Exposure");
-    fe.sharpness = frame->GetValue<float>("CameraSettings.Sharpness");
-    fe.brightness = frame->GetValue<float>("CameraSettings.Brightness");
-    fe.saturation = frame->GetValue<float>("CameraSettings.Saturation");
-    fe.hue = frame->GetValue<float>("CameraSettings.Hue");
-    fe.gain = frame->GetValue<float>("CameraSettings.Gain");
-    fe.gamma = frame->GetValue<float>("CameraSettings.Gamma");
-    fe.wbred = frame->GetValue<float>("CameraSettings.WBRed");
-    fe.wbblue = frame->GetValue<float>("CameraSettings.WBBlue");
-    fe.update();
-    db.commit();
-    
-#endif // USE_LITESQL
+  FramesDatabase db("sqlite3", "database=frames.db");
+  try {
+    db.create();
+  } catch (...) {
+  }
+  db.begin();
+  db.verbose = true;
+  FrameEntry fe(db);
+  boost::filesystem::path filename_path(filename);
+  fe.path = boost::filesystem::canonical(filename_path).string();
+  fe.date = cur_time;
+  fe.exposure = frame->GetValue<float>("CameraSettings.Exposure");
+  fe.sharpness = frame->GetValue<float>("CameraSettings.Sharpness");
+  fe.brightness = frame->GetValue<float>("CameraSettings.Brightness");
+  fe.saturation = frame->GetValue<float>("CameraSettings.Saturation");
+  fe.hue = frame->GetValue<float>("CameraSettings.Hue");
+  fe.gain = frame->GetValue<float>("CameraSettings.Gain");
+  fe.gamma = frame->GetValue<float>("CameraSettings.Gamma");
+  fe.wbred = frame->GetValue<float>("CameraSettings.WBRed");
+  fe.wbblue = frame->GetValue<float>("CameraSettings.WBBlue");
+  fe.update();
+  db.commit();
 }
 
 DBFileWriter::DBFileWriter(const string& root_dir)
     : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {}), delay_ms_(0) {
   root_dir_ = root_dir;
-  while(root_dir_.back() == '/') {
+  while (root_dir_.back() == '/') {
     root_dir_.pop_back();
   }
 }
@@ -57,7 +55,7 @@ std::shared_ptr<DBFileWriter> DBFileWriter::Create(
 }
 
 void DBFileWriter::SetRate(int rate) {
-  if(rate == 0) {
+  if (rate == 0) {
     delay_ms_ = 0;
   } else {
     delay_ms_ = 1000 / rate;
@@ -67,15 +65,13 @@ void DBFileWriter::SetRate(int rate) {
 
 bool DBFileWriter::Init() {
   // Create the root directory if it doesn't exist
-  if(!CreateDirs(root_dir_)) {
+  if (!CreateDirs(root_dir_)) {
     LOG(INFO) << "Using existing directory " << root_dir_;
   }
   return true;
 }
 
-bool DBFileWriter::OnStop() {
-  return true;
-}
+bool DBFileWriter::OnStop() { return true; }
 
 void DBFileWriter::Process() {
   auto frame = GetFrame("input");
@@ -87,20 +83,22 @@ void DBFileWriter::Process() {
   time_t now = std::chrono::system_clock::to_time_t(t);
   localtime_r(&now, &local_time);
   const std::chrono::duration<double> tse = t.time_since_epoch();
-  
+
   int sec = local_time.tm_sec;
   int min = local_time.tm_min;
   int hour = local_time.tm_hour;
   int day = local_time.tm_mday;
   int month = local_time.tm_mon + 1;
   int year = local_time.tm_year + 1900;
-  int ms = std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
-  unsigned long long cur_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(tse).count(); 
+  int ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
+  unsigned long long cur_timestamp =
+      std::chrono::duration_cast<std::chrono::milliseconds>(tse).count();
   // Framerate limiting
-  if(expected_timestamp_ == 0) {
+  if (expected_timestamp_ == 0) {
     expected_timestamp_ = cur_timestamp;
   }
-  if(cur_timestamp < expected_timestamp_) {
+  if (cur_timestamp < expected_timestamp_) {
     return;
   } else {
     expected_timestamp_ += delay_ms_;
@@ -131,19 +129,21 @@ void DBFileWriter::Process() {
 
   nlohmann::json metadata_json;
   metadata_json["Exposure"] = frame->GetValue<float>("CameraSettings.Exposure");
-  metadata_json["Sharpness"] = frame->GetValue<float>("CameraSettings.Sharpness");
-  metadata_json["Brightness"] = frame->GetValue<float>("CameraSettings.Brightness");
-  metadata_json["Saturation"] = frame->GetValue<float>("CameraSettings.Saturation");
+  metadata_json["Sharpness"] =
+      frame->GetValue<float>("CameraSettings.Sharpness");
+  metadata_json["Brightness"] =
+      frame->GetValue<float>("CameraSettings.Brightness");
+  metadata_json["Saturation"] =
+      frame->GetValue<float>("CameraSettings.Saturation");
   metadata_json["Hue"] = frame->GetValue<float>("CameraSettings.Hue");
   metadata_json["Gain"] = frame->GetValue<float>("CameraSettings.Gain");
   metadata_json["Gamma"] = frame->GetValue<float>("CameraSettings.Gamma");
   metadata_json["WBRed"] = frame->GetValue<float>("CameraSettings.WBRed");
   metadata_json["WBBlue"] = frame->GetValue<float>("CameraSettings.WBBlue");
 
-
   nlohmann::json j;
   j["Metadata"] = metadata_json;
-  
+
   std::string json_string = j.dump();
 
   // write out metadata
@@ -164,7 +164,7 @@ void DBFileWriter::Process() {
   */
   struct stat buf;
   // Write out file
-  if(stat (filename.str().c_str(), &buf) != 0) {
+  if (stat(filename.str().c_str(), &buf) != 0) {
     imwrite(filename.str(), image, params);
   }
   // Write to DB

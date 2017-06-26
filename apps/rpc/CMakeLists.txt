@@ -11,8 +11,6 @@ MACRO(BUILD_ONE app)
   ADD_BUILD_REQS(${app})
 ENDMACRO()
 
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../")
-
 add_executable(rpc_sender EXCLUDE_FROM_ALL rpc_sender.cpp)
 BUILD_ONE(rpc_sender)
 

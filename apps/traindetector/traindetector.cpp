@@ -61,7 +61,8 @@ void Run(const std::vector<string>& camera_names, std::string root_dir) {
     }
   }
 
-  while (true);
+  while (true)
+    ;
 
   LOG(INFO) << "Done";
 }
@@ -82,8 +83,9 @@ int main(int argc, char* argv[]) {
                      "cameras to be used, separate with ,");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
-  desc.add_options()("rootdir", po::value<string>()->value_name("ROOTDIR")->required(),
-                     "Root directory for the directory tree containing all of the images");
+  desc.add_options()(
+      "rootdir", po::value<string>()->value_name("ROOTDIR")->required(),
+      "Root directory for the directory tree containing all of the images");
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
