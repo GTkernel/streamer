@@ -54,7 +54,7 @@ foreach (app_dir ${APP_DIRS})
   endif ()
 endforeach ()
 
-option(USE_LITESQL "Build with Caffe" ON)
+option(USE_LITESQL "Build with litesql" ON)
 if(USE_LITESQL)
   target_link_libraries(traindetector "litesql")
   add_definitions("-D USE_LITESQL")
