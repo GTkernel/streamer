@@ -9,6 +9,8 @@
 #include <csignal>
 #include "streamer.h"
 
+#include "db_filewriter.h"
+
 namespace po = boost::program_options;
 using std::cout;
 using std::endl;
@@ -109,6 +111,10 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     encoder->SetSource("input", classifier_streams.at(i));
     encoders.push_back(encoder);
   }
+
+  auto* db_fw = new DBFileWriter("./garbage/");
+  db_fw->SetSource("input", cameras[0]->GetSink("raw_output"));
+  db_fw->Start();
 
   for (const auto& camera : cameras) {
     if (!camera->IsStarted()) {
