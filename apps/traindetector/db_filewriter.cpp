@@ -17,9 +17,7 @@
 void DoWriteDB(std::string filename, time_t cur_time,
                std::unique_ptr<Frame>& frame) {
   // assumes database has been created
-  LOG(INFO) << "Creating database";
   FramesDatabase db("sqlite3", "database=frames.db");
-  LOG(INFO) << "Created database";
   try {
     db.create();
   } catch (...) {
