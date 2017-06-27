@@ -7,7 +7,7 @@
 
 #include <glog/logging.h>
 #include <stdlib.h>
-#include <tinytoml/toml.h>
+#include <tinytoml/include/toml/toml.h>
 #include <fstream>
 #include <map>
 #include <memory>
