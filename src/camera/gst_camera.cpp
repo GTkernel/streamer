@@ -37,7 +37,7 @@ void GSTCamera::Process() {
   raw_frame->SetValue("OriginalImage", pixels);
   raw_frame->SetValue("DataBuffer", DataBuffer(pixels.data, pixels.total() * pixels.elemSize()));
   MetadataToFrame(raw_frame);
-  
+
   PushFrame("bgr_output", std::move(image_frame));
   PushFrame("raw_output", std::move(raw_frame));
 }
@@ -73,3 +73,8 @@ CameraPixelFormatType GSTCamera::GetPixelFormat() {
 void GSTCamera::SetPixelFormat(CameraPixelFormatType) {}
 void GSTCamera::SetFrameRate(float f) { }
 float GSTCamera::GetFrameRate() { return 0; }
+void GSTCamera::SetROI(int roi_offset_x, int roi_offset_y,
+                       int roi_width, int roi_height) { }
+int GSTCamera::GetROIOffsetX() { return 0; }
+int GSTCamera::GetROIOffsetY() { return 0; }
+Shape GSTCamera::GetROIOffsetShape() { return Shape(); }

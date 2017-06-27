@@ -242,6 +242,52 @@ void VimbaCamera::SetFrameRate(float frame_rate) {
   CHECK_VIMBA(pFeature->SetValue(frame_rate));
 }
 
+void VimbaCamera::SetROI(int roi_offset_x, int roi_offset_y,
+                         int roi_width, int roi_height) {
+
+    VmbAPI::FeaturePtr pFeature;
+
+    CHECK_VIMBA(camera_->GetFeatureByName("OffsetX", pFeature));
+    CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_offset_x)));
+
+    CHECK_VIMBA(camera_->GetFeatureByName("OffsetY", pFeature));
+    CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_offset_y)));
+
+    CHECK_VIMBA(camera_->GetFeatureByName("Width", pFeature));
+    CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_width)));
+
+    CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
+    CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_height)));
+
+}
+
+int VimbaCamera::GetROIOffsetX() {
+    VmbAPI::FeaturePtr pFeature;
+    VmbInt64_t roi_offset_x;
+    CHECK_VIMBA(camera_->GetFeatureByName("OffsetX", pFeature));
+    CHECK_VIMBA(pFeature->GetValue(roi_offset_x));
+    return (int) roi_offset_x;
+}
+
+int VimbaCamera::GetROIOffsetY() {
+    VmbAPI::FeaturePtr pFeature;
+    VmbInt64_t roi_offset_y;
+    CHECK_VIMBA(camera_->GetFeatureByName("OffsetY", pFeature));
+    CHECK_VIMBA(pFeature->GetValue(roi_offset_y));
+    return (int) roi_offset_y;
+}
+
+Shape VimbaCamera::GetROIOffsetShape() {
+    VmbAPI::FeaturePtr pFeature;
+    VmbInt64_t width, height;
+    CHECK_VIMBA(camera_->GetFeatureByName("Width", pFeature));
+    CHECK_VIMBA(pFeature->GetValue(width));
+    CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
+    CHECK_VIMBA(pFeature->GetValue(height));
+
+    return Shape((int)width, (int)height);
+}
+
 float VimbaCamera::GetSharpness() { return 0; }
 void VimbaCamera::SetSharpness(float sharpness) {}
 Shape VimbaCamera::GetImageSize() {
