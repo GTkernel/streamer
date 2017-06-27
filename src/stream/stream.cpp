@@ -29,14 +29,13 @@ void Stream::UnSubscribe(StreamReader* reader) {
 
 void Stream::PushFrame(std::unique_ptr<Frame> frame) {
   std::lock_guard<std::mutex> guard(stream_lock_);
-  auto num_readers = readers_.size();
-  for (const auto& reader : readers_) {
-    if(num_readers == 1) {
-      reader->PushFrame(std::move(frame));
-    } else {
+  if (readers_.size() == 1) {
+    readers_.at(0)->PushFrame(std::move(frame));
+  } else {
+    // If there is more than one reader, then we need to copy the frame.
+    for (const auto& reader : readers_) {
       reader->PushFrame(std::make_unique<Frame>(frame));
     }
-    num_readers -= 1;
   }
 }
 
@@ -59,7 +58,7 @@ std::unique_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
     return frame;
   } else {
     // Can't get frame within timeout
-    return std::unique_ptr<Frame>();
+    return nullptr;
   }
 }
 

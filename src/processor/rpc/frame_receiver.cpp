@@ -13,7 +13,7 @@ void FrameReceiver::RunServer(const std::string listen_url) {
   grpc::ServerBuilder builder;
 
   // Increase maximum message size to 10 MiB
-  builder.SetMaxMessageSize(10*1024*1024);
+  builder.SetMaxMessageSize(10 * 1024 * 1024);
 
   // TODO:  Use secure credentials (e.g., SslCredentials)
   builder.AddListeningPort(listen_url, grpc::InsecureServerCredentials());

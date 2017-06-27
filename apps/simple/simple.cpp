@@ -33,7 +33,7 @@ void Run(const string& camera_name) {
 
   while (true) {
     auto frame = reader->PopFrame();
-    cv::Mat img = frame->GetValue<cv::Mat>("OriginalImage");
+    const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
     cv::imshow(camera_name, img);
 
     std::cout << frame->ToString() << std::endl;

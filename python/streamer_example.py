@@ -39,7 +39,7 @@ for file in files:
 transformer = streamer.processor.ImageTransformer(227, 227)
 classifier = streamer.processor.ImageClassifier('GoogleNet', 227, 227)
 
-transformer['input'] = camera['bgr_output']
+transformer['input'] = camera['output']
 classifier['input'] = transformer['output']
 
 pipeline = streamer.pipeline.Pipeline('classification')

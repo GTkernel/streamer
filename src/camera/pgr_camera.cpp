@@ -22,10 +22,7 @@ PGRCamera::PGRCamera(const string& name, const string& video_uri, int width,
                      CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
-      initial_mode_(mode) {
-  // Init raw output sink
-  sinks_.insert({"raw_output", StreamPtr(new Stream)});
-}
+      initial_mode_(mode) {}
 
 bool PGRCamera::Init() {
   // Get the camera guid from ip address
@@ -91,20 +88,12 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
   cv::Mat image = cv::Mat(converted_image.GetRows(), converted_image.GetCols(),
                           CV_8UC3, converted_image.GetData(), rowBytes);
 
-  cv::Mat output_image;
-  output_image = image.clone();
-
-  auto image_frame = std::make_unique<Frame>;
-  auto raw_frame = std::make_unique<Frame>;
-
-  image_frame->SetValue("OriginalImage", output_image);
-  image_frame->SetValue("Image", output_image);
-
-  raw_frame->SetValue("DataBuffer", image_bytes);
-  raw_frame->SetValue("OriginalImage", output_image);
-
-  camera->PushFrame("bgr_output", std::move(image_frame));
-  camera->PushFrame("raw_output", std::move(raw_frame));
+  cv::Mat output_image = image.clone();
+  auto frame = std::make_unique<Frame>();
+  frame->SetValue("original_bytes", image_bytes);
+  frame->SetValue("original_image", output_image);
+  frame->SetValue("image", output_image);
+  camera->PushFrame("output", std::move(frame));
 }
 
 bool PGRCamera::OnStop() {

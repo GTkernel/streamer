@@ -33,7 +33,9 @@ TEST(STREAM_PUBLISHER_TEST, TEST_PUBLISH_MDSTREAM) {
 
   // Push MD frame with tags
   std::vector<string> tags = {"cow", "car"};
-  stream->PushFrame(new MetadataFrame(tags));
+  auto frame = std::make_unique<Frame>();
+  frame->SetValue("tags", tags);
+  stream->PushFrame(std::move(frame));
 
   LOG(INFO) << "Try to receive";
   string topic_name = s_recv(subscriber);

@@ -1,6 +1,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include <caffe/caffe.hpp>
 #include <opencv2/opencv.hpp>
 
@@ -9,10 +10,10 @@
 #include <string>
 #include <vector>
 
+#include "common/serialization.h"
 #include "common/types.h"
 #include "model/model.h"
 #include "processor/neural_net_evaluator.h"
-#include "common/serialization.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
 
@@ -236,10 +237,10 @@ cv::Mat GetMean() {
   return cv::Mat(SHAPE, mean.type(), channel_mean);
 }
 
-cv::Mat Preprocess(const cv::Mat& img) {
+cv::Mat Preprocess(const cv::Mat& image) {
   // Convert the input image to the input image format of the network.
   cv::Mat sample;
-  sample = img;
+  sample = image;
 
   cv::Mat sample_resized;
   cv::resize(sample, sample_resized, SHAPE);
@@ -271,51 +272,53 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   ModelDesc desc("TestLayerOutputModel", MODEL_TYPE_CAFFE, NETWORK_FILEPATH,
                  WEIGHTS_FILEPATH, WIDTH, HEIGHT, "prob");
   NeuralNetEvaluator nne(desc, input_shape, OUTPUTS);
+  EXPECT_EQ(nne.GetSinkNames().size(), OUTPUTS.size());
 
   // Read the input
-  cv::Mat img = cv::imread(INPUT_IMAGE_FILEPATH, -1);
-  EXPECT_FALSE(img.empty());
-  cv::Mat input_data = Preprocess(img);
+  cv::Mat original_image = cv::imread(INPUT_IMAGE_FILEPATH);
+  EXPECT_FALSE(original_image.empty());
+  cv::Mat preprocessed_image = Preprocess(original_image);
 
   // Construct frame with input image in it
-  std::shared_ptr<ImageFrame> input_frame =
-      std::make_shared<ImageFrame>(input_data, img);
+  auto input_frame = std::make_unique<Frame>();
+  input_frame->SetValue("original_image", original_image);
+  input_frame->SetValue("image", preprocessed_image);
 
-  // Prepare input stream
-  StreamPtr input_stream_ptr = std::make_shared<Stream>();
+  // Prepare stream
+  StreamPtr stream = std::make_shared<Stream>();
+  nne.SetSource("input", stream);
 
-  nne.SetSource("input", input_stream_ptr);
-
-  std::vector<std::pair<std::string, StreamReader*>> readers;
-  EXPECT_EQ(nne.GetSinkNames().size(), OUTPUTS.size());
+  // We need to set up the StreamReaders before calling Start().
+  std::unordered_map<std::string, StreamReader*> readers;
   for (const auto& sink_name : nne.GetSinkNames()) {
-    readers.push_back({sink_name, nne.GetSink(sink_name)->Subscribe()});
+    readers[sink_name] = nne.GetSink(sink_name)->Subscribe();
   }
+
   nne.Start();
-  input_stream_ptr->PushFrame(input_frame);
-  for (const auto& pair : readers) {
-    auto sink_name = pair.first;
-    auto reader = pair.second;
-    auto result_frame = reader->PopFrame<LayerFrame>();
-    ASSERT_FALSE(result_frame == nullptr) << "Unable to get frame";
+  stream->PushFrame(std::move(input_frame));
+
+  for (const auto& sink_name : nne.GetSinkNames()) {
+    auto output_frame = readers[sink_name]->PopFrame();
+    ASSERT_FALSE(output_frame == nullptr) << "Unable to get frame";
 
     std::string filename = sink_name;
     boost::replace_all(filename, "/", ".");
     filename = "data/inception/caffe_ground_truth/" + filename + ".expect";
     // contains the activations of the output layer
-    std::ifstream input_gt_file;
-    input_gt_file.open(filename);
+    std::ifstream gt_file;
+    gt_file.open(filename);
     cv::Mat expected_output;
-    boost::archive::binary_iarchive expected_output_archive(input_gt_file);
+    boost::archive::binary_iarchive expected_output_archive(gt_file);
+
     try {
       expected_output_archive >> expected_output;
     } catch (std::exception e) {
       LOG(INFO) << "Ignoring empty layer\n";
+      continue;
     }
-    input_gt_file.close();
-    CvMatEqual(
-        expected_output,
-        std::dynamic_pointer_cast<LayerFrame>(result_frame)->GetActivations());
+
+    gt_file.close();
+    CvMatEqual(expected_output, output_frame->GetValue<cv::Mat>("activations"));
   }
 
   nne.Stop();

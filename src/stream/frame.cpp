@@ -8,30 +8,28 @@
 #include "common/types.h"
 
 class FramePrinter : public boost::static_visitor<std::string> {
-public:
-  std::string operator() (const double& v) const {
+ public:
+  std::string operator()(const double& v) const {
     std::ostringstream output;
     output << v;
     return output.str();
   }
 
-  std::string operator() (const float& v) const {
+  std::string operator()(const float& v) const {
     std::ostringstream output;
     output << v;
     return output.str();
   }
 
-  std::string operator() (const int& v) const {
+  std::string operator()(const int& v) const {
     std::ostringstream output;
     output << v;
     return output.str();
   }
 
-  std::string operator() (const std::string& v) const {
-    return v;
-  }
+  std::string operator()(const std::string& v) const { return v; }
 
-  std::string operator() (const std::vector<std::string>& v) const {
+  std::string operator()(const std::vector<std::string>& v) const {
     std::ostringstream output;
     output << "std::vector<std::string> = [" << std::endl;
     for (auto& s : v) {
@@ -45,20 +43,25 @@ public:
     std::ostringstream output;
     output << "std::vector<Rect> = [" << std::endl;
     for (auto& r : v) {
-      output << "Rect("<< "px = " << r.px << "py = " << r.py << "width = " << r.width
-                     << "height = " << r.height << ")" << std::endl;
+      output << "Rect("
+             << "px = " << r.px << "py = " << r.py << "width = " << r.width
+             << "height = " << r.height << ")" << std::endl;
     }
     output << "]";
     return output.str();
   }
 
-  std::string operator() (const std::vector<char>& v) const {
+  std::string operator()(const std::vector<char>& v) const {
     std::ostringstream output;
-    output << "std::vector<char> = [" << std::endl;
-    for (auto& s : v) {
-      output << s << std::endl;
+    output << "std::vector<char>(size = " << v.size() << ") = [";
+    decltype(v.size()) num_elems = v.size();
+    if (num_elems > 3) {
+      num_elems = 3;
     }
-    output << "]";
+    for (decltype(num_elems) i = 0; i < num_elems; ++i) {
+      output << +v[i] << ", ";
+    }
+    output << "...]" << std::endl;
     return output.str();
   }
 
@@ -73,21 +76,18 @@ public:
   }
 };
 
-Frame::Frame(double start_time) {
-  frame_data_[START_TIME_KEY] = start_time;
-}
+Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
+
+Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
 
 Frame::Frame(const Frame& frame) {
   frame_data_ = frame.frame_data_;
-  // Deep copy the databuffer
-  auto it = frame.frame_data_.find("DataBuffer");
-  if(it != frame.frame_data_.end()) {
+  // Deep copy the original bytes
+  auto it = frame.frame_data_.find("original_bytes");
+  if (it != frame.frame_data_.end()) {
     std::vector<char> newbuf(boost::get<std::vector<char>>(it->second));
-    frame_data_["DataBuffer"] = newbuf;
+    frame_data_["original_bytes"] = newbuf;
   }
-}
-
-Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {
 }
 
 template <typename T>
@@ -96,7 +96,7 @@ T Frame::GetValue(std::string key) const {
   if (it != frame_data_.end()) {
     return boost::get<T>(it->second);
   } else {
-    throw std::runtime_error("No key " + key + " in Frame\n");
+    throw std::out_of_range(key);
   }
 }
 

@@ -38,14 +38,13 @@ struct Shape {
  * @brief Rectangle
  */
 struct Rect {
-  Rect() : px(0), py(0), width(0), height(0) {};
-  Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h) {};
+  Rect() : px(0), py(0), width(0), height(0){};
+  Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
 
   friend class boost::serialization::access;
 
   template <class Archive>
-  void serialize(Archive&, const unsigned int) {
-  }
+  void serialize(Archive&, const unsigned int) {}
 
   bool operator==(const Rect& rhs) const {
     return (px == rhs.px) && (py == rhs.py) && (width == rhs.width) &&
