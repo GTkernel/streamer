@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 
-#include "json/json.hpp"
+#include "json/src/json.hpp"
 
 #include "common/types.h"
 

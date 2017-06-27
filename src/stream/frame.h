@@ -5,7 +5,7 @@
 #ifndef STREAMER_STREAM_FRAME_H_
 #define STREAMER_STREAM_FRAME_H_
 
-#include "json/json.hpp"
+#include "json/src/json.hpp"
 
 #include "common/common.h"
 #include "common/context.h"
