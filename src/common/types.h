@@ -67,36 +67,6 @@ struct Rect {
   int height;
 };
 
-// The following serialization code is required because Rect does not have a
-// default constructor.  See the Non-default constructions section of the
-// documentation: http://www.boost.org/libs/serialization
-namespace boost {
-namespace serialization {
-
-template <class Archive> void save_construct_data(Archive &ar, const Rect *r, const unsigned int) {
-  ar << r->px;
-  ar << r->py;
-  ar << r->width;
-  ar << r->height;
-}
-
-template <class Archive> void load_construct_data(Archive &ar, Rect *r, const unsigned int) {
-  int px;
-  int py;
-  int width;
-  int height;
-
-  ar >> px;
-  ar >> py;
-  ar >> width;
-  ar >> height;
-
-  ::new (r) Rect(px, py, width, height);
-}
-
-}  // namespace serialization
-}  // namespace boost
-
 /**
  * @brief Prediction result, a string label and a confidence score
  */
