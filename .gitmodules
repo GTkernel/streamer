@@ -4,3 +4,9 @@
 [submodule "3rdparty/json"]
 	path = 3rdparty/json
 	url = https://github.com/nlohmann/json.git
+[submodule "3rdparty/zguide"]
+	path = 3rdparty/zguide
+	url = https://github.com/booksbyus/zguide.git
+[submodule "3rdparty/Simple-Web-Server"]
+	path = 3rdparty/Simple-Web-Server
+	url = https://github.com/eidheim/Simple-Web-Server.git
