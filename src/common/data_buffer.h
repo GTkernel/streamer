@@ -11,6 +11,8 @@
 #include <memory>
 #include <string>
 
+#include <boost/serialization/access.hpp>
+
 /**
  * @brief The buffer wrapper for a bunch of data.
  */
@@ -100,6 +102,13 @@ class DataBuffer {
   }
 
  private:
+  friend class boost::serialization::access;
+
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {
+    // TODO:  we do not serialize the DataBuffer class
+  }
+
   size_t size_;
   std::shared_ptr<char> buffer_;
   void* buffer_ptr_;

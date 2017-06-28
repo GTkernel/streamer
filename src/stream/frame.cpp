@@ -5,8 +5,67 @@
 
 #include <opencv2/core/core.hpp>
 
-#include "json/json.hpp"
 #include "common/types.h"
+
+class FramePrinter : public boost::static_visitor<std::string> {
+public:
+  std::string operator() (const double& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
+  std::string operator() (const float& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
+  std::string operator() (const int& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
+  std::string operator() (const std::string& v) const {
+    return v;
+  }
+
+  std::string operator() (const std::vector<std::string>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::string> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<Rect>& v) const {
+    std::ostringstream output;
+    output << "std::vector<Rect> = [" << std::endl;
+    for (auto& r : v) {
+      output << "Rect("<< "px = " << r.px << "py = " << r.py << "width = " << r.width
+                     << "height = " << r.height << ")" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator() (const DataBuffer&) const {
+    return "DataBuffer";
+  }
+
+  std::string operator()(const cv::Mat& v) const {
+    std::ostringstream output, mout;
+    cv::Mat tmp;
+    v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
+    mout << tmp;
+    output << "cv::Mat(size = " << v.cols << "x" << v.rows
+           << ") = " << mout.str().substr(0, 20) << "...]";
+    return output.str();
+  }
+};
 
 Frame::Frame(double start_time) {
   frame_data_[START_TIME_KEY] = start_time;
@@ -25,19 +84,6 @@ Frame::Frame(const Frame& frame) {
 Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {
 }
 
-FrameType Frame::GetType() const {
-  if(frame_data_.count("DataBuffer") > 0) {
-    return FRAME_TYPE_BYTES;
-    return FRAME_TYPE_LAYER;
-  } else if(frame_data_.count("Tags") > 0 || frame_data_.count("Bboxes") > 0) {
-    return FRAME_TYPE_MD;  
-  } else if(frame_data_.count("OriginalImage") > 0) {
-    return FRAME_TYPE_IMAGE;
-  } else {
-    return FRAME_TYPE_INVALID;
-  }
-}
-
 template <typename T>
 T Frame::GetValue(std::string key) const {
   auto it = frame_data_.find(key);
@@ -53,19 +99,14 @@ void Frame::SetValue(std::string key, const T& val) {
   frame_data_[key] = val;
 }
 
-nlohmann::json Frame::ToJson() const {
-  nlohmann::json md_j;
-  md_j["tags"] = this->GetValue<std::vector<std::string>>("Tags");
-
-  std::vector<nlohmann::json> bboxes;
-  for (const auto& bbox : this->GetValue<std::vector<Rect>>("Bboxes")) {
-    bboxes.push_back(bbox.ToJson());
+std::string Frame::ToString() const {
+  FramePrinter visitor;
+  std::ostringstream output;
+  for (auto iter = frame_data_.begin(); iter != frame_data_.end(); iter++) {
+    auto res = boost::apply_visitor(visitor, iter->second);
+    output << iter->first << ": " << res << std::endl;
   }
-  md_j["bboxes"] = bboxes;
-
-  nlohmann::json j;
-  j["MetadataFrame"] = md_j;
-  return j;
+  return output.str();
 }
 
 // Types declared in field_types of frame
@@ -83,5 +124,6 @@ template float Frame::GetValue(std::string) const;
 template int Frame::GetValue(std::string) const;
 template std::string Frame::GetValue(std::string) const;
 template std::vector<std::string> Frame::GetValue(std::string) const;
+template std::vector<Rect> Frame::GetValue(std::string) const;
 template cv::Mat Frame::GetValue(std::string) const;
 template DataBuffer Frame::GetValue(std::string) const;

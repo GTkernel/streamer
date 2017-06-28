@@ -12,7 +12,7 @@
 #include "common/types.h"
 #include "model/model.h"
 #include "processor/neural_net_evaluator.h"
-#include "processor/rpc/serialization.h"
+#include "common/serialization.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
 

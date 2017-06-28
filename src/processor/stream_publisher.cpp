@@ -47,39 +47,33 @@ bool StreamPublisher::OnStop() { return true; }
 
 void StreamPublisher::Process() {
   auto frame = GetFrame("input");
-  switch (frame->GetType()) {
-    case FRAME_TYPE_BYTES: {
-      STREAMER_NOT_IMPLEMENTED;
-      break;
-    }
-    case FRAME_TYPE_IMAGE: {
-      STREAMER_NOT_IMPLEMENTED;
-      break;
-    }
-    case FRAME_TYPE_MD: {
-      // TODO: Move the serialization function to the logic of frame class
-      s_sendmore(zmq_publisher_, topic_name_);
 
-      pt::ptree root;
-      pt::ptree tags_node;
-      pt::ptree bboxes_node;
+  // NOTE: The following code is likely unused and should be remove.  It
+  // probably doesn't work any more.
+  
+  // TODO: Move the serialization function to the logic of frame class
+  s_sendmore(zmq_publisher_, topic_name_);
 
-      root.put("type", "metadata");
+  pt::ptree root;
+  pt::ptree tags_node;
+  pt::ptree bboxes_node;
 
-      for (const auto& tag :
-           frame->GetValue<std::vector<std::string>>("Tags")) {
-        pt::ptree tag_node;
-        tag_node.put("", tag);
-        tags_node.push_back({"", tag_node});
+  root.put("type", "metadata");
+
+  for (const auto& tag :
+      frame->GetValue<std::vector<std::string>>("Tags")) {
+          pt::ptree tag_node;
+          tag_node.put("", tag);
+          tags_node.push_back({"", tag_node});
       }
 
       for (const auto& bbox : frame->GetValue<std::vector<Rect>>("Bboxes")) {
-        pt::ptree bbox_node;
-        bbox_node.put("x", bbox.px);
-        bbox_node.put("y", bbox.py);
-        bbox_node.put("width", bbox.width);
-        bbox_node.put("height", bbox.height);
-        bboxes_node.push_back({"", bbox_node});
+          pt::ptree bbox_node;
+          bbox_node.put("x", bbox.px);
+          bbox_node.put("y", bbox.py);
+          bbox_node.put("width", bbox.width);
+          bbox_node.put("height", bbox.height);
+          bboxes_node.push_back({"", bbox_node});
       }
 
       root.add_child("tags", tags_node);
@@ -91,16 +85,4 @@ void StreamPublisher::Process() {
       s_send(zmq_publisher_, ss.str());
 
       LOG(INFO) << "Sent";
-      break;
-    }
-    case FRAME_TYPE_LAYER: {
-      STREAMER_NOT_IMPLEMENTED;
-      break;
-    }
-    case FRAME_TYPE_INVALID: {
-      s_send(zmq_publisher_, topic_name_);
-      s_send(zmq_publisher_, "INVALID");
-      break;
-    }
-  }
 }

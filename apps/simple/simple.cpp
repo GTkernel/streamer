@@ -36,6 +36,8 @@ void Run(const string& camera_name) {
     cv::Mat img = frame->GetValue<cv::Mat>("OriginalImage");
     cv::imshow(camera_name, img);
 
+    std::cout << frame->ToString() << std::endl;
+
     unsigned char q = cv::waitKey(10);
     if (q == 'q') break;
   }

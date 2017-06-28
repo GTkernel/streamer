@@ -17,9 +17,10 @@
 #include <cuda_fp16.h>
 #endif  // USE_FP16
 
-#include "json/json.hpp"
+#include <boost/serialization/access.hpp>
 
 #include "common/common.h"
+#include "common/serialization.h"
 
 /**
  * @brief 3-D shape structure
@@ -44,29 +45,13 @@ struct Shape {
  * @brief Rectangle
  */
 struct Rect {
-  Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
+  Rect() : px(0), py(0), width(0), height(0) {};
+  Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h) {};
 
-  Rect(nlohmann::json j) {
-    try {
-      nlohmann::json rect_j = j.at("Rect");
-      px = rect_j.at("px").get<int>();
-      py = rect_j.at("py").get<int>();
-      width = rect_j.at("width").get<int>();
-      height = rect_j.at("height").get<int>();
-    } catch (std::out_of_range) {
-      LOG(FATAL) << "Malformed Rect JSON: " << j.dump();
-    }
-  }
+  friend class boost::serialization::access;
 
-  nlohmann::json ToJson() const {
-    nlohmann::json rect_j;
-    rect_j["px"] = px;
-    rect_j["py"] = py;
-    rect_j["width"] = width;
-    rect_j["height"] = height;
-    nlohmann::json j;
-    j["Rect"] = rect_j;
-    return j;
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {
   }
 
   bool operator==(const Rect& rhs) const {
@@ -81,6 +66,36 @@ struct Rect {
   int width;
   int height;
 };
+
+// The following serialization code is required because Rect does not have a
+// default constructor.  See the Non-default constructions section of the
+// documentation: http://www.boost.org/libs/serialization
+namespace boost {
+namespace serialization {
+
+template <class Archive> void save_construct_data(Archive &ar, const Rect *r, const unsigned int) {
+  ar << r->px;
+  ar << r->py;
+  ar << r->width;
+  ar << r->height;
+}
+
+template <class Archive> void load_construct_data(Archive &ar, Rect *r, const unsigned int) {
+  int px;
+  int py;
+  int width;
+  int height;
+
+  ar >> px;
+  ar >> py;
+  ar >> width;
+  ar >> height;
+
+  ::new (r) Rect(px, py, width, height);
+}
+
+}  // namespace serialization
+}  // namespace boost
 
 /**
  * @brief Prediction result, a string label and a confidence score
@@ -149,15 +164,6 @@ enum CameraPixelFormatType {
 };
 
 std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
-
-//// Frame types
-enum FrameType {
-  FRAME_TYPE_INVALID = 0,
-  FRAME_TYPE_IMAGE,
-  FRAME_TYPE_MD,
-  FRAME_TYPE_BYTES,
-  FRAME_TYPE_LAYER
-};
 
 //// Processor types
 enum ProcessorType {
