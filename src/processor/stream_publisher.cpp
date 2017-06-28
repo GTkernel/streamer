@@ -6,7 +6,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <cppzmq/zhelper.hpp>
+#include <zguide/examples/C++/zhelpers.hpp>
 
 namespace pt = boost::property_tree;
 
