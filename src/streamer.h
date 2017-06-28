@@ -12,7 +12,6 @@
 #include "processor/rpc/frame_receiver.h"
 #include "processor/rpc/frame_sender.h"
 #endif  // USE_RPC
-#include "processor/dummy_nn_processor.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"

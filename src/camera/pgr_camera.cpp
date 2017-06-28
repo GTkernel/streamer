@@ -78,8 +78,10 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
   PGRCamera* camera = (PGRCamera*)user_data;
 
   FlyCapture2::Image converted_image;
-  DataBuffer image_bytes(raw_image->GetDataSize());
-  image_bytes.Clone(raw_image->GetData(), raw_image->GetDataSize());
+  std::vector<char> image_bytes(
+      (char*)raw_image->GetData(),
+      (char*)raw_image->GetData() +
+          raw_image->GetDataSize() * sizeof(raw_image->GetData()[0]));
   raw_image->Convert(FlyCapture2::PIXEL_FORMAT_BGR, &converted_image);
 
   unsigned int rowBytes =

@@ -29,7 +29,7 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_GIE=false -DUSE_MXNET=false -DUSE_FP16=false -DBACKEND=cpu -DCAFFE_HOME=$(pwd)/../caffe/distribute ..
+  - cmake -DTEST_ON=true -DUSE_CAFFE=true -DUSE_FP16=false -DBACKEND=cpu -DCAFFE_HOME=$(pwd)/../caffe/distribute ..
   - make
   - make apps
   - make tests

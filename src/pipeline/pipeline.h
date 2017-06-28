@@ -5,6 +5,8 @@
 #ifndef STREAMER_PIPELINE_PIPELINE_H_
 #define STREAMER_PIPELINE_PIPELINE_H_
 
+#include <unordered_map>
+
 #include "common/common.h"
 #include "processor/processor.h"
 #include "spl_parser.h"

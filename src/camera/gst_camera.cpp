@@ -27,8 +27,10 @@ bool GSTCamera::OnStop() {
 void GSTCamera::Process() {
   cv::Mat frame = capture_.GetFrame();
   PushFrame("bgr_output", new ImageFrame(frame, frame));
-  PushFrame("raw_output", new BytesFrame(DataBuffer(
-                              frame.data, frame.total() * frame.elemSize())));
+  PushFrame("raw_output",
+            new BytesFrame(std::vector<char>(
+                (char*)frame.data,
+                (char*)frame.data + frame.total() * frame.elemSize())));
 }
 
 CameraType GSTCamera::GetCameraType() const { return CAMERA_TYPE_GST; }

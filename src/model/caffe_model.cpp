@@ -3,12 +3,12 @@
 //
 
 #include "model/caffe_model.h"
+
 #include "common/context.h"
 
 template <typename DType>
-CaffeModel<DType>::CaffeModel(const ModelDesc& model_desc, Shape input_shape,
-                              int batch_size)
-    : Model(model_desc, input_shape, batch_size) {}
+CaffeModel<DType>::CaffeModel(const ModelDesc& model_desc, Shape input_shape)
+    : Model(model_desc, input_shape) {}
 
 template <typename DType>
 void CaffeModel<DType>::Load() {
@@ -67,41 +67,40 @@ void CaffeModel<DType>::Load() {
 
   caffe::Blob<DType>* input_layer = net_->input_blobs().at(0);
   // Adjust input dimensions
-  input_layer->Reshape(batch_size_, input_shape_.channel, input_shape_.height,
+  // batch size is enforced to be 1
+  input_layer->Reshape(1, input_shape_.channel, input_shape_.height,
                        input_shape_.width);
   // Forward dimension change to all layers.
   net_->Reshape();
-  // Prepare input buffer
-  input_layer = net_->input_blobs().at(0);
-  DType* input_data = input_layer->mutable_cpu_data();
-
-  input_buffer_ = DataBuffer(
-      input_data, batch_size_ * input_shape_.GetSize() * sizeof(DType));
 }
 
 template <typename DType>
-void CaffeModel<DType>::Evaluate() {
-  output_shapes_.clear();
-  output_buffers_.clear();
-
-  CHECK(net_->input_blobs().at(0)->mutable_cpu_data() ==
-        input_buffer_.GetBuffer());
-
-  net_->Forward();
-  // Copy the output of the network
-  const auto& output_blobs = net_->output_blobs();
-  // TODO: consider doing it lazily, e.g. when we actually retrieve the output
-  // data
-  for (const auto& output_blob : output_blobs) {
-    const DType* output_data = output_blob->mutable_cpu_data();
-    Shape shape(output_blob->channels(), output_blob->width(),
-                output_blob->height());
-    output_shapes_.push_back(shape);
-    DataBuffer output_buffer(batch_size_ * shape.GetSize() * sizeof(DType));
-    output_buffer.Clone(output_data,
-                        batch_size_ * shape.GetSize() * sizeof(DType));
-    output_buffers_.push_back(output_buffer);
+std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
+    cv::Mat input, const std::vector<std::string>& output_layer_names) {
+  // Format the input data in the way that Caffe expects
+  auto input_layer = net_->input_blobs().at(0);
+  DType* data = input_layer->mutable_cpu_data();
+  // This loop creates a cv::Mat for each channel that is configured to point to
+  // a particular location in "data", but the data itself is not populated until
+  // the call to cv::split(). output_channels points to the correct offsets in
+  // the Caffe input blob
+  std::vector<cv::Mat> output_channels;
+  for (decltype(input_shape_.channel) j = 0; j < input_shape_.channel; ++j) {
+    cv::Mat channel(input_shape_.height, input_shape_.width, CV_32F, data);
+    output_channels.push_back(channel);
+    data += input_shape_.width * input_shape_.height;
   }
+  cv::split(input, output_channels);
+
+  // Evaluate model on input
+  net_->Forward();
+
+  // Grab all the output layers
+  std::unordered_map<std::string, cv::Mat> output_layers;
+  for (const auto& layer : output_layer_names) {
+    output_layers[layer] = GetLayerOutput(layer);
+  }
+  return output_layers;
 }
 
 template <typename DType>
@@ -110,16 +109,11 @@ void CaffeModel<DType>::Forward() {
 }
 
 template <typename DType>
-const std::vector<std::string>& CaffeModel<DType>::GetLayerNames() const {
-  return net_->layer_names();
-}
-
-template <typename DType>
 cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string& layer_name) const {
   const std::vector<std::vector<caffe::Blob<DType>*>> layer_outputs =
       net_->top_vecs();
   // Find the correct layer to extract
-  std::vector<std::string> layer_names = GetLayerNames();
+  std::vector<std::string> layer_names = net_->layer_names();
   auto layer_idx =
       std::find(layer_names.begin(), layer_names.end(), layer_name);
   if (layer_idx == layer_names.end()) {

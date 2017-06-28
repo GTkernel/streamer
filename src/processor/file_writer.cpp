@@ -38,7 +38,7 @@ void FileWriter::Process() {
     case FRAME_TYPE_BYTES: {
       auto bytes_frame = std::dynamic_pointer_cast<BytesFrame>(frame);
       auto buffer = bytes_frame->GetDataBuffer();
-      file_.write((char*)buffer.GetBuffer(), buffer.GetSize());
+      file_.write((char*)buffer.data(), buffer.size());
       break;
     }
     case FRAME_TYPE_IMAGE: {

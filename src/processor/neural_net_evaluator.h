@@ -2,6 +2,8 @@
 #ifndef STREAMER_PROCESSOR_NEURAL_NET_EVALUATOR_H_
 #define STREAMER_PROCESSOR_NEURAL_NET_EVALUATOR_H_
 
+#include <unordered_map>
+
 #include "common/types.h"
 #include "model/model.h"
 #include "processor/processor.h"
@@ -44,7 +46,6 @@ class NeuralNetEvaluator : public Processor {
   std::unordered_map<std::string, cv::Mat> Evaluate();
 
   Shape input_shape_;
-  DataBuffer input_buffer_;
   std::unique_ptr<Model> model_;
 };
 

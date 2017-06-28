@@ -142,7 +142,7 @@ void GstVideoCapture::DestroyPipeline() {
  * @brief Get next frame from the pipeline, busy wait (which should be improved)
  * until frame available.
  */
-cv::Mat GstVideoCapture::GetFrame(DataBuffer*) {
+cv::Mat GstVideoCapture::GetFrame() {
   Timer timer;
   timer.Start();
   if (!connected_) return cv::Mat();
@@ -166,7 +166,7 @@ cv::Mat GstVideoCapture::GetFrame(DataBuffer*) {
  * @return The frame currently in the frames queue. An empty Mat if no frame
  * immediately available.
  */
-cv::Mat GstVideoCapture::TryGetFrame(DataBuffer*) {
+cv::Mat GstVideoCapture::TryGetFrame() {
   Timer timer;
   timer.Start();
   if (!connected_ || frames_.size() == 0) {

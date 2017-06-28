@@ -81,8 +81,8 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         }
 
         // Raw bytes of the image
-        DataBuffer data_buffer(buffer_size);
-        data_buffer.Clone(DataBuffer(vmb_buffer, buffer_size));
+        std::vector<std::byte> data_buffer((char*)vmb_buffer,
+                                           buffer_size * sizeof(vmb_buffer[0]));
 
         // Transform to BGR image
         cv::Mat bgr_output = TransformToBGRImage(pFrame);

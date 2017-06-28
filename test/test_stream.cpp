@@ -8,10 +8,10 @@
 TEST(STREAM_TEST, BASIC_TEST) {
   std::shared_ptr<Stream> stream(new Stream);
   auto reader = stream->Subscribe();
-  stream->PushFrame(new BytesFrame(DataBuffer()));
+  stream->PushFrame(new BytesFrame(std::vector<char>()));
   EXPECT_EQ(reader->PopFrame<BytesFrame>()->GetType(), FRAME_TYPE_BYTES);
 
-  stream->PushFrame(new BytesFrame(DataBuffer(), cv::Mat()));
+  stream->PushFrame(new BytesFrame(std::vector<char>(), cv::Mat()));
   EXPECT_EQ(reader->PopFrame()->GetType(), FRAME_TYPE_BYTES);
 
   stream->PushFrame(new ImageFrame(cv::Mat(), cv::Mat(10, 20, CV_8UC3)));
@@ -27,7 +27,7 @@ TEST(STREAM_TEST, SUBSCRIBE_TEST) {
   auto reader1 = stream->Subscribe();
   auto reader2 = stream->Subscribe();
 
-  stream->PushFrame(new BytesFrame(DataBuffer()));
+  stream->PushFrame(new BytesFrame(std::vector<char>()));
   stream->PushFrame(new ImageFrame(cv::Mat()));
 
   // Both readers can pop twice

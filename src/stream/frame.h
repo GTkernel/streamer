@@ -65,12 +65,12 @@ class BytesFrame : public Frame {
  public:
   BytesFrame() = delete;
   BytesFrame(
-      DataBuffer data_buffer, cv::Mat original_image = cv::Mat(),
+      std::vector<char> data_buffer, cv::Mat original_image = cv::Mat(),
       double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  DataBuffer GetDataBuffer();
+  std::vector<char> GetDataBuffer();
 
  private:
-  DataBuffer data_buffer_;
+  std::vector<char> data_buffer_;
 };
 
 class LayerFrame : public Frame {

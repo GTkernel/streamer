@@ -72,12 +72,12 @@ nlohmann::json MetadataFrame::ToJson() const {
   return j;
 }
 
-BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image,
+BytesFrame::BytesFrame(std::vector<char> data_buffer, cv::Mat original_image,
                        double start_time)
     : Frame(FRAME_TYPE_BYTES, original_image, start_time),
       data_buffer_(data_buffer) {}
 
-DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }
+std::vector<char> BytesFrame::GetDataBuffer() { return data_buffer_; }
 
 LayerFrame::LayerFrame(std::string layer_name, cv::Mat activations,
                        cv::Mat original_image)

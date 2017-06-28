@@ -51,7 +51,7 @@ void Throttler::Process() {
     case FRAME_TYPE_BYTES: {
       auto bytes_frame = std::dynamic_pointer_cast<BytesFrame>(frame);
       cv::Mat original_image = bytes_frame->GetOriginalImage();
-      DataBuffer data_buffer = bytes_frame->GetDataBuffer();
+      std::vector<char> data_buffer = bytes_frame->GetDataBuffer();
       PushFrame("output", new BytesFrame(data_buffer, original_image));
       break;
     }

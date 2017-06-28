@@ -269,7 +269,7 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   // Construct model
   Shape input_shape(CHANNELS, WIDTH, HEIGHT);
   ModelDesc desc("TestLayerOutputModel", MODEL_TYPE_CAFFE, NETWORK_FILEPATH,
-                 WEIGHTS_FILEPATH, WIDTH, HEIGHT);
+                 WEIGHTS_FILEPATH, WIDTH, HEIGHT, "prob");
   NeuralNetEvaluator nne(desc, input_shape, OUTPUTS);
 
   // Read the input
