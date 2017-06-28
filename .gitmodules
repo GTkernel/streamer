@@ -10,3 +10,6 @@
 [submodule "3rdparty/Simple-Web-Server"]
 	path = 3rdparty/Simple-Web-Server
 	url = https://github.com/eidheim/Simple-Web-Server.git
+[submodule "3rdparty/googletest"]
+	path = 3rdparty/googletest
+	url = https://github.com/google/googletest.git
