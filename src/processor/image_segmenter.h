@@ -19,7 +19,6 @@ class ImageSegmenter : public Processor {
   virtual void Process() override;
 
  private:
-  DataBuffer input_buffer_;
   std::unique_ptr<Model> model_;
   ModelDesc model_desc_;
   Shape input_shape_;

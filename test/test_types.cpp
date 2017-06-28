@@ -10,9 +10,6 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_CUSTOM,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CUSTOM)));
-  EXPECT_EQ(PROCESSOR_TYPE_DUMMY_NN,
-            GetProcessorTypeByString(
-                GetStringForProcessorType(PROCESSOR_TYPE_DUMMY_NN)));
   EXPECT_EQ(PROCESSOR_TYPE_ENCODER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_ENCODER)));

@@ -33,7 +33,10 @@ void GSTCamera::Process() {
 
   auto raw_frame =std::make_unique<Frame>();
   raw_frame->SetValue("OriginalImage", pixels);
-  raw_frame->SetValue("DataBuffer", DataBuffer(pixels.data, pixels.total() * pixels.elemSize()));
+  raw_frame->SetValue("DataBuffer",
+                      std::vector<char>((char*)pixels.data,
+                                        (char*)pixels.data + pixels.total() *
+                                        pixels.elemSize()));
   
   PushFrame("bgr_output", std::move(image_frame));
   PushFrame("raw_output", std::move(raw_frame));

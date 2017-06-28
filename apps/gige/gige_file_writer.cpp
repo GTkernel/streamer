@@ -55,8 +55,8 @@ void GigeFileWriter::Process() {
 
   auto frame = GetFrame("input");
 
-  current_file_.write((char*)frame->GetValue<DataBuffer>("DataBuffer").GetBuffer(),
-                      frame->GetValue<DataBuffer>("DataBuffer").GetSize());
+  current_file_.write((char*)frame->GetValue<std::vector<char>>("DataBuffer").data(),
+                      frame->GetValue<std::vector<char>>("DataBuffer").size());
 
   frames_written_ += 1;
 }

@@ -34,7 +34,7 @@ class Frame {
   template <typename T>
   T GetValue(std::string key) const;
   std::string ToString() const;
-  using field_types = boost::variant<int, std::string, float, double, cv::Mat, DataBuffer,
+  using field_types = boost::variant<int, std::string, float, double, cv::Mat, std::vector<char>,
                                       std::vector<std::string>, std::vector<Rect>>;
 
  private:

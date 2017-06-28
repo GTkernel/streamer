@@ -52,8 +52,14 @@ public:
     return output.str();
   }
 
-  std::string operator() (const DataBuffer&) const {
-    return "DataBuffer";
+  std::string operator() (const std::vector<char>& v) const {
+    std::ostringstream output;
+    output << "std::vector<char> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
+    }
+    output << "]";
+    return output.str();
   }
 
   std::string operator()(const cv::Mat& v) const {
@@ -76,7 +82,7 @@ Frame::Frame(const Frame& frame) {
   // Deep copy the databuffer
   auto it = frame.frame_data_.find("DataBuffer");
   if(it != frame.frame_data_.end()) {
-    DataBuffer newbuf(boost::get<DataBuffer>(it->second));
+    std::vector<char> newbuf(boost::get<std::vector<char>>(it->second));
     frame_data_["DataBuffer"] = newbuf;
   }
 }
@@ -116,7 +122,7 @@ template void Frame::SetValue(std::string, const int&);
 template void Frame::SetValue(std::string, const std::string&);
 template void Frame::SetValue(std::string, const std::vector<std::string>&);
 template void Frame::SetValue(std::string, const std::vector<Rect>&);
-template void Frame::SetValue(std::string, const DataBuffer&);
+template void Frame::SetValue(std::string, const std::vector<char>&);
 template void Frame::SetValue(std::string, const cv::Mat&);
 
 template double Frame::GetValue(std::string) const;
@@ -126,4 +132,4 @@ template std::string Frame::GetValue(std::string) const;
 template std::vector<std::string> Frame::GetValue(std::string) const;
 template std::vector<Rect> Frame::GetValue(std::string) const;
 template cv::Mat Frame::GetValue(std::string) const;
-template DataBuffer Frame::GetValue(std::string) const;
+template std::vector<char> Frame::GetValue(std::string) const;

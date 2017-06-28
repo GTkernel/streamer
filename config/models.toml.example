@@ -11,6 +11,7 @@ params_path = "/path/to/caffe/model.caffemodel"
 input_width = 227
 input_height = 227
 label_file = "/path/to/caffe/data/ilsvrc12/synset_words.txt" # Optional
+last_layer = "prob"
 
 # [[model]]
 # Your other models

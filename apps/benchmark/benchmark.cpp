@@ -31,8 +31,6 @@ struct Configurations {
   int device_number;
   // Store the video or not
   bool store;
-  // Try to use fp16 or not
-  bool usefp16;
 } CONFIG;
 
 void SLEEP(int sleep_time_in_s) {
@@ -173,22 +171,38 @@ void RunEndToEndExperiment() {
  * @brief Benchmark the time to take the forward pass or a neural network
  */
 void RunNNInferenceExperiment() {
-  cout << "Run NN Inference Experiment" << endl;
+  LOG(INFO) << "Run NN Inference Experiment";
   // Check argument
   CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
 
   auto& model_manager = ModelManager::GetInstance();
-
   auto model_desc = model_manager.GetModelDesc(CONFIG.net);
-  std::shared_ptr<DummyNNProcessor> dummy_processor(
-      new DummyNNProcessor(model_desc));
+  Shape input_shape(3, 227, 227);
+  auto model = model_manager.CreateModel(model_desc, input_shape, 1);
+  model->Load();
 
-  dummy_processor->Start();
+  // Prepare fake input
+  srand((unsigned)(15213));
+  std::vector<decltype(input_shape.channel)> mat_size;
+  mat_size.push_back(input_shape.channel);
+  mat_size.push_back(input_shape.width);
+  mat_size.push_back(input_shape.height);
+  cv::Mat fake_input(mat_size, CV_32F);
+  auto mat_it = fake_input.begin<float>();
+  auto mat_end = fake_input.end<float>();
+  while (mat_it != mat_end) {
+    *mat_it = (float)(rand()) / (float)(RAND_MAX);
+    ++mat_it;
+  }
 
-  SLEEP(CONFIG.time);
+  std::string last_layer = model_desc.GetLastLayer();
+  std::vector<std::string> output_layers;
+  output_layers.push_back(last_layer);
 
-  dummy_processor->Stop();
-  cout << "-- processor fps is " << dummy_processor->GetAvgFps() << endl;
+  Timer timer;
+  timer.Start();
+  model->Evaluate(fake_input, output_layers);
+  LOG(INFO) << "Inference time: " << timer.ElapsedMSec() << " ms";
 }
 
 int main(int argc, char* argv[]) {
@@ -219,8 +233,6 @@ int main(int argc, char* argv[]) {
                      "Duration of the experiment");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
-  desc.add_options()("fp16", po::value<bool>()->default_value(false),
-                     "Try to use fp16 when possible");
   desc.add_options()(
       "pipeline,p", po::value<string>()->value_name("pipeline"),
       "The processor pipeline to run, separate processor with ,");
@@ -289,9 +301,7 @@ int main(int argc, char* argv[]) {
   CONFIG.verbose = vm["verbose"].as<bool>();
   CONFIG.time = vm["time"].as<int>();
   CONFIG.device_number = vm["device"].as<int>();
-  CONFIG.usefp16 = vm["fp16"].as<bool>();
   Context::GetContext().SetInt(DEVICE_NUMBER, CONFIG.device_number);
-  Context::GetContext().SetBool(USEFP16, CONFIG.usefp16);
 
   if (CONFIG.experiment == "endtoend") {
     RunEndToEndExperiment();

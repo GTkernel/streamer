@@ -7,6 +7,8 @@
 
 #include <atomic>
 #include <thread>
+#include <unordered_map>
+
 #include "common/common.h"
 #include "stream/stream.h"
 

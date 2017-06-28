@@ -24,8 +24,8 @@ class GstVideoCapture {
  public:
   GstVideoCapture();
   ~GstVideoCapture();
-  cv::Mat TryGetPixels(DataBuffer* data_bufferp = nullptr);
-  cv::Mat GetPixels(DataBuffer* data_bufferp = nullptr);
+  cv::Mat TryGetPixels();
+  cv::Mat GetPixels();
   cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
