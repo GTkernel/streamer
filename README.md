@@ -153,7 +153,7 @@ apps/multicam -m AlexNet -c Facetime -d
 
 ## Run with different frameworks
 
-Currently we support BVLC caffe, Caffe's OpenCL branch, NVIDIA caffe (not including fp16 caffe). Different frameworks are supported through several cmake flags.
+Currently we support BVLC caffe, Caffe's OpenCL branch, and Intel's Caffe. Different frameworks are supported through several cmake flags.
 **Cmake will cache the variables**, when you switch to another framework, better clean existed build.
 
 * Caffe
