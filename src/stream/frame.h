@@ -28,6 +28,7 @@ class Frame {
   void SetValue(std::string key, const T& val);
   template <typename T>
   T GetValue(std::string key) const;
+  size_t Count(std::string key) const;
   std::string ToString() const;
   using field_types =
       boost::variant<int, std::string, float, double, cv::Mat,
