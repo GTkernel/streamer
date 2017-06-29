@@ -6,7 +6,7 @@
 #include <chrono>
 #include <fstream>
 
-#include "json/json.hpp"
+#include "json/src/json.hpp"
 #include "sys/stat.h"
 #include "utils/file_utils.h"
 
@@ -79,8 +79,8 @@ bool DBFileWriter::OnStop() { return true; }
 
 void DBFileWriter::Process() {
   auto frame = GetFrame("input");
-  cv::Mat image = frame->GetValue<cv::Mat>("OriginalImage");
-  DataBuffer raw_image = frame->GetValue<DataBuffer>("DataBuffer");
+  cv::Mat image = frame->GetValue<cv::Mat>("original_image");
+  auto raw_image = frame->GetValue<std::vector<char>>("original_bytes");
   // TODO?: These should probably come from the frame, but not sure what format
   struct tm local_time;
   std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
@@ -158,7 +158,7 @@ void DBFileWriter::Process() {
 
   std::ofstream raw_file;
   raw_file.open(raw_filename.str(), std::ios::binary);
-  raw_file.write((char*)raw_image.GetBuffer(), raw_image.GetSize());
+  raw_file.write((char*)raw_image.data(), raw_image.size());
   raw_file.close();
 
   std::vector<int> params;
