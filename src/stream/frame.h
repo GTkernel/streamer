@@ -5,85 +5,44 @@
 #ifndef STREAMER_STREAM_FRAME_H_
 #define STREAMER_STREAM_FRAME_H_
 
-#include "json/src/json.hpp"
+#include "common/types.h"
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/unique_ptr.hpp>
+#include <boost/serialization/unordered_map.hpp>
+#include <boost/serialization/variant.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/variant.hpp>
+#include <boost/variant/apply_visitor.hpp>
 
 #include "common/common.h"
 #include "common/context.h"
 
 class Frame {
  public:
-  Frame() = delete;
-  Frame(FrameType frame_type, cv::Mat original_image,
-        double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  virtual ~Frame(){};
-  FrameType GetType();
-  cv::Mat GetOriginalImage();
-  void SetOriginalImage(cv::Mat original_image);
-  double GetStartTime();
+  Frame(double start_time = Context::GetContext().GetTimer().ElapsedMSec());
+  Frame(const std::unique_ptr<Frame>& frame);
+  Frame(const Frame& frame);
+
+  template <typename T>
+  void SetValue(std::string key, const T& val);
+  template <typename T>
+  T GetValue(std::string key) const;
+  std::string ToString() const;
+  using field_types =
+      boost::variant<int, std::string, float, double, cv::Mat,
+                     std::vector<char>, std::vector<std::string>,
+                     std::vector<Rect>>;
 
  private:
-  FrameType frame_type_;
-  cv::Mat original_image_;
-  // Time since streamer context was started
-  double start_time_;
-};
+  friend class boost::serialization::access;
 
-class ImageFrame : public Frame {
- public:
-  ImageFrame(
-      cv::Mat image, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  Shape GetSize();
-  cv::Mat GetImage();
-  void SetImage(cv::Mat image);
+  template <class Archive>
+  void serialize(Archive& ar, const unsigned int) {
+    ar& frame_data_;
+  }
 
- private:
-  cv::Mat image_;
-  Shape shape_;
-};
-
-class MetadataFrame : public Frame {
- public:
-  MetadataFrame() = delete;
-  MetadataFrame(
-      std::vector<string> tags, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  MetadataFrame(
-      std::vector<Rect> bboxes, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  MetadataFrame(nlohmann::json j);
-  std::vector<string> GetTags() const;
-  std::vector<Rect> GetBboxes() const;
-  nlohmann::json ToJson() const;
-
- private:
-  std::vector<string> tags_;
-  std::vector<Rect> bboxes_;
-};
-
-class BytesFrame : public Frame {
- public:
-  BytesFrame() = delete;
-  BytesFrame(
-      std::vector<char> data_buffer, cv::Mat original_image = cv::Mat(),
-      double start_time = Context::GetContext().GetTimer().ElapsedMSec());
-  std::vector<char> GetDataBuffer();
-
- private:
-  std::vector<char> data_buffer_;
-};
-
-class LayerFrame : public Frame {
- public:
-  LayerFrame() = delete;
-  LayerFrame(std::string layer_name, cv::Mat activations,
-             cv::Mat original_image = cv::Mat());
-  const std::string GetLayerName() const;
-  cv::Mat GetActivations() const;
-
- private:
-  const std::string layer_name_;
-  cv::Mat activations_;
+  std::unordered_map<std::string, field_types> frame_data_;
 };
 
 #endif  // STREAMER_STREAM_FRAME_H_

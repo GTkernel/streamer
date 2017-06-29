@@ -51,11 +51,11 @@ std::shared_ptr<ImageClassifier> ImageClassifier::Create(
 bool ImageClassifier::Init() { return NeuralNetConsumer::Init(); }
 
 void ImageClassifier::Process() {
-  std::shared_ptr<LayerFrame> layer_frame = GetFrame<LayerFrame>(SOURCE_NAME);
+  auto frame = GetFrame(SOURCE_NAME);
 
   // Assign labels.
   std::vector<Prediction> predictions;
-  cv::Mat output = layer_frame->GetActivations();
+  const cv::Mat& output = frame->GetValue<cv::Mat>("activations");
   float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
@@ -79,8 +79,8 @@ void ImageClassifier::Process() {
   for (const auto& pred : predictions) {
     tags.push_back(pred.first);
   }
-  cv::Mat original_image = layer_frame->GetOriginalImage();
-  PushFrame(SINK_NAME, new MetadataFrame(tags, original_image));
+  frame->SetValue("tags", tags);
+  PushFrame(SINK_NAME, std::move(frame));
 }
 
 std::vector<std::string> ImageClassifier::LoadLabels(

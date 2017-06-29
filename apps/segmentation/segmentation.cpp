@@ -73,10 +73,10 @@ int main(int argc, char* argv[]) {
   auto reader = seg_stream->Subscribe();
 
   while (true) {
-    auto frame = reader->PopFrame<ImageFrame>();
+    auto frame = reader->PopFrame();
     if (display) {
-      cv::imshow("Result", frame->GetImage());
-      cv::imshow("Camera", frame->GetOriginalImage());
+      cv::imshow("Result", frame->GetValue<cv::Mat>("image"));
+      cv::imshow("Camera", frame->GetValue<cv::Mat>("original_image"));
       int k = cv::waitKey(10);
       if (k == 'q') {
         break;

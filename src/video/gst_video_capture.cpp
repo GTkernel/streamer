@@ -142,7 +142,7 @@ void GstVideoCapture::DestroyPipeline() {
  * @brief Get next frame from the pipeline, busy wait (which should be improved)
  * until frame available.
  */
-cv::Mat GstVideoCapture::GetFrame() {
+cv::Mat GstVideoCapture::GetPixels() {
   Timer timer;
   timer.Start();
   if (!connected_) return cv::Mat();
@@ -155,10 +155,10 @@ cv::Mat GstVideoCapture::GetFrame() {
 
   if (!connected_) return cv::Mat();
 
-  cv::Mat frame = frames_.front();
+  cv::Mat pixels = frames_.front();
   frames_.pop_back();
 
-  return frame;
+  return pixels;
 }
 
 /**
@@ -166,18 +166,18 @@ cv::Mat GstVideoCapture::GetFrame() {
  * @return The frame currently in the frames queue. An empty Mat if no frame
  * immediately available.
  */
-cv::Mat GstVideoCapture::TryGetFrame() {
+cv::Mat GstVideoCapture::TryGetPixels() {
   Timer timer;
   timer.Start();
   if (!connected_ || frames_.size() == 0) {
     return cv::Mat();
   } else {
     std::lock_guard<std::mutex> guard(capture_lock_);
-    cv::Mat frame = frames_.front();
+    cv::Mat pixels = frames_.front();
     frames_.pop_front();
 
     LOG(INFO) << "Get frame in " << timer.ElapsedMSec() << " ms";
-    return frame;
+    return pixels;
   }
 }
 

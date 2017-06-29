@@ -12,7 +12,7 @@ TEST(PIPELINE_TEST, TEST_CONSTRUCT_PIPELINE) {
 ip_cam = camera(GST_TEST)
 transformer = processor(ImageTransformer, height=227, width=227)
 
-transformer[input] = ip_cam[bgr_output]
+transformer[input] = ip_cam[output]
 # classifier[input] = transformer[output]
 )pipeline";
 
@@ -41,9 +41,9 @@ transformer[input] = ip_cam[bgr_output]
   if (ip_cam->IsStarted() && transformer->IsStarted()) {
     auto output = transformer->GetSink("output");
     auto reader = output->Subscribe();
-    auto frame = reader->PopFrame<ImageFrame>();
-    auto transformed_image = frame->GetImage();
-    auto original_image = frame->GetOriginalImage();
+    auto frame = reader->PopFrame();
+    const auto& transformed_image = frame->GetValue<cv::Mat>("image");
+    const auto& original_image = frame->GetValue<cv::Mat>("original_image");
     reader->UnSubscribe();
 
     EXPECT_EQ(227, transformed_image.rows);

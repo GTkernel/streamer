@@ -1,6 +1,8 @@
 
 #include "frame_receiver.h"
 
+#include <boost/archive/binary_iarchive.hpp>
+
 constexpr auto SINK = "output";
 
 FrameReceiver::FrameReceiver(const std::string listen_url)
@@ -9,6 +11,9 @@ FrameReceiver::FrameReceiver(const std::string listen_url)
 
 void FrameReceiver::RunServer(const std::string listen_url) {
   grpc::ServerBuilder builder;
+
+  // Increase maximum message size to 10 MiB
+  builder.SetMaxMessageSize(10 * 1024 * 1024);
 
   // TODO:  Use secure credentials (e.g., SslCredentials)
   builder.AddListeningPort(listen_url, grpc::InsecureServerCredentials());
@@ -25,14 +30,14 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
   std::stringstream frame_string;
   frame_string << frame_message->frame();
 
-  cv::Mat image;
+  std::unique_ptr<Frame> frame;
 
   // If Boost's serialization fails, it throws an exception.  If we don't
   // catch the exception, gRPC triggers a core dump with a "double free or
   // corruption" error. See https://github.com/grpc/grpc/issues/3071
   try {
     boost::archive::binary_iarchive ar(frame_string);
-    ar >> image;
+    ar >> frame;
   } catch (const boost::archive::archive_exception& e) {
     std::ostringstream error_message;
     error_message << "Boost serialization error: " << e.what();
@@ -40,8 +45,7 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
     return grpc::Status(grpc::StatusCode::ABORTED, error_message.str());
   }
 
-  // TODO:  Support more than just ImageFrame
-  PushFrame(SINK, new ImageFrame(image, image));
+  PushFrame(SINK, std::move(frame));
 
   return grpc::Status::OK;
 }

@@ -85,12 +85,13 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
                                            buffer_size * sizeof(vmb_buffer[0]));
 
         // Transform to BGR image
-        cv::Mat bgr_output = TransformToBGRImage(pFrame);
+        cv::Mat bgr_image = TransformToBGRImage(pFrame);
 
-        vimba_camera_->PushFrame("raw_output",
-                                 new BytesFrame(data_buffer, bgr_output));
-        vimba_camera_->PushFrame("bgr_output",
-                                 new ImageFrame(bgr_output, bgr_output));
+        auto frame = std::make_unique<Frame>();
+        frame->SetValue("original_bytes", data_buffer);
+        frame->SetValue("original_image", bgr_image);
+        frame->SetValue("image", bgr_image);
+        vimba_camera_->PushFrame("output", std::move(frame));
       } else {
         LOG(ERROR) << "Can't get frame successfully: " << eReceiveStatus;
       }  // Validate eReceiveStatus
@@ -108,10 +109,7 @@ VimbaCamera::VimbaCamera(const string& name, const string& video_uri, int width,
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
       initial_mode_(mode),
-      vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {
-  // Init raw output sink
-  sinks_.insert({"raw_output", StreamPtr(new Stream)});
-}
+      vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {}
 
 CameraType VimbaCamera::GetCameraType() const { return CAMERA_TYPE_VIMBA; }
 

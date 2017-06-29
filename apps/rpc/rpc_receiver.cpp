@@ -30,9 +30,9 @@ void Run() {
   frame_receiver->Start();
 
   while (true) {
-    auto frame = reader->PopFrame<ImageFrame>(30);
+    auto frame = reader->PopFrame(30);
     if (frame != nullptr) {
-      cv::Mat img = frame->GetImage();
+      const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
       cv::imshow(window_name, img);
     }
 

@@ -53,10 +53,11 @@ void GigeFileWriter::Process() {
     current_filename_ = filename;
   }
 
-  auto frame = GetFrame<BytesFrame>("input");
+  auto frame = GetFrame("input");
 
-  current_file_.write((char*)frame->GetDataBuffer().data(),
-                      frame->GetDataBuffer().size());
+  std::vector<char> raw_pixels =
+      frame->GetValue<std::vector<char>>("original_bytes");
+  current_file_.write((char*)raw_pixels.data(), raw_pixels.size());
 
   frames_written_ += 1;
 }

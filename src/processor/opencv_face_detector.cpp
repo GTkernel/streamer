@@ -24,8 +24,8 @@ bool OpenCVFaceDetector::OnStop() {
 }
 
 void OpenCVFaceDetector::Process() {
-  auto frame = GetFrame<ImageFrame>("input");
-  cv::Mat image = frame->GetImage();
+  auto frame = GetFrame("input");
+  const cv::Mat& image = frame->GetValue<cv::Mat>("image");
 
   std::vector<cv::Rect> results;
 
@@ -49,6 +49,6 @@ void OpenCVFaceDetector::Process() {
   }
 #endif  // USE_CUDA
 
-  PushFrame("output",
-            new MetadataFrame(results_rect, frame->GetOriginalImage()));
+  frame->SetValue("bounding_boxes", results_rect);
+  PushFrame("output", std::move(frame));
 }

@@ -13,7 +13,7 @@ Processor::Processor(ProcessorType type,
     : type_(type) {
   for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
-    source_frame_cache_.insert({source_name, nullptr});
+    source_frame_cache_[source_name] = nullptr;
   }
 
   for (const auto& sink_name : sink_names) {
@@ -96,10 +96,10 @@ void Processor::ProcessorLoop() {
             continue;
           }
         } else {
-          source_frame_cache_.insert({source_name, frame});
           // Calculate queue latency
-          double start = frame->GetStartTime();
+          double start = frame->GetValue<double>("start_time_ms");
           double end = Context::GetContext().GetTimer().ElapsedMSec();
+          source_frame_cache_[source_name] = std::move(frame);
           queue_latency_sum_ += end - start;
           break;
         }
@@ -140,23 +140,13 @@ double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
 
 ProcessorType Processor::GetType() const { return type_; }
 
-void Processor::PushFrame(const string& sink_name, Frame* frame) {
+void Processor::PushFrame(const string& sink_name,
+                          std::unique_ptr<Frame> frame) {
   CHECK(sinks_.count(sink_name) != 0);
-  sinks_[sink_name]->PushFrame(frame);
+  sinks_[sink_name]->PushFrame(std::move(frame));
 }
 
-template <typename FT>
-std::shared_ptr<FT> Processor::GetFrame(const string& source_name) {
+std::unique_ptr<Frame> Processor::GetFrame(const string& source_name) {
   CHECK(source_frame_cache_.count(source_name) != 0);
-  return std::dynamic_pointer_cast<FT>(source_frame_cache_[source_name]);
+  return std::move(source_frame_cache_[source_name]);
 }
-
-template std::shared_ptr<Frame> Processor::GetFrame(const string& source_name);
-template std::shared_ptr<ImageFrame> Processor::GetFrame(
-    const string& source_name);
-template std::shared_ptr<MetadataFrame> Processor::GetFrame(
-    const string& source_name);
-template std::shared_ptr<BytesFrame> Processor::GetFrame(
-    const string& source_name);
-template std::shared_ptr<LayerFrame> Processor::GetFrame(
-    const string& source_name);

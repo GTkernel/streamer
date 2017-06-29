@@ -2,8 +2,7 @@
 #ifndef STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
 #define STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
 
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/array.hpp>
 
 namespace boost {
 namespace serialization {

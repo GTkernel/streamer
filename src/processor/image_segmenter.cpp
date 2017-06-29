@@ -39,9 +39,9 @@ void ImageSegmenter::Process() {
   // Do image segmentation
   Timer timer;
   timer.Start();
-  auto frame = GetFrame<ImageFrame>("input");
-  cv::Mat image = frame->GetImage();
-  cv::Mat original_image = frame->GetOriginalImage();
+  auto frame = GetFrame("input");
+  const cv::Mat& image = frame->GetValue<cv::Mat>("image");
+  const cv::Mat& original_image = frame->GetValue<cv::Mat>("original_image");
 
   CHECK(image.channels() == input_shape_.channel &&
         image.size[0] == input_shape_.width &&
@@ -97,7 +97,7 @@ void ImageSegmenter::Process() {
   cv::resize(colored_output, colored_output,
              cv::Size(original_image.cols, original_image.rows));
 
-  PushFrame("output",
-            new ImageFrame(colored_output, frame->GetOriginalImage()));
+  frame->SetValue("image", colored_output);
+  PushFrame("output", std::move(frame));
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
 }

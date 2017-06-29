@@ -1,6 +1,8 @@
 
 #include "frame_sender.h"
 
+#include <boost/archive/binary_oarchive.hpp>
+
 constexpr auto SOURCE = "input";
 
 FrameSender::FrameSender(const std::string server_url)
@@ -31,15 +33,13 @@ bool FrameSender::Init() { return true; }
 bool FrameSender::OnStop() { return true; }
 
 void FrameSender::Process() {
-  // TODO:  Support more than just ImageFrame
-  auto frame = this->GetFrame<ImageFrame>(SOURCE);
-  cv::Mat image = frame->GetImage();
+  auto frame = this->GetFrame(SOURCE);
 
   // serialize
   std::stringstream frame_string;
   try {
     boost::archive::binary_oarchive ar(frame_string);
-    ar << image;
+    ar << frame;
   } catch (const boost::archive::archive_exception& e) {
     LOG(INFO) << "Boost serialization error: " << e.what();
   }

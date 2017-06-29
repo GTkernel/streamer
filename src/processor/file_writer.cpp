@@ -4,12 +4,17 @@
 
 #include "file_writer.h"
 
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
 #include "utils/file_utils.h"
 
-FileWriter::FileWriter(const string& filename)
+FileWriter::FileWriter(const string& filename, const file_format format)
     : Processor(PROCESSOR_TYPE_FILE_WRITER, {"input"}, {}),
-      filename_(filename) {}
+      filename_(filename),
+      format_(format) {}
 
+// TODO: Fix Create to accept second argument for file format
 std::shared_ptr<FileWriter> FileWriter::Create(
     const FactoryParamsType& params) {
   return std::make_shared<FileWriter>(params.at("filename"));
@@ -33,26 +38,23 @@ bool FileWriter::OnStop() {
 }
 
 void FileWriter::Process() {
-  auto frame = GetFrame<Frame>("input");
-  switch (frame->GetType()) {
-    case FRAME_TYPE_BYTES: {
-      auto bytes_frame = std::dynamic_pointer_cast<BytesFrame>(frame);
-      auto buffer = bytes_frame->GetDataBuffer();
-      file_.write((char*)buffer.data(), buffer.size());
-      break;
+  auto frame = GetFrame("input");
+
+  try {
+    switch (format_) {
+      case TEXT: {
+        boost::archive::text_oarchive ar(file_);
+        ar << frame;
+        break;
+      }
+      case BINARY: {
+        boost::archive::binary_oarchive ar(file_);
+        ar << frame;
+        break;
+      }
+      default: { return; }
     }
-    case FRAME_TYPE_IMAGE: {
-      auto image_frame = std::dynamic_pointer_cast<ImageFrame>(frame);
-      auto image = image_frame->GetImage();
-      file_.write((char*)image.data, image.total() * image.elemSize());
-      break;
-    }
-    case FRAME_TYPE_MD: {
-      auto md_frame = std::dynamic_pointer_cast<MetadataFrame>(frame);
-      std::string s = md_frame->ToJson().dump();
-      file_.write(s.c_str(), sizeof(char) * s.length());
-      break;
-    }
-    default: { STREAMER_NOT_IMPLEMENTED; }
+  } catch (const boost::archive::archive_exception& e) {
+    LOG(INFO) << "Boost serialization error: " << e.what();
   }
 }

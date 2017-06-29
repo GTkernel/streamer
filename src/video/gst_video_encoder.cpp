@@ -236,12 +236,15 @@ void GstVideoEncoder::Process() {
 
   // Resize the image
   cv::Mat image;
-  cv::Mat original_image = input_frame->GetOriginalImage();
+  const cv::Mat& original_image =
+      input_frame->GetValue<cv::Mat>("original_image");
 
   cv::resize(original_image, image, cv::Size(width_, height_));
 
+  input_frame->SetValue("image", image);
+
   // Forward the input image to output
-  PushFrame("output", new ImageFrame(image, original_image));
+  PushFrame("output", std::move(input_frame));
 
   // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);

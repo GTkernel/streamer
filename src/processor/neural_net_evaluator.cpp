@@ -67,8 +67,9 @@ bool NeuralNetEvaluator::Init() { return true; }
 bool NeuralNetEvaluator::OnStop() { return true; }
 
 void NeuralNetEvaluator::Process() {
-  auto image_frame = GetFrame<ImageFrame>(SOURCE_NAME);
-  cv::Mat img = image_frame->GetImage();
+  auto input_frame = GetFrame(SOURCE_NAME);
+  const cv::Mat& img = input_frame->GetValue<cv::Mat>("image");
+
   CHECK(img.channels() == input_shape_.channel &&
         img.size[0] == input_shape_.width &&
         img.size[1] == input_shape_.height);
@@ -82,8 +83,10 @@ void NeuralNetEvaluator::Process() {
 
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
-    auto layer_frame = new LayerFrame(layer_pair.first, layer_pair.second,
-                                      image_frame->GetOriginalImage());
-    PushFrame(layer_pair.first, layer_frame);
+    auto layer_name = layer_pair.first;
+    auto output_frame = std::make_unique<Frame>(input_frame);
+    output_frame->SetValue("activations", layer_pair.second);
+    output_frame->SetValue("activations_layer_name", layer_name);
+    PushFrame(layer_name, std::move(output_frame));
   }
 }

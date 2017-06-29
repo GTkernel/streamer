@@ -87,12 +87,12 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
       << "Not running with GigE camera, we support PtGray and AlliedVision "
          "camera now";
 
-  auto camera_reader = camera->GetSink("bgr_output")->Subscribe();
+  auto camera_stream = camera->GetSink("output");
+  auto camera_reader = camera_stream->Subscribe();
 
-  auto bytes_stream = camera->GetSink("raw_output");
   std::shared_ptr<GigeFileWriter> file_writer(
       new GigeFileWriter("", frames_per_file));
-  file_writer->SetSource("input", bytes_stream);
+  file_writer->SetSource("input", camera_stream);
 
   camera->Start();
   STREAMER_SLEEP(10);
@@ -101,7 +101,8 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
     cv::namedWindow("Camera");
   }
   while (true) {
-    cv::Mat image = camera_reader->PopFrame<ImageFrame>()->GetOriginalImage();
+    cv::Mat image =
+        camera_reader->PopFrame()->GetValue<cv::Mat>("original_image");
     cv::Mat image_to_show;
     if (display) {
       int width = image.cols;

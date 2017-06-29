@@ -38,9 +38,6 @@ class NeuralNetEvaluator : public Processor {
   virtual void Process() override;
 
  private:
-  // Returns a vector of frames consisting of one frame from every source. This
-  // is just a wrapper for `GetFrame()`.
-  std::vector<std::shared_ptr<ImageFrame>> GetFrames();
   // Executes the neural network and returns a mapping from the name of a layer
   // to that layer's activations.
   std::unordered_map<std::string, cv::Mat> Evaluate();

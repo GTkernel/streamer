@@ -113,14 +113,13 @@ class Processor {
    */
   virtual void Process() = 0;
 
-  template <typename FT = Frame>
-  std::shared_ptr<FT> GetFrame(const string& source_name);
-  void PushFrame(const string& sink_name, Frame* frame);
+  std::unique_ptr<Frame> GetFrame(const string& source_name);
+  void PushFrame(const string& sink_name, std::unique_ptr<Frame> frame);
   void Init_();
 
   void ProcessorLoop();
 
-  std::unordered_map<string, std::shared_ptr<Frame>> source_frame_cache_;
+  std::unordered_map<string, std::unique_ptr<Frame>> source_frame_cache_;
   std::unordered_map<string, StreamPtr> sources_;
   std::unordered_map<string, StreamPtr> sinks_;
   std::unordered_map<string, StreamReader*> readers_;

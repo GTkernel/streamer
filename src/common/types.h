@@ -10,9 +10,10 @@
 #include <string>
 #include <unordered_map>
 
-#include "json/src/json.hpp"
+#include <boost/serialization/access.hpp>
 
 #include "common/common.h"
+#include "common/serialization.h"
 
 /**
  * @brief 3-D shape structure
@@ -37,30 +38,13 @@ struct Shape {
  * @brief Rectangle
  */
 struct Rect {
+  Rect() : px(0), py(0), width(0), height(0){};
   Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
 
-  Rect(nlohmann::json j) {
-    try {
-      nlohmann::json rect_j = j.at("Rect");
-      px = rect_j.at("px").get<int>();
-      py = rect_j.at("py").get<int>();
-      width = rect_j.at("width").get<int>();
-      height = rect_j.at("height").get<int>();
-    } catch (std::out_of_range) {
-      LOG(FATAL) << "Malformed Rect JSON: " << j.dump();
-    }
-  }
+  friend class boost::serialization::access;
 
-  nlohmann::json ToJson() const {
-    nlohmann::json rect_j;
-    rect_j["px"] = px;
-    rect_j["py"] = py;
-    rect_j["width"] = width;
-    rect_j["height"] = height;
-    nlohmann::json j;
-    j["Rect"] = rect_j;
-    return j;
-  }
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {}
 
   bool operator==(const Rect& rhs) const {
     return (px == rhs.px) && (py == rhs.py) && (width == rhs.width) &&
@@ -140,15 +124,6 @@ enum CameraPixelFormatType {
 };
 
 std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
-
-//// Frame types
-enum FrameType {
-  FRAME_TYPE_INVALID = 0,
-  FRAME_TYPE_IMAGE,
-  FRAME_TYPE_MD,
-  FRAME_TYPE_BYTES,
-  FRAME_TYPE_LAYER
-};
 
 //// Processor types
 enum ProcessorType {

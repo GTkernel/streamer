@@ -41,8 +41,8 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
 
 void ImageTransformer::Process() {
   Timer timer;
-  auto frame = GetFrame<ImageFrame>("input");
-  cv::Mat img = frame->GetImage();
+  auto frame = GetFrame("input");
+  const cv::Mat& img = frame->GetValue<cv::Mat>("image");
   timer.Start();
 
   int num_channel = target_shape_.channel, width = target_shape_.width,
@@ -91,8 +91,8 @@ void ImageTransformer::Process() {
     cv::subtract(sample_float_, mean_image_, sample_normalized_);
   }
 
-  PushFrame("output",
-            new ImageFrame(sample_normalized_, frame->GetOriginalImage()));
+  frame->SetValue("image", sample_normalized_);
+  PushFrame("output", std::move(frame));
 }
 
 bool ImageTransformer::Init() { return true; }

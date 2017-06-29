@@ -32,9 +32,11 @@ void Run(const string& camera_name) {
   camera->Start();
 
   while (true) {
-    auto frame = reader->PopFrame<Frame>();
-    cv::Mat img = frame->GetOriginalImage();
+    auto frame = reader->PopFrame();
+    const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
     cv::imshow(camera_name, img);
+
+    std::cout << frame->ToString() << std::endl;
 
     unsigned char q = cv::waitKey(10);
     if (q == 'q') break;

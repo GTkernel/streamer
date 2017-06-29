@@ -1,89 +1,136 @@
 //
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
-#include <opencv2/core/core.hpp>
 
 #include "frame.h"
 
-Frame::Frame(FrameType frame_type, cv::Mat original_image, double start_time)
-    : frame_type_(frame_type),
-      original_image_(original_image),
-      start_time_(start_time) {}
+#include <opencv2/core/core.hpp>
 
-cv::Mat Frame::GetOriginalImage() { return original_image_; }
+#include "common/types.h"
 
-void Frame::SetOriginalImage(cv::Mat original_image) {
-  original_image_ = original_image;
-}
+class FramePrinter : public boost::static_visitor<std::string> {
+ public:
+  std::string operator()(const double& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
 
-FrameType Frame::GetType() { return frame_type_; }
+  std::string operator()(const float& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
 
-double Frame::GetStartTime() { return start_time_; }
+  std::string operator()(const int& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
 
-ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image, double start_time)
-    : Frame(FRAME_TYPE_IMAGE, original_image, start_time),
-      image_(image),
-      shape_(image.channels(), image.cols, image.rows) {}
+  std::string operator()(const std::string& v) const { return v; }
 
-Shape ImageFrame::GetSize() { return shape_; }
-
-cv::Mat ImageFrame::GetImage() { return image_; }
-
-void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
-
-MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image,
-                             double start_time)
-    : Frame(FRAME_TYPE_MD, original_image, start_time), tags_(tags) {}
-MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image,
-                             double start_time)
-    : Frame(FRAME_TYPE_MD, original_image, start_time), bboxes_(bboxes) {}
-
-MetadataFrame::MetadataFrame(nlohmann::json j)
-    : Frame(FRAME_TYPE_MD, cv::Mat()) {
-  try {
-    nlohmann::json md_j = j.at("MetadataFrame");
-    this->tags_ = md_j.at("tags").get<std::vector<std::string>>();
-
-    for (const auto& bbox_j :
-         md_j.at("bboxes").get<std::vector<nlohmann::json>>()) {
-      this->bboxes_.push_back(Rect(bbox_j));
+  std::string operator()(const std::vector<std::string>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::string> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
     }
-  } catch (std::out_of_range) {
-    LOG(FATAL) << "Malformed MetadataFrame JSON: " << j.dump();
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<Rect>& v) const {
+    std::ostringstream output;
+    output << "std::vector<Rect> = [" << std::endl;
+    for (auto& r : v) {
+      output << "Rect("
+             << "px = " << r.px << "py = " << r.py << "width = " << r.width
+             << "height = " << r.height << ")" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<char>& v) const {
+    std::ostringstream output;
+    output << "std::vector<char>(size = " << v.size() << ") = [";
+    decltype(v.size()) num_elems = v.size();
+    if (num_elems > 3) {
+      num_elems = 3;
+    }
+    for (decltype(num_elems) i = 0; i < num_elems; ++i) {
+      output << +v[i] << ", ";
+    }
+    output << "...]" << std::endl;
+    return output.str();
+  }
+
+  std::string operator()(const cv::Mat& v) const {
+    std::ostringstream output, mout;
+    cv::Mat tmp;
+    v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
+    mout << tmp;
+    output << "cv::Mat(size = " << v.cols << "x" << v.rows
+           << ") = " << mout.str().substr(0, 20) << "...]";
+    return output.str();
+  }
+};
+
+Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
+
+Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
+
+Frame::Frame(const Frame& frame) {
+  frame_data_ = frame.frame_data_;
+  // Deep copy the original bytes
+  auto it = frame.frame_data_.find("original_bytes");
+  if (it != frame.frame_data_.end()) {
+    std::vector<char> newbuf(boost::get<std::vector<char>>(it->second));
+    frame_data_["original_bytes"] = newbuf;
   }
 }
 
-std::vector<string> MetadataFrame::GetTags() const { return tags_; }
-std::vector<Rect> MetadataFrame::GetBboxes() const { return bboxes_; }
-
-nlohmann::json MetadataFrame::ToJson() const {
-  nlohmann::json md_j;
-  md_j["tags"] = this->GetTags();
-
-  std::vector<nlohmann::json> bboxes;
-  for (const auto& bbox : this->GetBboxes()) {
-    bboxes.push_back(bbox.ToJson());
+template <typename T>
+T Frame::GetValue(std::string key) const {
+  auto it = frame_data_.find(key);
+  if (it != frame_data_.end()) {
+    return boost::get<T>(it->second);
+  } else {
+    throw std::out_of_range(key);
   }
-  md_j["bboxes"] = bboxes;
-
-  nlohmann::json j;
-  j["MetadataFrame"] = md_j;
-  return j;
 }
 
-BytesFrame::BytesFrame(std::vector<char> data_buffer, cv::Mat original_image,
-                       double start_time)
-    : Frame(FRAME_TYPE_BYTES, original_image, start_time),
-      data_buffer_(data_buffer) {}
+template <typename T>
+void Frame::SetValue(std::string key, const T& val) {
+  frame_data_[key] = val;
+}
 
-std::vector<char> BytesFrame::GetDataBuffer() { return data_buffer_; }
+std::string Frame::ToString() const {
+  FramePrinter visitor;
+  std::ostringstream output;
+  for (auto iter = frame_data_.begin(); iter != frame_data_.end(); iter++) {
+    auto res = boost::apply_visitor(visitor, iter->second);
+    output << iter->first << ": " << res << std::endl;
+  }
+  return output.str();
+}
 
-LayerFrame::LayerFrame(std::string layer_name, cv::Mat activations,
-                       cv::Mat original_image)
-    : Frame(FRAME_TYPE_LAYER, original_image),
-      layer_name_(layer_name),
-      activations_(activations) {}
+// Types declared in field_types of frame
+template void Frame::SetValue(std::string, const double&);
+template void Frame::SetValue(std::string, const float&);
+template void Frame::SetValue(std::string, const int&);
+template void Frame::SetValue(std::string, const std::string&);
+template void Frame::SetValue(std::string, const std::vector<std::string>&);
+template void Frame::SetValue(std::string, const std::vector<Rect>&);
+template void Frame::SetValue(std::string, const std::vector<char>&);
+template void Frame::SetValue(std::string, const cv::Mat&);
 
-const std::string LayerFrame::GetLayerName() const { return layer_name_; }
-
-cv::Mat LayerFrame::GetActivations() const { return activations_; }
+template double Frame::GetValue(std::string) const;
+template float Frame::GetValue(std::string) const;
+template int Frame::GetValue(std::string) const;
+template std::string Frame::GetValue(std::string) const;
+template std::vector<std::string> Frame::GetValue(std::string) const;
+template std::vector<Rect> Frame::GetValue(std::string) const;
+template cv::Mat Frame::GetValue(std::string) const;
+template std::vector<char> Frame::GetValue(std::string) const;

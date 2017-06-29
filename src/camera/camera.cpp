@@ -10,12 +10,12 @@
 
 Camera::Camera(const string& name, const string& video_uri, int width,
                int height)
-    : Processor(PROCESSOR_TYPE_CAMERA, {}, {"bgr_output"}),
+    : Processor(PROCESSOR_TYPE_CAMERA, {}, {"output"}),
       name_(name),
       video_uri_(video_uri),
       width_(width),
       height_(height) {
-  stream_ = sinks_["bgr_output"];
+  stream_ = sinks_["output"];
 }
 
 string Camera::GetName() const { return name_; }
@@ -29,6 +29,7 @@ std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
 
 bool Camera::Capture(cv::Mat& image) {
   if (stopped_) {
+    LOG(WARNING) << "stopped.";
     Start();
     auto reader = stream_->Subscribe();
     // Pop the first 3 images, the first few shots of the camera might be
@@ -36,12 +37,13 @@ bool Camera::Capture(cv::Mat& image) {
     for (int i = 0; i < 3; i++) {
       reader->PopFrame();
     }
-    image = reader->PopFrame<ImageFrame>()->GetOriginalImage();
+    image = reader->PopFrame()->GetValue<cv::Mat>("original_image");
     reader->UnSubscribe();
     Stop();
   } else {
+    LOG(WARNING) << "not stopped.";
     auto reader = stream_->Subscribe();
-    image = reader->PopFrame<ImageFrame>()->GetOriginalImage();
+    image = reader->PopFrame()->GetValue<cv::Mat>("original_image");
     reader->UnSubscribe();
   }
 
