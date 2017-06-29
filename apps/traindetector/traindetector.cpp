@@ -52,7 +52,7 @@ void Run(const std::vector<string>& camera_names, std::string root_dir) {
 
   // Do video stream classification
   auto* db_fw = new DBFileWriter(root_dir);
-  db_fw->SetSource("input", cameras[0]->GetSink("raw_output"));
+  db_fw->SetSource("input", cameras[0]->GetSink("output"));
   db_fw->SetDelay(1000);
   db_fw->Start();
 
