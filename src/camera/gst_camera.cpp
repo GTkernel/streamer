@@ -67,3 +67,8 @@ CameraPixelFormatType GSTCamera::GetPixelFormat() {
 void GSTCamera::SetPixelFormat(CameraPixelFormatType) {}
 void GSTCamera::SetFrameRate(float f) {}
 float GSTCamera::GetFrameRate() { return 0; }
+void GSTCamera::SetROI(int roi_offset_x, int roi_offset_y,
+                       int roi_width, int roi_height) { }
+int GSTCamera::GetROIOffsetX() { return 0; }
+int GSTCamera::GetROIOffsetY() { return 0; }
+Shape GSTCamera::GetROIOffsetShape() { return Shape(); }

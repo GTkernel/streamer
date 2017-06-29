@@ -54,6 +54,12 @@ class Camera : public Processor {
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) = 0;
   virtual float GetFrameRate() = 0;
   virtual void SetFrameRate(float f) = 0;
+  virtual void SetROI(int roi_offset_x, int roi_offset_y,
+                      int roi_width, int roi_height) = 0;
+  virtual int GetROIOffsetX() = 0;
+  virtual int GetROIOffsetY() = 0;
+  virtual Shape GetROIOffsetShape() = 0;
+
   void MoveUp();
   void MoveDown();
   void MoveLeft();
