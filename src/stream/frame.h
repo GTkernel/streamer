@@ -33,6 +33,8 @@ class Frame {
       boost::variant<int, std::string, float, double, cv::Mat,
                      std::vector<char>, std::vector<std::string>,
                      std::vector<Rect>>;
+  using map_size_type = std::unordered_map<std::string, field_types>::size_type;
+  map_size_type Count(std::string key) const { return frame_data_.count(key); }
 
  private:
   friend class boost::serialization::access;
