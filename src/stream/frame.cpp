@@ -101,10 +101,6 @@ T Frame::GetValue(std::string key) const {
   }
 }
 
-size_t Frame::Count(std::string key) const {
-  return frame_data_.count(key);
-}
-
 template <typename T>
 void Frame::SetValue(std::string key, const T& val) {
   frame_data_[key] = val;
