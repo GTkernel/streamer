@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
   while (true) {
     auto frame = reader->PopFrame();
     if (display) {
-      cv::imshow("Result", frame->GetValue<cv::Mat>("Image"));
-      cv::imshow("Camera", frame->GetValue<cv::Mat>("OriginalImage"));
+      cv::imshow("Result", frame->GetValue<cv::Mat>("image"));
+      cv::imshow("Camera", frame->GetValue<cv::Mat>("original_image"));
       int k = cv::waitKey(10);
       if (k == 'q') {
         break;

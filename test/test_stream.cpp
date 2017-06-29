@@ -8,16 +8,15 @@
 TEST(STREAM_TEST, BASIC_TEST) {
   std::shared_ptr<Stream> stream(new Stream);
   auto reader = stream->Subscribe();
-  stream->PushFrame(new BytesFrame(DataBuffer()));
-  EXPECT_EQ(reader->PopFrame<BytesFrame>()->GetType(), FRAME_TYPE_BYTES);
 
-  stream->PushFrame(new BytesFrame(DataBuffer(), cv::Mat()));
-  EXPECT_EQ(reader->PopFrame()->GetType(), FRAME_TYPE_BYTES);
+  auto input_frame = std::make_unique<Frame>();
+  input_frame->SetValue("image", cv::Mat(10, 20, CV_8UC3));
+  stream->PushFrame(std::move(input_frame));
 
-  stream->PushFrame(new ImageFrame(cv::Mat(), cv::Mat(10, 20, CV_8UC3)));
-  auto image_frame = reader->PopFrame<ImageFrame>();
-  EXPECT_EQ(image_frame->GetOriginalImage().rows, 10);
-  EXPECT_EQ(image_frame->GetOriginalImage().cols, 20);
+  auto output_frame = reader->PopFrame();
+  const auto& image = output_frame->GetValue<cv::Mat>("image");
+  EXPECT_EQ(image.rows, 10);
+  EXPECT_EQ(image.cols, 20);
 
   reader->UnSubscribe();
 }
@@ -27,8 +26,8 @@ TEST(STREAM_TEST, SUBSCRIBE_TEST) {
   auto reader1 = stream->Subscribe();
   auto reader2 = stream->Subscribe();
 
-  stream->PushFrame(new BytesFrame(DataBuffer()));
-  stream->PushFrame(new ImageFrame(cv::Mat()));
+  stream->PushFrame(std::make_unique<Frame>());
+  stream->PushFrame(std::make_unique<Frame>());
 
   // Both readers can pop twice
   reader1->PopFrame();

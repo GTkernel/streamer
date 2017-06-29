@@ -8,20 +8,8 @@
 #include "utils/utils.h"
 
 #ifdef USE_CAFFE
-#ifdef USE_FP16
-#include "caffe_fp16_model.h"
-#else
 #include "caffe_model.h"
-#endif  // USE_FP16
 #endif  // USE_CAFFE
-
-#ifdef USE_GIE
-#include "gie_model.h"
-#endif  // USE_GIE
-
-#ifdef USE_MXNET
-#include "mxnet_model.h"
-#endif  // USE_MXNET
 
 static const string MODEL_TOML_FILENAME = "models.toml";
 
@@ -52,10 +40,6 @@ ModelManager::ModelManager() {
     ModelType type = MODEL_TYPE_INVALID;
     if (type_string == "caffe") {
       type = MODEL_TYPE_CAFFE;
-    } else if (type_string == "mxnet") {
-      type = MODEL_TYPE_MXNET;
-    } else if (type_string == "gie") {
-      type = MODEL_TYPE_GIE;
     } else if (type_string == "tensorflow") {
       type = MODEL_TYPE_TENSORFLOW;
     }
@@ -66,8 +50,12 @@ ModelManager::ModelManager() {
     int input_width = model_value.get<int>("input_width");
     int input_height = model_value.get<int>("input_height");
 
+    CHECK(model_value.has("last_layer"))
+        << "Model \"" << name << "\" is missing the \"last_layer\" parameter!";
+    std::string last_layer = model_value.get<std::string>("last_layer");
+
     ModelDesc model_desc(name, type, desc_path, params_path, input_width,
-                         input_height);
+                         input_height, last_layer);
 
     auto label_file_value = model_value.find("label_file");
     if (label_file_value != nullptr) {
@@ -103,30 +91,10 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
   std::unique_ptr<Model> result;
   if (model_desc.GetModelType() == MODEL_TYPE_CAFFE) {
 #ifdef USE_CAFFE
-#ifdef USE_FP16
-    result.reset(new CaffeFp16Model(model_desc, input_shape, batch_size));
+    result.reset(new CaffeModel<float>(model_desc, input_shape));
 #else
-    result.reset(new CaffeModel<float>(model_desc, input_shape, batch_size));
-#endif  // USE_FP16
-#else
-    LOG(FATAL) << "Not build with Caffe, failed to initialize classifier";
+    LOG(FATAL) << "Not built with Caffe, failed to initialize classifier";
 #endif  // USE_CAFFE
-  }
-
-  if (model_desc.GetModelType() == MODEL_TYPE_GIE) {
-#ifdef USE_GIE
-    result.reset(new GIEModel(model_desc, input_shape, batch_size));
-#else
-    LOG(FATAL) << "Not build with GIE, failed to initialize classifier";
-#endif  // USE_GIE
-  }
-
-  if (model_desc.GetModelType() == MODEL_TYPE_MXNET) {
-#ifdef USE_MXNET
-    result.reset(new MXNetModel(model_desc, input_shape, batch_size));
-#else
-    LOG(FATAL) << "Not build with MXNet, failed to initialize classifier";
-#endif  // USE_MXNET
   }
   return result;
 }

@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
   if (display_on) cv::namedWindow("Image");
   while (true) {
     auto frame = output_reader->PopFrame();
-    cv::Mat image = frame->GetValue<cv::Mat>("OriginalImage");
-    auto results = frame->GetValue<std::vector<Rect>>("Bboxes");
+    cv::Mat image = frame->GetValue<cv::Mat>("original_image");
+    auto results = frame->GetValue<std::vector<Rect>>("bounding_boxes");
     cv::Scalar box_color(255, 0, 0);
     for (const auto& result : results) {
       cv::Rect rect(result.px, result.py, result.width, result.height);

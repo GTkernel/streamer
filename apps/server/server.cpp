@@ -291,7 +291,9 @@ int main(int argc, char* argv[]) {
 
   size_t server_thread_num = 1;
   unsigned short server_port = (unsigned short)vm["port"].as<int>();
-  HttpServer server(server_port, server_thread_num);
+  HttpServer server;
+  server.config.port = server_port;
+  server.config.thread_pool_size = server_thread_num;
 
   SetUpEndpoints(server);
 

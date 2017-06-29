@@ -35,7 +35,7 @@ void Run(const string& camera_name, const string& net_name) {
   Shape input_shape(3, 227, 227);
   transformer =
       std::make_shared<ImageTransformer>(input_shape, true /* subtract mean */);
-  transformer->SetSource("input", camera->GetSink("bgr_output"));
+  transformer->SetSource("input", camera->GetSink("output"));
 
   // Image classifier
   auto model_desc = model_manager.GetModelDesc(net_name);

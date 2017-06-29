@@ -7,7 +7,7 @@
 
 #include <glog/logging.h>
 #include <stdlib.h>
-#include <tinytoml/toml.h>
+#include <tinytoml/include/toml/toml.h>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -19,7 +19,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "data_buffer.h"
 #include "timer.h"
 #include "types.h"
 

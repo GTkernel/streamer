@@ -5,7 +5,7 @@
 #ifndef STREAMER_PROCESSOR_STREAM_PUBLISHER_H_
 #define STREAMER_PROCESSOR_STREAM_PUBLISHER_H_
 
-#include <cppzmq/zmq.hpp>
+#include <zmq.hpp>
 
 #include "common/common.h"
 #include "common/types.h"

@@ -6,7 +6,6 @@
 
 #include "common/types.h"
 #include "processor/processor.h"
-#include "processor/rpc/serialization.h"
 #include "streamer_rpc.grpc.pb.h"
 
 class FrameSender : public Processor {

@@ -10,12 +10,12 @@
 
 Camera::Camera(const string& name, const string& video_uri, int width,
                int height)
-    : Processor(PROCESSOR_TYPE_CAMERA, {}, {"bgr_output"}),
+    : Processor(PROCESSOR_TYPE_CAMERA, {}, {"output"}),
       name_(name),
       video_uri_(video_uri),
       width_(width),
       height_(height) {
-  stream_ = sinks_["bgr_output"];
+  stream_ = sinks_["output"];
 }
 
 string Camera::GetName() const { return name_; }
@@ -37,13 +37,13 @@ bool Camera::Capture(cv::Mat& image) {
     for (int i = 0; i < 3; i++) {
       reader->PopFrame();
     }
-    image = reader->PopFrame()->GetValue<cv::Mat>("OriginalImage");
+    image = reader->PopFrame()->GetValue<cv::Mat>("original_image");
     reader->UnSubscribe();
     Stop();
   } else {
     LOG(WARNING) << "not stopped.";
     auto reader = stream_->Subscribe();
-    image = reader->PopFrame()->GetValue<cv::Mat>("OriginalImage");
+    image = reader->PopFrame()->GetValue<cv::Mat>("original_image");
     reader->UnSubscribe();
   }
 

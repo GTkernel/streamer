@@ -7,9 +7,7 @@
 
 GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
                      int height)
-    : Camera(name, video_uri, width, height) {
-  sinks_.insert({"raw_output", StreamPtr(new Stream)});
-}
+    : Camera(name, video_uri, width, height) {}
 
 bool GSTCamera::Init() {
   bool opened = capture_.CreatePipeline(video_uri_);
@@ -26,20 +24,16 @@ bool GSTCamera::OnStop() {
   return true;
 }
 void GSTCamera::Process() {
-  cv::Mat pixels = capture_.GetPixels();
-
-  auto image_frame = std::make_unique<Frame>();
-  image_frame->SetValue("OriginalImage", pixels);
-  image_frame->SetValue("Image", pixels);
-  MetadataToFrame(image_frame);
-
-  auto raw_frame = std::make_unique<Frame>();
-  raw_frame->SetValue("OriginalImage", pixels);
-  raw_frame->SetValue("DataBuffer", DataBuffer(pixels.data, pixels.total() * pixels.elemSize()));
-  MetadataToFrame(raw_frame);
-  
-  PushFrame("bgr_output", std::move(image_frame));
-  PushFrame("raw_output", std::move(raw_frame));
+  const cv::Mat& pixels = capture_.GetPixels();
+  auto frame = std::make_unique<Frame>();
+  frame->SetValue("original_bytes",
+                  std::vector<char>(
+                      (char*)pixels.data,
+                      (char*)pixels.data + pixels.total() * pixels.elemSize()));
+  frame->SetValue("original_image", pixels);
+  frame->SetValue("image", pixels);
+  MetadataToFrame(frame);
+  PushFrame("output", std::move(frame));
 }
 
 CameraType GSTCamera::GetCameraType() const { return CAMERA_TYPE_GST; }

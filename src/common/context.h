@@ -13,7 +13,6 @@
 const string H264_ENCODER_GST_ELEMENT = "h264_encoder_gst_element";
 const string H264_DECODER_GST_ELEMENT = "h264_decoder_gst_element";
 const string DEVICE_NUMBER = "device_number";
-const string USEFP16 = "use_fp16";
 const int DEVICE_NUMBER_CPU_ONLY = -1;
 
 /**
@@ -37,7 +36,6 @@ class Context {
     SetEncoderDecoderInformation();
     SetDefaultDeviceInformation();
     timer_.Start();
-    bool_values_.insert({USEFP16, false});
   }
 
   int GetInt(const string& key) {

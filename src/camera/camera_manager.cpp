@@ -3,6 +3,7 @@
 //
 
 #include "camera_manager.h"
+
 #include "common/context.h"
 
 // The path to the camera config file

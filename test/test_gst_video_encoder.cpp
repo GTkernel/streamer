@@ -17,7 +17,7 @@ TEST(GST_VIDEO_ENCODER_TEST, FILE_TEST) {
   STREAMER_SLEEP(100);
 
   auto encoder_reader = encoder.GetSink("output")->Subscribe();
-  auto image_frame = encoder_reader->PopFrame<ImageFrame>();
+  auto image_frame = encoder_reader->PopFrame();
 
   encoder.Stop();
   camera->Stop();

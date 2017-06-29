@@ -1,4 +1,3 @@
-
 #include "image_classifier.h"
 
 #include "model/model_manager.h"
@@ -7,17 +6,13 @@
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
-
 ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
                                  const Shape& input_shape, size_t num_labels)
     : NeuralNetConsumer(PROCESSOR_TYPE_IMAGE_CLASSIFIER, model_desc,
                         input_shape, {}, {SOURCE_NAME}, {SINK_NAME}),
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {
-  // The NeuralNetEvaluator only has one sink, but we don't know what it's
-  // called because it's named after the last layer in the model, which could
-  // be named anything.
-  std::string nne_sink_name = nne_->GetSinkNames().at(0);
+  std::string nne_sink_name = model_desc.GetLastLayer();
   StreamPtr stream = nne_->GetSink(nne_sink_name);
   // Call Processor::SetSource() because NeuralNetConsumer::SetSource() would
   // set the NeuralNetEvaluator's source (because the NeuralNetEvaluator is
@@ -60,7 +55,7 @@ void ImageClassifier::Process() {
 
   // Assign labels.
   std::vector<Prediction> predictions;
-  cv::Mat output = frame->GetValue<cv::Mat>("Activations");
+  const cv::Mat& output = frame->GetValue<cv::Mat>("activations");
   float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
@@ -84,7 +79,7 @@ void ImageClassifier::Process() {
   for (const auto& pred : predictions) {
     tags.push_back(pred.first);
   }
-  frame->SetValue("Tags", tags);
+  frame->SetValue("tags", tags);
   PushFrame(SINK_NAME, std::move(frame));
 }
 

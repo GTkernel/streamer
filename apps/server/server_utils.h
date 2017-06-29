@@ -11,7 +11,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <simplewebserver/server_http.hpp>
+#include <simple-web-server/server_http.hpp>
 
 #define BOOST_SPIRIT_THREADSAFE
 

@@ -10,16 +10,10 @@
 #include <string>
 #include <unordered_map>
 
-#ifdef USE_FP16
-// THIS ORDER MATTERS!
-#include <driver_types.h>
-
-#include <cuda_fp16.h>
-#endif  // USE_FP16
-
-#include "json/json.hpp"
+#include <boost/serialization/access.hpp>
 
 #include "common/common.h"
+#include "common/serialization.h"
 
 /**
  * @brief 3-D shape structure
@@ -44,30 +38,13 @@ struct Shape {
  * @brief Rectangle
  */
 struct Rect {
+  Rect() : px(0), py(0), width(0), height(0){};
   Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
 
-  Rect(nlohmann::json j) {
-    try {
-      nlohmann::json rect_j = j.at("Rect");
-      px = rect_j.at("px").get<int>();
-      py = rect_j.at("py").get<int>();
-      width = rect_j.at("width").get<int>();
-      height = rect_j.at("height").get<int>();
-    } catch (std::out_of_range) {
-      LOG(FATAL) << "Malformed Rect JSON: " << j.dump();
-    }
-  }
+  friend class boost::serialization::access;
 
-  nlohmann::json ToJson() const {
-    nlohmann::json rect_j;
-    rect_j["px"] = px;
-    rect_j["py"] = py;
-    rect_j["width"] = width;
-    rect_j["height"] = height;
-    nlohmann::json j;
-    j["Rect"] = rect_j;
-    return j;
-  }
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {}
 
   bool operator==(const Rect& rhs) const {
     return (px == rhs.px) && (py == rhs.py) && (width == rhs.width) &&
@@ -104,8 +81,6 @@ typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 enum ModelType {
   MODEL_TYPE_INVALID = 0,
   MODEL_TYPE_CAFFE,
-  MODEL_TYPE_MXNET,
-  MODEL_TYPE_GIE,
   MODEL_TYPE_TENSORFLOW
 };
 
@@ -150,20 +125,10 @@ enum CameraPixelFormatType {
 
 std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
 
-//// Frame types
-enum FrameType {
-  FRAME_TYPE_INVALID = 0,
-  FRAME_TYPE_IMAGE,
-  FRAME_TYPE_MD,
-  FRAME_TYPE_BYTES,
-  FRAME_TYPE_LAYER
-};
-
 //// Processor types
 enum ProcessorType {
   PROCESSOR_TYPE_CAMERA = 0,
   PROCESSOR_TYPE_CUSTOM,
-  PROCESSOR_TYPE_DUMMY_NN,
   PROCESSOR_TYPE_ENCODER,
   PROCESSOR_TYPE_FILE_WRITER,
 #ifdef USE_RPC
@@ -181,15 +146,12 @@ enum ProcessorType {
 #endif  // USE_ZMQ
   PROCESSOR_TYPE_INVALID
 };
-
 // Returns the ProcessorType enum value corresponding to the string.
 inline ProcessorType GetProcessorTypeByString(const std::string& type) {
   if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
   } else if (type == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
-  } else if (type == "DummyNNProcessor") {
-    return PROCESSOR_TYPE_DUMMY_NN;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
   } else if (type == "FileWriter") {
@@ -228,8 +190,6 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "Camera";
     case PROCESSOR_TYPE_CUSTOM:
       return "Custom";
-    case PROCESSOR_TYPE_DUMMY_NN:
-      return "DummyNNProcessor";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
     case PROCESSOR_TYPE_FILE_WRITER:
@@ -262,23 +222,5 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
 
   LOG(FATAL) << "Unhandled ProcessorType: " << type;
 }
-
-#ifdef USE_FP16
-half Cpu_Float2Half(float f);
-float Cpu_Half2Float(half h);
-
-/**
- * @brief Float16 type
- */
-struct float16 {
-  inline float16() { data.x = 0; }
-
-  inline float16(const float& rhs) { data = Cpu_Float2Half(rhs); }
-
-  inline operator float() const { return Cpu_Half2Float(data); }
-
-  half data;
-};
-#endif  // USE_FP16
 
 #endif  // STREAMER_COMMON_TYPE_H_

@@ -16,11 +16,13 @@
  */
 class FileWriter : public Processor {
  public:
+  enum file_format { TEXT, BINARY };
+
   /**
    * @brief FileWriter constructor
    * @param filename The name of the file.
    */
-  FileWriter(const string& filename);
+  FileWriter(const string& filename, const file_format format = TEXT);
 
   static std::shared_ptr<FileWriter> Create(const FactoryParamsType& params);
 
@@ -32,6 +34,7 @@ class FileWriter : public Processor {
  private:
   string filename_;
   std::ofstream file_;
+  file_format format_;
 };
 
 #endif  // STREAMER_PROCESSOR_FILE_WRITER_H_

@@ -81,25 +81,18 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         }
 
         // Raw bytes of the image
-        DataBuffer data_buffer(buffer_size);
-        data_buffer.Clone(DataBuffer(vmb_buffer, buffer_size));
+        std::vector<std::byte> data_buffer((char*)vmb_buffer,
+                                           buffer_size * sizeof(vmb_buffer[0]));
 
         // Transform to BGR image
-        cv::Mat bgr_output = TransformToBGRImage(pFrame);
+        cv::Mat bgr_image = TransformToBGRImage(pFrame);
 
-        auto image_frame = std::make_unique<Frame>();
-        auto raw_frame = std::make_unique<Frame>();
-
-        image_frame->SetValue("OriginalImage", bgr_output);
-        image_frame->SetValue("Image", bgr_output);
-        vimba_camera_->MetadataToFrame(image_frame);
-
-        raw_frame->SetValue("DataBuffer", data_buffer);
-        raw_frame->SetValue("OriginalImage", bgr_output);
-        vimba_camera_->MetadataToFrame(raw_frame);
-
-        vimba_camera_->PushFrame("bgr_output", std::move(image_frame));
-        vimba_camera_->PushFrame("raw_output", std::move(raw_frame));
+        auto frame = std::make_unique<Frame>();
+        frame->SetValue("original_bytes", data_buffer);
+        frame->SetValue("original_image", bgr_image);
+        frame->SetValue("image", bgr_image);
+        vimba_camera_->MetadataToFrame(frame);
+        vimba_camera_->PushFrame("output", std::move(frame));
       } else {
         LOG(ERROR) << "Can't get frame successfully: " << eReceiveStatus;
       }  // Validate eReceiveStatus
@@ -117,10 +110,7 @@ VimbaCamera::VimbaCamera(const string& name, const string& video_uri, int width,
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
       initial_mode_(mode),
-      vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {
-  // Init raw output sink
-  sinks_.insert({"raw_output", StreamPtr(new Stream)});
-}
+      vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {}
 
 CameraType VimbaCamera::GetCameraType() const { return CAMERA_TYPE_VIMBA; }
 

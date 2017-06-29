@@ -10,6 +10,7 @@ desc_path = "/path/to/caffe/model.prototxt"
 params_path = "/path/to/caffe/model.caffemodel"
 input_width = 227
 input_height = 227
+last_layer = "prob"
 
 [[model]]
 name = "GoogleNet"
@@ -18,3 +19,4 @@ desc_path = "/path/to/caffe/model.prototxt"
 params_path = "/path/to/caffe/model.caffemodel"
 input_width = 227
 input_height = 227
+last_layer = "prob"

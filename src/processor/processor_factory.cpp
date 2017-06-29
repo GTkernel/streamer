@@ -2,7 +2,6 @@
 #include "processor_factory.h"
 
 #include "camera/camera_manager.h"
-#include "processor/dummy_nn_processor.h"
 #include "processor/file_writer.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
@@ -27,8 +26,6 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
     case PROCESSOR_TYPE_CUSTOM:
       STREAMER_NOT_IMPLEMENTED;
       return nullptr;
-    case PROCESSOR_TYPE_DUMMY_NN:
-      return DummyNNProcessor::Create(params);
     case PROCESSOR_TYPE_ENCODER:
       return GstVideoEncoder::Create(params);
     case PROCESSOR_TYPE_FILE_WRITER:
