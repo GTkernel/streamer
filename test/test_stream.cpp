@@ -26,8 +26,8 @@ TEST(STREAM_TEST, SUBSCRIBE_TEST) {
   auto reader1 = stream->Subscribe();
   auto reader2 = stream->Subscribe();
 
-  stream->PushFrame(std::move(std::make_unique<Frame>()));
-  stream->PushFrame(std::move(std::make_unique<Frame>()));
+  stream->PushFrame(std::make_unique<Frame>());
+  stream->PushFrame(std::make_unique<Frame>());
 
   // Both readers can pop twice
   reader1->PopFrame();

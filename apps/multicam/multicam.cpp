@@ -147,7 +147,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       auto reader = classifier_streams.at(i)->Subscribe();
       auto frame = reader->PopFrame();
       if (display) {
-        const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
+        cv::Mat img = frame->GetValue<cv::Mat>("original_image");
         string label = frame->GetValue<std::vector<std::string>>("tags").at(0);
         if (update_overlay == 1) {
           label_to_show.at(i) = label;
