@@ -65,5 +65,5 @@ CameraPixelFormatType GSTCamera::GetPixelFormat() {
   return CAMERA_PIXEL_FORMAT_INVALID;
 }
 void GSTCamera::SetPixelFormat(CameraPixelFormatType) {}
-void GSTCamera::SetFrameRate(float f) { }
+void GSTCamera::SetFrameRate(float f) {}
 float GSTCamera::GetFrameRate() { return 0; }

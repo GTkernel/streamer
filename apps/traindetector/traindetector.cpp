@@ -62,7 +62,8 @@ void Run(const std::vector<string>& camera_names, std::string root_dir) {
     }
   }
 
-  while (true);
+  while (true)
+    ;
 
   LOG(INFO) << "Done";
 }

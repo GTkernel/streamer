@@ -78,7 +78,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
 
   Shape input_shape(3, 227, 227);
   std::vector<std::shared_ptr<Stream>> input_streams;
-  
+
   // Transformers
   for (const auto& camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(

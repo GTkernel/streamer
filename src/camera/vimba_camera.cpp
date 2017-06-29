@@ -193,12 +193,12 @@ float VimbaCamera::GetFrameRate() {
   }
 
   error = camera_->GetFeatureByName("TriggerSource", pFeature);
-  if (error == VmbErrorNotFound ) {
+  if (error == VmbErrorNotFound) {
     LOG(WARNING) << "Feature not found Trigger Source";
   }
 
   error = camera_->GetFeatureByName("AcquisitionFrameRateAbs", pFeature);
-  if (error == VmbErrorNotFound ) {
+  if (error == VmbErrorNotFound) {
     LOG(WARNING) << "Feature not found AcquisitionFrameRateAbs";
     return -1;
   }
@@ -217,14 +217,14 @@ void VimbaCamera::SetFrameRate(float frame_rate) {
 
   CHECK_VIMBA(pFeature->SetValue("FrameStart"));
   error = camera_->GetFeatureByName("TriggerSource", pFeature);
-  if (error == VmbErrorNotFound ) {
+  if (error == VmbErrorNotFound) {
     LOG(WARNING) << "Feature not found Trigger Source";
   }
 
   CHECK_VIMBA(pFeature->SetValue("FixedRate"));
 
   error = (camera_->GetFeatureByName("AcquisitionFrameRateAbs", pFeature));
-  if (error == VmbErrorNotFound ) {
+  if (error == VmbErrorNotFound) {
     LOG(WARNING) << "Feature not found AcquisitionFrameRateAbs";
   }
 

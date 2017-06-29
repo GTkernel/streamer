@@ -45,7 +45,9 @@ void DoWriteDB(std::string filename, time_t cur_time,
     fe.update();
     db.commit();
   } catch (litesql::Except e) {
-    LOG(FATAL) << database_path << " doesn't appear to be a valid sqlite3 database.\n" << e.what();
+    LOG(FATAL) << database_path
+               << " doesn't appear to be a valid sqlite3 database.\n"
+               << e.what();
   }
 }
 

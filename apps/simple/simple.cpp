@@ -27,7 +27,7 @@ void Run(const string& camera_name) {
 
   camera = camera_manager.GetCamera(camera_name);
   auto reader = camera->GetStream()->Subscribe();
-  //cv::namedWindow(camera_name);
+  // cv::namedWindow(camera_name);
 
   camera->Start();
 

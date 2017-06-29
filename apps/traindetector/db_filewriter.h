@@ -18,7 +18,7 @@ class DBFileWriter : public Processor {
   DBFileWriter(const string& root_dir);
 
   static std::shared_ptr<DBFileWriter> Create(const FactoryParamsType& params);
-  // Set the number of milliseconds to wait between capturing frames 
+  // Set the number of milliseconds to wait between capturing frames
   void SetDelay(int delay_ms);
 
  protected:
