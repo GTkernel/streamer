@@ -2,7 +2,6 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
 #include <opencv2/core/core.hpp>
-#include "json/json.hpp"
 
 #include "frame.h"
 
