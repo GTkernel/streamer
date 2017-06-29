@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include <cppzmq/zhelper.hpp>
+#include <zguide/examples/C++/zhelpers.hpp>
 
 #include "processor/stream_publisher.h"
 #include "utils/utils.h"

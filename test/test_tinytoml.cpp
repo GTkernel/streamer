@@ -4,7 +4,7 @@
 
 #include <common/common.h>
 #include <gtest/gtest.h>
-#include <tinytoml/toml.h>
+#include <tinytoml/include/toml/toml.h>
 
 TEST(TINYTOML_TEST, TINYTOML_TEST) {
   string test_toml_string =
