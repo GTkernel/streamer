@@ -17,12 +17,6 @@ void FrameSender::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE, stream);
 }
 
-void FrameSender::SetSource(const string& name, StreamPtr stream) {
-  CHECK(name == SOURCE) << "StreamSender has one source named \"" << SOURCE
-                        << "\"!";
-  Processor::SetSource(name, stream);
-}
-
 std::shared_ptr<FrameSender> FrameSender::Create(
     const FactoryParamsType& params) {
   return std::make_shared<FrameSender>(params.at("server_url"));

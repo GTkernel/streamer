@@ -24,6 +24,8 @@ void FrameReceiver::RunServer(const std::string listen_url) {
   server_->Wait();
 }
 
+StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }
+
 grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
                                       const SingleFrame* frame_message,
                                       google::protobuf::Empty*) {
@@ -54,8 +56,6 @@ std::shared_ptr<FrameReceiver> FrameReceiver::Create(
     const FactoryParamsType& params) {
   return std::make_shared<FrameReceiver>(params.at("listen_url"));
 }
-
-StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }
 
 bool FrameReceiver::Init() {
   std::thread server_thread([this]() { this->RunServer(this->listen_url_); });
