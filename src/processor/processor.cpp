@@ -28,6 +28,14 @@ Processor::~Processor() {}
 StreamPtr Processor::GetSink(const string& name) { return sinks_[name]; }
 
 void Processor::SetSource(const string& name, StreamPtr stream) {
+  if (sources_.find(name) == sources_.end()) {
+    std::ostringstream sources;
+    for (const auto& s : sources_) {
+      sources << "`" << s.first << "' ";
+    }
+    LOG(FATAL) << "Source `" << name << "` does not exist.\n"
+               << "Available sources: " << sources.str();
+  }
   sources_[name] = stream;
 }
 

@@ -24,6 +24,14 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FRAME_SENDER)));
 #endif  // USE_RPC
+#ifdef USE_ZMQ
+  EXPECT_EQ(PROCESSOR_TYPE_FRAME_PUBLISHER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FRAME_PUBLISHER)));
+  EXPECT_EQ(PROCESSOR_TYPE_FRAME_SUBSCRIBER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FRAME_SUBSCRIBER)));
+#endif  // USE_ZMQ
   EXPECT_EQ(PROCESSOR_TYPE_IMAGE_CLASSIFIER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGE_CLASSIFIER)));
@@ -39,11 +47,6 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_OPENCV_FACE_DETECTOR)));
-#ifdef USE_ZMQ
-  EXPECT_EQ(PROCESSOR_TYPE_STREAM_PUBLISHER,
-            GetProcessorTypeByString(
-                GetStringForProcessorType(PROCESSOR_TYPE_STREAM_PUBLISHER)));
-#endif  // USE_ZMQ
   EXPECT_EQ(PROCESSOR_TYPE_INVALID,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_INVALID)));

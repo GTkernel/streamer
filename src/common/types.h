@@ -135,15 +135,16 @@ enum ProcessorType {
   PROCESSOR_TYPE_FRAME_RECEIVER,
   PROCESSOR_TYPE_FRAME_SENDER,
 #endif  // USE_RPC
+#ifdef USE_ZMQ
+  PROCESSOR_TYPE_FRAME_PUBLISHER,
+  PROCESSOR_TYPE_FRAME_SUBSCRIBER,
+#endif  // USE_ZMQ
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
   PROCESSOR_TYPE_THROTTLER,
-#ifdef USE_ZMQ
-  PROCESSOR_TYPE_STREAM_PUBLISHER,
-#endif  // USE_ZMQ
   PROCESSOR_TYPE_INVALID
 };
 // Returns the ProcessorType enum value corresponding to the string.
@@ -162,6 +163,12 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
   } else if (type == "FrameSender") {
     return PROCESSOR_TYPE_FRAME_SENDER;
 #endif  // USE_RPC
+#ifdef USE_ZMQ
+  } else if (type == "FramePublisher") {
+    return PROCESSOR_TYPE_FRAME_PUBLISHER;
+  } else if (type == "FrameSubscriber") {
+    return PROCESSOR_TYPE_FRAME_SUBSCRIBER;
+#endif  // USE_ZMQ
   } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
   } else if (type == "ImageSegmenter") {
@@ -174,10 +181,6 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
   } else if (type == "Throttler") {
     return PROCESSOR_TYPE_THROTTLER;
-#ifdef USE_ZMQ
-  } else if (type == "StreamPublisher") {
-    return PROCESSOR_TYPE_STREAM_PUBLISHER;
-#endif  // USE_ZMQ
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
@@ -200,6 +203,12 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
     case PROCESSOR_TYPE_FRAME_SENDER:
       return "FrameSender";
 #endif  // USE_RPC
+#ifdef USE_ZMQ
+    case PROCESSOR_TYPE_FRAME_PUBLISHER:
+      return "FramePublisher";
+    case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
+      return "FrameSubscriber";
+#endif  // USE_ZMQ
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return "ImageClassifier";
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:
@@ -212,10 +221,6 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "OpenCVFaceDetector";
     case PROCESSOR_TYPE_THROTTLER:
       return "Throttler";
-#ifdef USE_ZMQ
-    case PROCESSOR_TYPE_STREAM_PUBLISHER:
-      return "StreamPublisher";
-#endif  // USE_ZMQ
     case PROCESSOR_TYPE_INVALID:
       return "Invalid";
   }

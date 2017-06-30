@@ -14,7 +14,8 @@
 #include "processor/rpc/frame_sender.h"
 #endif  // USE_RPC
 #ifdef USE_ZMQ
-#include "processor/stream_publisher.h"
+#include "processor/pubsub/frame_publisher.h"
+#include "processor/pubsub/frame_subscriber.h"
 #endif  // USE_ZMQ
 #include "video/gst_video_encoder.h"
 
@@ -36,6 +37,12 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
     case PROCESSOR_TYPE_FRAME_SENDER:
       return FrameSender::Create(params);
 #endif  // USE_RPC
+#ifdef USE_ZMQ
+    case PROCESSOR_TYPE_FRAME_PUBLISHER:
+      return FramePublisher::Create(params);
+    case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
+      return FrameSubscriber::Create(params);
+#endif  // USE_ZMQ
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return ImageClassifier::Create(params);
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:
@@ -48,10 +55,6 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return OpenCVFaceDetector::Create(params);
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
-#ifdef USE_ZMQ
-    case PROCESSOR_TYPE_STREAM_PUBLISHER:
-      return StreamPublisher::Create(params);
-#endif  // USE_ZMQ
     case PROCESSOR_TYPE_INVALID:
       LOG(FATAL) << "Cannot instantiate a Processor of type: "
                  << GetStringForProcessorType(type);
