@@ -17,6 +17,7 @@ class FramePublisher : public Processor {
   ~FramePublisher();
 
   void SetSource(StreamPtr stream);
+  using Processor::SetSource;
 
   static std::shared_ptr<FramePublisher> Create(
       const FactoryParamsType& params);

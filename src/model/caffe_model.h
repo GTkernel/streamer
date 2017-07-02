@@ -19,7 +19,7 @@ template <typename DType>
 class CaffeModel : public Model {
  public:
   CaffeModel(const ModelDesc& model_desc, Shape input_shape);
-  virtual void Load();
+  virtual void Load() override;
   virtual std::unordered_map<std::string, cv::Mat> Evaluate(
       cv::Mat input,
       const std::vector<std::string>& output_layer_names) override;
