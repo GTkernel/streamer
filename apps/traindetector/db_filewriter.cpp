@@ -175,7 +175,17 @@ void DBFileWriter::Process() {
   struct stat buf;
   // Write out file
   if (stat(filename.str().c_str(), &buf) != 0) {
-    imwrite(filename.str(), image, params);
+    double angle = -90;
+    cv::Point2f center(image.cols/2.0, image.rows/2.0);
+    cv::Mat rot = cv::getRotationMatrix2D(center, angle, 1.0);
+    cv::Rect bbox = cv::RotatedRect(center,image.size(), angle).boundingRect();
+    rot.at<double>(0,2) += bbox.width/2.0 - center.x;
+    rot.at<double>(1,2) += bbox.height/2.0 - center.y;
+    cv::Mat dst;
+    cv::warpAffine(image, dst, rot, bbox.size());
+
+    imwrite(filename.str(), dst, params);
+    std::cout << frame->ToString() << std::endl;
   }
   // Write to DB
   DoWriteDB(filename.str(), now, frame, root_dir_);
