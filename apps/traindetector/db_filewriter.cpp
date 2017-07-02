@@ -106,8 +106,12 @@ void DBFileWriter::Process() {
   }
   if (cur_timestamp < expected_timestamp_) {
     return;
-  } else {
+  } else if(cur_timestamp - 500 < expected_timestamp_) {
+    // If we have drift within 500ms, try to correct for it
     expected_timestamp_ += delay_ms_;
+  } else {
+    // If the drift is larger than 500ms, drop frames
+    expected_timestamp_ = cur_timestamp + delay_ms_;
   }
   std::stringstream directory_name;
   directory_name << root_dir_ << "/";
