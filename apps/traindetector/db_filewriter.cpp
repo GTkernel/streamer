@@ -4,6 +4,10 @@
 #include "db_filewriter.h"
 
 #include <chrono>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/filter/bzip2.hpp>
 #include <fstream>
 
 #include "json/src/json.hpp"
@@ -133,7 +137,7 @@ void DBFileWriter::Process() {
   metadata_filename << filename.str() << ".json";
 
   std::stringstream raw_filename;
-  raw_filename << filename.str() << ".raw";
+  raw_filename << filename.str() << ".raw.bz2";
 
   filename << ".jpg";
 
@@ -162,9 +166,17 @@ void DBFileWriter::Process() {
   metadata_file << json_string;
   metadata_file.close();
 
+  // Compress raw
+  std::vector<char> bzip2_compressed_raw;
+  boost::iostreams::filtering_ostream compressor; 
+  compressor.push(boost::iostreams::bzip2_compressor());
+  compressor.push(boost::iostreams::back_inserter(bzip2_compressed_raw));
+  compressor.write((char*)raw_image.data(), raw_image.size());
+  boost::iostreams::close(compressor);
+
   std::ofstream raw_file;
-  raw_file.open(raw_filename.str(), std::ios::binary);
-  raw_file.write((char*)raw_image.data(), raw_image.size());
+  raw_file.open(raw_filename.str(), std::ios::binary | std::ios::out);
+  raw_file.write((char*)bzip2_compressed_raw.data(), bzip2_compressed_raw.size());
   raw_file.close();
 
   std::vector<int> params;
