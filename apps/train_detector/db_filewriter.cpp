@@ -1,6 +1,10 @@
 
 #include "db_filewriter.h"
 
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filter/bzip2.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 #include <chrono>
 #include <fstream>
 
@@ -14,7 +18,6 @@
 // the frame
 void DoWriteDB(std::string filename, time_t cur_time,
                std::unique_ptr<Frame>& frame, std::string root_dir) {
-  #if 0
   // assumes database has been created
   std::string database_path = "database=" + root_dir + "/frames.db";
   FramesDatabase db("sqlite3", database_path);
@@ -48,7 +51,6 @@ void DoWriteDB(std::string filename, time_t cur_time,
                << " doesn't appear to be a valid sqlite3 database.\n"
                << e.what();
   }
-#endif
 }
 
 DBFileWriter::DBFileWriter(const string& root_dir)
@@ -144,10 +146,9 @@ void DBFileWriter::Process() {
   metadata_file.close();
 
   // Write raw file
-  auto compressed_raw = frame->GetValue<std::vector<char>>("compressed_bytes");
   std::ofstream raw_file;
   raw_file.open(raw_filename.str(), std::ios::binary | std::ios::out);
-  raw_file.write((char*)compressed_raw.data(), compressed_raw.size());
+  raw_file.write((char*)raw_image.data(), raw_image.size());
   raw_file.close();
 
   std::vector<int> params;
