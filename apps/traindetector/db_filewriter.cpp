@@ -14,7 +14,6 @@
 // the frame
 void DoWriteDB(std::string filename, time_t cur_time,
                std::unique_ptr<Frame>& frame, std::string root_dir) {
-  #if 0
   // assumes database has been created
   std::string database_path = "database=" + root_dir + "/frames.db";
   FramesDatabase db("sqlite3", database_path);
@@ -48,7 +47,6 @@ void DoWriteDB(std::string filename, time_t cur_time,
                << " doesn't appear to be a valid sqlite3 database.\n"
                << e.what();
   }
-#endif
 }
 
 DBFileWriter::DBFileWriter(const string& root_dir)
