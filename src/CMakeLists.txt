@@ -102,6 +102,11 @@ if (USE_FRCNN)
   list(APPEND STREAMER_SOURCE_FILES ${FRCNN_SOURCE_FILES})
 endif ()
 
+# Build with DLIB libraries
+if (USE_DLIB)
+  list(APPEND STREAMER_LIBRARIES ${Dlib_LIBRARIES})
+endif ()
+
 list(APPEND STREAMER_LIBRARIES struck)
 message(${STREAMER_LIBRARIES})
 

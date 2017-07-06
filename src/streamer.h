@@ -17,7 +17,7 @@
 #include "processor/caffe_mtcnn.h"
 #include "processor/facenet.h"
 #include "processor/opencv_motion_detector.h"
-#include "processor/struck_tracker.h"
+#include "processor/obj_tracker.h"
 #include "processor/db_writer.h"
 #include "processor/ssd_detector.h"
 #include "processor/processor.h"

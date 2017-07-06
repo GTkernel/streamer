@@ -61,9 +61,10 @@ void Run(const std::vector<string> &camera_names,
          float detector_confidence_threshold,
          float detector_idle_duration,
          const string &detector_targets,
+         const std::string& tracker_type,
          float tracker_calibration_duration,
          bool db_write_to_file) {
-  cout << "Run tracker_struck demo" << endl;
+  cout << "Run tracker_obj demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
@@ -141,7 +142,7 @@ void Run(const std::vector<string> &camera_names,
 
   // tracker
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> tracker(new StruckTracker(tracker_calibration_duration));
+    std::shared_ptr<Processor> tracker(new ObjTracker(tracker_type, tracker_calibration_duration));
     tracker->SetSource("input", detectors[i]->GetSink("output"));
     trackers.push_back(tracker);
 
@@ -298,6 +299,9 @@ int main(int argc, char *argv[]) {
   desc.add_options()("detector_targets",
                      po::value<string>()->default_value(""),
                      "The name of the target to detect, separate with ,");
+  desc.add_options()("tracker_type",
+                     po::value<string>()->default_value("struck"),
+                     "The name of the tracker type to run");
   desc.add_options()("tracker_calibration_duration", po::value<float>()->default_value(2.0),
                      "tracker calibration duration");
   desc.add_options()("db_write_to_file", po::value<bool>()->default_value(false),
@@ -336,10 +340,12 @@ int main(int argc, char *argv[]) {
   float detector_confidence_threshold = vm["detector_confidence_threshold"].as<float>();
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
   auto detector_targets = vm["detector_targets"].as<string>();
+  auto tracker_type = vm["tracker_type"].as<string>();
   float tracker_calibration_duration = vm["tracker_calibration_duration"].as<float>();
   bool db_write_to_file = vm["db_write_to_file"].as<bool>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_confidence_threshold, detector_idle_duration, detector_targets, tracker_calibration_duration, db_write_to_file);
+      detector_confidence_threshold, detector_idle_duration, detector_targets,
+      tracker_type, tracker_calibration_duration, db_write_to_file);
 
   return 0;
 }
