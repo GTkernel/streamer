@@ -16,7 +16,7 @@ TEST(GST_CAMERA_TEST, TEST_BASIC) {
   auto reader = stream->Subscribe();
   camera.Start();
 
-  const auto& image = reader->PopFrame()->GetValue<cv::Mat>("image");
+  const auto& image = reader->PopFrame()->GetValue<cv::Mat>("original_image");
 
   EXPECT_EQ(height, image.rows);
   EXPECT_EQ(width, image.cols);

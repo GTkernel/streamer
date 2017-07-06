@@ -31,7 +31,6 @@ void GSTCamera::Process() {
                       (char*)pixels.data,
                       (char*)pixels.data + pixels.total() * pixels.elemSize()));
   frame->SetValue("original_image", pixels);
-  frame->SetValue("image", pixels);
   MetadataToFrame(frame);
   PushFrame("output", std::move(frame));
 }

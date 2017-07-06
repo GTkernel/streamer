@@ -42,7 +42,7 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
 void ImageTransformer::Process() {
   Timer timer;
   auto frame = GetFrame("input");
-  const cv::Mat& img = frame->GetValue<cv::Mat>("image");
+  const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
   timer.Start();
 
   int num_channel = target_shape_.channel, width = target_shape_.width,
