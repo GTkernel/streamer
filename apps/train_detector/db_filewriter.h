@@ -18,8 +18,6 @@ class DBFileWriter : public Processor {
   DBFileWriter(const string& root_dir);
 
   static std::shared_ptr<DBFileWriter> Create(const FactoryParamsType& params);
-  // Set the number of milliseconds to wait between capturing frames
-  void SetDelay(int delay_ms);
 
  protected:
   virtual bool Init() override;
@@ -28,9 +26,6 @@ class DBFileWriter : public Processor {
 
  private:
   string root_dir_;
-  // Match types to avoid compiler warnings
-  unsigned long long expected_timestamp_;
-  unsigned long long delay_ms_;
 };
 
 #endif  // STREAMER_PROCESSOR_DB_FILE_WRITER_H_

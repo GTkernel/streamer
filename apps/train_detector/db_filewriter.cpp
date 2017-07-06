@@ -1,13 +1,11 @@
-//
-// Not created by Ran Xian (xranthoar@gmail.com) on 11/13/16.
-//
+
 #include "db_filewriter.h"
 
-#include <chrono>
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <chrono>
 #include <fstream>
 
 #include "json/src/json.hpp"
@@ -20,6 +18,7 @@
 // the frame
 void DoWriteDB(std::string filename, time_t cur_time,
                std::unique_ptr<Frame>& frame, std::string root_dir) {
+#if 0
   // assumes database has been created
   std::string database_path = "database=" + root_dir + "/frames.db";
   FramesDatabase db("sqlite3", database_path);
@@ -53,10 +52,11 @@ void DoWriteDB(std::string filename, time_t cur_time,
                << " doesn't appear to be a valid sqlite3 database.\n"
                << e.what();
   }
+#endif
 }
 
 DBFileWriter::DBFileWriter(const string& root_dir)
-    : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {}), delay_ms_(0) {
+    : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {}) {
   root_dir_ = root_dir;
   while (root_dir_.back() == '/') {
     root_dir_.pop_back();
@@ -66,11 +66,6 @@ DBFileWriter::DBFileWriter(const string& root_dir)
 std::shared_ptr<DBFileWriter> DBFileWriter::Create(
     const FactoryParamsType& params) {
   return std::make_shared<DBFileWriter>(params.at("filename"));
-}
-
-void DBFileWriter::SetDelay(int delay_ms) {
-  delay_ms_ = delay_ms;
-  expected_timestamp_ = 0;
 }
 
 bool DBFileWriter::Init() {
@@ -102,21 +97,7 @@ void DBFileWriter::Process() {
   int year = local_time.tm_year + 1900;
   int ms =
       std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
-  unsigned long long cur_timestamp =
-      std::chrono::duration_cast<std::chrono::milliseconds>(tse).count();
-  // Framerate limiting
-  if (expected_timestamp_ == 0) {
-    expected_timestamp_ = cur_timestamp;
-  }
-  if (cur_timestamp < expected_timestamp_) {
-    return;
-  } else if(cur_timestamp - 500 < expected_timestamp_) {
-    // If we have drift within 500ms, try to correct for it
-    expected_timestamp_ += delay_ms_;
-  } else {
-    // If the drift is larger than 500ms, drop frames
-    expected_timestamp_ = cur_timestamp + delay_ms_;
-  }
+
   std::stringstream directory_name;
   directory_name << root_dir_ << "/";
   directory_name << std::setw(4) << std::setfill('0') << year << "-";
@@ -137,7 +118,7 @@ void DBFileWriter::Process() {
   metadata_filename << filename.str() << ".json";
 
   std::stringstream raw_filename;
-  raw_filename << filename.str() << ".raw.bz2";
+  raw_filename << filename.str();
 
   filename << ".jpg";
 
@@ -166,17 +147,10 @@ void DBFileWriter::Process() {
   metadata_file << json_string;
   metadata_file.close();
 
-  // Compress raw
-  std::vector<char> bzip2_compressed_raw;
-  boost::iostreams::filtering_ostream compressor; 
-  compressor.push(boost::iostreams::bzip2_compressor());
-  compressor.push(boost::iostreams::back_inserter(bzip2_compressed_raw));
-  compressor.write((char*)raw_image.data(), raw_image.size());
-  boost::iostreams::close(compressor);
-
+  // Write raw file
   std::ofstream raw_file;
   raw_file.open(raw_filename.str(), std::ios::binary | std::ios::out);
-  raw_file.write((char*)bzip2_compressed_raw.data(), bzip2_compressed_raw.size());
+  raw_file.write((char*)raw_image.data(), raw_image.size());
   raw_file.close();
 
   std::vector<int> params;
@@ -188,11 +162,11 @@ void DBFileWriter::Process() {
   // Write out file
   if (stat(filename.str().c_str(), &buf) != 0) {
     double angle = -90;
-    cv::Point2f center(image.cols/2.0, image.rows/2.0);
+    cv::Point2f center(image.cols / 2.0, image.rows / 2.0);
     cv::Mat rot = cv::getRotationMatrix2D(center, angle, 1.0);
-    cv::Rect bbox = cv::RotatedRect(center,image.size(), angle).boundingRect();
-    rot.at<double>(0,2) += bbox.width/2.0 - center.x;
-    rot.at<double>(1,2) += bbox.height/2.0 - center.y;
+    cv::Rect bbox = cv::RotatedRect(center, image.size(), angle).boundingRect();
+    rot.at<double>(0, 2) += bbox.width / 2.0 - center.x;
+    rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
     cv::Mat dst;
     cv::warpAffine(image, dst, rot, bbox.size());
 
