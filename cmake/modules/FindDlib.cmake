@@ -3,11 +3,11 @@ unset(Dlib_FOUND)
 
 find_path(Dlib_INCLUDE_DIRS NAMES dlib/any.h
   HINTS
-  /usr/local/include)
+  ${Dlib_HOME})
 
 find_library(Dlib_LIBRARIES NAMES dlib
   HINTS
-  /usr/local/lib)
+  ${Dlib_HOME}/dlib/build)
 
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Dlib DEFAULT_MSG
