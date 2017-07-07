@@ -133,7 +133,10 @@ void Run(const std::vector<string> &camera_names,
         if (!m.empty()) targets.insert(m);
       }
       detector.reset(new SsdDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
-    } else {
+	} else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
+		auto model_desc = model_manager.GetModelDesc(detector_model);
+		detector.reset(new YoloDetector(model_desc, detector_idle_duration));
+	} else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
     detector->SetSource("input", input_streams[i]);
