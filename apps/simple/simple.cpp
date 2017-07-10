@@ -7,6 +7,7 @@
 #include <boost/program_options.hpp>
 
 #include "streamer.h"
+#include "utils/image_utils.h"
 
 namespace po = boost::program_options;
 
@@ -19,7 +20,7 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const string& camera_name) {
+void Run(const string& camera_name, float zoom, unsigned int angle) {
   CameraManager& camera_manager = CameraManager::GetInstance();
 
   CHECK(camera_manager.HasCamera(camera_name))
@@ -33,10 +34,15 @@ void Run(const string& camera_name) {
 
   while (true) {
     auto frame = reader->PopFrame();
-    const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
-    cv::imshow(camera_name, img);
+    if (frame != nullptr) {
+      const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
+      cv::Mat m;
+      cv::resize(img, m, cv::Size(), zoom, zoom);
+      RotateImage(m, angle);
+      cv::imshow(camera_name, m);
 
-    std::cout << frame->ToString() << std::endl;
+      std::cout << frame->ToString() << std::endl;
+    }
 
     unsigned char q = cv::waitKey(10);
     if (q == 'q') break;
@@ -61,6 +67,10 @@ int main(int argc, char* argv[]) {
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
+  desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
+                     "Angle to rotate image; must be 0, 90, 180, or 270");
+  desc.add_options()("zoom,z", po::value<float>()->default_value(1.0),
+                     "Zoom factor by which to scale image for display");
 
   std::signal(SIGINT, SignalHandler);
 
@@ -87,8 +97,18 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   auto camera_name = vm["camera"].as<string>();
+  auto zoom = vm["zoom"].as<float>();
 
-  Run(camera_name);
+  auto angles = std::set<unsigned int>{0, 90, 180, 270};
+  auto angle = vm["rotate"].as<unsigned int>();
+  if (!angles.count(angle)) {
+    std::cerr << "--rotate angle must be 0, 90, 180, or 270" << std::endl;
+    std::cerr << std::endl;
+    std::cout << desc << std::endl;
+    return 1;
+  }
+
+  Run(camera_name, zoom, angle);
 
   return 0;
 }
