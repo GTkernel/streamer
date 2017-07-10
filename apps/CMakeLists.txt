@@ -1,5 +1,5 @@
 find_package(Threads REQUIRED)
-find_package(Boost COMPONENTS regex system thread date_time REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 if (USE_RPC)
   include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
@@ -44,5 +44,3 @@ foreach (app_dir ${APP_DIRS})
     add_dependencies(apps ${app_name})
   endif ()
 endforeach ()
-
-target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

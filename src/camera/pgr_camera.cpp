@@ -5,8 +5,6 @@
 #include "pgr_camera.h"
 #include "utils/utils.h"
 
-#include <boost/regex.hpp>
-
 #define CHECK_PGR(cmd)                       \
   do {                                       \
     FlyCapture2::Error error;                \
