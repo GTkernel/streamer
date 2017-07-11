@@ -13,6 +13,7 @@ file(GLOB_RECURSE GIE_SOURCE_FILES ${SRC_ROOT}/gie_*.cpp ${SRC_ROOT}/gie_*.h)
 file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/camera/pgr_*.h)
 file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/camera/vimba_*.h)
 file(GLOB_RECURSE FRCNN_SOURCE_FILES ${SRC_ROOT}/processor/object_detector.cpp ${SRC_ROOT}/processor/object_detector.h)
+file(GLOB_RECURSE NCS_SOURCE_FILES ${SRC_ROOT}/processor/ncs_yolo_detector.cpp ${SRC_ROOT}/processor/ncs_yolo_detector.h)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${CAFFE_SOURCE_FILES}
   ${CAFFE_FP16_SOURCE_FILES}
@@ -21,7 +22,8 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${GIE_SOURCE_FILES}
   ${PTGRAY_SOURCE_FILES}
   ${VIMBA_SOURCE_FILES}
-  ${FRCNN_SOURCE_FILES})
+  ${FRCNN_SOURCE_FILES}
+  ${NCS_SOURCE_FILES})
 
 # Pick libraries
 set(STREAMER_LIBRARIES
@@ -105,6 +107,12 @@ endif ()
 # Build with DLIB libraries
 if (USE_DLIB)
   list(APPEND STREAMER_LIBRARIES ${Dlib_LIBRARIES})
+endif ()
+
+# Build with NCS libraries
+if (USE_NCS)
+  list(APPEND STREAMER_SOURCE_FILES ${NCS_SOURCE_FILES})
+  list(APPEND STREAMER_LIBRARIES ${NCS_LIBRARIES})
 endif ()
 
 list(APPEND STREAMER_LIBRARIES struck)

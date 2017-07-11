@@ -21,6 +21,9 @@
 #include "processor/obj_tracker.h"
 #include "processor/db_writer.h"
 #include "processor/ssd_detector.h"
+#ifdef USE_NCS
+#include "processor/ncs_yolo_detector.h"
+#endif
 #include "processor/processor.h"
 #include "processor/processor_factory.h"
 #include "utils/utils.h"
