@@ -6,6 +6,7 @@
 
 #include "camera/camera_manager.h"
 #include "processor/pubsub/frame_subscriber.h"
+#include "utils/image_utils.h"
 
 namespace po = boost::program_options;
 
@@ -14,7 +15,7 @@ namespace po = boost::program_options;
  *
  * Pipeline:  FrameSubscriber -> Display
  */
-void Run(std::string server) {
+void Run(std::string& server, float zoom, unsigned int angle) {
   // Set up FrameSubscriber (receives frames over ZMQ)
   auto subscriber = new FrameSubscriber(server);
   auto reader = subscriber->GetSink()->Subscribe();
@@ -28,7 +29,10 @@ void Run(std::string server) {
     auto frame = reader->PopFrame(30);
     if (frame != nullptr) {
       const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
-      cv::imshow(window_name, img);
+      cv::Mat m;
+      cv::resize(img, m, cv::Size(), zoom, zoom);
+      RotateImage(m, angle);
+      cv::imshow(window_name, m);
     }
 
     unsigned char q = cv::waitKey(10);
@@ -49,6 +53,10 @@ int main(int argc, char* argv[]) {
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("config_dir,C", po::value<string>(),
                      "The directory to find streamer's configuration");
+  desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
+                     "Angle to rotate image; must be 0, 90, 180, or 270");
+  desc.add_options()("zoom,z", po::value<float>()->default_value(1.0),
+                     "Zoom factor by which to scale image for display");
   desc.add_options()("publish_url,s",
                      po::value<string>()->default_value("127.0.0.1:5536"),
                      "host:port to connect to (e.g., example.com:4444)");
@@ -79,6 +87,16 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   auto server = vm["publish_url"].as<string>();
+  auto zoom = vm["zoom"].as<float>();
 
-  Run(server);
+  auto angles = std::set<unsigned int>{0, 90, 180, 270};
+  auto angle = vm["rotate"].as<unsigned int>();
+  if (!angles.count(angle)) {
+    std::cerr << "--rotate angle must be 0, 90, 180, or 270" << std::endl;
+    std::cerr << std::endl;
+    std::cout << desc << std::endl;
+    return 1;
+  }
+
+  Run(server, zoom, angle);
 }
