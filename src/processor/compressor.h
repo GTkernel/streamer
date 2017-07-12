@@ -14,21 +14,17 @@
 
 class Compressor : public Processor {
  public:
-  enum CompressionType {
-    BZIP2,
-    GZIP,
-    NONE
-  };
+  enum CompressionType { BZIP2, GZIP, NONE };
 
   struct LockedFrame {
-    public:
-      LockedFrame(std::unique_ptr<Frame> frame_ptr) : count(0) {
-        frame = std::move(frame_ptr);
-      }
-      std::unique_ptr<Frame> frame;
-      int count;
-      std::mutex lock;
-      std::condition_variable cv;
+   public:
+    LockedFrame(std::unique_ptr<Frame> frame_ptr) : count(0) {
+      frame = std::move(frame_ptr);
+    }
+    std::unique_ptr<Frame> frame;
+    int count;
+    std::mutex lock;
+    std::condition_variable cv;
   };
 
   Compressor(CompressionType t, int num_threads = 4);
