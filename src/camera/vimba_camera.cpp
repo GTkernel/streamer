@@ -81,8 +81,9 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         }
 
         // Raw bytes of the image
-        std::vector<std::byte> data_buffer((char*)vmb_buffer,
-                                           buffer_size * sizeof(vmb_buffer[0]));
+        std::vector<char> data_buffer(
+            (char*)vmb_buffer,
+            (char*)vmb_buffer + buffer_size * sizeof(vmb_buffer[0]));
 
         // Transform to BGR image
         cv::Mat bgr_image = TransformToBGRImage(pFrame);
@@ -125,9 +126,9 @@ bool VimbaCamera::Init() {
         vimba_system_.OpenCameraByID(ip.c_str(), VmbAccessModeFull, camera_));
   } else {
     // Looks like an device index
-    int device_idx = StringToInt(ip);
     VmbAPI::CameraPtrVector cameras;
     CHECK_VIMBA(vimba_system_.GetCameras(cameras));
+    decltype(cameras.size()) device_idx = StringToInt(ip);
     CHECK(device_idx < cameras.size())
         << "Invalid camera index: " << device_idx;
     camera_ = cameras[device_idx];
@@ -158,6 +159,8 @@ bool VimbaCamera::OnStop() {
   StopCapture();
 
   CHECK_VIMBA(vimba_system_.Shutdown());
+
+  return true;
 }
 
 void VimbaCamera::Process() {
@@ -185,7 +188,7 @@ void VimbaCamera::SetExposure(float exposure) {
 }
 
 float VimbaCamera::GetSharpness() { return 0; }
-void VimbaCamera::SetSharpness(float sharpness) {}
+void VimbaCamera::SetSharpness(float) {}
 Shape VimbaCamera::GetImageSize() {
   VmbAPI::FeaturePtr pFeature;
   VmbInt64_t width, height;
@@ -196,11 +199,11 @@ Shape VimbaCamera::GetImageSize() {
 
   return Shape((int)width, (int)height);
 }
-void VimbaCamera::SetBrightness(float brightness) {}
+void VimbaCamera::SetBrightness(float) {}
 float VimbaCamera::GetBrightness() { return 0; }
-void VimbaCamera::SetSaturation(float saturation) {}
+void VimbaCamera::SetSaturation(float) {}
 float VimbaCamera::GetSaturation() { return 0; }
-void VimbaCamera::SetHue(float hue) {}
+void VimbaCamera::SetHue(float) {}
 float VimbaCamera::GetHue() { return 0; }
 
 void VimbaCamera::SetGain(float gain) {
@@ -241,11 +244,11 @@ float VimbaCamera::GetGamma() {
   return (float)gamma;
 }
 
-void VimbaCamera::SetWBRed(float wb_red) {}
+void VimbaCamera::SetWBRed(float) {}
 
 float VimbaCamera::GetWBRed() { return 0; }
 
-void VimbaCamera::SetWBBlue(float wb_blue) {}
+void VimbaCamera::SetWBBlue(float) {}
 
 float VimbaCamera::GetWBBlue() { return 0; }
 

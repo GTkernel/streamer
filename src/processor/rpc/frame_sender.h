@@ -13,6 +13,7 @@ class FrameSender : public Processor {
   FrameSender(const std::string server_url);
 
   void SetSource(StreamPtr stream);
+  using Processor::SetSource;
 
   static std::shared_ptr<FrameSender> Create(const FactoryParamsType& params);
 
