@@ -6,39 +6,43 @@
 
 unset(Vimba_FOUND)
 
-EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
+EXECUTE_PROCESS(
+  COMMAND uname -m
+  COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
 
-message( STATUS "Architecture: ${ARCHITECTURE}" )
-if( ${ARCHITECTURE} STREQUAL "aarch64"  )
+if (${ARCHITECTURE} STREQUAL "aarch64")
   set(ARCHITECTURE "arm_64")
 endif()
 
-message( STATUS "Architecture: ${ARCHITECTURE}" )
+message(STATUS "Architecture: ${ARCHITECTURE}")
 
 find_path(Vimba_INCLUDE_DIRS NAMES
   VimbaCPP/Include/
   VimbaC/Include/
   VimbaImageTransform/Include/
   HINTS
-  ${VIMBA_HOME}/include
-  ${VIMBA_HOME}/)
+  ${VIMBA_HOME}
+  ${VIMBA_HOME}/include)
 
 find_library(Vimba_CPP_LIBRARY NAMES VimbaCPP
   HINTS
-  ${VIMBA_HOME}/
-  ${VIMBA_HOME}/VimbaCPP/DynamicLib/${ARCHITECTURE}bit/)
+  ${VIMBA_HOME}
+  ${VIMBA_HOME}/VimbaCPP/DynamicLib/${ARCHITECTURE}bit)
 
 find_library(Vimba_C_LIBRARY NAMES VimbaC
   HINTS
-  ${VIMBA_HOME}/
-  ${VIMBA_HOME}/VimbaC/DynamicLib/${ARCHITECTURE}bit/)
+  ${VIMBA_HOME}
+  ${VIMBA_HOME}/VimbaC/DynamicLib/${ARCHITECTURE}bit)
 
 find_library(Vimba_ImageTransform_LIBRARY NAMES VimbaImageTransform
   HINTS
-  ${VIMBA_HOME}/
-  ${VIMBA_HOME}/VimbaImageTransform/DynamicLib/${ARCHITECTURE}bit/)
+  ${VIMBA_HOME}
+  ${VIMBA_HOME}/VimbaImageTransform/DynamicLib/${ARCHITECTURE}bit)
 
-set(Vimba_LIBRARIES ${Vimba_CPP_LIBRARY} ${Vimba_C_LIBRARY} ${Vimba_ImageTransform_LIBRARY})
+set(Vimba_LIBRARIES
+  ${Vimba_CPP_LIBRARY}
+  ${Vimba_C_LIBRARY}
+  ${Vimba_ImageTransform_LIBRARY})
 
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Vimba DEFAULT_MSG
@@ -47,5 +51,5 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(Vimba DEFAULT_MSG
 if (Vimba_INCLUDE_DIRS AND Vimba_LIBRARIES)
   set(Vimba_FOUND 1)
 else ()
-  message("Not found Vimba")
+  message("Vimba not found.")
 endif ()
