@@ -1,5 +1,5 @@
 /**
-* An example application showing the usage of frcnn detector.
+* An example application showing the usage of detector.
 * 
 * @author Tony Chen <xiaolongx.chen@intel.com>
 * @author Shao-Wen Yang <shao-wen.yang@intel.com>
@@ -49,8 +49,11 @@ void SignalHandler(int signal) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names, const string &model_name,
-         bool display) {
+void Run(const std::vector<string> &camera_names,
+         const string &detector_type,
+         const string &detector_model,
+         bool display, float scale, int min_size,
+         float detector_confidence_threshold) {
   cout << "Run detection demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -60,7 +63,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   ModelManager &model_manager = ModelManager::GetInstance();
   
 // Check options
-  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
+  CHECK(model_manager.HasModel(detector_model)) << "Model " << detector_model
                                             << " does not exist";
   for (auto camera_name : camera_names) {
     CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
@@ -80,7 +83,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
-  Shape input_shape(3, cameras[0]->GetWidth(), cameras[0]->GetHeight());
+  Shape input_shape(3, cameras[0]->GetWidth()*scale, cameras[0]->GetHeight()*scale);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
@@ -93,9 +96,49 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   }
 
   // detector
-  auto model_desc = model_manager.GetModelDesc(model_name);
+  float detector_idle_duration = 0.f;
+  std::string detector_targets;
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> detector(new ObjectDetector(model_desc, input_shape));
+    std::shared_ptr<Processor> detector;
+    auto p = GetProcessorTypeByString(detector_type);
+    if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
+#ifdef USE_FRCNN
+      auto model_desc = model_manager.GetModelDesc(detector_model);
+      auto t = SplitString(detector_targets, ",");
+      std::set<std::string> targets;
+      for (const auto& m: t) {
+        if (!m.empty()) targets.insert(m);
+      }
+      detector.reset(new ObjectDetector(model_desc, input_shape, detector_idle_duration, targets));
+#else
+      CHECK(false) << "detector_type " << detector_type
+                   << " not supported, please compile with -DUSE_FRCNN=ON";
+#endif
+    } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
+      auto model_description = model_manager.GetModelDescription(detector_model);
+      detector.reset(new MtcnnFaceDetector(model_description, min_size, detector_idle_duration));
+    } else if (p == PROCESSOR_TYPE_SSD_DETECTOR) {
+      auto model_desc = model_manager.GetModelDesc(detector_model);
+      auto t = SplitString(detector_targets, ",");
+      std::set<std::string> targets;
+      for (const auto& m: t) {
+        if (!m.empty()) targets.insert(m);
+      }
+      detector.reset(new SsdDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
+  	} else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
+      auto model_desc = model_manager.GetModelDesc(detector_model);
+      detector.reset(new YoloDetector(model_desc, detector_idle_duration));
+    } else if (p == PROCESSOR_TYPE_NCS_YOLO_DETECTOR) {
+      auto model_desc = model_manager.GetModelDesc(detector_model);
+      auto t = SplitString(detector_targets, ",");
+      std::set<std::string> targets;
+      for (const auto& m: t) {
+        if (!m.empty()) targets.insert(m);
+      }
+      detector.reset(new NcsYoloDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
+  	} else {
+      CHECK(false) << "detector_type " << detector_type << " not supported.";
+    }
     detector->SetSource("input", input_streams[i]);
     detectors.push_back(detector);
   }
@@ -143,6 +186,13 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   }
 
   //  double fps_to_show = 0.0;
+  const std::vector<cv::Scalar> colors = GetColors(32);
+  int color_count = 0;
+  std::map<std::string, int> tags_colors;
+  int fontface = cv::FONT_HERSHEY_SIMPLEX;
+  double d_scale = 1;
+  int thickness = 2;
+  int baseline = 0;
   while (true) {
     for (int i = 0; i < camera_names.size(); i++) {
       double fps_to_show = (1000.0 / detectors[i]->GetSlidingLatencyMs());
@@ -150,16 +200,51 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
       auto md_frame = reader->PopFrame<MetadataFrame>();
       if (display) {
         cv::Mat image = md_frame->GetOriginalImage();
-        auto tags = md_frame->GetTags();
         auto bboxes = md_frame->GetBboxes();
-        auto confidences = md_frame->GetConfidences();
-        for (size_t i = 0; i < bboxes.size(); ++i) {
-          cv::Rect rect(bboxes[i].px, bboxes[i].py, bboxes[i].width, bboxes[i].height);
-          cv::rectangle(image, rect, cv::Scalar(255, 0, 0), 5);
-          std::ostringstream text;
-          text << tags[i] << "  :  " << confidences[i];
-          cv::putText(image, text.str() , cv::Point(bboxes[i].px,bboxes[i].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
+        //for(const auto& m: bboxes) {
+        //  cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
+        //}
+        auto face_landmarks = md_frame->GetFaceLandmarks();
+        for(const auto& m: face_landmarks) {
+          for(int j=0;j<5;j++)
+            cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
         }
+        auto tags = md_frame->GetTags();
+        //auto confidences = md_frame->GetConfidences();
+        auto uuids = md_frame->GetUuids();
+        for (size_t j = 0; j < tags.size(); ++j) {
+          // Get the color
+          int color_index;
+          auto it = tags_colors.find(tags[j]);
+          if (it == tags_colors.end()) {
+            tags_colors.insert(std::make_pair(tags[j], color_count++));
+            color_index = tags_colors.find(tags[j])->second;
+          } else {
+            color_index = it->second;
+          }
+          const cv::Scalar& color = colors[color_index];
+
+          // Draw bboxes
+          cv::Point top_left_pt(bboxes[j].px, bboxes[j].py);
+          cv::Point bottom_right_pt(bboxes[j].px+bboxes[j].width, bboxes[j].py+bboxes[j].height);
+          cv::rectangle(image, top_left_pt, bottom_right_pt, color, 4);
+          cv::Point bottom_left_pt(bboxes[j].px, bboxes[j].py+bboxes[j].height);
+          std::ostringstream text;
+          text << tags[j];
+          //if (tags.size() == confidences.size())
+          //  text << "  :  " << confidences[j];
+          if (tags.size() == uuids.size()) {
+            std::size_t pos = uuids[j].size();
+            auto sheared_uuid = uuids[j].substr(pos-5);
+            text << ": " << sheared_uuid;
+          }
+          cv::Size text_size = cv::getTextSize(text.str().c_str(), fontface, d_scale, thickness, &baseline);
+          cv::rectangle(
+            image, bottom_left_pt + cv::Point(0, 0),
+            bottom_left_pt + cv::Point(text_size.width, -text_size.height-baseline),
+            color, CV_FILLED);
+          cv::putText(image, text.str(), bottom_left_pt - cv::Point(0, baseline), fontface , d_scale , CV_RGB(0, 0, 0), thickness, 8);
+        }  
         cv::imshow(camera_names[i], image);
       }
     }
@@ -188,9 +273,12 @@ int main(int argc, char *argv[]) {
 
   po::options_description desc("Multi-camera end to end video ingestion demo");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("model,m",
-                     po::value<string>()->value_name("MODEL")->required(),
-                     "The name of the model to run");
+  desc.add_options()("detector_type",
+                     po::value<string>()->value_name("DETECTOR_TYPE")->required(),
+                     "The name of the detector type to run");
+  desc.add_options()("detector_model,m",
+                     po::value<string>()->value_name("DETECTOR_MODEL")->required(),
+                     "The name of the detector model to run");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
@@ -201,6 +289,12 @@ int main(int argc, char *argv[]) {
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
+  desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
+                     "scale factor before mtcnn");
+  desc.add_options()("min_size", po::value<int>()->default_value(40),
+                     "face minimum size");
+  desc.add_options()("detector_confidence_threshold", po::value<float>()->default_value(0.5),
+                     "detector confidence threshold");
 
   po::variables_map vm;
   try {
@@ -227,9 +321,14 @@ int main(int argc, char *argv[]) {
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
-  auto model = vm["model"].as<string>();
+  auto detector_type = vm["detector_type"].as<string>();
+  auto detector_model = vm["detector_model"].as<string>();
   bool display = vm.count("display") != 0;
-  Run(camera_names, model, display);
+  float scale = vm["scale"].as<float>();
+  int min_size = vm["min_size"].as<int>();
+  float detector_confidence_threshold = vm["detector_confidence_threshold"].as<float>();
+  Run(camera_names, detector_type, detector_model, display, scale, min_size,
+      detector_confidence_threshold);
 
   return 0;
 }
