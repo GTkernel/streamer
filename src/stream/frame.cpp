@@ -62,7 +62,7 @@ class FramePrinter : public boost::static_visitor<std::string> {
     for (decltype(num_elems) i = 0; i < num_elems; ++i) {
       output << +v[i] << ", ";
     }
-    output << "...]" << std::endl;
+    output << "...]";
     return output.str();
   }
 
