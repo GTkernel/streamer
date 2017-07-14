@@ -129,6 +129,7 @@ void Run(const std::vector<string> &camera_names,
       auto model_desc = model_manager.GetModelDesc(detector_model);
       detector.reset(new YoloDetector(model_desc, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_NCS_YOLO_DETECTOR) {
+#ifdef USE_NCS
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
@@ -136,6 +137,10 @@ void Run(const std::vector<string> &camera_names,
         if (!m.empty()) targets.insert(m);
       }
       detector.reset(new NcsYoloDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
+#else
+      LOG(FATAL) << "Detector type " << detector_type
+                   << " not supported, please compile with -DUSE_NCS=ON";
+#endif
   	} else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
