@@ -1,6 +1,6 @@
 unset(NCS_FOUND)
 
-find_path(NCS_INCLUDE_DIRS NAMES ncs.h mvnc.h
+find_path(NCS_INCLUDE_DIRS NAMES ncs.h
     HINTS
     ${NCS_HOME}/include
     /usr/local/include)
