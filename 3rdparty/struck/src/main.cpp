@@ -31,8 +31,9 @@
 #include <iostream>
 #include <fstream>
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+//#include <opencv/cv.h>
+//#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace cv;

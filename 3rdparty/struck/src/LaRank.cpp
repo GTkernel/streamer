@@ -34,7 +34,8 @@
 #include "Rect.h"
 #include "GraphUtils/GraphUtils.h"
 
-#include <opencv/highgui.h>
+//#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
 
 namespace struck {
 static const int kTileSize = 30;
