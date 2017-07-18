@@ -28,9 +28,7 @@ int Camera::GetHeight() { return height_; }
 
 std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
 
-unsigned long Camera::CreateFrameID() {
-  return frame_id_++;
-}
+unsigned long Camera::CreateFrameID() { return frame_id_++; }
 
 bool Camera::Capture(cv::Mat& image) {
   if (stopped_) {
