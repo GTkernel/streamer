@@ -9,7 +9,6 @@
 #define STREAMER_OPENCV_MOTION_DETECTOR_H
 
 #include <chrono>
-#include <opencv2/gpu/gpu.hpp>
 #include <opencv2/opencv.hpp>
 #include "common/common.h"
 #include "processor.h"

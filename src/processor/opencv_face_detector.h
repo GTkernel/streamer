@@ -8,9 +8,10 @@
 using namespace std;
 
 #ifdef USE_CUDA
-#include <opencv2/gpu/gpu.hpp>
-#endif
+#include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
+#else
 #include <opencv2/objdetect/objdetect.hpp>
+#endif
 #include "common/common.h"
 #include "processor.h"
 
@@ -30,7 +31,7 @@ class OpenCVFaceDetector : public Processor {
  private:
   string classifier_xml_path_;
 #ifdef USE_CUDA
-  cv::gpu::CascadeClassifier_GPU classifier_;
+  cv::cuda::CascadeClassifier classifier_;
 #else
   cv::CascadeClassifier classifier_;
 #endif
