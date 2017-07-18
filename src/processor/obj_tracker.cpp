@@ -78,7 +78,7 @@ public:
     return cv::Rect(r.left(), r.top(), r.right()-r.left(), r.bottom()-r.top());
   }
   virtual std::vector<double> GetBBFeature() {
-    return std::vector<double>();
+    return std::vector<double>(128, 0.f);
   }
 
 private:

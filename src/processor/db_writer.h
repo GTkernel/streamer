@@ -8,13 +8,14 @@
 #ifndef STREAMER_DB_WRITER_H
 #define STREAMER_DB_WRITER_H
 
+#include "client/AthenaClient.h"
 #include "common/common.h"
 #include "camera/camera.h"
 #include "processor.h"
 
 class DbWriter : public Processor {
   public:
-    DbWriter(std::shared_ptr<Camera> camera, bool write_to_file = false);
+    DbWriter(std::shared_ptr<Camera> camera, bool write_to_file, const std::string& athena_address);
     virtual ProcessorType GetType() override;
 
   protected:
@@ -38,6 +39,8 @@ class DbWriter : public Processor {
     std::shared_ptr<Camera> camera_;
     bool write_to_file_;
     std::ofstream ofs_;
+    std::string athena_address_;
+    std::unique_ptr<athena::AthenaClient> aclient_;
 };
 
 #endif // STREAMER_DB_WRITER_H

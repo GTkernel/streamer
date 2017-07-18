@@ -6,17 +6,32 @@
 */
 
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <regex>
+
+#include "boost/tokenizer.hpp"
+#include "boost/spirit/include/qi.hpp"
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/json_parser.hpp"
+
 #include "db_writer.h"
 
-DbWriter::DbWriter(std::shared_ptr<Camera> camera, bool write_to_file) 
+DbWriter::DbWriter(std::shared_ptr<Camera> camera, bool write_to_file, const std::string& athena_address) 
     : Processor({"input"}, {}),
       camera_(camera),
-      write_to_file_(write_to_file) {}
+      write_to_file_(write_to_file),
+      athena_address_(athena_address) {}
 
 bool DbWriter::Init() {
   if (write_to_file_) {
-    ofs_.open("data_sample.csv");
+    ofs_.open(std::tmpnam(nullptr));
     CHECK(ofs_.is_open()) << "Error opening file";
+  } else {
+    if (!athena_address_.empty()) {
+      aclient_.reset(new athena::AthenaClient(athena_address_));
+    }
   }
   return true;
 }
@@ -44,10 +59,12 @@ void DbWriter::Process() {
   auto struck_features = md_frame->GetStruckFeatures();
   //auto bboxes = md_frame->GetBboxes();
   CHECK(uuids.size() == tags.size());
-  if (write_to_file_)
+  if (write_to_file_) {
     WriteFile(camera_id, uuids, timestamp, tags, struck_features);
-  else
-    WriteAthena(camera_id, uuids, timestamp, tags, struck_features);
+  } else {
+    if (!athena_address_.empty() && aclient_)
+      WriteAthena(camera_id, uuids, timestamp, tags, struck_features);
+  }
 }
 
 ProcessorType DbWriter::GetType() {
@@ -84,14 +101,48 @@ void DbWriter::WriteAthena(const std::string& camera_id,
                            unsigned long timestamp,
                            const std::vector<string>& tags,
                            const std::vector<std::vector<double>>& struck_features) {
-  /*
   for (size_t i = 0; i < uuids.size(); ++i) {
-    if (uuids.size() == struck_features.size())
-      LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i] << "[struck_feature]";
-    else
-      LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
-  }
-  */
+    if (uuids.size() == struck_features.size()) {
+      //LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i] << "[struck_feature]";
 
-  // Waiting for Athena API
+      const std::string& streamId = camera_id;
+      const std::string& objectId = uuids[i];
+      const std::vector<double>& fv = struck_features[i];
+      // Turn the metadata into a JSON object
+
+      using boost::property_tree::ptree;
+
+      ptree root;
+
+      root.put("id", objectId);
+      root.put("ts", timestamp);
+      root.put("st", streamId);
+
+      ptree tag_array;
+      ptree fv_array;
+
+      tag_array.push_back(std::make_pair("", ptree(tags[i])));
+      std::for_each(fv.begin(), fv.end(),
+              [&](const double& v) {
+              fv_array.push_back(
+                      std::make_pair("", ptree(std::to_string(v)))); });
+
+      root.put_child("tg", tag_array);
+      root.put_child("fv", fv_array);
+
+      std::ostringstream oss;
+      boost::property_tree::write_json(oss, root, false);
+
+      // The following is for JSON compliance
+
+      std::string json_str = std::regex_replace(oss.str(),
+              std::regex(R"sy("([-+]?[0-9]*\.?[0-9]*)")sy"), "$1");
+
+      std::cout << json_str << std::endl;
+
+      std::cout << aclient_->query(json_str) << std::endl;
+    } else {
+      //LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
+    }
+  }
 }

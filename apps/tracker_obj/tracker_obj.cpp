@@ -63,7 +63,8 @@ void Run(const std::vector<string> &camera_names,
          const string &detector_targets,
          const std::string& tracker_type,
          float tracker_calibration_duration,
-         bool db_write_to_file) {
+         bool db_write_to_file,
+         const std::string& athena_address) {
   cout << "Run tracker_obj demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -166,7 +167,7 @@ void Run(const std::vector<string> &camera_names,
     auto tracker_output = tracker->GetSink("output");
     tracker_output_readers.push_back(tracker_output->Subscribe());
 
-    std::shared_ptr<Processor> db_writer(new DbWriter(cameras[i], db_write_to_file));
+    std::shared_ptr<Processor> db_writer(new DbWriter(cameras[i], db_write_to_file, athena_address));
     db_writer->SetSource("input", tracker->GetSink("output"));
     db_writers.push_back(db_writer);
   }
@@ -322,6 +323,9 @@ int main(int argc, char *argv[]) {
                      "tracker calibration duration");
   desc.add_options()("db_write_to_file", po::value<bool>()->default_value(false),
                      "Enable db write to file or not");
+  desc.add_options()("athena_address",
+                     po::value<string>()->default_value(""),
+                     "The address of the athena server");
 
   po::variables_map vm;
   try {
@@ -359,9 +363,10 @@ int main(int argc, char *argv[]) {
   auto tracker_type = vm["tracker_type"].as<string>();
   float tracker_calibration_duration = vm["tracker_calibration_duration"].as<float>();
   bool db_write_to_file = vm["db_write_to_file"].as<bool>();
+  auto athena_address = vm["athena_address"].as<string>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
       detector_confidence_threshold, detector_idle_duration, detector_targets,
-      tracker_type, tracker_calibration_duration, db_write_to_file);
+      tracker_type, tracker_calibration_duration, db_write_to_file, athena_address);
 
   return 0;
 }

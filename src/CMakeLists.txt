@@ -115,6 +115,11 @@ if (USE_NCS)
   list(APPEND STREAMER_LIBRARIES ${NCS_LIBRARIES})
 endif ()
 
+# Build with ATHENA libraries
+if (USE_ATHENA)
+  list(APPEND STREAMER_LIBRARIES ${Athena_LIBRARIES} ${Athena_utils_LIBRARIES})
+endif ()
+
 list(APPEND STREAMER_LIBRARIES struck)
 message(${STREAMER_LIBRARIES})
 
