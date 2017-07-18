@@ -53,7 +53,8 @@ void Run(const std::vector<string> &camera_names,
          const string &detector_type,
          const string &detector_model,
          bool display, float scale, int min_size,
-         float detector_confidence_threshold) {
+         float detector_confidence_threshold,
+         const string &detector_targets) {
   cout << "Run detection demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -97,7 +98,6 @@ void Run(const std::vector<string> &camera_names,
 
   // detector
   float detector_idle_duration = 0.f;
-  std::string detector_targets;
   for (int i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> detector;
     auto p = GetProcessorTypeByString(detector_type);
@@ -279,6 +279,9 @@ int main(int argc, char *argv[]) {
   desc.add_options()("detector_model,m",
                      po::value<string>()->value_name("DETECTOR_MODEL")->required(),
                      "The name of the detector model to run");
+  desc.add_options()("detector_targets",
+                     po::value<string>()->default_value(""),
+                     "The name of the target to detect, separate with ,");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
@@ -323,12 +326,13 @@ int main(int argc, char *argv[]) {
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
   auto detector_type = vm["detector_type"].as<string>();
   auto detector_model = vm["detector_model"].as<string>();
+  auto detector_targets = vm["detector_targets"].as<string>();
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
   float detector_confidence_threshold = vm["detector_confidence_threshold"].as<float>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_confidence_threshold);
+      detector_confidence_threshold, detector_targets);
 
   return 0;
 }
