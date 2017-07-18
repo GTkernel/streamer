@@ -14,7 +14,8 @@ Camera::Camera(const string& name, const string& video_uri, int width,
       name_(name),
       video_uri_(video_uri),
       width_(width),
-      height_(height) {
+      height_(height),
+      frame_id_(0) {
   stream_ = sinks_["output"];
 }
 
@@ -26,6 +27,10 @@ int Camera::GetWidth() { return width_; }
 int Camera::GetHeight() { return height_; }
 
 std::shared_ptr<Stream> Camera::GetStream() const { return stream_; }
+
+unsigned long Camera::CreateFrameID() {
+  return frame_id_++;
+}
 
 bool Camera::Capture(cv::Mat& image) {
   if (stopped_) {

@@ -69,6 +69,7 @@ class Camera : public Processor {
   virtual void MetadataToFrame(std::unique_ptr<Frame>& frame);
 
   string GetCameraInfo();
+  unsigned long CreateFrameID();
 
  protected:
   virtual bool Init() override = 0;
@@ -86,6 +87,8 @@ class Camera : public Processor {
   string pan_right_command_;
   // Camera output stream
   std::shared_ptr<Stream> stream_;
+  // Counter to set camera specific frame id
+  unsigned long frame_id_;
 };
 
 #endif  // STREAMER_CAMERA_CAMERA_H_

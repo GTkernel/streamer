@@ -28,6 +28,12 @@ class FramePrinter : public boost::static_visitor<std::string> {
     return output.str();
   }
 
+  std::string operator()(const unsigned long& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
   std::string operator()(const std::string& v) const { return v; }
 
   std::string operator()(const std::vector<std::string>& v) const {
@@ -120,6 +126,7 @@ std::string Frame::ToString() const {
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
 template void Frame::SetValue(std::string, const int&);
+template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const std::string&);
 template void Frame::SetValue(std::string, const std::vector<std::string>&);
 template void Frame::SetValue(std::string, const std::vector<Rect>&);
@@ -129,6 +136,7 @@ template void Frame::SetValue(std::string, const cv::Mat&);
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
 template int Frame::GetValue(std::string) const;
+template unsigned long Frame::GetValue(std::string) const;
 template std::string Frame::GetValue(std::string) const;
 template std::vector<std::string> Frame::GetValue(std::string) const;
 template std::vector<Rect> Frame::GetValue(std::string) const;

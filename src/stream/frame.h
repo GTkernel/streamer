@@ -30,8 +30,8 @@ class Frame {
   T GetValue(std::string key) const;
   std::string ToString() const;
   using field_types =
-      boost::variant<int, std::string, float, double, cv::Mat,
-                     std::vector<char>, std::vector<std::string>,
+      boost::variant<int, std::string, float, double, unsigned long,
+                     cv::Mat, std::vector<char>, std::vector<std::string>,
                      std::vector<Rect>>;
   using map_size_type = std::unordered_map<std::string, field_types>::size_type;
   map_size_type Count(std::string key) const { return frame_data_.count(key); }
