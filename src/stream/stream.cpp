@@ -67,6 +67,9 @@ void StreamReader::PushFrame(std::unique_ptr<Frame> frame) {
   // If buffer is full, the frame is dropped
   if (frame_buffer_.size() < max_buffer_size_) {
     frame_buffer_.push(std::move(frame));
+  } else {
+    LOG(WARNING) << "Dropping frame: "
+                 << frame->GetValue<unsigned long>("frame_id");
   }
   buffer_cv_.notify_all();
 }
