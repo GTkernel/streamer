@@ -171,26 +171,6 @@ cv::Mat GstVideoCapture::GetPixels() {
 }
 
 /**
- * @brief Try to get next frame from the pipeline and does not block.
- * @return The frame currently in the frames queue. An empty Mat if no frame
- * immediately available.
- */
-cv::Mat GstVideoCapture::TryGetPixels() {
-  Timer timer;
-  timer.Start();
-  if (!connected_ || frames_.size() == 0) {
-    return cv::Mat();
-  } else {
-    std::lock_guard<std::mutex> guard(capture_lock_);
-    cv::Mat pixels = frames_.front();
-    frames_.pop_front();
-
-    LOG(INFO) << "Get frame in " << timer.ElapsedMSec() << " ms";
-    return pixels;
-  }
-}
-
-/**
  * @brief Get the size of original frame.
  */
 cv::Size GstVideoCapture::GetOriginalFrameSize() const {

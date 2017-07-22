@@ -24,7 +24,6 @@ class GstVideoCapture {
  public:
   GstVideoCapture();
   ~GstVideoCapture();
-  cv::Mat TryGetPixels();
   cv::Mat GetPixels();
   cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri);
