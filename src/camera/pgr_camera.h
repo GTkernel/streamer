@@ -45,6 +45,13 @@ class PGRCamera : public Camera {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode);
   virtual CameraPixelFormatType GetPixelFormat();
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format);
+  virtual void SetFrameRate(float f) override;
+  virtual float GetFrameRate() override;
+  virtual void SetROI(int roi_offset_x, int roi_offset_y, int roi_width,
+                      int roi_height);
+  virtual int GetROIOffsetX() override;
+  virtual int GetROIOffsetY() override;
+  virtual Shape GetROIOffsetShape() override;
 
  protected:
   virtual bool Init() override;

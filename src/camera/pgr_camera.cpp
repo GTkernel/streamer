@@ -90,7 +90,7 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
   auto frame = std::make_unique<Frame>();
   frame->SetValue("original_bytes", image_bytes);
   frame->SetValue("original_image", output_image);
-  frame->SetValue("frame_id", CreateFrameID());
+  frame->SetValue("frame_id", camera->CreateFrameID());
   camera->PushFrame("output", std::move(frame));
 }
 
@@ -251,6 +251,30 @@ void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
   CHECK_PGR(camera_.SetFormat7Configuration(
       &image_settings, fmt7_packet_info.recommendedBytesPerPacket));
   CHECK_PGR(camera_.StartCapture(PGRCamera::OnImageGrabbed, this));
+}
+
+void PGRCamera::SetFrameRate(float) { STREAMER_NOT_IMPLEMENTED; }
+
+float PGRCamera::GetFrameRate() {
+  STREAMER_NOT_IMPLEMENTED;
+  return 0;
+}
+
+void PGRCamera::SetROI(int, int, int, int) { STREAMER_NOT_IMPLEMENTED; }
+
+int PGRCamera::GetROIOffsetX() {
+  STREAMER_NOT_IMPLEMENTED;
+  return 0;
+}
+
+int PGRCamera::GetROIOffsetY() {
+  STREAMER_NOT_IMPLEMENTED;
+  return 0;
+}
+
+Shape PGRCamera::GetROIOffsetShape() {
+  STREAMER_NOT_IMPLEMENTED;
+  return Shape();
 }
 
 void PGRCamera::SetProperty(FlyCapture2::PropertyType property_type,
