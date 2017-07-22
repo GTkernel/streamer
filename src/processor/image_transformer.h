@@ -25,13 +25,6 @@ class ImageTransformer : public Processor {
   Shape target_shape_;
   cv::Mat mean_image_;
   bool subtract_mean_;
-
-  // Temporary mat for image processing, reduce memory (de)allocation
-  cv::Mat sample_image_;
-  cv::Mat sample_resized_;
-  cv::Mat sample_cropped_;
-  cv::Mat sample_float_;
-  cv::Mat sample_normalized_;
 };
 
 #endif  // STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_

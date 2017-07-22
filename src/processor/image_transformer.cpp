@@ -45,26 +45,29 @@ void ImageTransformer::Process() {
   const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
   timer.Start();
 
-  int num_channel = target_shape_.channel, width = target_shape_.width,
-      height = target_shape_.height;
+  int num_channel = target_shape_.channel;
+  int width = target_shape_.width;
+  int height = target_shape_.height;
   cv::Size input_geometry(width, height);
 
+  cv::Mat sample_image;
   // Convert channels
   if (img.channels() == 3 && num_channel == 1)
-    cv::cvtColor(img, sample_image_, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(img, sample_image, cv::COLOR_BGR2GRAY);
   else if (img.channels() == 4 && num_channel == 1)
-    cv::cvtColor(img, sample_image_, cv::COLOR_BGRA2GRAY);
+    cv::cvtColor(img, sample_image, cv::COLOR_BGRA2GRAY);
   else if (img.channels() == 4 && num_channel == 3)
-    cv::cvtColor(img, sample_image_, cv::COLOR_BGRA2BGR);
+    cv::cvtColor(img, sample_image, cv::COLOR_BGRA2BGR);
   else if (img.channels() == 1 && num_channel == 3)
-    cv::cvtColor(img, sample_image_, cv::COLOR_GRAY2BGR);
+    cv::cvtColor(img, sample_image, cv::COLOR_GRAY2BGR);
   else
-    sample_image_ = img;
+    sample_image = img;
 
   // Crop according to scale
   int desired_width = (int)((float)width / height * img.size[1]);
   int desired_height = (int)((float)height / width * img.size[0]);
-  int new_width = img.size[0], new_height = img.size[1];
+  int new_width = img.size[0];
+  int new_height = img.size[1];
   if (desired_width < img.size[0]) {
     new_width = desired_width;
   } else {
@@ -72,26 +75,32 @@ void ImageTransformer::Process() {
   }
   cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2,
                new_width, new_height);
-  sample_cropped_ = sample_image_(roi);
+  cv::Mat sample_cropped = sample_image(roi);
 
   // Resize
-  if (sample_cropped_.size() != input_geometry)
-    cv::resize(sample_cropped_, sample_resized_, input_geometry);
-  else
-    sample_resized_ = sample_cropped_;
-
-  // Convert to float
-  if (num_channel == 3)
-    sample_resized_.convertTo(sample_float_, CV_32FC3);
-  else
-    sample_resized_.convertTo(sample_float_, CV_32FC1);
-
-  // Normalize
-  if (subtract_mean_) {
-    cv::subtract(sample_float_, mean_image_, sample_normalized_);
+  cv::Mat sample_resized;
+  if (sample_cropped.size() != input_geometry) {
+    cv::resize(sample_cropped, sample_resized, input_geometry);
+  } else {
+    sample_resized = sample_cropped;
   }
 
-  frame->SetValue("image", sample_normalized_);
+  // Convert to float
+  cv::Mat sample_float;
+  if (num_channel == 3)
+    sample_resized.convertTo(sample_float, CV_32FC3);
+  else
+    sample_resized.convertTo(sample_float, CV_32FC1);
+
+  // Normalize
+  cv::Mat sample_normalized;
+  if (subtract_mean_) {
+    cv::subtract(sample_float, mean_image_, sample_normalized);
+  } else {
+    sample_normalized = sample_float;
+  }
+
+  frame->SetValue("image", sample_normalized);
   PushFrame("output", std::move(frame));
 }
 
