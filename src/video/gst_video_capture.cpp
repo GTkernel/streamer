@@ -2,12 +2,17 @@
 // Created by Ran Xian on 7/22/16.
 //
 
-#include "gst_video_capture.h"
+#include "video/gst_video_capture.h"
+
+#include <chrono>
+#include <thread>
+
 #include <gst/app/gstappsink.h>
 #include <gst/gstmemory.h>
-#include <thread>
+
 #include "common/context.h"
 #include "utils/utils.h"
+
 /************************
  * GStreamer callbacks ***
  ************************/
@@ -148,11 +153,15 @@ cv::Mat GstVideoCapture::GetPixels() {
   if (!connected_) return cv::Mat();
 
   std::unique_lock<std::mutex> lk(capture_lock_);
-  capture_cv_.wait(lk, [this] {
+  bool pred = capture_cv_.wait_for(lk, std::chrono::milliseconds(100), [this] {
     // Stop waiting when frame available or connection fails
     return !connected_ || frames_.size() != 0;
   });
 
+  if (!pred) {
+    // The wait stopped because of a timeout.
+    return cv::Mat();
+  }
   if (!connected_) return cv::Mat();
 
   cv::Mat pixels = frames_.front();

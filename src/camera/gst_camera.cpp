@@ -25,6 +25,11 @@ bool GSTCamera::OnStop() {
 }
 void GSTCamera::Process() {
   const cv::Mat& pixels = capture_.GetPixels();
+  if (pixels.empty()) {
+    // Did not get a new frame.
+    return;
+  }
+
   auto frame = std::make_unique<Frame>();
   frame->SetValue("frame_id", CreateFrameID());
   frame->SetValue("original_bytes",
