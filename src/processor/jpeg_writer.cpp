@@ -36,6 +36,11 @@ void JpegWriter::Process() {
   auto id = frame->GetValue<unsigned long>("frame_id");
   filepath << output_dir_ << "/" << id << ".jpg";
 
+  std::string filepath_s = filepath.str();
   const auto& img = frame->GetValue<cv::Mat>(key_);
-  cv::imwrite(filepath.str(), img);
+  try {
+    cv::imwrite(filepath_s, img);
+  } catch (cv::Exception& e) {
+    LOG(FATAL) << "Unable to write JPEG file \"" << filepath_s << "\": " << e.what();
+  }
 };
