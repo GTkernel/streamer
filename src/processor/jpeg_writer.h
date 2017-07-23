@@ -18,7 +18,7 @@ class JpegWriter : public Processor {
  public:
   // "key" denotes which field to encode, and "output_dir" denotes the directory
   // in which the resulting files will be written.
-  JpegWriter(std::string key, std::string output_dir);
+  JpegWriter(std::string key = "original_image", std::string output_dir = ".");
 
   // "params" should contain two keys, "key" and "output_dir"
   static std::shared_ptr<JpegWriter> Create(const FactoryParamsType& params);

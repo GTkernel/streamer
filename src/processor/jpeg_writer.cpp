@@ -30,6 +30,7 @@ bool JpegWriter::OnStop() { return true; }
 
 void JpegWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
+  if (!frame->Count(key_)) LOG(FATAL) << "Key \"" << key_ << "\" not in frame.";
 
   std::stringstream filepath;
   auto id = frame->GetValue<unsigned long>("frame_id");
