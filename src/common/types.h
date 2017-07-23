@@ -127,7 +127,8 @@ std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
 
 //// Processor types
 enum ProcessorType {
-  PROCESSOR_TYPE_CAMERA = 0,
+  PROCESSOR_TYPE_BINARY_FILE_WRITER = 0,
+  PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_ENCODER,
   PROCESSOR_TYPE_FILE_WRITER,
@@ -150,7 +151,9 @@ enum ProcessorType {
 };
 // Returns the ProcessorType enum value corresponding to the string.
 inline ProcessorType GetProcessorTypeByString(const std::string& type) {
-  if (type == "Camera") {
+  if (type == "BinaryFileWriter") {
+    return PROCESSOR_TYPE_BINARY_FILE_WRITER;
+  } else if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
   } else if (type == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
@@ -192,6 +195,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
 // Returns a human-readable string corresponding to the provided ProcessorType.
 inline std::string GetStringForProcessorType(ProcessorType type) {
   switch (type) {
+    case PROCESSOR_TYPE_BINARY_FILE_WRITER:
+      return "BinaryFileWriter";
     case PROCESSOR_TYPE_CAMERA:
       return "Camera";
     case PROCESSOR_TYPE_CUSTOM:
