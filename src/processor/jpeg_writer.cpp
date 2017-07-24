@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include <opencv2/opencv.hpp>
+#include <boost/filesystem.hpp>
 
 #include "stream/frame.h"
 
@@ -30,7 +31,13 @@ bool JpegWriter::OnStop() { return true; }
 
 void JpegWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
-  if (!frame->Count(key_)) LOG(FATAL) << "Key \"" << key_ << "\" not in frame.";
+
+  if (!frame->Count(key_)) {
+    LOG(FATAL) << "Key \"" << key_ << "\" not in frame.";
+  }
+  if (!boost::filesystem::exists(output_dir_)) {
+    LOG(FATAL) << "Directory \"" << output_dir_ << "\" does not exist.";
+  }
 
   std::stringstream filepath;
   auto id = frame->GetValue<unsigned long>("frame_id");
