@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/26/16.
 //
 
-#ifndef STREAMER_COMMON_TYPE_H_
-#define STREAMER_COMMON_TYPE_H_
+#ifndef STREAMER_COMMON_TYPES_H_
+#define STREAMER_COMMON_TYPES_H_
 
 #include <cstdlib>
 #include <memory>
@@ -228,4 +228,4 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
   LOG(FATAL) << "Unhandled ProcessorType: " << type;
 }
 
-#endif  // STREAMER_COMMON_TYPE_H_
+#endif  // STREAMER_COMMON_TYPES_H_
