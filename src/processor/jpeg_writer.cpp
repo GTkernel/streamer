@@ -2,8 +2,10 @@
 #include "processor/jpeg_writer.h"
 
 #include <sstream>
+#include <stdexcept>
 
 #include <boost/filesystem.hpp>
+#include <boost/variant/get.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "stream/frame.h"
