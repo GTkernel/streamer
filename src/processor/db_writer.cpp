@@ -30,7 +30,11 @@ bool DbWriter::Init() {
     CHECK(ofs_.is_open()) << "Error opening file";
   } else {
     if (!athena_address_.empty()) {
+#ifdef USE_ATHENA
       aclient_.reset(new athena::AthenaClient(athena_address_));
+#else
+      LOG(FATAL) << "Athena client not supported, please compile with -DUSE_ATHENA=ON";
+#endif
     }
   }
   return true;
@@ -62,8 +66,10 @@ void DbWriter::Process() {
   if (write_to_file_) {
     WriteFile(camera_id, uuids, timestamp, tags, struck_features);
   } else {
+#ifdef USE_ATHENA
     if (!athena_address_.empty() && aclient_)
       WriteAthena(camera_id, uuids, timestamp, tags, struck_features);
+#endif
   }
 }
 
@@ -96,6 +102,7 @@ void DbWriter::WriteFile(const std::string& camera_id,
   }
 }
 
+#ifdef USE_ATHENA
 void DbWriter::WriteAthena(const std::string& camera_id,
                            const std::vector<std::string>& uuids,
                            unsigned long timestamp,
@@ -146,3 +153,4 @@ void DbWriter::WriteAthena(const std::string& camera_id,
     }
   }
 }
+#endif

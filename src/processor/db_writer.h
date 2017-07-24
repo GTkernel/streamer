@@ -8,7 +8,9 @@
 #ifndef STREAMER_DB_WRITER_H
 #define STREAMER_DB_WRITER_H
 
+#ifdef USE_ATHENA
 #include "client/AthenaClient.h"
+#endif
 #include "common/common.h"
 #include "camera/camera.h"
 #include "processor.h"
@@ -40,7 +42,9 @@ class DbWriter : public Processor {
     bool write_to_file_;
     std::ofstream ofs_;
     std::string athena_address_;
+#ifdef USE_ATHENA
     std::unique_ptr<athena::AthenaClient> aclient_;
+#endif
 };
 
 #endif // STREAMER_DB_WRITER_H
