@@ -22,7 +22,7 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const string& camera_name, const string& net_name) {
+void Run(const string& camera_name, const string& net_name, bool display) {
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
@@ -49,7 +49,42 @@ void Run(const string& camera_name, const string& net_name) {
 
   LOG(INFO) << "Classifier running. CTRL-C to stop";
 
+  auto reader = classifier->GetSink("output")->Subscribe();
   while (true) {
+    auto frame = reader->PopFrame();
+    auto tags = frame->GetValue<std::vector<std::string>>("tags");
+    auto probs = frame->GetValue<std::vector<double>>("probabilities");
+    std::string tag = tags.front();
+    double prob = probs.front();
+
+    if (display) {
+      cv::Mat img = frame->GetValue<cv::Mat>("original_image");
+
+      // Overlay classification label and probability
+      double font_size = 0.8 * img.size[0] / 320.0;
+      cv::Point label_point(img.rows / 6, img.cols / 3);
+      cv::Scalar outline_color(0, 0, 0);
+      cv::Scalar label_color(200, 200, 250);
+
+      cv::putText(img, tag, label_point, CV_FONT_HERSHEY_DUPLEX, font_size,
+                  outline_color, 8, CV_AA);
+      cv::putText(img, tag, label_point, CV_FONT_HERSHEY_DUPLEX, font_size,
+                  label_color, 2, CV_AA);
+
+      cv::Point fps_point(img.rows / 3, img.cols / 6);
+
+      char fps_string[256];
+      sprintf(fps_string, "Prob: %.2lf", prob);
+      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
+                  outline_color, 8, CV_AA);
+      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
+                  label_color, 2, CV_AA);
+
+      cv::imshow(camera_name, img);
+
+      int q = cv::waitKey(10);
+      if (q == 'q') break;
+    }
   }
 }
 
@@ -67,6 +102,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR")->required(),
                      "The directory to find streamer's configurations");
+  desc.add_options()("display,d", "Enable display or not");
   desc.add_options()("net,n",
                      po::value<string>()->value_name("NET")->required(),
                      "The name of the neural net to run");
@@ -98,9 +134,10 @@ int main(int argc, char* argv[]) {
 
   auto camera_name = vm["camera"].as<string>();
   auto net_name = vm["net"].as<string>();
+  auto display = vm.count("display") != 0;
 
   // Run classifier
-  Run(camera_name, net_name);
+  Run(camera_name, net_name, display);
 
   return 0;
 }
