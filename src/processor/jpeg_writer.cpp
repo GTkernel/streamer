@@ -3,8 +3,8 @@
 
 #include <sstream>
 
-#include <opencv2/opencv.hpp>
 #include <boost/filesystem.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "stream/frame.h"
 
@@ -48,6 +48,7 @@ void JpegWriter::Process() {
   try {
     cv::imwrite(filepath_s, img);
   } catch (cv::Exception& e) {
-    LOG(FATAL) << "Unable to write JPEG file \"" << filepath_s << "\": " << e.what();
+    LOG(FATAL) << "Unable to write JPEG file \"" << filepath_s
+               << "\": " << e.what();
   }
 };
