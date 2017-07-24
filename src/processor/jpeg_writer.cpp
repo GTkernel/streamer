@@ -30,21 +30,25 @@ bool JpegWriter::Init() { return true; }
 bool JpegWriter::OnStop() { return true; }
 
 void JpegWriter::Process() {
-  std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
-
-  if (!frame->Count(key_)) {
-    LOG(FATAL) << "Key \"" << key_ << "\" not in frame.";
-  }
   if (!boost::filesystem::exists(output_dir_)) {
     LOG(FATAL) << "Directory \"" << output_dir_ << "\" does not exist.";
   }
 
+  std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
+
   std::stringstream filepath;
   auto id = frame->GetValue<unsigned long>("frame_id");
   filepath << output_dir_ << "/" << id << ".jpg";
-
   std::string filepath_s = filepath.str();
-  const auto& img = frame->GetValue<cv::Mat>(key_);
+
+  cv::Mat img;
+  try {
+    img = frame->GetValue<cv::Mat>(key_);
+  } catch (boost::bad_get& e) {
+    LOG(FATAL) << "Unable to get key \"" << key_ << "\" as a cv::Mat: " << e.what();
+  } catch (std::out_of_range& e) {
+    LOG(FATAL) << "Key \"" << key_ << "\" not in frame.";
+  }
   try {
     cv::imwrite(filepath_s, img);
   } catch (cv::Exception& e) {
