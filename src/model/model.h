@@ -30,6 +30,9 @@ class ModelDesc {
 
   const string& GetName() const { return name_; }
   const ModelType& GetModelType() const { return type_; }
+  void SetModelDescPath(const string& file_path) {
+    model_desc_path_ = file_path;
+  }
   const string& GetModelDescPath() const { return model_desc_path_; }
   const string& GetModelParamsPath() const { return model_params_path_; }
   int GetInputWidth() const { return input_width_; }
