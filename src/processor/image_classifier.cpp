@@ -76,10 +76,15 @@ void ImageClassifier::Process() {
 
   // Create and push a MetadataFrame.
   std::vector<std::string> tags;
+  std::vector<double> probabilities;
   for (const auto& pred : predictions) {
     tags.push_back(pred.first);
+    probabilities.push_back(pred.second);
   }
+
   frame->SetValue("tags", tags);
+  frame->SetValue("probabilities", probabilities);
+
   PushFrame(SINK_NAME, std::move(frame));
 }
 

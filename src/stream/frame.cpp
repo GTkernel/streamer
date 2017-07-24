@@ -46,6 +46,16 @@ class FramePrinter : public boost::static_visitor<std::string> {
     return output.str();
   }
 
+  std::string operator()(const std::vector<double>& v) const {
+    std::ostringstream output;
+    output << "std::vector<double> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
   std::string operator()(const std::vector<Rect>& v) const {
     std::ostringstream output;
     output << "std::vector<Rect> = [" << std::endl;
@@ -129,6 +139,7 @@ template void Frame::SetValue(std::string, const int&);
 template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const std::string&);
 template void Frame::SetValue(std::string, const std::vector<std::string>&);
+template void Frame::SetValue(std::string, const std::vector<double>&);
 template void Frame::SetValue(std::string, const std::vector<Rect>&);
 template void Frame::SetValue(std::string, const std::vector<char>&);
 template void Frame::SetValue(std::string, const cv::Mat&);
@@ -139,6 +150,7 @@ template int Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
 template std::string Frame::GetValue(std::string) const;
 template std::vector<std::string> Frame::GetValue(std::string) const;
+template std::vector<double> Frame::GetValue(std::string) const;
 template std::vector<Rect> Frame::GetValue(std::string) const;
 template cv::Mat Frame::GetValue(std::string) const;
 template std::vector<char> Frame::GetValue(std::string) const;
