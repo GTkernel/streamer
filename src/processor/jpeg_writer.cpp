@@ -45,7 +45,8 @@ void JpegWriter::Process() {
   try {
     img = frame->GetValue<cv::Mat>(key_);
   } catch (boost::bad_get& e) {
-    LOG(FATAL) << "Unable to get key \"" << key_ << "\" as a cv::Mat: " << e.what();
+    LOG(FATAL) << "Unable to get key \"" << key_
+               << "\" as a cv::Mat: " << e.what();
   } catch (std::out_of_range& e) {
     LOG(FATAL) << "Key \"" << key_ << "\" not in frame.";
   }
