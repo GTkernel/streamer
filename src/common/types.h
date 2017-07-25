@@ -142,6 +142,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
+  PROCESSOR_TYPE_JPEG_WRITER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
   PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
   PROCESSOR_TYPE_THROTTLER,
@@ -175,6 +176,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_IMAGE_SEGMENTER;
   } else if (type == "ImageTransformer") {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
+  } else if (type == "JpegWriter") {
+    return PROCESSOR_TYPE_JPEG_WRITER;
   } else if (type == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
   } else if (type == "OpenCVFaceDetector") {
@@ -215,6 +218,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "ImageSegmenter";
     case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
       return "ImageTransformer";
+    case PROCESSOR_TYPE_JPEG_WRITER:
+      return "JpegWriter";
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return "NeuralNetEvaluator";
     case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:

@@ -41,6 +41,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_IMAGE_TRANSFORMER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGE_TRANSFORMER)));
+  EXPECT_EQ(PROCESSOR_TYPE_JPEG_WRITER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_JPEG_WRITER)));
   EXPECT_EQ(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_NEURAL_NET_EVALUATOR)));

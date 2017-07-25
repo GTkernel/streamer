@@ -6,6 +6,7 @@
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
+#include "processor/jpeg_writer.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_face_detector.h"
 #include "processor/throttler.h"
@@ -49,6 +50,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return ImageSegmenter::Create(params);
     case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
       return ImageTransformer::Create(params);
+    case PROCESSOR_TYPE_JPEG_WRITER:
+      return JpegWriter::Create(params);
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return NeuralNetEvaluator::Create(params);
     case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
