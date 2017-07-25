@@ -90,6 +90,12 @@ class Processor {
   virtual double GetAvgFps() const;
 
   /**
+   * @brief Get observed throughput of processor
+   * @return throughput in FPS
+   */
+  double GetObservedAvgFps();
+
+  /**
    * @brief Get the type of the processor
    */
   ProcessorType GetType() const;
@@ -140,6 +146,8 @@ class Processor {
 
  private:
   const ProcessorType type_;
+  Timer timer_;
+
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_H_

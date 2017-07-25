@@ -63,6 +63,8 @@ bool Processor::Start() {
     readers_.emplace(source.first, source.second->Subscribe());
   }
 
+  timer_.Start();
+
   stopped_ = false;
   process_thread_ = std::thread(&Processor::ProcessorLoop, this);
   return true;
@@ -142,6 +144,11 @@ double Processor::GetAvgLatencyMs() const { return avg_latency_; }
 
 double Processor::GetAvgQueueLatencyMs() const {
   return queue_latency_sum_ / n_processed_;
+}
+
+double Processor::GetObservedAvgFps() {
+  double secs_elapsed = timer_.ElapsedMSec() / 1000;
+  return n_processed_ / secs_elapsed;
 }
 
 double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
