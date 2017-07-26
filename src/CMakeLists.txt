@@ -14,6 +14,7 @@ file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/c
 file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/camera/vimba_*.h)
 file(GLOB_RECURSE FRCNN_SOURCE_FILES ${SRC_ROOT}/processor/object_detector.cpp ${SRC_ROOT}/processor/object_detector.h)
 file(GLOB_RECURSE NCS_SOURCE_FILES ${SRC_ROOT}/processor/ncs_yolo_detector.cpp ${SRC_ROOT}/processor/ncs_yolo_detector.h)
+file(GLOB_RECURSE SSD_SOURCE_FILES ${SRC_ROOT}/processor/ssd_detector.cpp ${SRC_ROOT}/processor/ssd_detector.h)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${CAFFE_SOURCE_FILES}
   ${CAFFE_FP16_SOURCE_FILES}
@@ -23,7 +24,8 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${PTGRAY_SOURCE_FILES}
   ${VIMBA_SOURCE_FILES}
   ${FRCNN_SOURCE_FILES}
-  ${NCS_SOURCE_FILES})
+  ${NCS_SOURCE_FILES}
+  ${SSD_SOURCE_FILES})
 
 # Pick libraries
 set(STREAMER_LIBRARIES
@@ -118,6 +120,11 @@ endif ()
 # Build with ATHENA libraries
 if (USE_ATHENA)
   list(APPEND STREAMER_LIBRARIES ${Athena_LIBRARIES} ${Athena_utils_LIBRARIES})
+endif ()
+
+# Build with SSD libraries
+if (USE_SSD)
+  list(APPEND STREAMER_SOURCE_FILES ${SSD_SOURCE_FILES})
 endif ()
 
 list(APPEND STREAMER_LIBRARIES struck)

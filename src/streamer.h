@@ -20,7 +20,9 @@
 #include "processor/opencv_motion_detector.h"
 #include "processor/obj_tracker.h"
 #include "processor/db_writer.h"
+#ifdef USE_SSD
 #include "processor/ssd_detector.h"
+#endif
 #ifdef USE_NCS
 #include "processor/ncs_yolo_detector.h"
 #endif

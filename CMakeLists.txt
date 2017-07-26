@@ -119,6 +119,12 @@ if (USE_ATHENA)
   message("Build with Athena")
 endif ()
 
+option(USE_SSD "Build with Caffe SSD" OFF)
+if (USE_SSD)
+  add_definitions("-D USE_SSD")
+  message("Build with Caffe SSD")
+endif ()
+
 option(USE_GIE "Build with GIE or not. GIE could not be used together with Caffe for now." OFF)
 if (USE_GIE)
   if (USE_CAFFE)
