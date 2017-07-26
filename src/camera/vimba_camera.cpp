@@ -89,10 +89,9 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         cv::Mat bgr_image = TransformToBGRImage(pFrame);
 
         auto frame = std::make_unique<Frame>();
+        vimba_camera_->MetadataToFrame(frame);
         frame->SetValue("original_bytes", data_buffer);
         frame->SetValue("original_image", bgr_image);
-        frame->SetValue("frame_id", vimba_camera_->CreateFrameID());
-        vimba_camera_->MetadataToFrame(frame);
         vimba_camera_->PushFrame("output", std::move(frame));
       } else {
         LOG(ERROR) << "Can't get frame successfully: " << eReceiveStatus;

@@ -70,15 +70,18 @@ string Camera::GetCameraInfo() {
 }
 
 void Camera::MetadataToFrame(std::unique_ptr<Frame>& frame) {
-  frame->SetValue<float>("CameraSettings.Exposure", GetExposure());
-  frame->SetValue<float>("CameraSettings.Sharpness", GetSharpness());
-  frame->SetValue<float>("CameraSettings.Brightness", GetBrightness());
-  frame->SetValue<float>("CameraSettings.Saturation", GetSaturation());
-  frame->SetValue<float>("CameraSettings.Hue", GetHue());
-  frame->SetValue<float>("CameraSettings.Gain", GetGain());
-  frame->SetValue<float>("CameraSettings.Gamma", GetGamma());
-  frame->SetValue<float>("CameraSettings.WBRed", GetWBRed());
-  frame->SetValue<float>("CameraSettings.WBBlue", GetWBBlue());
+  frame->SetValue("frame_id", CreateFrameID());
+  frame->SetValue("capture_time_micros",
+                  boost::posix_time::microsec_clock::local_time());
+  frame->SetValue("CameraSettings.Exposure", GetExposure());
+  frame->SetValue("CameraSettings.Sharpness", GetSharpness());
+  frame->SetValue("CameraSettings.Brightness", GetBrightness());
+  frame->SetValue("CameraSettings.Saturation", GetSaturation());
+  frame->SetValue("CameraSettings.Hue", GetHue());
+  frame->SetValue("CameraSettings.Gain", GetGain());
+  frame->SetValue("CameraSettings.Gamma", GetGamma());
+  frame->SetValue("CameraSettings.WBRed", GetWBRed());
+  frame->SetValue("CameraSettings.WBBlue", GetWBBlue());
 }
 
 /*****************************************************************************

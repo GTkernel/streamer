@@ -2,6 +2,7 @@
 #ifndef STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
 #define STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
 
+#include <boost/date_time/posix_time/time_serialize.hpp>
 #include <boost/serialization/array.hpp>
 
 namespace boost {

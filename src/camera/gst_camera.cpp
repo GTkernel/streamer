@@ -31,13 +31,12 @@ void GSTCamera::Process() {
   }
 
   auto frame = std::make_unique<Frame>();
-  frame->SetValue("frame_id", CreateFrameID());
+  MetadataToFrame(frame);
   frame->SetValue("original_bytes",
                   std::vector<char>(
                       (char*)pixels.data,
                       (char*)pixels.data + pixels.total() * pixels.elemSize()));
   frame->SetValue("original_image", pixels);
-  MetadataToFrame(frame);
   PushFrame("output", std::move(frame));
 }
 

@@ -88,9 +88,9 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
 
   cv::Mat output_image = image.clone();
   auto frame = std::make_unique<Frame>();
+  camera->MetadataToFrame(frame);
   frame->SetValue("original_bytes", image_bytes);
   frame->SetValue("original_image", output_image);
-  frame->SetValue("frame_id", camera->CreateFrameID());
   camera->PushFrame("output", std::move(frame));
 }
 

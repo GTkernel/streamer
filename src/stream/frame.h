@@ -7,6 +7,7 @@
 
 #include "common/types.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/unique_ptr.hpp>
 #include <boost/serialization/unordered_map.hpp>
@@ -30,9 +31,10 @@ class Frame {
   T GetValue(std::string key) const;
   std::string ToString() const;
   using field_types =
-      boost::variant<int, std::string, float, double, unsigned long, cv::Mat,
-                     std::vector<char>, std::vector<std::string>,
-                     std::vector<double>, std::vector<Rect>>;
+      boost::variant<int, std::string, float, double, unsigned long,
+                     boost::posix_time::ptime, cv::Mat, std::vector<char>,
+                     std::vector<std::string>, std::vector<double>,
+                     std::vector<Rect>>;
   using map_size_type = std::unordered_map<std::string, field_types>::size_type;
   map_size_type Count(std::string key) const { return frame_data_.count(key); }
 

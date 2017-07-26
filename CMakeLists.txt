@@ -23,7 +23,8 @@ find_package(OpenCV REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(Glog REQUIRED)
 find_package(GLIB REQUIRED gobject)
-find_package(Boost REQUIRED COMPONENTS system filesystem serialization iostreams thread)
+find_package(Boost REQUIRED COMPONENTS
+  system filesystem serialization iostreams thread date_time)
 find_package(JeMalloc)
 find_package(Eigen3 REQUIRED)
 
