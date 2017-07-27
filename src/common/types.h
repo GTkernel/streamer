@@ -129,6 +129,7 @@ std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
 enum ProcessorType {
   PROCESSOR_TYPE_BINARY_FILE_WRITER = 0,
   PROCESSOR_TYPE_CAMERA,
+  PROCESSOR_TYPE_COMPRESSOR,
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_ENCODER,
   PROCESSOR_TYPE_FILE_WRITER,
@@ -155,6 +156,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_BINARY_FILE_WRITER;
   } else if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
+  } else if (type == "Compressor") {
+    return PROCESSOR_TYPE_COMPRESSOR;
   } else if (type == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
   } else if (type == "GstVideoEncoder") {
@@ -199,6 +202,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "BinaryFileWriter";
     case PROCESSOR_TYPE_CAMERA:
       return "Camera";
+    case PROCESSOR_TYPE_COMPRESSOR:
+      return "Compressor";
     case PROCESSOR_TYPE_CUSTOM:
       return "Custom";
     case PROCESSOR_TYPE_ENCODER:

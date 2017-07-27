@@ -81,7 +81,7 @@ bool DBFileWriter::OnStop() { return true; }
 void DBFileWriter::Process() {
   auto frame = GetFrame("input");
   cv::Mat image = frame->GetValue<cv::Mat>("original_image");
-  auto raw_image = frame->GetValue<std::vector<char>>("original_bytes");
+  auto raw_image = frame->GetValue<std::vector<char>>("compressed_bytes");
 
   boost::posix_time::ptime pt =
       frame->GetValue<boost::posix_time::ptime>("capture_time_micros");

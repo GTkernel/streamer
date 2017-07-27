@@ -10,6 +10,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_CAMERA,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CAMERA)));
+  EXPECT_EQ(PROCESSOR_TYPE_COMPRESSOR,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_COMPRESSOR)));
   EXPECT_EQ(PROCESSOR_TYPE_CUSTOM,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CUSTOM)));

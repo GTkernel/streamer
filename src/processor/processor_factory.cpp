@@ -3,6 +3,7 @@
 
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
+#include "processor/compressor.h"
 #include "processor/file_writer.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
@@ -28,6 +29,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return BinaryFileWriter::Create(params);
     case PROCESSOR_TYPE_CAMERA:
       return CameraManager::GetInstance().GetCamera(params.at("camera_name"));
+    case PROCESSOR_TYPE_COMPRESSOR:
+      return Compressor::Create(params);
     case PROCESSOR_TYPE_CUSTOM:
       STREAMER_NOT_IMPLEMENTED;
       return nullptr;

@@ -147,7 +147,6 @@ class Processor {
  private:
   const ProcessorType type_;
   Timer timer_;
-
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_H_

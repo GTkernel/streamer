@@ -11,6 +11,7 @@
 
 #include "common/context.h"
 #include "db_filewriter.h"
+#include "processor/compressor.h"
 #include "processor/pubsub/frame_subscriber.h"
 
 namespace po = boost::program_options;
@@ -34,9 +35,15 @@ void Run(const std::string& publisher_url, const std::string& output_dir) {
   auto subscriber = std::make_shared<FrameSubscriber>(publisher_url);
   procs.push_back(subscriber);
 
+  // Create Compressor.
+  auto compressor =
+      std::make_shared<Compressor>(Compressor::CompressionType::BZIP2);
+  compressor->SetSource(subscriber->GetSink());
+  procs.push_back(compressor);
+
   // Create DBFileWriter.
   auto writer = std::make_shared<DBFileWriter>(output_dir);
-  writer->SetSource("input", subscriber->GetSink());
+  writer->SetSource("input", compressor->GetSink());
   procs.push_back(writer);
 
   // Start the processors in reverse order.
