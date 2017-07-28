@@ -4,6 +4,9 @@
 
 #include "frame.h"
 
+#include <algorithm>
+#include <experimental/unordered_map>
+
 #include <opencv2/core/core.hpp>
 
 #include "common/types.h"
@@ -97,17 +100,73 @@ class FramePrinter : public boost::static_visitor<std::string> {
   }
 };
 
+class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
+ public:
+  nlohmann::json operator()(const double& v) const { return v; }
+
+  nlohmann::json operator()(const float& v) const { return v; }
+
+  nlohmann::json operator()(const int& v) const { return v; }
+
+  nlohmann::json operator()(const unsigned long& v) const { return v; }
+
+  nlohmann::json operator()(const boost::posix_time::ptime& v) const {
+    return boost::posix_time::to_simple_string(v);
+  }
+
+  nlohmann::json operator()(const std::string& v) const { return v; }
+
+  nlohmann::json operator()(const std::vector<std::string>& v) const {
+    return v;
+  }
+
+  nlohmann::json operator()(const std::vector<double>& v) const { return v; }
+
+  nlohmann::json operator()(const std::vector<Rect>& v) const {
+    nlohmann::json j;
+    for (const auto& r : v) {
+      j.push_back(r.ToJson());
+    }
+    return j;
+  }
+
+  nlohmann::json operator()(const std::vector<char>& v) const { return v; }
+
+  nlohmann::json operator()(const cv::Mat& v) const {
+    cv::FileStorage fs(".json", cv::FileStorage::WRITE |
+                                    cv::FileStorage::MEMORY |
+                                    cv::FileStorage::FORMAT_JSON);
+    fs << "cvMat" << v;
+    return fs.releaseAndGetString();
+  }
+};
+
 Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
 
 Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
 
-Frame::Frame(const Frame& frame) {
+Frame::Frame(const Frame& frame) : Frame(frame, {}) {}
+
+Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
   frame_data_ = frame.frame_data_;
-  // Deep copy the original bytes
-  auto it = frame.frame_data_.find("original_bytes");
-  if (it != frame.frame_data_.end()) {
-    std::vector<char> newbuf(boost::get<std::vector<char>>(it->second));
-    frame_data_["original_bytes"] = newbuf;
+
+  bool inherit_all_fields = fields.empty();
+  if (!inherit_all_fields) {
+    std::experimental::erase_if(frame_data_, [&fields](auto& e) {
+      return fields.find(e.first) == fields.end();
+    });
+  }
+
+  // If either we are inheriting all fields or we are explicitly inheriting
+  // "original_bytes", and "original_bytes" is a valid field in "frame", then
+  // we need to inherit the "original_bytes" field. Doing so requires a deep
+  // copy.
+  auto other_it = frame.frame_data_.find("original_bytes");
+  auto field_it = std::find(fields.begin(), fields.end(), "original_bytes");
+  if ((inherit_all_fields || (field_it != fields.end())) &&
+      (other_it != frame.frame_data_.end())) {
+    frame_data_["original_bytes"] =
+        boost::get<std::vector<char>>(other_it->second);
   }
 }
 
@@ -136,7 +195,16 @@ std::string Frame::ToString() const {
   return output.str();
 }
 
-// Types declared in field_types of frame
+nlohmann::json Frame::ToJson() const {
+  FrameJsonPrinter visitor;
+  nlohmann::json j;
+  for (const auto& e : frame_data_) {
+    j[e.first] = boost::apply_visitor(visitor, e.second);
+  }
+  return j;
+}
+
+// Types declared in Field
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
 template void Frame::SetValue(std::string, const int&);

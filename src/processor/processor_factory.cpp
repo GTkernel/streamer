@@ -4,7 +4,7 @@
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
 #include "processor/compressor.h"
-#include "processor/file_writer.h"
+#include "processor/frame_writer.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
@@ -36,8 +36,6 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return nullptr;
     case PROCESSOR_TYPE_ENCODER:
       return GstVideoEncoder::Create(params);
-    case PROCESSOR_TYPE_FILE_WRITER:
-      return FileWriter::Create(params);
 #ifdef USE_RPC
     case PROCESSOR_TYPE_FRAME_RECEIVER:
       return FrameReceiver::Create(params);
@@ -50,6 +48,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
     case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
       return FrameSubscriber::Create(params);
 #endif  // USE_ZMQ
+    case PROCESSOR_TYPE_FRAME_WRITER:
+      return FrameWriter::Create(params);
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return ImageClassifier::Create(params);
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:
