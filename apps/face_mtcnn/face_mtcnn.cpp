@@ -42,7 +42,7 @@ void CleanUp() {
   }
 }
 
-void SignalHandler(int signal) {
+void SignalHandler(int) {
   std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
   //  CleanUp();
 
@@ -86,7 +86,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, CROP_TYPE_INVALID, false, false));
+        input_shape, false, false, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -140,16 +140,16 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
 
   //  double fps_to_show = 0.0;
   while (true) {
-    for (int i = 0; i < camera_names.size(); i++) {
+    for (size_t i = 0; i < camera_names.size(); i++) {
       auto reader = mtcnn_output_readers[i];
-      auto md_frame = reader->PopFrame<MetadataFrame>();
+      auto frame = reader->PopFrame();
       if (display) {
-        cv::Mat image = md_frame->GetOriginalImage();
-        std::vector<Rect> bboxes = md_frame->GetBboxes();
+        auto image = frame->GetValue<cv::Mat>("original_image");
+        auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
         for(const auto& m: bboxes) {
           cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
         }
-        std::vector<FaceLandmark> face_landmarks = md_frame->GetFaceLandmarks();
+        auto face_landmarks = frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
         for(const auto& m: face_landmarks) {
           for(int j=0;j<5;j++)
             cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);

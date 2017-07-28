@@ -17,7 +17,6 @@ class Facenet : public Processor {
  public:
   Facenet(const ModelDesc &model_desc, Shape input_shape,
           size_t batch_size);
-  virtual ProcessorType GetType() override;
   void SetInputStream(int src_id, StreamPtr stream);
 
  protected:
@@ -27,7 +26,7 @@ class Facenet : public Processor {
 
  private:
   std::unique_ptr<caffe::Net<float>> net_;
-  DataBuffer input_buffer_;
+  void* input_buffer_;
   std::unique_ptr<Model> model_;
   ModelDesc model_desc_;
   Shape input_shape_;

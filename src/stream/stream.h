@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/26/16.
 //
 
-#ifndef STREAMER_STREAM_H
-#define STREAMER_STREAM_H
+#ifndef STREAMER_STREAM_STREAM_H_
+#define STREAMER_STREAM_STREAM_H_
 
 #include "common/common.h"
 #include "frame.h"
@@ -21,14 +21,13 @@ class StreamReader {
   friend class Stream;
 
  public:
-  StreamReader(Stream *stream, size_t max_buffer_size = 5);
+  StreamReader(Stream* stream, size_t max_buffer_size = 5);
 
   /**
    * @brief Pop a frame, and timeout if no frame available for a given time
    * @param timeout_ms Time out threshold, 0 for forever
    */
-  template <typename FT = Frame>
-  std::shared_ptr<FT> PopFrame(unsigned int timeout_ms = 0);
+  std::unique_ptr<Frame> PopFrame(unsigned int timeout_ms = 0);
 
   void UnSubscribe();
 
@@ -37,15 +36,15 @@ class StreamReader {
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.
    */
-  void PushFrame(std::shared_ptr<Frame> frame);
+  void PushFrame(std::unique_ptr<Frame> frame);
+  Stream* stream_;
   // Max size of the buffer to hold frames in the stream
   size_t max_buffer_size_;
   // The frame buffer
-  std::queue<std::shared_ptr<Frame>> frame_buffer_;
+  std::queue<std::unique_ptr<Frame>> frame_buffer_;
   // Stream synchronization
   std::mutex buffer_lock_;
   std::condition_variable buffer_cv_;
-  Stream *stream_;
 };
 
 /**
@@ -60,12 +59,8 @@ class Stream {
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.
    */
-  void PushFrame(std::shared_ptr<Frame> frame);
-  /**
-   * @brief Push a raw pointer of the frame into the stream.
-   * @param frame The frame to be pushed into the stream.
-   */
-  void PushFrame(Frame *frame);
+  void PushFrame(std::unique_ptr<Frame> frame);
+
   /**
    * @brief Get the name of the stream.
    */
@@ -75,12 +70,12 @@ class Stream {
    * @brief Get a reader from the stream.
    * @param max_buffer_size The buffer size limit of the reader.
    */
-  StreamReader *Subscribe(size_t max_buffer_size = 5);
+  StreamReader* Subscribe(size_t max_buffer_size = 5);
 
   /**
    * @brief Unsubscribe from the stream
    */
-  void UnSubscribe(StreamReader *reader);
+  void UnSubscribe(StreamReader* reader);
 
  private:
   // Stream name for profiling and debugging
@@ -91,4 +86,4 @@ class Stream {
   std::mutex stream_lock_;
 };
 
-#endif  // STREAMER_STREAM_H
+#endif  // STREAMER_STREAM_STREAM_H_

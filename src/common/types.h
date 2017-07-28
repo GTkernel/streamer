@@ -2,24 +2,18 @@
 // Created by Ran Xian on 7/26/16.
 //
 
-#ifndef STREAMER_TYPE_H
-#define STREAMER_TYPE_H
+#ifndef STREAMER_COMMON_TYPES_H_
+#define STREAMER_COMMON_TYPES_H_
 
 #include <cstdlib>
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-#ifdef USE_FP16
-// THIS ORDER MATTERS!
-#include <driver_types.h>
-
-#include <cuda_fp16.h>
-#endif
-
-#include "json/json.hpp"
+#include <boost/serialization/access.hpp>
 
 #include "common/common.h"
+#include "common/serialization.h"
 
 /**
  * @brief 3-D shape structure
@@ -44,32 +38,15 @@ struct Shape {
  * @brief Rectangle
  */
 struct Rect {
+  Rect() : px(0), py(0), width(0), height(0){};
   Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
 
-  Rect(nlohmann::json j) {
-    try {
-      nlohmann::json rect_j = j.at("Rect");
-      px = rect_j.at("px").get<int>();
-      py = rect_j.at("py").get<int>();
-      width = rect_j.at("width").get<int>();
-      height = rect_j.at("height").get<int>();
-    } catch (std::out_of_range) {
-      LOG(FATAL) << "Malformed Rect JSON: " << j.dump();
-    }
-  }
+  friend class boost::serialization::access;
 
-  nlohmann::json ToJson() {
-    nlohmann::json rect_j;
-    rect_j["px"] = px;
-    rect_j["py"] = py;
-    rect_j["width"] = width;
-    rect_j["height"] = height;
-    nlohmann::json j;
-    j["Rect"] = rect_j;
-    return j;
-  }
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {}
 
-  bool operator==(const Rect &rhs) const {
+  bool operator==(const Rect& rhs) const {
     return (px == rhs.px) && (py == rhs.py) && (width == rhs.width) &&
            (height == rhs.height);
   }
@@ -86,7 +63,21 @@ struct Rect {
  * @brief Face landmark
  */
 struct FaceLandmark {
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {}
   float x[5],y[5];
+};
+
+/**
+ * @brief Point feature
+ */
+struct PointFeature {
+  PointFeature(const cv::Point& p, const std::vector<float>& f)
+    : point(p), face_feature(f) {}
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {}
+  cv::Point point;
+  std::vector<float> face_feature;
 };
 
 /**
@@ -111,10 +102,7 @@ typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 enum ModelType {
   MODEL_TYPE_INVALID = 0,
   MODEL_TYPE_CAFFE,
-  MODEL_TYPE_MXNET,
-  MODEL_TYPE_GIE,
-  MODEL_TYPE_TENSORFLOW,
-  MODEL_TYPE_NCS
+  MODEL_TYPE_TENSORFLOW
 };
 
 //// Camera types
@@ -158,26 +146,30 @@ enum CameraPixelFormatType {
 
 std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
 
-//// Frame types
-enum FrameType {
-  FRAME_TYPE_INVALID = 0,
-  FRAME_TYPE_IMAGE,
-  FRAME_TYPE_MD,
-  FRAME_TYPE_BYTES
-};
-
 //// Processor types
 enum ProcessorType {
-  PROCESSOR_TYPE_INVALID = 0,
-  PROCESSOR_TYPE_IMAGE_CLASSIFIER,
-  PROCESSOR_TYPE_OBJECT_DETECTOR,
-  PROCESSOR_TYPE_IMAGE_TRANSFORMER,
-  PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
-  PROCESSOR_TYPE_DUMMY_NN,
-  PROCESSOR_TYPE_IMAGE_SEGMENTER,
-  PROCESSOR_TYPE_STREAM_PUBLISHER,
-  PROCESSOR_TYPE_FILE_WRITER,
+  PROCESSOR_TYPE_BINARY_FILE_WRITER = 0,
+  PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_CUSTOM,
+  PROCESSOR_TYPE_ENCODER,
+  PROCESSOR_TYPE_FILE_WRITER,
+#ifdef USE_RPC
+  PROCESSOR_TYPE_FRAME_RECEIVER,
+  PROCESSOR_TYPE_FRAME_SENDER,
+#endif  // USE_RPC
+#ifdef USE_ZMQ
+  PROCESSOR_TYPE_FRAME_PUBLISHER,
+  PROCESSOR_TYPE_FRAME_SUBSCRIBER,
+#endif  // USE_ZMQ
+  PROCESSOR_TYPE_IMAGE_CLASSIFIER,
+  PROCESSOR_TYPE_IMAGE_SEGMENTER,
+  PROCESSOR_TYPE_IMAGE_TRANSFORMER,
+  PROCESSOR_TYPE_JPEG_WRITER,
+  PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
+  PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
+  PROCESSOR_TYPE_THROTTLER,
+  PROCESSOR_TYPE_OBJECT_DETECTOR,
+  PROCESSOR_TYPE_STREAM_PUBLISHER,
   PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
   PROCESSOR_TYPE_OBJECT_TRACKER,
   PROCESSOR_TYPE_MTCNN_FACE_DETECTOR,
@@ -188,70 +180,143 @@ enum ProcessorType {
   PROCESSOR_TYPE_DB_WRITER,
   PROCESSOR_TYPE_SSD_DETECTOR,
   PROCESSOR_TYPE_NCS_YOLO_DETECTOR,
-
-  PROCESSOR_TYPE_CAMERA,
-  PROCESSOR_TYPE_ENCODER,
-  PROCESSOR_TYPE_DECODER
+  PROCESSOR_TYPE_INVALID
 };
-
-inline ProcessorType GetProcessorTypeByString(const std::string &str) {
-  if (str == "ImageClassifier") {
-    return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
-  } else if (str == "ObjectDetector") {
-    return PROCESSOR_TYPE_OBJECT_DETECTOR;
-  } else if (str == "ImageTransformer") {
-    return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
-  } else if (str == "OpenCVFaceDetector") {
-    return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
-  } else if (str == "DummyNN") {
-    return PROCESSOR_TYPE_DUMMY_NN;
-  } else if (str == "Custom") {
-    return PROCESSOR_TYPE_CUSTOM;
-  } else if (str == "OpenCVPeopleDetector") {
-    return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
-  } else if (str == "ObjectTracker") {
-    return PROCESSOR_TYPE_OBJECT_TRACKER;
-  } else if (str == "MtcnnFaceDetector") {
-    return PROCESSOR_TYPE_MTCNN_FACE_DETECTOR;
-  } else if (str == "YoloDetector") {
-    return PROCESSOR_TYPE_YOLO_DETECTOR;
-  } else if (str == "Facenet") {
-    return PROCESSOR_TYPE_FACENET;
-  } else if (str == "OpenCVMotionDetector") {
-    return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
-  } else if (str == "ObjTracker") {
-    return PROCESSOR_TYPE_OBJ_TRACKER;
-  } else if (str == "SsdDetector") {
-    return PROCESSOR_TYPE_SSD_DETECTOR;
-  } else if (str == "NcsYoloDetector") {
-    return PROCESSOR_TYPE_NCS_YOLO_DETECTOR;
-  } else if (str == "Camera") {
+// Returns the ProcessorType enum value corresponding to the string.
+inline ProcessorType GetProcessorTypeByString(const std::string& type) {
+  if (type == "BinaryFileWriter") {
+    return PROCESSOR_TYPE_BINARY_FILE_WRITER;
+  } else if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
-  } else if (str == "Encoder" || str == "VideoEncoder") {
+  } else if (type == "Custom") {
+    return PROCESSOR_TYPE_CUSTOM;
+  } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
-  } else if (str == "FileWriter") {
+  } else if (type == "FileWriter") {
     return PROCESSOR_TYPE_FILE_WRITER;
+#ifdef USE_RPC
+  } else if (type == "FrameReceiver") {
+    return PROCESSOR_TYPE_FRAME_RECEIVER;
+  } else if (type == "FrameSender") {
+    return PROCESSOR_TYPE_FRAME_SENDER;
+#endif  // USE_RPC
+#ifdef USE_ZMQ
+  } else if (type == "FramePublisher") {
+    return PROCESSOR_TYPE_FRAME_PUBLISHER;
+  } else if (type == "FrameSubscriber") {
+    return PROCESSOR_TYPE_FRAME_SUBSCRIBER;
+#endif  // USE_ZMQ
+  } else if (type == "ImageClassifier") {
+    return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
+  } else if (type == "ImageSegmenter") {
+    return PROCESSOR_TYPE_IMAGE_SEGMENTER;
+  } else if (type == "ImageTransformer") {
+    return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
+  } else if (type == "JpegWriter") {
+    return PROCESSOR_TYPE_JPEG_WRITER;
+  } else if (type == "NeuralNetEvaluator") {
+    return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
+  } else if (type == "OpenCVFaceDetector") {
+    return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+  } else if (type == "Throttler") {
+    return PROCESSOR_TYPE_THROTTLER;
+  } else if (type == "ObjectDetector") {
+    return PROCESSOR_TYPE_OBJECT_DETECTOR;
+  } else if (type == "StreamPublisher") {
+    return PROCESSOR_TYPE_STREAM_PUBLISHER;
+  } else if (type == "OpenCVPeopleDetector") {
+    return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
+  } else if (type == "ObjectTracker") {
+    return PROCESSOR_TYPE_OBJECT_TRACKER;
+  } else if (type == "MtcnnFaceDetector") {
+    return PROCESSOR_TYPE_MTCNN_FACE_DETECTOR;
+  } else if (type == "YoloDetector") {
+    return PROCESSOR_TYPE_YOLO_DETECTOR;
+  } else if (type == "Facenet") {
+    return PROCESSOR_TYPE_FACENET;
+  } else if (type == "OpenCVMotionDetector") {
+    return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
+  } else if (type == "ObjTracker") {
+    return PROCESSOR_TYPE_OBJ_TRACKER;
+  } else if (type == "DbWriter") {
+    return PROCESSOR_TYPE_DB_WRITER;
+  } else if (type == "SsdDetector") {
+    return PROCESSOR_TYPE_SSD_DETECTOR;
+  } else if (type == "NcsYoloDetector") {
+    return PROCESSOR_TYPE_NCS_YOLO_DETECTOR;
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
 }
 
-#ifdef USE_FP16
-half Cpu_Float2Half(float f);
-float Cpu_Half2Float(half h);
+// Returns a human-readable string corresponding to the provided ProcessorType.
+inline std::string GetStringForProcessorType(ProcessorType type) {
+  switch (type) {
+    case PROCESSOR_TYPE_BINARY_FILE_WRITER:
+      return "BinaryFileWriter";
+    case PROCESSOR_TYPE_CAMERA:
+      return "Camera";
+    case PROCESSOR_TYPE_CUSTOM:
+      return "Custom";
+    case PROCESSOR_TYPE_ENCODER:
+      return "GstVideoEncoder";
+    case PROCESSOR_TYPE_FILE_WRITER:
+      return "FileWriter";
+#ifdef USE_RPC
+    case PROCESSOR_TYPE_FRAME_RECEIVER:
+      return "FrameReceiver";
+    case PROCESSOR_TYPE_FRAME_SENDER:
+      return "FrameSender";
+#endif  // USE_RPC
+#ifdef USE_ZMQ
+    case PROCESSOR_TYPE_FRAME_PUBLISHER:
+      return "FramePublisher";
+    case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
+      return "FrameSubscriber";
+#endif  // USE_ZMQ
+    case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
+      return "ImageClassifier";
+    case PROCESSOR_TYPE_IMAGE_SEGMENTER:
+      return "ImageSegmenter";
+    case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
+      return "ImageTransformer";
+    case PROCESSOR_TYPE_JPEG_WRITER:
+      return "JpegWriter";
+    case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
+      return "NeuralNetEvaluator";
+    case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
+      return "OpenCVFaceDetector";
+    case PROCESSOR_TYPE_THROTTLER:
+      return "Throttler";
+    case PROCESSOR_TYPE_OBJECT_DETECTOR:
+      return "ObjectDetector";
+    case PROCESSOR_TYPE_STREAM_PUBLISHER:
+      return "StreamPublisher";
+    case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
+      return "OpenCVPeopleDetector";
+    case PROCESSOR_TYPE_OBJECT_TRACKER:
+      return "ObjectTracker";
+    case PROCESSOR_TYPE_MTCNN_FACE_DETECTOR:
+      return "MtcnnFaceDetector";
+    case PROCESSOR_TYPE_YOLO_DETECTOR:
+      return "YoloDetector";
+    case PROCESSOR_TYPE_FACENET:
+      return "Facenet";
+    case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
+      return "OpenCVMotionDetector";
+    case PROCESSOR_TYPE_OBJ_TRACKER:
+      return "ObjTracker";
+    case PROCESSOR_TYPE_DB_WRITER:
+      return "DbWriter";
+    case PROCESSOR_TYPE_SSD_DETECTOR:
+      return "SsdDetector";
+    case PROCESSOR_TYPE_NCS_YOLO_DETECTOR:
+      return "NcsYoloDetector";
+    case PROCESSOR_TYPE_INVALID:
+      return "Invalid";
+  }
 
-/**
- * @brief Float16 type
- */
-struct float16 {
-  inline float16() { data.x = 0; }
+  LOG(FATAL) << "Unhandled ProcessorType: " << type;
+}
 
-  inline float16(const float &rhs) { data = Cpu_Float2Half(rhs); }
-
-  inline operator float() const { return Cpu_Half2Float(data); }
-
-  half data;
-};
-#endif
-
-#endif  // STREAMER_TYPE_H
+#endif  // STREAMER_COMMON_TYPES_H_

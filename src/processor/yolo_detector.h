@@ -18,7 +18,7 @@ namespace yolo {
 	public:
 		Detector(const string& model_file,
 				   const string& weights_file);
-		cv::Mat Detect(cv::Mat& img);
+		cv::Mat Detect(const cv::Mat& img);
 		cv::Mat GetBox(std::vector<float>DetectionResult,float* pro_obj,
 				int* idx_class, std::vector<std::vector<int>>& bboxs, 
 				float thresh, cv::Mat img);
@@ -36,8 +36,6 @@ class YoloDetector : public Processor {
 public:
 	YoloDetector(const ModelDesc& model_desc,
 		float idle_duration = 0.f);
-	virtual ProcessorType GetType() override;
-
 	
 protected:
 	virtual bool Init() override;

@@ -47,7 +47,7 @@ void CleanUp() {
   }
 }
 
-void SignalHandler(int signal) {
+void SignalHandler(int) {
   std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
   //  CleanUp();
 
@@ -100,7 +100,7 @@ void Run(const std::vector<string> &camera_names,
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, CROP_TYPE_INVALID, false, false));
+        input_shape, false, false, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -216,23 +216,24 @@ void Run(const std::vector<string> &camera_names,
   int thickness = 2;
   int baseline = 0;
   while (true) {
-    for (int i = 0; i < camera_names.size(); i++) {
+    for (size_t i = 0; i < camera_names.size(); i++) {
       auto reader = tracker_output_readers[i];
-      auto md_frame = reader->PopFrame<MetadataFrame>();
+      auto frame = reader->PopFrame();
       if (display) {
-        cv::Mat image = md_frame->GetOriginalImage();
-        auto bboxes = md_frame->GetBboxes();
+        auto image = frame->GetValue<cv::Mat>("original_image");
+        auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
         //for(const auto& m: bboxes) {
         //  cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
         //}
-        auto face_landmarks = md_frame->GetFaceLandmarks();
-        for(const auto& m: face_landmarks) {
-          for(int j=0;j<5;j++)
-            cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
+        if (frame->Count("face_landmarks") > 0) {
+          auto face_landmarks = frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
+          for(const auto& m: face_landmarks) {
+            for(int j=0;j<5;j++)
+              cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
+          }
         }
-        auto tags = md_frame->GetTags();
+        auto tags = frame->GetValue<std::vector<std::string>>("tags");
         //auto confidences = md_frame->GetConfidences();
-        auto uuids = md_frame->GetUuids();
         for (size_t j = 0; j < tags.size(); ++j) {
           // Get the color
           int color_index;
@@ -254,7 +255,8 @@ void Run(const std::vector<string> &camera_names,
           text << tags[j];
           //if (tags.size() == confidences.size())
           //  text << "  :  " << confidences[j];
-          if (tags.size() == uuids.size()) {
+          if (frame->Count("uuids") > 0) {
+            auto uuids = frame->GetValue<std::vector<std::string>>("uuids");
             std::size_t pos = uuids[j].size();
             auto sheared_uuid = uuids[j].substr(pos-5);
             text << ": " << sheared_uuid;

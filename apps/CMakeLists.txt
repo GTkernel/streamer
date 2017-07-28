@@ -1,7 +1,12 @@
 find_package(Threads REQUIRED)
-find_package(Boost COMPONENTS regex system thread date_time REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
-include_directories(${ZMQ_INCLUDE_DIRS})
+if (USE_RPC)
+  include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
+endif ()
+if (USE_ZMQ)
+  include_directories(SYSTEM ${ZMQ_INCLUDE_DIRS})
+endif ()
 
 # Macro to get sub directories
 MACRO(SUBDIRLIST result curdir)
@@ -23,17 +28,19 @@ MACRO(BUILD_APP app_dir)
     target_link_libraries(${app_name} ${JAMALLOC_LIBRARIES})
   endif ()
   target_link_libraries(${app_name} streamer ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  ADD_BUILD_REQS(${app_name})
 ENDMACRO()
 
 set(APPS_ROOT ${PROJECT_SOURCE_DIR}/apps/)
 SUBDIRLIST(APP_DIRS ${APPS_ROOT})
 
 add_custom_target(apps)
-
 foreach (app_dir ${APP_DIRS})
-  BUILD_APP(${app_dir})
-  get_filename_component(app_name ${app_dir} NAME_WE)
-  add_dependencies(apps ${app_name})
+  if (EXISTS ${PROJECT_SOURCE_DIR}/apps/${app_dir}/CMakeLists.txt)
+    add_subdirectory(${app_dir})
+  else ()
+    BUILD_APP(${app_dir})
+    get_filename_component(app_name ${app_dir} NAME_WE)
+    add_dependencies(apps ${app_name})
+  endif ()
 endforeach ()
-
-target_link_libraries(server ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

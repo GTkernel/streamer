@@ -20,13 +20,13 @@ You can run an end-to-end ingestion and analytics pipeline on streamer with mult
 
 
 
-For DNN frameworks, streamer currently supports Caffe, Caffe FP16 (NVIDIA's fork), Caffe OpenCL, Caffe-MKL, MXNet and TensorRT (former GIE from NVIDIA). The support of tensorflow is on the way.
+For DNN frameworks, streamer currently supports Caffe, Caffe OpenCL, and Caffe-MKL. The support of tensorflow is on the way.
 
 ## Getting Started
 
 ### Dependencies
 
-Note: Here I will only include minimal requirements to successfully build streamer without additional dependencies. You may want to install various deep learning frameworks (Caffe, MXNet, etc.). You can refer to their documentation on how to install them on your platform. 
+Note: Here I will only include minimal requirements to successfully build streamer without additional dependencies. You may want to install various deep learning frameworks (Caffe, etc.). You can refer to their documentation on how to install them on your platform. 
 
 #### 1. Mac
 
@@ -36,7 +36,7 @@ With homebrew:
 ```
 brew install cmake glog glib gstreamer gst-plugins-base \
 	gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-ffmpeg \
-	boost opencv jemalloc zmq eigen
+	boost opencv jemalloc zmq zmqpp eigen
 ```
 
 #### 2. Linux x86 (Ubuntu)
@@ -49,7 +49,8 @@ sudo apt-get update
 sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
     libboost-all-dev libopencv-dev gstreamer1.0 libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
-    libgstreamer-plugins-bad1.0-dev libjemalloc-dev libzmq3-dev libeigen3-dev
+    libgstreamer-plugins-bad1.0-dev libjemalloc-dev libzmq3-dev \
+    libzmqpp-dev libeigen3-dev
 ```
 
 For Ubuntu <= 14.04, also need to install cmake 3.
@@ -119,9 +120,9 @@ First you need to configure your cameras and models. In your build directory, th
 1. `cp config/models.toml.example config/models.toml`
 2. Edit `config/models.toml`, fill in various fields for each of your model.
     * `name`: name of the model
-    * `type`: either `"caffe"`, `"mxnet"` or `"gie"`
-    * `desc_path`: The path to the model description file. For caffe and GIE it is `.prototxt` file, for mxnet it is `.json` file
-    * `params_path`: The path to the model weights. For caffe and GIE it is `.caffemodel` file, for mxnet it is `.params` file
+    * `type`: currently only `caffe` is supported
+    * `desc_path`: The path to the model description file. For caffe it is a `.prototxt` file.
+    * `params_path`: The path to the model weights. For caffe it is a `.caffemodel` file.
     * `input_width`: The suggested width of the input image.
     * `input_height`: The suggested height of the input image.
     * `label_file`: this is optional. For classification network or other network that requires a label file to produce a string label, you may add the path to that file here.
@@ -153,7 +154,7 @@ apps/multicam -m AlexNet -c Facetime -d
 
 ## Run with different frameworks
 
-Currently we support BVLC caffe, Caffe's OpenCL branch, NVIDIA caffe (including fp16 caffe), GIE (GPU Inference Engine) and MXNet. Different frameworks are supported through several cmake flags.
+Currently we support BVLC caffe, Caffe's OpenCL branch, and Intel's Caffe. Different frameworks are supported through several cmake flags.
 **Cmake will cache the variables**, when you switch to another framework, better clean existed build.
 
 * Caffe
@@ -167,16 +168,6 @@ Currently we support BVLC caffe, Caffe's OpenCL branch, NVIDIA caffe (including 
     * `make -j && make install`, built targets should be in `build/install`
     * Then build `streamer` with `cmake -DCAFFE_HOME=/path/to/opencl-caffe -DBACKEND=opencl`
     * Notice that OpenCL caffe has a different interface than the original caffe.
-* NVDIA fp16 Caffe
-	* Installation: install from https://github.com/NVIDIA/caffe/tree/experimental/fp16
-	* Build with: `cmake -DCAFFE_HOME=/path/to/fp16caffe -DUSE_CAFFE=true -DUSE_FP16=true -DBACKEND=cuda ..`
-* GIE
-	* Installation: Apply usage through NVIDIA developer program: https://developer.nvidia.com/tensorrt
-	* Build with: `cmake -DGIE_HOME=/path/to/gie -DUSE_GIE=true -DBACKEND=cuda ..`
-	* GIE must be built with `-DBACKEND=cuda`. Also note that GIE can't be built together with Caffe.
-* MXNet
-	* Installation: http://mxnet.readthedocs.io/en/latest/how_to/build.html
-	* Build with: `cmake -DMXNET_HOME=/path/to/mxnet -DUSE_MXNET=true ..`
 
 ## Compile configurations
 

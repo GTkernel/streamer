@@ -99,7 +99,6 @@ public:
   MtcnnFaceDetector(const ModelDescription& model_description,
                     int min_size,
                     float idle_duration = 0.f);
-  virtual ProcessorType GetType() override;
 
 protected:
   virtual bool Init() override;

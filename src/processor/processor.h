@@ -2,11 +2,13 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_PROCESSOR_H
-#define STREAMER_PROCESSOR_H
+#ifndef STREAMER_PROCESSOR_PROCESSOR_H_
+#define STREAMER_PROCESSOR_PROCESSOR_H_
 
 #include <atomic>
 #include <thread>
+#include <unordered_map>
+
 #include "common/common.h"
 #include "stream/stream.h"
 
@@ -14,7 +16,7 @@ class Pipeline;
 
 #ifdef USE_VIMBA
 class VimbaCameraFrameObserver;
-#endif
+#endif  // USE_VIMBA
 
 /**
  * @brief Processor is the core computation unit in the system. It accepts
@@ -25,10 +27,10 @@ class Processor {
   friend class Pipeline;
 #ifdef USE_VIMBA
   friend class VimbaCameeraFrameObserver;
-#endif
+#endif  // USE_VIMBA
  public:
-  Processor(const std::vector<string> &source_names,
-            const std::vector<string> &sink_names);
+  Processor(ProcessorType type, const std::vector<string>& source_names,
+            const std::vector<string>& sink_names);
   virtual ~Processor();
   /**
    * @brief Start processing, drain frames from sources and send output to
@@ -47,44 +49,56 @@ class Processor {
    * @param name Name of the sink.
    * @return Stream with the name.
    */
-  StreamPtr GetSink(const string &name);
+  StreamPtr GetSink(const string& name);
 
   /**
    * @brief Set the source of the processor by name.
    * @param name Name of the source.
    * @param stream Stream to be set.
    */
-  void SetSource(const string &name, StreamPtr stream);
+  virtual void SetSource(const string& name, StreamPtr stream);
 
   /**
    * @brief Check if the processor has started.
    * @return True if processor has started.
    */
-  bool IsStarted();
+  bool IsStarted() const;
 
   /**
    * @brief Get sliding window average latency of the processor.
    * @return Latency in ms.
    */
-  double GetSlidingLatencyMs();
+  virtual double GetSlidingLatencyMs() const;
 
   /**
    * @brief Get overall average latency.
    * @return Latency in ms.
    */
-  double GetAvgLatencyMs();
+  virtual double GetAvgLatencyMs() const;
+
+  /**
+   * @brief Get overall average queue latency.
+   * @return queue latency in ms.
+   */
+  virtual double GetAvgQueueLatencyMs() const;
 
   /**
    * @brief Get processing speed of the processor, measured in frames / sec. It
    * is simply computed as 1000.0 / GetLatencyMs().
    * @return FPS of the processor.
    */
-  double GetAvgFps();
+  virtual double GetAvgFps() const;
+
+  /**
+   * @brief Get observed throughput of processor
+   * @return throughput in FPS
+   */
+  double GetObservedAvgFps();
 
   /**
    * @brief Get the type of the processor
    */
-  virtual ProcessorType GetType() = 0;
+  ProcessorType GetType() const;
 
  protected:
   /**
@@ -92,7 +106,7 @@ class Processor {
    */
   virtual bool Init() = 0;
   /**
-   * @brief Called after Prcessor#Stop() is called, do any clean up in this
+   * @brief Called after Processor#Stop() is called, do any clean up in this
    * method.
    * @return [description]
    */
@@ -105,18 +119,16 @@ class Processor {
    */
   virtual void Process() = 0;
 
-  template <typename FT = Frame>
-  std::shared_ptr<FT> GetFrame(const string &source_name);
-  void PushFrame(const string &sink_name, std::shared_ptr<Frame> frame);
-  void PushFrame(const string &sink_name, Frame *frame);
+  std::unique_ptr<Frame> GetFrame(const string& source_name);
+  void PushFrame(const string& sink_name, std::unique_ptr<Frame> frame);
   void Init_();
 
   void ProcessorLoop();
 
-  std::unordered_map<string, std::shared_ptr<Frame>> source_frame_cache_;
+  std::unordered_map<string, std::unique_ptr<Frame>> source_frame_cache_;
   std::unordered_map<string, StreamPtr> sources_;
   std::unordered_map<string, StreamPtr> sinks_;
-  std::unordered_map<string, StreamReader *> readers_;
+  std::unordered_map<string, StreamReader*> readers_;
 
   std::thread process_thread_;
   bool stopped_;
@@ -125,11 +137,17 @@ class Processor {
   std::queue<double> latencies_;
   double latency_sum_;
   double sliding_latency_;
+  double queue_latency_sum_;
   double avg_latency_;
 
   // Processor stats
   // Number of processed frames
   size_t n_processed_;
+
+ private:
+  const ProcessorType type_;
+  Timer timer_;
+
 };
 
-#endif  // STREAMER_PROCESSOR_H
+#endif  // STREAMER_PROCESSOR_PROCESSOR_H_

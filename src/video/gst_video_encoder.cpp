@@ -3,15 +3,17 @@
 //
 
 #include "gst_video_encoder.h"
+
+#include <stdlib.h>
+
 #include "common/context.h"
+#include "utils/string_utils.h"
 
-const static char *ENCODER_SRC_NAME = "encoder_src";
-
-ProcessorType GstVideoEncoder::GetType() { return PROCESSOR_TYPE_ENCODER; }
+const static char* ENCODER_SRC_NAME = "encoder_src";
 
 GstVideoEncoder::GstVideoEncoder(int width, int height,
-                                 const string &output_filename)
-    : Processor({"input"}, {"output"}),
+                                 const string& output_filename)
+    : Processor(PROCESSOR_TYPE_ENCODER, {"input"}, {"output"}),
       width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),
@@ -25,7 +27,7 @@ GstVideoEncoder::GstVideoEncoder(int width, int height,
 }
 
 GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_ENCODER, {"input"}, {"output"}),
       width_(width),
       height_(height),
       frame_size_bytes_(width * height * 3),
@@ -38,19 +40,43 @@ GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
   encoder_element_ = Context::GetContext().GetString(H264_ENCODER_GST_ELEMENT);
 }
 
-void GstVideoEncoder::NeedDataCB(GstAppSrc *appsrc, guint size,
-                                 gpointer user_data) {
+std::shared_ptr<GstVideoEncoder> GstVideoEncoder::Create(
+    const FactoryParamsType& params) {
+  int port = -1;
+  string filename;
+
+  if (params.count("port") != 0) {
+    port = atoi(params.at("port").c_str());
+  } else if (params.count("filename") != 0) {
+    filename = params.at("filename");
+  } else {
+    LOG(FATAL) << "At least port or filename is needed for encoder";
+  }
+
+  int width = atoi(params.at("width").c_str());
+  int height = atoi(params.at("height").c_str());
+  CHECK(width >= 0 && height >= 0) << "Width (" << width << ") and height ("
+                                   << height << ") must not be negative.";
+
+  if (port > 0) {
+    return std::make_shared<GstVideoEncoder>(width, height, port);
+  } else {
+    return std::make_shared<GstVideoEncoder>(width, height, filename);
+  }
+}
+
+void GstVideoEncoder::NeedDataCB(GstAppSrc*, guint, gpointer user_data) {
   if (user_data == nullptr) return;
 
-  GstVideoEncoder *encoder = (GstVideoEncoder *)user_data;
+  GstVideoEncoder* encoder = (GstVideoEncoder*)user_data;
   if (encoder->IsStarted()) encoder->need_data_ = true;
 }
 
-void GstVideoEncoder::EnoughDataCB(GstAppSrc *appsrc, gpointer user_data) {
+void GstVideoEncoder::EnoughDataCB(GstAppSrc*, gpointer user_data) {
   DLOG(INFO) << "Received enough data signal";
   if (user_data == nullptr) return;
 
-  GstVideoEncoder *encoder = (GstVideoEncoder *)user_data;
+  GstVideoEncoder* encoder = (GstVideoEncoder*)user_data;
   encoder->need_data_ = false;
 }
 
@@ -113,7 +139,7 @@ bool GstVideoEncoder::Init() {
   g_main_loop_ = g_main_loop_new(NULL, FALSE);
 
   // Build Gst pipeline
-  GError *err = nullptr;
+  GError* err = nullptr;
   string pipeline_str = BuildPipelineString();
 
   gst_pipeline_ = GST_PIPELINE(gst_parse_launch(pipeline_str.c_str(), &err));
@@ -137,9 +163,9 @@ bool GstVideoEncoder::Init() {
 
   // Get the appsrc and connect callbacks
 
-  GstElement *appsrc_element =
+  GstElement* appsrc_element =
       gst_bin_get_by_name(GST_BIN(gst_pipeline_), ENCODER_SRC_NAME);
-  GstAppSrc *appsrc = GST_APP_SRC(appsrc_element);
+  GstAppSrc* appsrc = GST_APP_SRC(appsrc_element);
 
   if (appsrc == nullptr) {
     LOG(ERROR) << "Failed to get appsrc from pipeline";
@@ -165,7 +191,7 @@ bool GstVideoEncoder::Init() {
   callbacks.enough_data = GstVideoEncoder::EnoughDataCB;
   callbacks.need_data = GstVideoEncoder::NeedDataCB;
   callbacks.seek_data = NULL;
-  gst_app_src_set_callbacks(gst_appsrc_, &callbacks, (void *)this, NULL);
+  gst_app_src_set_callbacks(gst_appsrc_, &callbacks, (void*)this, NULL);
 
   // Play the pipeline
   GstStateChangeReturn result =
@@ -210,12 +236,15 @@ void GstVideoEncoder::Process() {
 
   // Resize the image
   cv::Mat image;
-  cv::Mat original_image = input_frame->GetOriginalImage();
+  const cv::Mat& original_image =
+      input_frame->GetValue<cv::Mat>("original_image");
 
   cv::resize(original_image, image, cv::Size(width_, height_));
 
+  input_frame->SetValue("image", image);
+
   // Forward the input image to output
-  PushFrame("output", new ImageFrame(image, original_image));
+  PushFrame("output", std::move(input_frame));
 
   // Lock the state of the encoder
   std::lock_guard<std::mutex> guard(encoder_lock_);
@@ -224,7 +253,7 @@ void GstVideoEncoder::Process() {
 
   // Give PTS to the buffer
   GstMapInfo info;
-  GstBuffer *buffer =
+  GstBuffer* buffer =
       gst_buffer_new_allocate(nullptr, frame_size_bytes_, nullptr);
   gst_buffer_map(buffer, &info, GST_MAP_WRITE);
   // Copy the image to gst buffer, should have better way such as using
@@ -250,7 +279,7 @@ void GstVideoEncoder::Process() {
 
   // Poll messages from the bus
   while (true) {
-    GstMessage *msg = gst_bus_pop(gst_bus_);
+    GstMessage* msg = gst_bus_pop(gst_bus_);
 
     if (!msg) break;
 
@@ -261,8 +290,8 @@ void GstVideoEncoder::Process() {
         DLOG(INFO) << "End of stream encountered";
         break;
       case GST_MESSAGE_ERROR: {
-        gchar *debug;
-        GError *error;
+        gchar* debug;
+        GError* error;
 
         gst_message_parse_error(msg, &error, &debug);
         g_free(debug);
@@ -272,8 +301,8 @@ void GstVideoEncoder::Process() {
         break;
       }
       case GST_MESSAGE_WARNING: {
-        gchar *debug;
-        GError *error;
+        gchar* debug;
+        GError* error;
         gst_message_parse_warning(msg, &error, &debug);
         g_free(debug);
 
@@ -315,6 +344,6 @@ void GstVideoEncoder::Process() {
   return;
 }
 
-void GstVideoEncoder::SetEncoderElement(const string &encoder) {
+void GstVideoEncoder::SetEncoderElement(const string& encoder) {
   encoder_element_ = encoder;
 }

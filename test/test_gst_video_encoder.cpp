@@ -6,7 +6,7 @@
 #include <streamer.h>
 
 TEST(GST_VIDEO_ENCODER_TEST, FILE_TEST) {
-  CameraManager &camera_manager = CameraManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
 
   auto camera = camera_manager.GetCamera("GST_TEST");
   GstVideoEncoder encoder(camera->GetWidth(), camera->GetHeight(), "test.mp4");
@@ -17,7 +17,7 @@ TEST(GST_VIDEO_ENCODER_TEST, FILE_TEST) {
   STREAMER_SLEEP(100);
 
   auto encoder_reader = encoder.GetSink("output")->Subscribe();
-  auto image_frame = encoder_reader->PopFrame<ImageFrame>();
+  auto image_frame = encoder_reader->PopFrame();
 
   encoder.Stop();
   camera->Stop();
@@ -26,7 +26,7 @@ TEST(GST_VIDEO_ENCODER_TEST, FILE_TEST) {
 }
 
 TEST(GST_VIDEO_ENCODER_TEST, STREAM_TEST) {
-  CameraManager &camera_manager = CameraManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
 
   auto camera = camera_manager.GetCamera("GST_TEST");
   GstVideoEncoder encoder(camera->GetWidth(), camera->GetHeight(), 12345);

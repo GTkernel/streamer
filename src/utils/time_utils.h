@@ -2,13 +2,13 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/2/16.
 //
 
-#ifndef STREAMER_TIME_UTILS_H
-#define STREAMER_TIME_UTILS_H
+#ifndef STREAMER_UTILS_TIME_UTILS_H_
+#define STREAMER_UTILS_TIME_UTILS_H_
 
 #include <ctime>
 #include "common/common.h"
 
-inline string GetCurrentTimeString(const string &time_format) {
+inline string GetCurrentTimeString(const string& time_format) {
   std::time_t t = std::time(nullptr);
   char timestr[128];
 
@@ -18,4 +18,4 @@ inline string GetCurrentTimeString(const string &time_format) {
   return string(timestr);
 }
 
-#endif  // STREAMER_TIME_UTILS_H
+#endif  // STREAMER_UTILS_TIME_UTILS_H_

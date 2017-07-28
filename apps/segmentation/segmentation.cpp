@@ -4,7 +4,7 @@
 
 #include "streamer.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -14,8 +14,8 @@ int main(int argc, char *argv[]) {
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  ModelManager &model_manager = ModelManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
+  ModelManager& model_manager = ModelManager::GetInstance();
 
   if (argc != 4) {
     std::cout << argv[0] << " - Image segmentation example\n";
@@ -37,10 +37,10 @@ int main(int argc, char *argv[]) {
   string display_on = argv[3];
 
   // Check options
-  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
-                                            << " does not exist";
-  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                               << " does not exist";
+  CHECK(model_manager.HasModel(model_name))
+      << "Model " << model_name << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name))
+      << "Camera " << camera_name << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
   bool display = (display_on == "true");
@@ -58,8 +58,7 @@ int main(int argc, char *argv[]) {
   auto camera_stream = camera->GetStream();
 
   Shape input_shape(3, 250, 250);
-  ImageTransformer transform_processor(input_shape, CROP_TYPE_CENTER,
-                                       true /* subtract mean */);
+  ImageTransformer transform_processor(input_shape, true, true, true /* subtract mean */);
   transform_processor.SetSource("input", camera_stream);
 
   auto model_desc = model_manager.GetModelDesc(model_name);
@@ -74,10 +73,10 @@ int main(int argc, char *argv[]) {
   auto reader = seg_stream->Subscribe();
 
   while (true) {
-    auto frame = reader->PopFrame<ImageFrame>();
+    auto frame = reader->PopFrame();
     if (display) {
-      cv::imshow("Result", frame->GetImage());
-      cv::imshow("Camera", frame->GetOriginalImage());
+      cv::imshow("Result", frame->GetValue<cv::Mat>("image"));
+      cv::imshow("Camera", frame->GetValue<cv::Mat>("original_image"));
       int k = cv::waitKey(10);
       if (k == 'q') {
         break;

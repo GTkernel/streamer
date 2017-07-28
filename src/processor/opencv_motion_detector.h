@@ -16,7 +16,6 @@
 class OpenCVMotionDetector : public Processor {
   public:
     OpenCVMotionDetector(float threshold = 0.5, float max_duration = 1.0);
-    virtual ProcessorType GetType() override;
 
   protected:
     virtual bool Init() override;

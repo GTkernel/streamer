@@ -1,14 +1,22 @@
+
 #include "image_segmenter.h"
+
 #include "model/model_manager.h"
 
-ImageSegmenter::ImageSegmenter(const ModelDesc &model_desc, Shape input_shape)
-    : Processor({"input"}, {"output"}),
+ImageSegmenter::ImageSegmenter(const ModelDesc& model_desc, Shape input_shape)
+    : Processor(PROCESSOR_TYPE_IMAGE_SEGMENTER, {"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape) {}
 
+std::shared_ptr<ImageSegmenter> ImageSegmenter::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool ImageSegmenter::Init() {
   // Load model
-  auto &manager = ModelManager::GetInstance();
+  auto& manager = ModelManager::GetInstance();
   model_ = manager.CreateModel(model_desc_, input_shape_);
   model_->Load();
 
@@ -17,9 +25,6 @@ bool ImageSegmenter::Init() {
   mean_image_ =
       cv::Mat(cv::Size(input_shape_.width, input_shape_.height), CV_32FC3,
               cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
-
-  // Prepare data buffer
-  input_buffer_ = DataBuffer(input_shape_.GetSize() * sizeof(float));
 
   LOG(INFO) << "Processor initialized";
   return true;
@@ -34,9 +39,9 @@ void ImageSegmenter::Process() {
   // Do image segmentation
   Timer timer;
   timer.Start();
-  auto frame = GetFrame<ImageFrame>("input");
-  cv::Mat image = frame->GetImage();
-  cv::Mat original_image = frame->GetOriginalImage();
+  auto frame = GetFrame("input");
+  const cv::Mat& image = frame->GetValue<cv::Mat>("image");
+  const cv::Mat& original_image = frame->GetValue<cv::Mat>("original_image");
 
   CHECK(image.channels() == input_shape_.channel &&
         image.size[0] == input_shape_.width &&
@@ -44,39 +49,44 @@ void ImageSegmenter::Process() {
 
   // Get bytes to feed into the model
   std::vector<cv::Mat> output_channels;
-  float *data = (float *)(model_->GetInputBuffer().GetBuffer());
-  for (int i = 0; i < input_shape_.channel; i++) {
-    cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
-    output_channels.push_back(channel);
-    data += input_shape_.width * input_shape_.height;
+
+  auto layer_outputs = model_->Evaluate(image);
+
+  // Expect only 1 output, being the last layer of a non-batched neural net
+  CHECK(layer_outputs.size() == 1);
+  cv::Mat output = layer_outputs.begin()->second;
+  CHECK(output.dims == 3);
+  std::vector<cv::Mat> output_split;
+  // TODO: double check this code, not sure how channels work in this case
+  for (decltype(output.channels()) i = 0; i < output.channels(); ++i) {
+    // This seems a bit reversed, double check!!!
+    cv::Mat channel(output.size[1], output.size[0], CV_32FC1);
+    output_split.push_back(channel);
   }
-  cv::split(image, output_channels);
-
-  model_->Evaluate();
-
-  DataBuffer output_buffer = model_->GetOutputBuffers()[0];
-  Shape output_shape = model_->GetOutputShapes()[0];
-  LOG(INFO) << output_shape.channel << " " << output_shape.width << " "
-            << output_shape.height;
+  cv::split(output, output_split);
 
   // Render the segmentation
-  cv::Mat output_img =
-      cv::Mat::zeros(output_shape.height, output_shape.width, CV_8U);
-  cv::Mat output_score =
-      cv::Mat::zeros(output_shape.height, output_shape.width, CV_32F);
-  float *output_data = (float *)output_buffer.GetBuffer();
-  for (int i = 0; i < output_shape.channel; i++) {
-    cv::Mat wrapper(input_shape_.height, input_shape_.width, CV_32FC1,
-                    output_data);
-    for (int j = 0; j < input_shape_.height; j++) {
-      for (int k = 0; k < input_shape_.width; k++) {
-        if (wrapper.at<float>(j, k) > output_score.at<float>(j, k)) {
-          output_score.at<float>(j, k) = wrapper.at<float>(j, k);
-          output_img.at<uchar>(j, k) = (uchar)i;
-        }
+  cv::Mat output_img = cv::Mat::zeros(output.size[1], output.size[0], CV_8U);
+  cv::Mat output_score = cv::Mat::zeros(output.size[1], output.size[0], CV_32F);
+  for (const auto& channel : output_split) {
+    CHECK(channel.dims == output_img.dims);
+    CHECK(channel.size[0] == output_img.size[0]);
+    CHECK(channel.size[1] == output_img.size[1]);
+    auto channel_it = channel.begin<float>(),
+         channel_end = channel.end<float>();
+    cv::MatIterator_<uchar> output_img_it = output_img.begin<uchar>(),
+                            output_img_end = output_img.end<uchar>();
+    cv::MatIterator_<float> output_score_it = output_score.begin<float>(),
+                            output_score_end = output_score.end<float>();
+    for (uchar channel_number = 0;
+         channel_it != channel_end && output_img_it != output_img_end &&
+         output_score_it != output_score_end;
+         ++channel_it, ++output_img_it, ++output_score_it, ++channel_number) {
+      if (*channel_it > *output_score_it) {
+        *output_score_it = *channel_it;
+        *output_img_it = channel_number;
       }
     }
-    output_data += input_shape_.width * input_shape_.height;
   }
 
   cv::Mat output_frame;
@@ -87,11 +97,7 @@ void ImageSegmenter::Process() {
   cv::resize(colored_output, colored_output,
              cv::Size(original_image.cols, original_image.rows));
 
-  PushFrame("output",
-            new ImageFrame(colored_output, frame->GetOriginalImage()));
+  frame->SetValue("image", colored_output);
+  PushFrame("output", std::move(frame));
   LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
-}
-
-ProcessorType ImageSegmenter::GetType() {
-  return PROCESSOR_TYPE_IMAGE_SEGMENTER;
 }

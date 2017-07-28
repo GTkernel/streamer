@@ -2,10 +2,9 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/16/16.
 //
 
-#ifndef STREAMER_CONTEXT_H
-#define STREAMER_CONTEXT_H
+#ifndef STREAMER_COMMON_CONTEXT_H_
+#define STREAMER_COMMON_CONTEXT_H_
 
-#include <cppzmq/zmq.hpp>
 #include <unordered_map>
 
 #include "common.h"
@@ -13,11 +12,9 @@
 
 const string H264_ENCODER_GST_ELEMENT = "h264_encoder_gst_element";
 const string H264_DECODER_GST_ELEMENT = "h264_decoder_gst_element";
-const string PUBLISHER_PORT = "publisher_port";
 const string DEVICE_NUMBER = "device_number";
-const string USEFP16 = "use_fp16";
 const int DEVICE_NUMBER_CPU_ONLY = -1;
-const int DEFAULT_PUBLISHER_PORT = 5536;
+
 /**
  * @brief Global single context, used to store and access various global
  * information.
@@ -27,73 +24,62 @@ class Context {
   /**
    * @brief Get singleton instance.
    */
-  static Context &GetContext() {
+  static Context& GetContext() {
     static Context context;
     return context;
   }
 
  public:
-  Context()
-      : config_dir_("./config"),
-        zmq_context_{1},
-        zmq_publisher_{zmq_context_, ZMQ_PUB} {}
-  ~Context() {
-    // Tear down the publisher socket
-    zmq_publisher_.unbind(zmq_publisher_addr_);
-  }
+  Context() : config_dir_("./config") {}
+
   void Init() {
     SetEncoderDecoderInformation();
     SetDefaultDeviceInformation();
-    SetupZMQ();
-    bool_values_.insert({USEFP16, false});
+    timer_.Start();
   }
 
-  int GetInt(const string &key) {
+  int GetInt(const string& key) {
     CHECK(int_values_.count(key) != 0) << "No integer value with key  " << key;
     return int_values_[key];
   }
-  double GetDouble(const string &key) {
+  double GetDouble(const string& key) {
     CHECK(double_values_.count(key) != 0) << "No double value with key " << key;
     return double_values_[key];
   }
-  string GetString(const string &key) {
+  string GetString(const string& key) {
     CHECK(string_values_.count(key) != 0) << "No string value with key " << key;
     return string_values_[key];
   }
-  bool GetBool(const string &key) {
+  bool GetBool(const string& key) {
     CHECK(bool_values_.count(key) != 0) << "No bool value with key " << key;
     return bool_values_[key];
   }
 
-  void SetInt(const string &key, int value) { int_values_[key] = value; }
+  void SetInt(const string& key, int value) { int_values_[key] = value; }
 
-  void SetDouble(const string &key, double value) {
+  void SetDouble(const string& key, double value) {
     double_values_[key] = value;
   }
-  void SetString(const string &key, const string &value) {
+  void SetString(const string& key, const string& value) {
     string_values_[key] = value;
   }
-  void SetBool(const string &key, bool value) { bool_values_[key] = value; }
+  void SetBool(const string& key, bool value) { bool_values_[key] = value; }
+
+  Timer GetTimer() { return timer_; }
 
   /**
    * @brief Reload the config dir, MUST call Init() after this.
    */
-  void SetConfigDir(const string &config_dir) { config_dir_ = config_dir; }
+  void SetConfigDir(const string& config_dir) { config_dir_ = config_dir; }
 
   string GetConfigDir() { return config_dir_; }
 
-  string GetConfigFile(const string &filename) {
+  string GetConfigFile(const string& filename) {
     return config_dir_ + "/" + filename;
   }
 
-  zmq::context_t &GetZMQContext() { return zmq_context_; }
-
-  zmq::socket_t &GetZMQPublisher() { return zmq_publisher_; }
-
-  int GetZMQPublisherPort() { return GetInt(PUBLISHER_PORT); }
-
  private:
-  string ValidateEncoderElement(const string &encoder) {
+  string ValidateEncoderElement(const string& encoder) {
     if (IsGstElementExists(encoder)) {
       return encoder;
     } else if (IsGstElementExists("vtenc_h264")) {
@@ -111,7 +97,7 @@ class Context {
     return "INVALID_ENCODER";
   }
 
-  string ValidateDecoderElement(const string &decoder) {
+  string ValidateDecoderElement(const string& decoder) {
     if (IsGstElementExists(decoder)) {
       return decoder;
     } else if (IsGstElementExists("avdec_h264")) {
@@ -165,39 +151,16 @@ class Context {
     SetInt(DEVICE_NUMBER, DEVICE_NUMBER_CPU_ONLY);
   }
 
-  // Set the zmq context that will be used globally.
-  void SetupZMQ() {
-    string config_file = GetConfigFile("config.toml");
-    auto root_value = ParseTomlFromFile(config_file);
-    auto port_value = root_value.find(PUBLISHER_PORT);
-    if (port_value == nullptr) {
-      LOG(INFO) << "Using default publisher port " << DEFAULT_PUBLISHER_PORT;
-      SetInt(PUBLISHER_PORT, DEFAULT_PUBLISHER_PORT);
-    } else {
-      LOG(INFO) << "Using publisher port: " << port_value->as<int>();
-      SetInt(PUBLISHER_PORT, port_value->as<int>());
-    }
-
-    // Bind the publisher socket
-    zmq_publisher_addr_ =
-        "tcp://127.0.0.1:" + std::to_string(GetInt(PUBLISHER_PORT));
-    LOG(INFO) << zmq_publisher_addr_;
-    zmq_publisher_.bind(zmq_publisher_addr_);
-  }
-
  private:
   string config_dir_;
-
-  zmq::context_t zmq_context_;
-  int default_publisher_port_;
-  zmq::socket_t zmq_publisher_;
 
   std::unordered_map<string, int> int_values_;
   std::unordered_map<string, string> string_values_;
   std::unordered_map<string, double> double_values_;
   std::unordered_map<string, bool> bool_values_;
 
-  string zmq_publisher_addr_;
+  // Tracks time since start of Streamer
+  Timer timer_;
 };
 
-#endif
+#endif  // STREAMER_COMMON_CONTEXT_H_

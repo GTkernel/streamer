@@ -33,7 +33,6 @@ private:
 class ObjTracker : public Processor {
 public:
   ObjTracker(const std::string& type, float calibration_duration);
-  virtual ProcessorType GetType() override;
 
 protected:
   virtual bool Init() override;

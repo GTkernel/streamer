@@ -1,43 +1,41 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 10/6/16.
-//
 
-#ifndef STREAMER_BATCH_CLASSIFIER_H
-#define STREAMER_BATCH_CLASSIFIER_H
+#ifndef STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_
+#define STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_
 
-#include "common/common.h"
+#include "common/types.h"
 #include "model/model.h"
-#include "processor.h"
+#include "processor/neural_net_consumer.h"
 
-class ImageClassifier : public Processor {
+// An ImageClassifier receives input from a NeuralNetEvaluator (which may be
+// hidden) that produces classification label probabilities and matches labels
+// to the probabilities. An ImageClassifier has one source named "input" and one
+// sink named "output".
+class ImageClassifier : public NeuralNetConsumer {
  public:
-  ImageClassifier(const ModelDesc &model_desc, Shape input_shape,
-                  size_t batch_size);
-  virtual ProcessorType GetType() override;
-  void SetInputStream(int src_id, StreamPtr stream);
+  // Constructs a NeuralNetEvaluator, which is connected and managed
+  // automatically.
+  ImageClassifier(const ModelDesc& model_desc, const Shape& input_shape,
+                  size_t num_labels = 5);
+  // Relies on the calling code to connect this ImageClassifier to an existing
+  // NeuralNetEvaluator, which is not managed automatically.
+  ImageClassifier(const ModelDesc& model_desc, size_t num_labels = 5);
+
+  static std::shared_ptr<ImageClassifier> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;
-  virtual bool OnStop() override;
   virtual void Process() override;
 
  private:
-  /**
-   * @brief Classify the image stored in the input_buffer_
-   *
-   * @param N The number of predictions desired.
-   *
-   * @return An array of prediction results, sorted by confidence score.
-   */
-  std::vector<std::vector<Prediction>> Classify(int N = 5);
+  // Loads the specified model's labels from disk and returns them in a vector.
+  static std::vector<std::string> LoadLabels(const ModelDesc& model_desc);
 
-  DataBuffer input_buffer_;
-  std::unique_ptr<Model> model_;
-  std::vector<string> labels_;
-  ModelDesc model_desc_;
-  Shape input_shape_;
-  cv::Mat mean_image_;
-  size_t batch_size_;
+  // The number of labels that will be assigned to each frame.
+  size_t num_labels_;
+  // A list of all labels, from which num_labels_ entries will be assigned to
+  // each frame.
+  std::vector<std::string> labels_;
 };
 
-#endif  // STREAMER_BATCH_CLASSIFIER_H
+#endif  // STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_

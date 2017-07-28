@@ -2,20 +2,19 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_IMAGETRANSFORMPROCESSOR_H
-#define STREAMER_IMAGETRANSFORMPROCESSOR_H
+#ifndef STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_
+#define STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_
 
 #include "common/types.h"
-#include "processor.h"
+#include "processor/processor.h"
 #include "stream/stream.h"
-
-enum CropType { CROP_TYPE_INVALID = 0, CROP_TYPE_CENTER = 1 };
 
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(const Shape &target_shape, CropType crop_type,
-                   bool subtract_mean = true, bool convert = true);
-  virtual ProcessorType GetType() override;
+  ImageTransformer(const Shape& target_shape, bool crop, bool convert, bool subtract_mean = true);
+
+  static std::shared_ptr<ImageTransformer> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;
@@ -25,15 +24,9 @@ class ImageTransformer : public Processor {
  private:
   Shape target_shape_;
   cv::Mat mean_image_;
-  CropType crop_type_;
-  bool subtract_mean_;
+  bool crop_;
   bool convert_;
-
-  // Temporary mat for image processing, reduce memory (de)allocation
-  cv::Mat sample_image_;
-  cv::Mat sample_cropped_;
-  cv::Mat sample_float_;
-  cv::Mat sample_normalized_;
+  bool subtract_mean_;
 };
 
-#endif  // STREAMER_IMAGETRANSFORMPROCESSOR_H
+#endif  // STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_

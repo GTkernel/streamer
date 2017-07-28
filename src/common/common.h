@@ -2,12 +2,12 @@
 // Created by Ran Xian on 7/22/16.
 //
 
-#ifndef TX1_DNN_COMMON_H
-#define TX1_DNN_COMMON_H
+#ifndef STREAMER_COMMON_COMMON_H_
+#define STREAMER_COMMON_COMMON_H_
 
 #include <glog/logging.h>
 #include <stdlib.h>
-#include <tinytoml/toml.h>
+#include <tinytoml/include/toml/toml.h>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -19,7 +19,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "data_buffer.h"
 #include "timer.h"
 #include "types.h"
 
@@ -27,4 +26,4 @@ using std::string;
 
 #define STREAMER_NOT_IMPLEMENTED (LOG(FATAL) << "Function not implemented");
 
-#endif  // TX1_DNN_COMMON_H
+#endif  // STREAMER_COMMON_COMMON_H_

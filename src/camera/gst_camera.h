@@ -2,15 +2,15 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/25/16.
 //
 
-#ifndef STREAMER_IP_CAMERA_H
-#define STREAMER_IP_CAMERA_H
+#ifndef STREAMER_CAMERA_GST_CAMERA_H_
+#define STREAMER_CAMERA_GST_CAMERA_H_
 
 #include "camera.h"
 #include "video/gst_video_capture.h"
 
 class GSTCamera : public Camera {
  public:
-  GSTCamera(const string &name, const string &video_uri, int width = -1,
+  GSTCamera(const string& name, const string& video_uri, int width = -1,
             int height = -1);
   virtual CameraType GetCameraType() const override;
 
@@ -37,6 +37,13 @@ class GSTCamera : public Camera {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode) override;
   virtual CameraPixelFormatType GetPixelFormat() override;
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) override;
+  virtual void SetFrameRate(float f) override;
+  virtual float GetFrameRate() override;
+  virtual void SetROI(int roi_offset_x, int roi_offset_y, int roi_width,
+                      int roi_height) override;
+  virtual int GetROIOffsetX() override;
+  virtual int GetROIOffsetY() override;
+  virtual Shape GetROIOffsetShape() override;
 
  protected:
   virtual bool Init() override;
@@ -47,4 +54,4 @@ class GSTCamera : public Camera {
   GstVideoCapture capture_;
 };
 
-#endif  // STREAMER_IP_CAMERA_H
+#endif  // STREAMER_CAMERA_GST_CAMERA_H_

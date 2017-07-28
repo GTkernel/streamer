@@ -22,7 +22,7 @@ using std::endl;
  * @param text The text to be added.
  * @param nrow The row of the text in the image.
  */
-void AddText(cv::Mat &img, const string &text, int nrow) {
+void AddText(cv::Mat& img, const string& text, int nrow) {
   // Maximum lines of text
   const int MAX_LINE = 14;
   const int FONT_FACE = CV_FONT_HERSHEY_SIMPLEX;
@@ -32,9 +32,6 @@ void AddText(cv::Mat &img, const string &text, int nrow) {
   const int START_X = 10;
   const int START_Y = 20;
   const int TEXT_HEIGHT = 25;
-
-  int width = img.cols;
-  int height = img.rows;
 
   CHECK(nrow < MAX_LINE);
 
@@ -48,8 +45,7 @@ void AddText(cv::Mat &img, const string &text, int nrow) {
  * salient.
  * @param img The image to add text onto.
  */
-void AddGrayBackground(cv::Mat &img) {
-  int width = img.cols;
+void AddGrayBackground(cv::Mat& img) {
   int height = img.rows;
   cv::Mat roi = img(cv::Rect(0, 0, 300, height));
   cv::Mat color(roi.size(), CV_8UC3, cv::Scalar(0, 0, 0));
@@ -57,7 +53,7 @@ void AddGrayBackground(cv::Mat &img) {
   cv::addWeighted(color, alpha, roi, 1 - alpha, 0.0, roi);
 }
 
-void WriteCameraInfo(CameraPtr camera, const string &video_dir) {
+void WriteCameraInfo(CameraPtr camera, const string& video_dir) {
   STREAMER_SLEEP(100);
   string filename = video_dir + "/camera_parameters.txt";
   std::ofstream f(filename);
@@ -80,10 +76,10 @@ void CleanUp() {
 #endif
 }
 
-void Run(const string &camera_name, bool display, size_t frames_per_file) {
+void Run(const string& camera_name, bool display, size_t frames_per_file) {
   StartUp();
 
-  auto &camera_manager = CameraManager::GetInstance();
+  auto& camera_manager = CameraManager::GetInstance();
   auto camera = camera_manager.GetCamera(camera_name);
 
   CHECK(camera->GetCameraType() == CAMERA_TYPE_PTGRAY ||
@@ -91,11 +87,12 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
       << "Not running with GigE camera, we support PtGray and AlliedVision "
          "camera now";
 
-  auto camera_reader = camera->GetSink("bgr_output")->Subscribe();
+  auto camera_stream = camera->GetSink("output");
+  auto camera_reader = camera_stream->Subscribe();
 
-  auto bytes_stream = camera->GetSink("raw_output");
-  std::shared_ptr<GigeFileWriter> file_writer(new GigeFileWriter("", frames_per_file));
-  file_writer->SetSource("input", bytes_stream);
+  std::shared_ptr<GigeFileWriter> file_writer(
+      new GigeFileWriter("", frames_per_file));
+  file_writer->SetSource("input", camera_stream);
 
   camera->Start();
   STREAMER_SLEEP(10);
@@ -104,7 +101,8 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
     cv::namedWindow("Camera");
   }
   while (true) {
-    cv::Mat image = camera_reader->PopFrame<ImageFrame>()->GetOriginalImage();
+    cv::Mat image =
+        camera_reader->PopFrame()->GetValue<cv::Mat>("original_image");
     cv::Mat image_to_show;
     if (display) {
       int width = image.cols;
@@ -128,34 +126,40 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
                   std::to_string(camera->GetImageSize().height),
               row_idx++);
 
-      AddText(image_to_show, string() + "[E] Exposure: " +
-                                 std::to_string(camera->GetExposure()),
-              row_idx++);
-      AddText(image_to_show, string() + "[N] Gain: " +
-                                 std::to_string(camera->GetGain()) + "dB",
-              row_idx++);
+      AddText(
+          image_to_show,
+          string() + "[E] Exposure: " + std::to_string(camera->GetExposure()),
+          row_idx++);
+      AddText(
+          image_to_show,
+          string() + "[N] Gain: " + std::to_string(camera->GetGain()) + "dB",
+          row_idx++);
       AddText(image_to_show, "--------------------", row_idx++);
-      AddText(image_to_show, string() + "[S] Sharpness: " +
-                                 std::to_string(camera->GetSharpness()),
-              row_idx++);
+      AddText(
+          image_to_show,
+          string() + "[S] Sharpness: " + std::to_string(camera->GetSharpness()),
+          row_idx++);
 
-      AddText(image_to_show, string() + "[V] Hue: " +
-                                 std::to_string(camera->GetHue()) + " deg",
+      AddText(
+          image_to_show,
+          string() + "[V] Hue: " + std::to_string(camera->GetHue()) + " deg",
+          row_idx++);
+      AddText(image_to_show,
+              string() + "[U] Saturation: " +
+                  std::to_string(camera->GetSaturation()) + "%",
               row_idx++);
-      AddText(image_to_show, string() + "[U] Saturation: " +
-                                 std::to_string(camera->GetSaturation()) + "%",
-              row_idx++);
-      AddText(image_to_show, string() + "[B] Brightness: " +
-                                 std::to_string(camera->GetBrightness()) + "%",
+      AddText(image_to_show,
+              string() + "[B] Brightness: " +
+                  std::to_string(camera->GetBrightness()) + "%",
               row_idx++);
       AddText(image_to_show,
               string() + "[G] Gamma: " + std::to_string(camera->GetGamma()),
               row_idx++);
 
       AddText(image_to_show,
-              string() + "[O,P] WB " + "R:" +
-                  std::to_string((int)camera->GetWBRed()) + " B:" +
-                  std::to_string((int)camera->GetWBBlue()),
+              string() + "[O,P] WB " +
+                  "R:" + std::to_string((int)camera->GetWBRed()) +
+                  " B:" + std::to_string((int)camera->GetWBBlue()),
               row_idx++);
       AddText(
           image_to_show,
@@ -260,7 +264,7 @@ void Run(const string &camera_name, bool display, size_t frames_per_file) {
   CleanUp();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -284,7 +288,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << endl;
     cout << desc << endl;
     return 1;

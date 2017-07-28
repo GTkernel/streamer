@@ -13,7 +13,7 @@
 
 Facenet::Facenet(const ModelDesc &model_desc, Shape input_shape,
                  size_t batch_size)
-    : Processor({}, {}),
+    : Processor(PROCESSOR_TYPE_FACENET, {}, {}),
       model_desc_(model_desc),
       input_shape_(input_shape),
       batch_size_(batch_size),
@@ -43,7 +43,7 @@ bool Facenet::Init() {
     std::vector<int> gpus;
     GetCUDAGpus(gpus);
 
-    if (desired_device_number < gpus.size()) {
+    if (desired_device_number < (int)gpus.size()) {
       // Device exists
       LOG(INFO) << "Use GPU with device ID " << desired_device_number;
       caffe::Caffe::SetDevice(desired_device_number);
@@ -95,8 +95,7 @@ bool Facenet::Init() {
   input_layer = net_->input_blobs()[0];
   float *input_data = input_layer->mutable_cpu_data();
 
-  input_buffer_ = DataBuffer(
-      input_data, batch_size_ * input_shape_.GetSize() * sizeof(float));
+  input_buffer_ = input_data;
 
   LOG(INFO) << "Facenet initialized";
   return true;
@@ -115,12 +114,12 @@ void Facenet::Process() {
   timer.Start();
 
   cv::Size input_geometry(input_shape_.width, input_shape_.height);
-  std::vector<std::shared_ptr<MetadataFrame>> md_frames;
+  std::vector<std::unique_ptr<Frame>> frames;
   size_t face_total_num = 0;
-  for (int i = 0; i < batch_size_; i++) {
-    auto md_frame = GetFrame<MetadataFrame>(GET_SOURCE_NAME(i));    
-    md_frames.push_back(md_frame);
-    std::vector<Rect> bboxes = md_frame->GetBboxes();
+  for (size_t i = 0; i < batch_size_; i++) {
+    auto frame = GetFrame(GET_SOURCE_NAME(i));
+    frames.push_back(std::move(frame));
+    auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
     face_total_num += bboxes.size();
   }
 
@@ -139,15 +138,14 @@ void Facenet::Process() {
       input_layer = net_->input_blobs()[0];
       float *input_data = input_layer->mutable_cpu_data();
 
-      input_buffer_ = DataBuffer(
-          input_data, batch_size_ * input_shape_.GetSize() * sizeof(float));
+      input_buffer_ = input_data;
     }
-    float *data = (float *)input_buffer_.GetBuffer();
+    float *data = (float *)input_buffer_;
 
     // load data
-    for (int i = 0; i < batch_size_; i++) {
-      cv::Mat img = md_frames[i]->GetOriginalImage();
-      std::vector<Rect> bboxes = md_frames[i]->GetBboxes();
+    for (size_t i = 0; i < batch_size_; i++) {
+      cv::Mat img = frames[i]->GetValue<cv::Mat>("original_image");
+      auto bboxes = frames[i]->GetValue<std::vector<Rect>>("bounding_boxes");
       for(const auto& m: bboxes){
         int x = m.px;
         int y = m.py;
@@ -159,7 +157,6 @@ void Facenet::Process() {
         face_image_ = img(roi);
 
         // Resize
-        face_image_resized_;
         if (face_image_.size() != input_geometry)
           cv::resize(face_image_, face_image_resized_, input_geometry);
         else
@@ -190,7 +187,7 @@ void Facenet::Process() {
     }
 
     CHECK(net_->input_blobs()[0]->mutable_cpu_data() ==
-          input_buffer_.GetBuffer());
+          input_buffer_);
 
     net_->Forward();
     auto output_blob = net_->output_blobs()[0];
@@ -203,26 +200,12 @@ void Facenet::Process() {
     }
   }
 
-  for (int i = 0; i < batch_size_; i++) {
-    auto md_frame = md_frames[i];
-    cv::Mat img = md_frame->GetOriginalImage();
-    CHECK(!img.empty());
-    std::vector<Rect> bboxes = md_frame->GetBboxes();
-    std::vector<FaceLandmark> face_landmarks = md_frame->GetFaceLandmarks();
-
-    auto p_meta = new MetadataFrame(img);
-    CHECK(p_meta);
-    p_meta->SetBboxes(bboxes);
-    p_meta->SetFaceLandmarks(face_landmarks);
-    p_meta->SetFaceFeatures(face_features);
-    PushFrame(GET_SINK_NAME(i), p_meta);
+  for (size_t i = 0; i < batch_size_; i++) {
+    frames[i]->SetValue("face_features", face_features);
+    PushFrame(GET_SINK_NAME(i), std::move(frames[i]));
   }
 
   LOG(INFO) << "Facenet took " << timer.ElapsedMSec() << " ms";
-}
-
-ProcessorType Facenet::GetType() {
-  return PROCESSOR_TYPE_FACENET;
 }
 
 void Facenet::SetInputStream(int src_id, StreamPtr stream) {

@@ -6,7 +6,7 @@
 #include "streamer.h"
 
 TEST(CONTEXT_TEST, TEST_BASIC) {
-  Context &context = Context::GetContext();
+  Context& context = Context::GetContext();
 
   // Sanaity check
   context.GetString(H264_DECODER_GST_ELEMENT);

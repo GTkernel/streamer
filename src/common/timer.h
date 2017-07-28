@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/23/16.
 //
 
-#ifndef STREAMER_TIMER_H
-#define STREAMER_TIMER_H
+#ifndef STREAMER_COMMON_TIMER_H_
+#define STREAMER_COMMON_TIMER_H_
 
 #include <chrono>
 
@@ -45,4 +45,4 @@ class Timer {
   TimerTimePoint start_time_;
 };
 
-#endif  // STREAMER_TIMER_H
+#endif  // STREAMER_COMMON_TIMER_H_

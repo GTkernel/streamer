@@ -19,7 +19,7 @@
 #include "db_writer.h"
 
 DbWriter::DbWriter(std::shared_ptr<Camera> camera, bool write_to_file, const std::string& athena_address) 
-    : Processor({"input"}, {}),
+    : Processor(PROCESSOR_TYPE_DB_WRITER, {"input"}, {}),
       camera_(camera),
       write_to_file_(write_to_file),
       athena_address_(athena_address) {}
@@ -55,12 +55,12 @@ static unsigned long GetTimeSinceEpochMillis()
 }
 
 void DbWriter::Process() {
-  auto md_frame = GetFrame<MetadataFrame>("input");
+  auto frame = GetFrame("input");
   auto camera_id = camera_->GetName();
-  auto uuids = md_frame->GetUuids();
+  auto uuids = frame->GetValue<std::vector<std::string>>("uuids");
   auto timestamp = GetTimeSinceEpochMillis();
-  auto tags = md_frame->GetTags();
-  auto struck_features = md_frame->GetStruckFeatures();
+  auto tags = frame->GetValue<std::vector<std::string>>("tags");
+  auto struck_features = frame->GetValue<std::vector<std::vector<double>>>("struck_features");
   //auto bboxes = md_frame->GetBboxes();
   CHECK(uuids.size() == tags.size());
   if (write_to_file_) {
@@ -71,10 +71,6 @@ void DbWriter::Process() {
       WriteAthena(camera_id, uuids, timestamp, tags, struck_features);
 #endif
   }
-}
-
-ProcessorType DbWriter::GetType() {
-  return PROCESSOR_TYPE_DB_WRITER;
 }
 
 void DbWriter::WriteFile(const std::string& camera_id,

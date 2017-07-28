@@ -9,7 +9,7 @@
 #include "object_tracker.h"
 
 ObjectTracker::ObjectTracker(size_t rem_size)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_OBJECT_TRACKER, {"input"}, {"output"}),
       rem_size_(rem_size) ,
       first_frame_(true) {}
 
@@ -23,14 +23,13 @@ bool ObjectTracker::OnStop() {
 }
 
 void ObjectTracker::Process() {
-  auto md_frame = GetFrame<MetadataFrame>("input");
-  cv::Mat image = md_frame->GetOriginalImage();
-  std::vector<Rect> bboxes = md_frame->GetBboxes();
-  std::vector<std::vector<float>> face_features = md_frame->GetFaceFeatures();
+  auto frame = GetFrame("input");
+  auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
+  auto face_features = frame->GetValue<std::vector<std::vector<float>>>("face_features");
   CHECK(bboxes.size() == face_features.size());
   
   std::vector<PointFeature> point_features;
-  for(int i = 0;i<bboxes.size();i++){
+  for(size_t i = 0;i<bboxes.size();i++){
     cv::Point point(bboxes[i].px + bboxes[i].width/2,
                     bboxes[i].py + bboxes[i].height/2);
     point_features.push_back(PointFeature(point, face_features[i]));
@@ -62,12 +61,8 @@ void ObjectTracker::Process() {
       it++;
   }
 
-  md_frame->SetPaths(path_list_);
-  PushFrame("output", md_frame);
-}
-
-ProcessorType ObjectTracker::GetType() {
-  return PROCESSOR_TYPE_OBJECT_TRACKER;
+  //frame->SetValue("path_list", path_list_);
+  PushFrame("output", std::move(frame));
 }
 
 void ObjectTracker::AttachNearest(std::vector<PointFeature>& point_features,

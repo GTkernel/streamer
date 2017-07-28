@@ -7,14 +7,16 @@
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
 
-Processor::Processor(const std::vector<string> &source_names,
-                     const std::vector<string> &sink_names) {
-  for (auto &source_name : source_names) {
+Processor::Processor(ProcessorType type,
+                     const std::vector<string>& source_names,
+                     const std::vector<string>& sink_names)
+    : type_(type) {
+  for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
-    source_frame_cache_.insert({source_name, nullptr});
+    source_frame_cache_[source_name] = nullptr;
   }
 
-  for (auto &sink_name : sink_names) {
+  for (const auto& sink_name : sink_names) {
     sinks_.insert({sink_name, StreamPtr(new Stream)});
   }
 
@@ -23,9 +25,17 @@ Processor::Processor(const std::vector<string> &source_names,
 
 Processor::~Processor() {}
 
-StreamPtr Processor::GetSink(const string &name) { return sinks_[name]; }
+StreamPtr Processor::GetSink(const string& name) { return sinks_[name]; }
 
-void Processor::SetSource(const string &name, StreamPtr stream) {
+void Processor::SetSource(const string& name, StreamPtr stream) {
+  if (sources_.find(name) == sources_.end()) {
+    std::ostringstream sources;
+    for (const auto& s : sources_) {
+      sources << "`" << s.first << "' ";
+    }
+    LOG(FATAL) << "Source `" << name << "` does not exist.\n"
+               << "Available sources: " << sources.str();
+  }
   sources_[name] = stream;
 }
 
@@ -34,6 +44,7 @@ void Processor::Init_() {
   latency_sum_ = 0.0;
   sliding_latency_ = 99999.0;
   avg_latency_ = 0.0;
+  queue_latency_sum_ = 0.0;
   n_processed_ = 0;
 }
 
@@ -42,14 +53,17 @@ bool Processor::Start() {
   CHECK(stopped_) << "Processor has already started";
 
   // Check sources are filled
-  for (auto itr = sources_.begin(); itr != sources_.end(); itr++) {
-    CHECK(itr->second != nullptr) << "Source: " << itr->first << " is not set.";
+  for (const auto& source : sources_) {
+    CHECK(source.second != nullptr)
+        << "Source \"" << source.first << "\" is not set.";
   }
 
   // Subscribe sources
-  for (auto itr = sources_.begin(); itr != sources_.end(); itr++) {
-    readers_.emplace(itr->first, itr->second->Subscribe());
+  for (auto& source : sources_) {
+    readers_.emplace(source.first, source.second->Subscribe());
   }
+
+  timer_.Start();
 
   stopped_ = false;
   process_thread_ = std::thread(&Processor::ProcessorLoop, this);
@@ -63,8 +77,8 @@ bool Processor::Stop() {
   process_thread_.join();
   bool result = OnStop();
 
-  for (auto itr = readers_.begin(); itr != readers_.end(); itr++) {
-    itr->second->UnSubscribe();
+  for (auto& reader : readers_) {
+    reader.second->UnSubscribe();
   }
 
   readers_.clear();
@@ -78,9 +92,9 @@ void Processor::ProcessorLoop() {
   while (!stopped_) {
     // Cache source frames
     source_frame_cache_.clear();
-    for (auto itr = readers_.begin(); itr != readers_.end(); itr++) {
-      auto source_name = itr->first;
-      auto source_stream = itr->second;
+    for (auto& reader : readers_) {
+      auto source_name = reader.first;
+      auto source_stream = reader.second;
 
       while (true) {
         auto frame = source_stream->PopFrame(100);
@@ -92,7 +106,11 @@ void Processor::ProcessorLoop() {
             continue;
           }
         } else {
-          source_frame_cache_.insert({source_name, frame});
+          // Calculate queue latency
+          double start = frame->GetValue<double>("start_time_ms");
+          double end = Context::GetContext().GetTimer().ElapsedMSec();
+          source_frame_cache_[source_name] = std::move(frame);
+          queue_latency_sum_ += end - start;
           break;
         }
       }
@@ -118,34 +136,32 @@ void Processor::ProcessorLoop() {
   }
 }
 
-bool Processor::IsStarted() { return !stopped_; }
+bool Processor::IsStarted() const { return !stopped_; }
 
-double Processor::GetSlidingLatencyMs() { return sliding_latency_; }
+double Processor::GetSlidingLatencyMs() const { return sliding_latency_; }
 
-double Processor::GetAvgLatencyMs() { return avg_latency_; }
+double Processor::GetAvgLatencyMs() const { return avg_latency_; }
 
-double Processor::GetAvgFps() { return 1000.0 / avg_latency_; }
-
-void Processor::PushFrame(const string &sink_name, std::shared_ptr<Frame> frame) {
-  CHECK(sinks_.count(sink_name) != 0);
-  sinks_[sink_name]->PushFrame(frame);
+double Processor::GetAvgQueueLatencyMs() const {
+  return queue_latency_sum_ / n_processed_;
 }
 
-void Processor::PushFrame(const string &sink_name, Frame *frame) {
-  CHECK(sinks_.count(sink_name) != 0);
-  sinks_[sink_name]->PushFrame(frame);
+double Processor::GetObservedAvgFps() {
+  double secs_elapsed = timer_.ElapsedMSec() / 1000;
+  return n_processed_ / secs_elapsed;
 }
 
-template <typename FT>
-std::shared_ptr<FT> Processor::GetFrame(const string &source_name) {
+double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
+
+ProcessorType Processor::GetType() const { return type_; }
+
+void Processor::PushFrame(const string& sink_name,
+                          std::unique_ptr<Frame> frame) {
+  CHECK(sinks_.count(sink_name) != 0);
+  sinks_[sink_name]->PushFrame(std::move(frame));
+}
+
+std::unique_ptr<Frame> Processor::GetFrame(const string& source_name) {
   CHECK(source_frame_cache_.count(source_name) != 0);
-  return std::dynamic_pointer_cast<FT>(source_frame_cache_[source_name]);
+  return std::move(source_frame_cache_[source_name]);
 }
-
-template std::shared_ptr<Frame> Processor::GetFrame(const string &source_name);
-template std::shared_ptr<ImageFrame> Processor::GetFrame(
-    const string &source_name);
-template std::shared_ptr<MetadataFrame> Processor::GetFrame(
-    const string &source_name);
-template std::shared_ptr<BytesFrame> Processor::GetFrame(
-    const string &source_name);

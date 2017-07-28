@@ -68,7 +68,7 @@ namespace yolo {
 	}
 	
 
-	cv::Mat Detector::Detect(cv::Mat& img){
+	cv::Mat Detector::Detect(const cv::Mat& img){
 		caffe::Blob<float>* input_layer = net_->input_blobs()[0];
 		int width, height;
 		width = input_layer->width();
@@ -210,7 +210,7 @@ namespace yolo {
 	
 YoloDetector::YoloDetector(const ModelDesc& model_desc,
 	float idle_duration)
-	: Processor({ "input" }, { "output" }),
+	: Processor(PROCESSOR_TYPE_YOLO_DETECTOR, { "input" }, { "output" }),
 	model_desc_(model_desc),
 	idle_duration_(idle_duration){}
 
@@ -230,34 +230,22 @@ bool YoloDetector::OnStop() {
 	return true;
 }
 
-
 void YoloDetector::Process() {
 	Timer timer;
 	timer.Start();
 
-	auto image_frame = GetFrame<ImageFrame>("input");
+  auto frame = GetFrame("input");
 
 	auto now = std::chrono::system_clock::now();
 	std::chrono::duration<double> diff = now - last_detect_time_;
 	
 	if (diff.count() >= idle_duration_) {
-		cv::Mat img = image_frame->GetImage();
-		cv::Mat DetectionOutput= detector_->Detect(img);
+    const cv::Mat& image = frame->GetValue<cv::Mat>("image");
+		cv::Mat DetectionOutput= detector_->Detect(image);
 		LOG(INFO) << "Yolo detection took " << timer.ElapsedMSec() << " ms";
 		cv::imshow("Image",DetectionOutput);
 		cv::waitKey(1);
+	} else {
+    PushFrame("output", std::move(frame));
 	}
-
-	else {
-		PushFrame("output", new MetadataFrame(image_frame->GetOriginalImage()));
-	}
-	}
-
-
-
-ProcessorType YoloDetector::GetType() {
-	return PROCESSOR_TYPE_YOLO_DETECTOR;
 }
-
-
-

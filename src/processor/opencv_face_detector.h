@@ -2,18 +2,16 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/11/16.
 //
 
-#ifndef STREAMER_OPENCV_FACE_DETECTOR_H
-#define STREAMER_OPENCV_FACE_DETECTOR_H
-
-using namespace std;
+#ifndef STREAMER_PROCESSOR_OPENCV_FACE_DETECTOR_H_
+#define STREAMER_PROCESSOR_OPENCV_FACE_DETECTOR_H_
 
 #ifdef USE_CUDA
-#include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
-#else
+#include <opencv2/gpu/gpu.hpp>
+#endif  // USE_CUDA
 #include <opencv2/objdetect/objdetect.hpp>
-#endif
 #include "common/common.h"
-#include "processor.h"
+#include "common/types.h"
+#include "processor/processor.h"
 
 class OpenCVFaceDetector : public Processor {
  public:
@@ -21,7 +19,9 @@ class OpenCVFaceDetector : public Processor {
   OpenCVFaceDetector(
       string classifier_xml_path =
           "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml");
-  virtual ProcessorType GetType() override;
+
+  static std::shared_ptr<OpenCVFaceDetector> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;
@@ -31,10 +31,10 @@ class OpenCVFaceDetector : public Processor {
  private:
   string classifier_xml_path_;
 #ifdef USE_CUDA
-  cv::cuda::CascadeClassifier classifier_;
+  cv::gpu::CascadeClassifier_GPU classifier_;
 #else
   cv::CascadeClassifier classifier_;
-#endif
+#endif  // USE_CUDA
 };
 
-#endif  // STREAMER_OPENCV_FACE_DETECTOR_H
+#endif  // STREAMER_PROCESSOR_OPENCV_FACE_DETECTOR_H_

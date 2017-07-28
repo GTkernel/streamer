@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
 //
 
-#ifndef STREAMER_CAMERA_H
-#define STREAMER_CAMERA_H
+#ifndef STREAMER_CAMERA_CAMERA_H_
+#define STREAMER_CAMERA_CAMERA_H_
 
 #include "common/common.h"
 #include "processor/processor.h"
@@ -17,7 +17,7 @@ class Camera : public Processor {
   friend class CameraManager;
 
  public:
-  Camera(const string &name, const string &video_uri, int width = -1,
+  Camera(const string& name, const string& video_uri, int width = -1,
          int height = -1);  // Just a nonsense default value
   string GetName() const;
   string GetVideoURI() const;
@@ -25,9 +25,8 @@ class Camera : public Processor {
   int GetWidth();
   int GetHeight();
 
-  virtual bool Capture(cv::Mat &image);
+  virtual bool Capture(cv::Mat& image);
   virtual CameraType GetCameraType() const = 0;
-  virtual ProcessorType GetType() override;
 
   // Camera controls
   virtual float GetExposure() = 0;
@@ -53,12 +52,24 @@ class Camera : public Processor {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode) = 0;
   virtual CameraPixelFormatType GetPixelFormat() = 0;
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) = 0;
+  virtual float GetFrameRate() = 0;
+  virtual void SetFrameRate(float f) = 0;
+  virtual void SetROI(int roi_offset_x, int roi_offset_y, int roi_width,
+                      int roi_height) = 0;
+  virtual int GetROIOffsetX() = 0;
+  virtual int GetROIOffsetY() = 0;
+  virtual Shape GetROIOffsetShape() = 0;
+
   void MoveUp();
   void MoveDown();
   void MoveLeft();
   void MoveRight();
 
+  // Update metadata in frame
+  virtual void MetadataToFrame(std::unique_ptr<Frame>& frame);
+
   string GetCameraInfo();
+  unsigned long CreateFrameID();
 
  protected:
   virtual bool Init() override = 0;
@@ -76,6 +87,8 @@ class Camera : public Processor {
   string pan_right_command_;
   // Camera output stream
   std::shared_ptr<Stream> stream_;
+  // Counter to set camera specific frame id
+  unsigned long frame_id_;
 };
 
-#endif  // STREAMER_CAMERA_H
+#endif  // STREAMER_CAMERA_CAMERA_H_

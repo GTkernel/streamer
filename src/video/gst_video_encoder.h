@@ -2,22 +2,25 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/13/16.
 //
 
-#ifndef STREAMER_GST_VIDEO_ENCODER_H
-#define STREAMER_GST_VIDEO_ENCODER_H
+#ifndef STREAMER_VIDEO_GST_VIDEO_ENCODER_H_
+#define STREAMER_VIDEO_GST_VIDEO_ENCODER_H_
 
-#include "common/common.h"
+#include <mutex>
+
 #include "gst/app/gstappsrc.h"
 #include "gst/gst.h"
 #include "gst/gstbuffer.h"
+
+#include "common/common.h"
+#include "common/types.h"
 #include "processor/processor.h"
 
-#include <mutex>
 /**
  * @brief Video encoder utilizing GStreamer pipeline
  */
 class GstVideoEncoder : public Processor {
  public:
-  GstVideoEncoder(int width, int height, const string &output_filename);
+  GstVideoEncoder(int width, int height, const string& output_filename);
   GstVideoEncoder(int width, int height, int port, bool tcp = true);
 
   /**
@@ -26,8 +29,10 @@ class GstVideoEncoder : public Processor {
    *
    * @param encoder The name of the deocder gstreamer element.
    */
-  void SetEncoderElement(const string &encoder);
-  virtual ProcessorType GetType() override;
+  void SetEncoderElement(const string& encoder);
+
+  static std::shared_ptr<GstVideoEncoder> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;
@@ -39,25 +44,25 @@ class GstVideoEncoder : public Processor {
   string BuildCapsString();
 
   // GST Callbacks
-  static void NeedDataCB(GstAppSrc *appsrc, guint size, gpointer user_data);
-  static void EnoughDataCB(GstAppSrc *appsrc, gpointer userdata);
+  static void NeedDataCB(GstAppSrc* appsrc, guint size, gpointer user_data);
+  static void EnoughDataCB(GstAppSrc* appsrc, gpointer userdata);
 
   // Video attributes
   int width_;
   int height_;
   // Frame size in bytes
   size_t frame_size_bytes_;
-  string output_filename_;
   int port_;
+  string output_filename_;
   // Use tcp for streaming or not (udp)
   bool tcp_;
 
   // Gst elements
-  GstBus *gst_bus_;
-  GstPipeline *gst_pipeline_;
-  GstAppSrc *gst_appsrc_;
-  GstCaps *gst_caps_;
-  GMainLoop *g_main_loop_;
+  GstBus* gst_bus_;
+  GstPipeline* gst_pipeline_;
+  GstAppSrc* gst_appsrc_;
+  GstCaps* gst_caps_;
+  GMainLoop* g_main_loop_;
 
   // States
   bool need_data_;
@@ -71,4 +76,4 @@ class GstVideoEncoder : public Processor {
   string encoder_element_;
 };
 
-#endif  // STREAMER_GST_VIDEO_ENCODER_H
+#endif  // STREAMER_VIDEO_GST_VIDEO_ENCODER_H_

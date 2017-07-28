@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_UTILS_H
-#define STREAMER_UTILS_H
+#ifndef STREAMER_UTILS_UTILS_H_
+#define STREAMER_UTILS_UTILS_H_
 
 #include "cuda_utils.h"
 #include "file_utils.h"
@@ -29,7 +29,7 @@ inline void STREAMER_SLEEP(int msecs) {
 template <typename T>
 class TaskQueue {
  public:
-  void Push(const T &t) {
+  void Push(const T& t) {
     std::lock_guard<std::mutex> lock(queue_lock_);
     queue_.push(t);
     queue_cv_.notify_all();
@@ -51,7 +51,7 @@ class TaskQueue {
 };
 
 //// TOML
-inline toml::Value ParseTomlFromFile(const string &filepath) {
+inline toml::Value ParseTomlFromFile(const string& filepath) {
   std::ifstream ifs(filepath);
   CHECK(!ifs.fail()) << "Can't open file " << filepath << " for read";
   toml::ParseResult pr = toml::parse(ifs);
@@ -61,4 +61,12 @@ inline toml::Value ParseTomlFromFile(const string &filepath) {
   return pr.value;
 }
 
-#endif  // STREAMER_UTILS_H
+inline void ExecuteAndCheck(std::string command) {
+  int exit_code = system(command.c_str());
+  if (!exit_code) {
+    LOG(FATAL) << "Command \"" << command
+               << "\"failed with exit code: " << exit_code;
+  }
+}
+
+#endif  // STREAMER_UTILS_UTILS_H_

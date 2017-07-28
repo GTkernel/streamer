@@ -2,8 +2,8 @@
 // Created by Ran Xian on 7/22/16.
 //
 
-#ifndef TX1_DNN_GSTVIDEOCAPTURE_H
-#define TX1_DNN_GSTVIDEOCAPTURE_H
+#ifndef STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_
+#define STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_
 
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
@@ -16,7 +16,7 @@
 /**
  * @brief Video capture for reading frames from GStreamer. Return frames in
  * OpenCV BGR Mat. Internally the video capture is using GStreamer-1.0's
- * appsink to `intercept' frame buffers. When the <code>GetFrame()</code>
+ * appsink to `intercept' frame buffers. When the <code>GetPixels()</code>
  * method is called, The video capture will issue a <code>pre_preroll</code>
  * signal to the GStreamer pipeline.
  */
@@ -24,12 +24,11 @@ class GstVideoCapture {
  public:
   GstVideoCapture();
   ~GstVideoCapture();
-  cv::Mat TryGetFrame(DataBuffer *data_bufferp = nullptr);
-  cv::Mat GetFrame(DataBuffer *data_bufferp = nullptr);
-  cv::Size GetOriginalFrameSize();
+  cv::Mat GetPixels();
+  cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
-  bool IsConnected();
+  bool IsConnected() const;
 
   /**
    * @brief Set Gstreamer decoder element direclty. The caller should make sure
@@ -37,10 +36,10 @@ class GstVideoCapture {
    *
    * @param decoder The name of the deocder gstreamer element.
    */
-  void SetDecoderElement(const string &decoder);
+  void SetDecoderElement(const string& decoder);
 
  private:
-  static GstFlowReturn NewSampleCB(GstAppSink *appsink, gpointer data);
+  static GstFlowReturn NewSampleCB(GstAppSink* appsink, gpointer data);
 
  private:
   void CheckBuffer();
@@ -49,9 +48,9 @@ class GstVideoCapture {
  private:
   cv::Size original_size_;
   std::string caps_string_;
-  GstPipeline *pipeline_;
-  GstAppSink *appsink_;
-  GstBus *bus_;
+  GstAppSink* appsink_;
+  GstPipeline* pipeline_;
+  GstBus* bus_;
   std::mutex capture_lock_;
   std::condition_variable capture_cv_;
   std::deque<cv::Mat> frames_;
@@ -60,4 +59,4 @@ class GstVideoCapture {
   string decoder_element_;
 };
 
-#endif  // TX1_DNN_GSTVIDEOCAPTURE_H
+#endif  // STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_

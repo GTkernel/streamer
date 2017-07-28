@@ -2,130 +2,227 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/9/16.
 //
 
-#include "json/json.hpp"
-
 #include "frame.h"
+
 #include <opencv2/core/core.hpp>
 
-Frame::Frame(FrameType frame_type, cv::Mat original_image)
-    : frame_type_(frame_type), original_image_(original_image) {}
+#include "common/types.h"
 
-cv::Mat Frame::GetOriginalImage() { return original_image_; }
+class FramePrinter : public boost::static_visitor<std::string> {
+ public:
+  std::string operator()(const double& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
 
-void Frame::SetOriginalImage(cv::Mat original_image) {
-  original_image_ = original_image;
-}
+  std::string operator()(const float& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
 
-FrameType Frame::GetType() { return frame_type_; }
+  std::string operator()(const int& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
 
-ImageFrame::ImageFrame(cv::Mat image, cv::Mat original_image)
-    : Frame(FRAME_TYPE_IMAGE, original_image),
-      image_(image),
-      shape_(image.channels(), image.cols, image.rows) {}
+  std::string operator()(const unsigned long& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
 
-Shape ImageFrame::GetSize() { return shape_; }
+  std::string operator()(const std::string& v) const { return v; }
 
-cv::Mat ImageFrame::GetImage() { return image_; }
-
-void ImageFrame::SetImage(cv::Mat image) { image_ = image; }
-
-MetadataFrame::MetadataFrame(cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image) {}
-MetadataFrame::MetadataFrame(std::vector<string> tags, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), tags_(tags) {
-  bitset_.set(Bit_tags);
-}
-MetadataFrame::MetadataFrame(std::vector<Rect> bboxes, cv::Mat original_image)
-    : Frame(FRAME_TYPE_MD, original_image), bboxes_(bboxes) {
-  bitset_.set(Bit_bboxes);
-}
-MetadataFrame::MetadataFrame(nlohmann::json j)
-    : Frame(FRAME_TYPE_MD, cv::Mat()) {
-  try {
-    nlohmann::json md_j = j.at("MetadataFrame");
-    this->tags_ = md_j.at("tags").get<std::vector<std::string>>();
-
-    for (const auto bbox_j :
-         md_j.at("bboxes").get<std::vector<nlohmann::json>>()) {
-      this->bboxes_.push_back(Rect(bbox_j));
+  std::string operator()(const std::vector<std::string>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::string> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
     }
-  } catch (std::out_of_range) {
-    LOG(FATAL) << "Malformed MetadataFrame JSON: " << j.dump();
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<double>& v) const {
+    std::ostringstream output;
+    output << "std::vector<double> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<Rect>& v) const {
+    std::ostringstream output;
+    output << "std::vector<Rect> = [" << std::endl;
+    for (auto& r : v) {
+      output << "Rect("
+             << "px = " << r.px << "py = " << r.py << "width = " << r.width
+             << "height = " << r.height << ")" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<char>& v) const {
+    std::ostringstream output;
+    output << "std::vector<char>(size = " << v.size() << ") = [";
+    decltype(v.size()) num_elems = v.size();
+    if (num_elems > 3) {
+      num_elems = 3;
+    }
+    for (decltype(num_elems) i = 0; i < num_elems; ++i) {
+      output << +v[i] << ", ";
+    }
+    output << "...]";
+    return output.str();
+  }
+
+  std::string operator()(const cv::Mat& v) const {
+    std::ostringstream output, mout;
+    cv::Mat tmp;
+    v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
+    mout << tmp;
+    output << "cv::Mat(size = " << v.cols << "x" << v.rows
+           << ") = " << mout.str().substr(0, 20) << "...]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<FaceLandmark>& v) const {
+    std::ostringstream output;
+    output << "std::vector<FaceLandmark> = [" << std::endl;
+    for (auto& m : v) {
+      output << "FaceLandmark("
+             << "(" << m.x[0] << "," << m.y[0] << ")"
+             << "(" << m.x[1] << "," << m.y[1] << ")"
+             << "(" << m.x[2] << "," << m.y[2] << ")"
+             << "(" << m.x[3] << "," << m.y[3] << ")"
+             << "(" << m.x[4] << "," << m.y[4] << ")"
+             << ")" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<std::vector<float>>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::vector<float>> = [" << std::endl;
+    for (auto& m : v) {
+      output << "std::vector<float>(";
+      bool flag = true;
+      for (auto& n : m) {
+        if (flag) {
+          output << n;
+        } else {
+          output << "," << n;
+        }
+      }
+      output << ")" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<float>& v) const {
+    std::ostringstream output;
+    output << "std::vector<float> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<std::vector<double>>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::vector<double>> = [" << std::endl;
+    for (auto& m : v) {
+      output << "std::vector<double>(";
+      bool flag = true;
+      for (auto& n : m) {
+        if (flag) {
+          output << n;
+        } else {
+          output << "," << n;
+        }
+      }
+      output << ")" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+};
+
+Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
+
+Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
+
+Frame::Frame(const Frame& frame) {
+  frame_data_ = frame.frame_data_;
+  // Deep copy the original bytes
+  auto it = frame.frame_data_.find("original_bytes");
+  if (it != frame.frame_data_.end()) {
+    std::vector<char> newbuf(boost::get<std::vector<char>>(it->second));
+    frame_data_["original_bytes"] = newbuf;
   }
 }
 
-std::vector<string> MetadataFrame::GetTags() { return tags_; }
-void MetadataFrame::SetTags(const std::vector<string>& tags) {
-  tags_ = tags;
-  bitset_.set(Bit_tags);
-}
-std::vector<Rect> MetadataFrame::GetBboxes() { return bboxes_; }
-void MetadataFrame::SetBboxes(const std::vector<Rect>& bboxes) {
-  bboxes_ = bboxes;
-  bitset_.set(Bit_bboxes);
-}
-std::vector<FaceLandmark> MetadataFrame::GetFaceLandmarks() {
-  return face_landmarks_;
-}
-void MetadataFrame::SetFaceLandmarks(const std::vector<FaceLandmark>& face_landmarks) {
-  face_landmarks_ = face_landmarks;
-  bitset_.set(Bit_face_landmarks);
-}
-std::vector<std::vector<float>> MetadataFrame::GetFaceFeatures() {
-  return face_features_;
-}
-void MetadataFrame::SetFaceFeatures(const std::vector<std::vector<float>>& face_features) {
-  face_features_ = face_features;
-  bitset_.set(Bit_face_features);
-}
-std::vector<float> MetadataFrame::GetConfidences() {
-  return confidences_;
-}
-void MetadataFrame::SetConfidences(const std::vector<float>& confidences) {
-  confidences_ = confidences;
-  bitset_.set(Bit_confidences);
-}
-std::list<std::list<boost::optional<PointFeature>>> MetadataFrame::GetPaths() {
-  return paths_;
-}
-void MetadataFrame::SetPaths(const std::list<std::list<boost::optional<PointFeature>>>& paths) {
-  paths_ = paths;
-  bitset_.set(Bit_paths);
-}
-std::vector<std::string> MetadataFrame::GetUuids() {
-  return uuids_;
-}
-void MetadataFrame::SetUuids(const std::vector<std::string>& uuids) {
-  uuids_ = uuids;
-  bitset_.set(Bit_uuids);
-}
-std::vector<std::vector<double>> MetadataFrame::GetStruckFeatures() {
-  return struck_features_;
-}
-void MetadataFrame::SetStruckFeatures(const std::vector<std::vector<double>>& struck_features) {
-  struck_features_ = struck_features;
-  bitset_.set(Bit_struck_features);
-}
-std::bitset<32> MetadataFrame::GetBitset() {
-  return bitset_;
-}
-
-nlohmann::json MetadataFrame::ToJson() {
-  nlohmann::json md_j;
-  md_j["tags"] = this->GetTags();
-
-  std::vector<nlohmann::json> bboxes;
-  for (auto bbox : this->GetBboxes()) {
-    bboxes.push_back(bbox.ToJson());
+template <typename T>
+T Frame::GetValue(std::string key) const {
+  auto it = frame_data_.find(key);
+  if (it != frame_data_.end()) {
+    return boost::get<T>(it->second);
+  } else {
+    throw std::out_of_range(key);
   }
-  md_j["bboxes"] = bboxes;
-
-  nlohmann::json j;
-  j["MetadataFrame"] = md_j;
-  return j;
 }
 
-BytesFrame::BytesFrame(DataBuffer data_buffer, cv::Mat original_image)
-    : Frame(FRAME_TYPE_BYTES, original_image), data_buffer_(data_buffer) {}
+template <typename T>
+void Frame::SetValue(std::string key, const T& val) {
+  frame_data_[key] = val;
+}
 
-DataBuffer BytesFrame::GetDataBuffer() { return data_buffer_; }
+std::string Frame::ToString() const {
+  FramePrinter visitor;
+  std::ostringstream output;
+  for (auto iter = frame_data_.begin(); iter != frame_data_.end(); iter++) {
+    auto res = boost::apply_visitor(visitor, iter->second);
+    output << iter->first << ": " << res << std::endl;
+  }
+  return output.str();
+}
+
+// Types declared in field_types of frame
+template void Frame::SetValue(std::string, const double&);
+template void Frame::SetValue(std::string, const float&);
+template void Frame::SetValue(std::string, const int&);
+template void Frame::SetValue(std::string, const unsigned long&);
+template void Frame::SetValue(std::string, const std::string&);
+template void Frame::SetValue(std::string, const std::vector<std::string>&);
+template void Frame::SetValue(std::string, const std::vector<double>&);
+template void Frame::SetValue(std::string, const std::vector<Rect>&);
+template void Frame::SetValue(std::string, const std::vector<char>&);
+template void Frame::SetValue(std::string, const cv::Mat&);
+template void Frame::SetValue(std::string, const std::vector<FaceLandmark>&);
+template void Frame::SetValue(std::string, const std::vector<std::vector<float>>&);
+template void Frame::SetValue(std::string, const std::vector<float>&);
+template void Frame::SetValue(std::string, const std::vector<std::vector<double>>&);
+
+template double Frame::GetValue(std::string) const;
+template float Frame::GetValue(std::string) const;
+template int Frame::GetValue(std::string) const;
+template unsigned long Frame::GetValue(std::string) const;
+template std::string Frame::GetValue(std::string) const;
+template std::vector<std::string> Frame::GetValue(std::string) const;
+template std::vector<double> Frame::GetValue(std::string) const;
+template std::vector<Rect> Frame::GetValue(std::string) const;
+template cv::Mat Frame::GetValue(std::string) const;
+template std::vector<char> Frame::GetValue(std::string) const;
+template std::vector<FaceLandmark> Frame::GetValue(std::string) const;
+template std::vector<std::vector<float>> Frame::GetValue(std::string) const;
+template std::vector<float> Frame::GetValue(std::string) const;
+template std::vector<std::vector<double>> Frame::GetValue(std::string) const;

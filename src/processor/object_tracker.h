@@ -16,7 +16,6 @@
 class ObjectTracker : public Processor {
 public:
   ObjectTracker(size_t rem_size = 5);
-  virtual ProcessorType GetType() override;
 
 protected:
   virtual bool Init() override;

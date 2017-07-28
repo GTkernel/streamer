@@ -82,7 +82,7 @@ std::vector<FaceInfo> MTCNN::NonMaximumSuppression(std::vector<FaceInfo>& bboxes
 }
 
 void MTCNN::Bbox2Square(std::vector<FaceInfo>& bboxes){
-  for(int i=0;i<bboxes.size();i++){
+  for(size_t i=0;i<bboxes.size();i++){
     float h = bboxes[i].bbox.x2 - bboxes[i].bbox.x1;
     float w = bboxes[i].bbox.y2 - bboxes[i].bbox.y1;
     float side = h>w ? h:w;
@@ -99,7 +99,7 @@ void MTCNN::Bbox2Square(std::vector<FaceInfo>& bboxes){
 
 std::vector<FaceInfo> MTCNN::BoxRegress(std::vector<FaceInfo>& faceInfo,int stage){
   std::vector<FaceInfo> bboxes;
-  for(int bboxId =0;bboxId<faceInfo.size();bboxId++){
+  for(size_t bboxId =0;bboxId<faceInfo.size();bboxId++){
       FaceRect faceRect;
       FaceInfo tempFaceInfo;
       float regw = faceInfo[bboxId].bbox.y2 - faceInfo[bboxId].bbox.y1;
@@ -123,7 +123,7 @@ std::vector<FaceInfo> MTCNN::BoxRegress(std::vector<FaceInfo>& faceInfo,int stag
 
 // compute the padding coordinates (pad the bounding boxes to square)
 void MTCNN::Padding(int img_w,int img_h){
-  for(int i=0;i<regressed_rects_.size();i++){
+  for(size_t i=0;i<regressed_rects_.size();i++){
     FaceInfo tempFaceInfo;
     tempFaceInfo = regressed_rects_[i];
     tempFaceInfo.bbox.y2 = (regressed_rects_[i].bbox.y2 >= img_w) ? img_w : regressed_rects_[i].bbox.y2;
@@ -186,7 +186,7 @@ MTCNN::MTCNN(ModelDescription& model_description){
     std::vector<int> gpus;
     GetCUDAGpus(gpus);
 
-    if (desired_device_number < gpus.size()) {
+    if (desired_device_number < (int)gpus.size()) {
       // Device exists
       LOG(INFO) << "Use GPU with device ID " << desired_device_number;
       caffe::Caffe::SetDevice(desired_device_number);
@@ -576,7 +576,7 @@ void MTCNN::Detect(const cv::Mat& image,std::vector<FaceInfo>& faceInfo,int minS
 MtcnnFaceDetector::MtcnnFaceDetector(const ModelDescription& model_description,
                                      int min_size,
                                      float idle_duration)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_MTCNN_FACE_DETECTOR, {"input"}, {"output"}),
       model_description_(model_description),
       minSize_(min_size),
       idle_duration_(idle_duration)
@@ -602,17 +602,17 @@ void MtcnnFaceDetector::Process() {
   timer.Start();
 
   std::vector<FaceInfo> faceInfo;
-  auto image_frame = GetFrame<ImageFrame>("input");
+  auto frame = GetFrame("input");
 
   auto now = std::chrono::system_clock::now();
   std::chrono::duration<double> diff = now-last_detect_time_;
   if (diff.count() >= idle_duration_) {
-    cv::Mat img = image_frame->GetImage();
-    detector_->Detect(img,faceInfo,minSize_,threshold_,factor_);
-    cv::Mat original_img = image_frame->GetOriginalImage();
+    auto image = frame->GetValue<cv::Mat>("image");
+    detector_->Detect(image,faceInfo,minSize_,threshold_,factor_);
+    auto original_img = frame->GetValue<cv::Mat>("original_image");
     CHECK(!original_img.empty());
-    float scale_factor[] = { (float)original_img.size[1]/(float)img.size[1],
-                             (float)original_img.size[0]/(float)img.size[0] };
+    float scale_factor[] = { (float)original_img.size[1]/(float)image.size[1],
+                             (float)original_img.size[0]/(float)image.size[0] };
     std::vector<Rect> bboxes;
     std::vector<FaceLandmark> face_landmarks;
     std::vector<std::string> tags;
@@ -640,17 +640,12 @@ void MtcnnFaceDetector::Process() {
     }
     last_detect_time_ = std::chrono::system_clock::now();
 
-    auto p_meta = new MetadataFrame(bboxes, original_img);
-    CHECK(p_meta);
-    p_meta->SetFaceLandmarks(face_landmarks);
-    p_meta->SetTags(tags);
-    PushFrame("output", p_meta);
+    frame->SetValue("bounding_boxes", bboxes);
+    frame->SetValue("face_landmarks", face_landmarks);
+    frame->SetValue("tags", tags);
+    PushFrame("output", std::move(frame));
     LOG(INFO) << "MtcnnFaceDetector took " << timer.ElapsedMSec() << " ms";
   } else {
-    PushFrame("output", new MetadataFrame(image_frame->GetOriginalImage()));
+    PushFrame("output", std::move(frame));
   }
-}
-
-ProcessorType MtcnnFaceDetector::GetType() {
-  return PROCESSOR_TYPE_MTCNN_FACE_DETECTOR;
 }

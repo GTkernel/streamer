@@ -6,7 +6,8 @@
 #define STREAMER_OPENCV_PEOPLE_DETECTOR_H
 
 #ifdef USE_CUDA
-#include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
+//#include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
+#include <opencv2/gpu/gpu.hpp>
 #else
 #include <opencv2/objdetect/objdetect.hpp>
 #endif
@@ -17,7 +18,6 @@ class OpenCVPeopleDetector : public Processor {
 
   public:
     OpenCVPeopleDetector();
-    virtual ProcessorType GetType() override;
 
   protected:
     virtual bool Init() override;
@@ -27,9 +27,10 @@ class OpenCVPeopleDetector : public Processor {
   private:
 
 #ifdef USE_CUDA
-  cv::cuda::HOG hog_;
+  //cv::cuda::HOG hog_;
+  cv::gpu::HOGDescriptor hog_;
 #else
-    cv::HOGDescriptor hog_;
+  cv::HOGDescriptor hog_;
 #endif
 
 };

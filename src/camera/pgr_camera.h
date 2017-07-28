@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/25/16.
 //
 
-#ifndef STREAMER_PGR_CAMERA_H
-#define STREAMER_PGR_CAMERA_H
+#ifndef STREAMER_CAMERA_PGR_CAMERA_H_
+#define STREAMER_CAMERA_PGR_CAMERA_H_
 
 #include <flycapture/FlyCapture2.h>
 
@@ -16,7 +16,7 @@
  */
 class PGRCamera : public Camera {
  public:
-  PGRCamera(const string &name, const string &video_uri, int width = -1,
+  PGRCamera(const string& name, const string& video_uri, int width = -1,
             int height = -1, CameraModeType mode = CAMERA_MODE_0,
             CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW12);
   virtual CameraType GetCameraType() const override;
@@ -45,6 +45,13 @@ class PGRCamera : public Camera {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode);
   virtual CameraPixelFormatType GetPixelFormat();
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format);
+  virtual void SetFrameRate(float f) override;
+  virtual float GetFrameRate() override;
+  virtual void SetROI(int roi_offset_x, int roi_offset_y, int roi_width,
+                      int roi_height);
+  virtual int GetROIOffsetX() override;
+  virtual int GetROIOffsetY() override;
+  virtual Shape GetROIOffsetShape() override;
 
  protected:
   virtual bool Init() override;
@@ -66,7 +73,7 @@ class PGRCamera : public Camera {
                     bool value_a = true);
   FlyCapture2::Format7ImageSettings GetImageSettings();
 
-  static void OnImageGrabbed(FlyCapture2::Image *image, const void *user_data);
+  static void OnImageGrabbed(FlyCapture2::Image* image, const void* user_data);
 
   CameraModeType FCMode2CameraMode(FlyCapture2::Mode fc_mode);
   FlyCapture2::Mode CameraMode2FCMode(CameraModeType mode);
@@ -80,4 +87,4 @@ class PGRCamera : public Camera {
   std::mutex camera_lock_;
 };
 
-#endif  // STREAMER_PGR_CAMERA_H
+#endif  // STREAMER_CAMERA_PGR_CAMERA_H_

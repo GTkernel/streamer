@@ -8,14 +8,15 @@
 #include "opencv_motion_detector.h"
 
 OpenCVMotionDetector::OpenCVMotionDetector(float threshold, float max_duration) 
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR, {"input"}, {"output"}),
       first_frame_(true),
       previous_pixels_(0),
       threshold_(threshold),
       max_duration_(max_duration) {}
 
 bool OpenCVMotionDetector::Init() {
-  mog2_.reset(cv::createBackgroundSubtractorMOG2());
+  //mog2_.reset(cv::createBackgroundSubtractorMOG2());
+  mog2_.reset(new cv::BackgroundSubtractorMOG2());
   return true;
 }
 
@@ -25,11 +26,12 @@ bool OpenCVMotionDetector::OnStop() {
 }
 
 void OpenCVMotionDetector::Process() {
-  auto frame = GetFrame<ImageFrame>("input");
-  cv::Mat image = frame->GetImage();
+  auto frame = GetFrame("input");
+  auto image = frame->GetValue<cv::Mat>("image");
 
   cv::Mat fore;
-  mog2_->apply(image, fore);
+  //mog2_->apply(image, fore);
+  (*mog2_)(image, fore);
 
   cv::erode(fore, fore, cv::Mat()); cv::dilate(fore, fore, cv::Mat());
   cv::erode(fore, fore, cv::Mat()); cv::dilate(fore, fore, cv::Mat());
@@ -56,13 +58,8 @@ void OpenCVMotionDetector::Process() {
   std::chrono::duration<double> diff = now-last_send_time_;
   if (need_send || (diff.count() >= max_duration_)) {
     last_send_time_ = now;
-    PushFrame("output",
-        new ImageFrame(image, frame->GetOriginalImage()));
+    PushFrame("output", std::move(frame));
   }
-}
-
-ProcessorType OpenCVMotionDetector::GetType() {
-  return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
 }
 
 int OpenCVMotionDetector::GetPixels(cv::Mat& image) {

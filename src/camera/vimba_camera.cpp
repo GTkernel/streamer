@@ -11,7 +11,7 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
   friend class VimbaCamera;
 
  public:
-  VimbaCameraFrameObserver(VimbaCamera *vimba_camera)
+  VimbaCameraFrameObserver(VimbaCamera* vimba_camera)
       : VmbAPI::IFrameObserver(vimba_camera->camera_),
         vimba_camera_(vimba_camera) {}
 
@@ -37,8 +37,8 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
     destinationImage.Size = sizeof(destinationImage);
 
     // attach the data buffers
-    VmbUchar_t *input_buffer;
-    VmbUchar_t *output_buffer = dest_bgr_mat.data;
+    VmbUchar_t* input_buffer;
+    VmbUchar_t* output_buffer = dest_bgr_mat.data;
     CHECK_VIMBA(pFrame->GetBuffer(input_buffer));
 
     sourceImage.Data = input_buffer;
@@ -69,7 +69,7 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         // Copy the data of the frame
 
         VmbUint32_t buffer_size;
-        VmbUchar_t *vmb_buffer;
+        VmbUchar_t* vmb_buffer;
         // We don't use CHECK_VIMBA here because we don't want to crash for
         // unsuccessful image grab
         if (VmbErrorSuccess != pFrame->GetBufferSize(buffer_size)) {
@@ -81,16 +81,19 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
         }
 
         // Raw bytes of the image
-        DataBuffer data_buffer(buffer_size);
-        data_buffer.Clone(DataBuffer(vmb_buffer, buffer_size));
+        std::vector<char> data_buffer(
+            (char*)vmb_buffer,
+            (char*)vmb_buffer + buffer_size * sizeof(vmb_buffer[0]));
 
         // Transform to BGR image
-        cv::Mat bgr_output = TransformToBGRImage(pFrame);
+        cv::Mat bgr_image = TransformToBGRImage(pFrame);
 
-        vimba_camera_->PushFrame("raw_output",
-                                 new BytesFrame(data_buffer, bgr_output));
-        vimba_camera_->PushFrame("bgr_output",
-                                 new ImageFrame(bgr_output, bgr_output));
+        auto frame = std::make_unique<Frame>();
+        frame->SetValue("original_bytes", data_buffer);
+        frame->SetValue("original_image", bgr_image);
+        frame->SetValue("frame_id", vimba_camera_->CreateFrameID());
+        vimba_camera_->MetadataToFrame(frame);
+        vimba_camera_->PushFrame("output", std::move(frame));
       } else {
         LOG(ERROR) << "Can't get frame successfully: " << eReceiveStatus;
       }  // Validate eReceiveStatus
@@ -99,26 +102,23 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
   }
 
  private:
-  VimbaCamera *vimba_camera_;
+  VimbaCamera* vimba_camera_;
 };
 
-VimbaCamera::VimbaCamera(const string &name, const string &video_uri, int width,
+VimbaCamera::VimbaCamera(const string& name, const string& video_uri, int width,
                          int height, CameraModeType mode,
                          CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
       initial_mode_(mode),
-      vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {
-  // Init raw output sink
-  sinks_.insert({"raw_output", StreamPtr(new Stream)});
-}
+      vimba_system_(VmbAPI::VimbaSystem::GetInstance()) {}
 
 CameraType VimbaCamera::GetCameraType() const { return CAMERA_TYPE_VIMBA; }
 
 bool VimbaCamera::Init() {
   string protocol, ip;
   ParseProtocolAndPath(video_uri_, protocol, ip);
-  
+
   CHECK_VIMBA(vimba_system_.Startup());
 
   if (StringContains(ip, ".")) {
@@ -127,11 +127,11 @@ bool VimbaCamera::Init() {
         vimba_system_.OpenCameraByID(ip.c_str(), VmbAccessModeFull, camera_));
   } else {
     // Looks like an device index
-    int device_idx = StringToInt(ip);
     VmbAPI::CameraPtrVector cameras;
     CHECK_VIMBA(vimba_system_.GetCameras(cameras));
-    CHECK(device_idx < cameras.size()) << "Invalid camera index: "
-                                       << device_idx;
+    decltype(cameras.size()) device_idx = StringToInt(ip);
+    CHECK(device_idx < cameras.size())
+        << "Invalid camera index: " << device_idx;
     camera_ = cameras[device_idx];
     camera_->Open(VmbAccessModeFull);
   }
@@ -160,6 +160,8 @@ bool VimbaCamera::OnStop() {
   StopCapture();
 
   CHECK_VIMBA(vimba_system_.Shutdown());
+
+  return true;
 }
 
 void VimbaCamera::Process() {
@@ -186,8 +188,99 @@ void VimbaCamera::SetExposure(float exposure) {
   CHECK_VIMBA(pFeature->SetValue((double)exposure));
 }
 
+float VimbaCamera::GetFrameRate() {
+  VmbAPI::FeaturePtr pFeature;
+  VmbErrorType error = camera_->GetFeatureByName("TriggerSelector", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Trigger selector not found";
+  }
+
+  error = camera_->GetFeatureByName("TriggerSource", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Feature not found Trigger Source";
+  }
+
+  error = camera_->GetFeatureByName("AcquisitionFrameRateAbs", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Feature not found AcquisitionFrameRateAbs";
+    return -1;
+  }
+
+  double frame_rate;
+  CHECK_VIMBA(pFeature->GetValue(frame_rate));
+  return (float)frame_rate;
+}
+
+void VimbaCamera::SetFrameRate(float frame_rate) {
+  VmbAPI::FeaturePtr pFeature;
+  VmbErrorType error = camera_->GetFeatureByName("TriggerSelector", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Trigger selector not found";
+  }
+
+  CHECK_VIMBA(pFeature->SetValue("FrameStart"));
+  error = camera_->GetFeatureByName("TriggerSource", pFeature);
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Feature not found Trigger Source";
+  }
+
+  CHECK_VIMBA(pFeature->SetValue("FixedRate"));
+
+  error = (camera_->GetFeatureByName("AcquisitionFrameRateAbs", pFeature));
+  if (error == VmbErrorNotFound) {
+    LOG(WARNING) << "Feature not found AcquisitionFrameRateAbs";
+  }
+
+  LOG(WARNING) << "Setting Frame Rate to " << frame_rate;
+  CHECK_VIMBA(pFeature->SetValue(frame_rate));
+}
+
+void VimbaCamera::SetROI(int roi_offset_x, int roi_offset_y, int roi_width,
+                         int roi_height) {
+  VmbAPI::FeaturePtr pFeature;
+
+  CHECK_VIMBA(camera_->GetFeatureByName("OffsetX", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_offset_x)));
+
+  CHECK_VIMBA(camera_->GetFeatureByName("OffsetY", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_offset_y)));
+
+  CHECK_VIMBA(camera_->GetFeatureByName("Width", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_width)));
+
+  CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
+  CHECK_VIMBA(pFeature->SetValue(static_cast<VmbInt64_t>(roi_height)));
+}
+
+int VimbaCamera::GetROIOffsetX() {
+  VmbAPI::FeaturePtr pFeature;
+  VmbInt64_t roi_offset_x;
+  CHECK_VIMBA(camera_->GetFeatureByName("OffsetX", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(roi_offset_x));
+  return (int)roi_offset_x;
+}
+
+int VimbaCamera::GetROIOffsetY() {
+  VmbAPI::FeaturePtr pFeature;
+  VmbInt64_t roi_offset_y;
+  CHECK_VIMBA(camera_->GetFeatureByName("OffsetY", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(roi_offset_y));
+  return (int)roi_offset_y;
+}
+
+Shape VimbaCamera::GetROIOffsetShape() {
+  VmbAPI::FeaturePtr pFeature;
+  VmbInt64_t width, height;
+  CHECK_VIMBA(camera_->GetFeatureByName("Width", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(width));
+  CHECK_VIMBA(camera_->GetFeatureByName("Height", pFeature));
+  CHECK_VIMBA(pFeature->GetValue(height));
+
+  return Shape((int)width, (int)height);
+}
+
 float VimbaCamera::GetSharpness() { return 0; }
-void VimbaCamera::SetSharpness(float sharpness) {}
+void VimbaCamera::SetSharpness(float) {}
 Shape VimbaCamera::GetImageSize() {
   VmbAPI::FeaturePtr pFeature;
   VmbInt64_t width, height;
@@ -198,11 +291,11 @@ Shape VimbaCamera::GetImageSize() {
 
   return Shape((int)width, (int)height);
 }
-void VimbaCamera::SetBrightness(float brightness) {}
+void VimbaCamera::SetBrightness(float) {}
 float VimbaCamera::GetBrightness() { return 0; }
-void VimbaCamera::SetSaturation(float saturation) {}
+void VimbaCamera::SetSaturation(float) {}
 float VimbaCamera::GetSaturation() { return 0; }
-void VimbaCamera::SetHue(float hue) {}
+void VimbaCamera::SetHue(float) {}
 float VimbaCamera::GetHue() { return 0; }
 
 void VimbaCamera::SetGain(float gain) {
@@ -243,11 +336,11 @@ float VimbaCamera::GetGamma() {
   return (float)gamma;
 }
 
-void VimbaCamera::SetWBRed(float wb_red) {}
+void VimbaCamera::SetWBRed(float) {}
 
 float VimbaCamera::GetWBRed() { return 0; }
 
-void VimbaCamera::SetWBBlue(float wb_blue) {}
+void VimbaCamera::SetWBBlue(float) {}
 
 float VimbaCamera::GetWBBlue() { return 0; }
 
@@ -334,7 +427,7 @@ void VimbaCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
 }
 
 CameraPixelFormatType VimbaCamera::VimbaPfmt2CameraPfmt(
-    const string &vmb_pfmt) {
+    const string& vmb_pfmt) {
   if (vmb_pfmt == "Mono8") {
     return CAMERA_PIXEL_FORMAT_MONO8;
   } else if (vmb_pfmt == "BayerRG8" || vmb_pfmt == "BayerGB8" ||

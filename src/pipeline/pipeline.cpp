@@ -6,15 +6,14 @@
 #include "processor/processor_factory.h"
 
 std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
-    const std::vector<SPLStatement> &spl_statements) {
+    const std::vector<SPLStatement>& spl_statements) {
   std::shared_ptr<Pipeline> pipeline(new Pipeline);
 
-  for (auto &stmt : spl_statements) {
+  for (const auto& stmt : spl_statements) {
     switch (stmt.statement_type) {
       case SPL_STATEMENT_PROCESSOR: {
         std::shared_ptr<Processor> processor;
-        processor =
-            ProcessorFactory::CreateInstance(stmt.processor_type, stmt.params);
+        processor = ProcessorFactory::Create(stmt.processor_type, stmt.params);
         pipeline->processors_.insert({stmt.processor_name, processor});
         pipeline->dependency_graph_.insert({processor.get(), {}});
         pipeline->reverse_dependency_graph_.insert({processor.get(), {}});
@@ -55,7 +54,7 @@ Pipeline::GetProcessors() {
   return processors_;
 }
 
-std::shared_ptr<Processor> Pipeline::GetProcessor(const string &name) {
+std::shared_ptr<Processor> Pipeline::GetProcessor(const string& name) {
   CHECK(processors_.count(name) != 0) << "Has no processor named: " << name;
 
   return processors_[name];
@@ -64,13 +63,13 @@ std::shared_ptr<Processor> Pipeline::GetProcessor(const string &name) {
 bool Pipeline::Start() {
   while (true) {
     bool some_processor_started = false;
-    int started_processor = 0;
-    for (auto itr : dependency_graph_) {
+    unsigned int started_processor = 0;
+    for (const auto& itr : dependency_graph_) {
       auto processor = itr.first;
       // For all not yet start processors
       if (!processor->IsStarted()) {
-        int started_dep = 0;
-        for (auto dep : itr.second) {
+        unsigned int started_dep = 0;
+        for (const auto& dep : itr.second) {
           if (dep->IsStarted()) started_dep += 1;
         }
         if (itr.second.size() == started_dep) {
@@ -101,13 +100,13 @@ bool Pipeline::Start() {
 
 void Pipeline::Stop() {
   while (true) {
-    int stopped_processor = 0;
-    for (auto itr : reverse_dependency_graph_) {
+    unsigned int stopped_processor = 0;
+    for (const auto& itr : reverse_dependency_graph_) {
       auto processor = itr.first;
       // For all not yet stop processors
       if (processor->IsStarted()) {
-        int stopped_dep = 0;
-        for (auto dep : itr.second) {
+        unsigned int stopped_dep = 0;
+        for (const auto& dep : itr.second) {
           if (!dep->IsStarted()) stopped_dep += 1;
         }
         if (itr.second.size() == stopped_dep) {

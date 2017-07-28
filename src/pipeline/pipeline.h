@@ -2,8 +2,10 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/5/16.
 //
 
-#ifndef STREAMER_PIPELINE_H
-#define STREAMER_PIPELINE_H
+#ifndef STREAMER_PIPELINE_PIPELINE_H_
+#define STREAMER_PIPELINE_PIPELINE_H_
+
+#include <unordered_map>
 
 #include "common/common.h"
 #include "processor/processor.h"
@@ -12,7 +14,7 @@
 class Pipeline {
  public:
   static std::shared_ptr<Pipeline> ConstructPipeline(
-      const std::vector<SPLStatement> &spl_statements);
+      const std::vector<SPLStatement>& spl_statements);
   /**
    * @brief Initialize the pipeline from spl statements
    * @param spl_statements The spl statements used to construct the pipeline
@@ -22,7 +24,7 @@ class Pipeline {
    * @brief Get a processor of the pipeline by its name
    * @return The processor
    */
-  std::shared_ptr<Processor> GetProcessor(const string &name);
+  std::shared_ptr<Processor> GetProcessor(const string& name);
 
   std::unordered_map<string, std::shared_ptr<Processor>> GetProcessors();
 
@@ -39,11 +41,11 @@ class Pipeline {
  private:
   std::unordered_map<string, std::shared_ptr<Processor>> processors_;
   // I depend on who
-  std::unordered_map<Processor *, std::unordered_set<Processor *>>
+  std::unordered_map<Processor*, std::unordered_set<Processor*>>
       dependency_graph_;
   // Who depends on me
-  std::unordered_map<Processor *, std::unordered_set<Processor *>>
+  std::unordered_map<Processor*, std::unordered_set<Processor*>>
       reverse_dependency_graph_;
 };
 
-#endif  // STREAMER_PIPELINE_H
+#endif  // STREAMER_PIPELINE_PIPELINE_H_

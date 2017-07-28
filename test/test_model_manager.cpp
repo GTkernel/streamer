@@ -6,7 +6,7 @@
 #include "model/model_manager.h"
 
 TEST(CAMERA_MANAGER_TEST, TEST_BASIC) {
-  ModelManager &manager = ModelManager::GetInstance();
+  ModelManager& manager = ModelManager::GetInstance();
 
   auto mean_colors = manager.GetMeanColors();
   EXPECT_EQ(mean_colors[0], 104);

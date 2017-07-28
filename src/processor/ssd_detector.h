@@ -47,7 +47,6 @@ public:
               float confidence_threshold,
               float idle_duration = 0.f,
               const std::set<std::string>& targets = std::set<std::string>());
-  virtual ProcessorType GetType() override;
 
 protected:
   virtual bool Init() override;

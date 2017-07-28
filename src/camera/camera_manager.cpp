@@ -3,12 +3,13 @@
 //
 
 #include "camera_manager.h"
+
 #include "common/context.h"
 
 // The path to the camera config file
 static const string CAMERA_TOML_FILENAME = "cameras.toml";
 
-CameraManager &CameraManager::GetInstance() {
+CameraManager& CameraManager::GetInstance() {
   static CameraManager manager;
   return manager;
 }
@@ -23,7 +24,7 @@ CameraManager::CameraManager() {
 
   auto cameras_value = root_value.find("camera")->as<toml::Array>();
 
-  for (const auto &camera_value : cameras_value) {
+  for (const auto& camera_value : cameras_value) {
     CHECK(camera_value.find("name") != nullptr);
     CHECK(camera_value.find("video_uri") != nullptr);
 
@@ -56,7 +57,8 @@ CameraManager::CameraManager() {
     }
 
     std::shared_ptr<Camera> camera;
-    string video_protocol = SplitString(video_uri, ":")[0];
+    string video_protocol, video_path;
+    ParseProtocolAndPath(video_uri, video_protocol, video_path);
     if (video_protocol == "gst" || video_protocol == "rtsp" ||
         video_protocol == "file") {
       camera.reset(new GSTCamera(name, video_uri, width, height));
@@ -67,7 +69,7 @@ CameraManager::CameraManager() {
       LOG(WARNING) << "Not built with PtGray FlyCapture SDK, camera: " << name
                    << " is not loaded";
       continue;
-#endif
+#endif  // USE_PTGRAY
     } else if (video_protocol == "vmb") {
 #ifdef USE_VIMBA
       camera.reset(new VimbaCamera(name, video_uri, width, height));
@@ -75,7 +77,7 @@ CameraManager::CameraManager() {
       LOG(WARNING) << "Not built with AlliedVision Vimba SDK, camera: " << name
                    << " is not loaded";
       continue;
-#endif
+#endif  // USE_VIMBA
     } else {
       LOG(WARNING) << "Unknown video protocol: " << video_protocol
                    << ". Ignored";
@@ -96,13 +98,13 @@ CameraManager::GetCameras() {
   return cameras_;
 }
 
-std::shared_ptr<Camera> CameraManager::GetCamera(const string &name) {
+std::shared_ptr<Camera> CameraManager::GetCamera(const string& name) {
   auto itr = cameras_.find(name);
-  CHECK(itr != cameras_.end()) << "Camera with name " << name
-                               << " is not present";
+  CHECK(itr != cameras_.end())
+      << "Camera with name " << name << " is not present";
   return itr->second;
 }
 
-bool CameraManager::HasCamera(const string &name) const {
+bool CameraManager::HasCamera(const string& name) const {
   return cameras_.count(name) != 0;
 }

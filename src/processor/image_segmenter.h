@@ -1,14 +1,17 @@
-#include "model/model.h"
-#include "processor.h"
 
-#ifndef STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
-#define STREAMER_IMAGE_SEGMENTATION_PROCESSOR_H
+#ifndef STREAMER_PROCESSOR_IMAGE_SEGMENTER_H_
+#define STREAMER_PROCESSOR_IMAGE_SEGMENTER_H_
+
+#include "common/types.h"
+#include "model/model.h"
+#include "processor/processor.h"
 
 class ImageSegmenter : public Processor {
  public:
-  ImageSegmenter(const ModelDesc &model_desc, Shape input_shape);
+  ImageSegmenter(const ModelDesc& model_desc, Shape input_shape);
 
-  virtual ProcessorType GetType() override;
+  static std::shared_ptr<ImageSegmenter> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;
@@ -16,11 +19,10 @@ class ImageSegmenter : public Processor {
   virtual void Process() override;
 
  private:
-  DataBuffer input_buffer_;
   std::unique_ptr<Model> model_;
   ModelDesc model_desc_;
   Shape input_shape_;
   cv::Mat mean_image_;
 };
 
-#endif
+#endif  // STREAMER_PROCESSOR_IMAGE_SEGMENTER_H_

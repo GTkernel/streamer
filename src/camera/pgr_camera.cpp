@@ -5,8 +5,6 @@
 #include "pgr_camera.h"
 #include "utils/utils.h"
 
-#include <boost/regex.hpp>
-
 #define CHECK_PGR(cmd)                       \
   do {                                       \
     FlyCapture2::Error error;                \
@@ -17,15 +15,12 @@
     }                                        \
   } while (0)
 
-PGRCamera::PGRCamera(const string &name, const string &video_uri, int width,
+PGRCamera::PGRCamera(const string& name, const string& video_uri, int width,
                      int height, CameraModeType mode,
                      CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
-      initial_mode_(mode) {
-  // Init raw output sink
-  sinks_.insert({"raw_output", StreamPtr(new Stream)});
-}
+      initial_mode_(mode) {}
 
 bool PGRCamera::Init() {
   // Get the camera guid from ip address
@@ -73,13 +68,15 @@ bool PGRCamera::Init() {
   return true;
 }
 
-void PGRCamera::OnImageGrabbed(FlyCapture2::Image *raw_image,
-                               const void *user_data) {
-  PGRCamera *camera = (PGRCamera *)user_data;
+void PGRCamera::OnImageGrabbed(FlyCapture2::Image* raw_image,
+                               const void* user_data) {
+  PGRCamera* camera = (PGRCamera*)user_data;
 
   FlyCapture2::Image converted_image;
-  DataBuffer image_bytes(raw_image->GetDataSize());
-  image_bytes.Clone(raw_image->GetData(), raw_image->GetDataSize());
+  std::vector<char> image_bytes(
+      (char*)raw_image->GetData(),
+      (char*)raw_image->GetData() +
+          raw_image->GetDataSize() * sizeof(raw_image->GetData()[0]));
   raw_image->Convert(FlyCapture2::PIXEL_FORMAT_BGR, &converted_image);
 
   unsigned int rowBytes =
@@ -89,11 +86,12 @@ void PGRCamera::OnImageGrabbed(FlyCapture2::Image *raw_image,
   cv::Mat image = cv::Mat(converted_image.GetRows(), converted_image.GetCols(),
                           CV_8UC3, converted_image.GetData(), rowBytes);
 
-  cv::Mat output_image;
-  output_image = image.clone();
-
-  camera->PushFrame("bgr_output", new ImageFrame(output_image, output_image));
-  camera->PushFrame("raw_output", new BytesFrame(image_bytes, output_image));
+  cv::Mat output_image = image.clone();
+  auto frame = std::make_unique<Frame>();
+  frame->SetValue("original_bytes", image_bytes);
+  frame->SetValue("original_image", output_image);
+  frame->SetValue("frame_id", camera->CreateFrameID());
+  camera->PushFrame("output", std::move(frame));
 }
 
 bool PGRCamera::OnStop() {
@@ -133,13 +131,13 @@ void PGRCamera::SetSaturation(float saturation) {
 }
 
 float PGRCamera::GetSaturation() {
-  GetProperty(FlyCapture2::SATURATION, true, false);
+  return GetProperty(FlyCapture2::SATURATION, true, false);
 }
 
 void PGRCamera::SetHue(float hue) {
   SetProperty(FlyCapture2::HUE, hue, true, false);
 }
-float PGRCamera::GetHue() { GetProperty(FlyCapture2::HUE, true, false); }
+float PGRCamera::GetHue() { return GetProperty(FlyCapture2::HUE, true, false); }
 
 void PGRCamera::SetGain(float gain) {
   SetProperty(FlyCapture2::GAIN, gain, true, false);
@@ -232,7 +230,6 @@ void PGRCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
 }
 
 void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
-  FlyCapture2::PixelFormat fc_pfmt = CameraPfmt2FCPfmt(pixel_format);
   std::lock_guard<std::mutex> guard(camera_lock_);
   CHECK_PGR(camera_.StopCapture());
 
@@ -254,6 +251,30 @@ void PGRCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
   CHECK_PGR(camera_.SetFormat7Configuration(
       &image_settings, fmt7_packet_info.recommendedBytesPerPacket));
   CHECK_PGR(camera_.StartCapture(PGRCamera::OnImageGrabbed, this));
+}
+
+void PGRCamera::SetFrameRate(float) { STREAMER_NOT_IMPLEMENTED; }
+
+float PGRCamera::GetFrameRate() {
+  STREAMER_NOT_IMPLEMENTED;
+  return 0;
+}
+
+void PGRCamera::SetROI(int, int, int, int) { STREAMER_NOT_IMPLEMENTED; }
+
+int PGRCamera::GetROIOffsetX() {
+  STREAMER_NOT_IMPLEMENTED;
+  return 0;
+}
+
+int PGRCamera::GetROIOffsetY() {
+  STREAMER_NOT_IMPLEMENTED;
+  return 0;
+}
+
+Shape PGRCamera::GetROIOffsetShape() {
+  STREAMER_NOT_IMPLEMENTED;
+  return Shape();
 }
 
 void PGRCamera::SetProperty(FlyCapture2::PropertyType property_type,

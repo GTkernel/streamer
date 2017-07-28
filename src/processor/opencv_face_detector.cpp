@@ -5,8 +5,14 @@
 #include "opencv_face_detector.h"
 
 OpenCVFaceDetector::OpenCVFaceDetector(string classifier_xml_path)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR, {"input"}, {"output"}),
       classifier_xml_path_(classifier_xml_path) {}
+
+std::shared_ptr<OpenCVFaceDetector> OpenCVFaceDetector::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
 
 bool OpenCVFaceDetector::Init() {
   return classifier_.load(classifier_xml_path_);
@@ -18,8 +24,8 @@ bool OpenCVFaceDetector::OnStop() {
 }
 
 void OpenCVFaceDetector::Process() {
-  auto frame = GetFrame<ImageFrame>("input");
-  cv::Mat image = frame->GetImage();
+  auto frame = GetFrame("input");
+  const cv::Mat& image = frame->GetValue<cv::Mat>("image");
 
   std::vector<cv::Rect> results;
 
@@ -32,21 +38,17 @@ void OpenCVFaceDetector::Process() {
   cv::Mat obj_host;
   faces.colRange(0, num_face).download(obj_host);
   cv::Rect* cfaces = obj_host.ptr<cv::Rect>();
-  for (int i = 0; i < num_face; i++) {
+  for (decltype(num_face) i = 0; i < num_face; ++i) {
     results_rect.emplace_back(cfaces[i].x, cfaces[i].y, cfaces[i].width,
                               cfaces[i].height);
   }
 #else
   classifier_.detectMultiScale(image, results);
-  for (auto result : results) {
+  for (const auto& result : results) {
     results_rect.emplace_back(result.x, result.y, result.width, result.height);
   }
-#endif
+#endif  // USE_CUDA
 
-  PushFrame("output",
-            new MetadataFrame(results_rect, frame->GetOriginalImage()));
-}
-
-ProcessorType OpenCVFaceDetector::GetType() {
-  return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+  frame->SetValue("bounding_boxes", results_rect);
+  PushFrame("output", std::move(frame));
 }

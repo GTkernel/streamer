@@ -5,7 +5,7 @@
 #include "opencv_people_detector.h"
 
 OpenCVPeopleDetector::OpenCVPeopleDetector() 
-    : Processor({"input"}, {"output"}) {}
+    : Processor(PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR, {"input"}, {"output"}) {}
 
 bool OpenCVPeopleDetector::Init() {
   hog_.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
@@ -18,8 +18,8 @@ bool OpenCVPeopleDetector::OnStop() {
 }
 
 void OpenCVPeopleDetector::Process() {
-  auto frame = GetFrame<ImageFrame>("input");
-  cv::Mat image = frame->GetImage();
+  auto frame = GetFrame("input");
+  const cv::Mat& image = frame->GetValue<cv::Mat>("image");
 
   std::vector<cv::Rect> results;
 
@@ -38,10 +38,6 @@ void OpenCVPeopleDetector::Process() {
     results_rect.emplace_back(result.x, result.y, result.width, result.height);
   }
 
-  PushFrame("output",
-            new MetadataFrame(results_rect, frame->GetOriginalImage()));
-}
-
-ProcessorType OpenCVPeopleDetector::GetType() {
-  return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
+  frame->SetValue("bounding_boxes", results_rect);
+  PushFrame("output", std::move(frame));
 }

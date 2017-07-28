@@ -9,7 +9,7 @@
 #include "common/common.h"
 #include "common/context.h"
 
-GTEST_API_ int main(int argc, char **argv) {
+GTEST_API_ int main(int argc, char** argv) {
   printf("Running main() from streamer_gtest_main.cc\n");
   testing::InitGoogleTest(&argc, argv);
   gst_init(&argc, &argv);

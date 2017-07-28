@@ -29,101 +29,101 @@ void CleanUp() {
 #endif
 }
 
-static void SetUpEndpoints(HttpServer &server) {
-  auto &camera_manager = CameraManager::GetInstance();
+static void SetUpEndpoints(HttpServer& server) {
+  auto& camera_manager = CameraManager::GetInstance();
 
   // GET /hello
   server.resource["^/hello$"]["GET"] = [](HttpServerResponse response,
-                                          HttpServerRequest request) {
+                                          HttpServerRequest) {
     string content = "Hello from streamer";
     LOG(INFO) << "Here";
     Send200Response(response, content);
   };
 
   // GET /cameras
-  server.resource["^/cameras"]["GET"] = [&camera_manager](
-      HttpServerResponse response, HttpServerRequest request) {
-    ModelManager &model_manager = ModelManager::GetInstance();
-    std::vector<pt::ptree> cameras_node;
-    auto cameras = camera_manager.GetCameras();
-    for (auto itr = cameras.begin(); itr != cameras.end(); itr++) {
-      pt::ptree node;
-      CameraToJson(itr->second.get(), node);
-      cameras_node.push_back(node);
-    }
+  server.resource["^/cameras"]["GET"] =
+      [&camera_manager](HttpServerResponse response, HttpServerRequest) {
+        std::vector<pt::ptree> cameras_node;
+        auto cameras = camera_manager.GetCameras();
+        for (const auto& camera : cameras) {
+          pt::ptree node;
+          CameraToJson(camera.second.get(), node);
+          cameras_node.push_back(node);
+        }
 
-    Send200Response(response, ListToJson("cameras", cameras_node));
-  };
+        Send200Response(response, ListToJson("cameras", cameras_node));
+      };
 
   // POST /cameras/:cam_name/control
   // data: key, value
-  server.resource["^/cameras/" STRING_PATTERN "/control$"]["POST"] = [](
-      HttpServerResponse response, HttpServerRequest request) {
-    LOG(INFO) << "Received " << request->path;
-    string camera_name = request->path_match[1];
-    auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  server.resource["^/cameras/" STRING_PATTERN "/control$"]["POST"] =
+      [](HttpServerResponse response, HttpServerRequest request) {
+        LOG(INFO) << "Received " << request->path;
+        string camera_name = request->path_match[1];
+        auto camera = CameraManager::GetInstance().GetCamera(camera_name);
 
-    pt::ptree doc;
-    pt::read_json(request->content, doc);
+        pt::ptree doc;
+        pt::read_json(request->content, doc);
 
-    std::ostringstream ss;
-    pt::write_json(ss, doc);
+        std::ostringstream ss;
+        pt::write_json(ss, doc);
 
-    LOG(INFO) << ss.str();
+        LOG(INFO) << ss.str();
 
-    if (doc.count("width") && doc.count("height") && doc.count("video_mode")) {
-      Shape shape;
-      CameraModeType mode;
-      shape.width = doc.get<int>("width");
-      shape.height = doc.get<int>("height");
+        if (doc.count("width") && doc.count("height") &&
+            doc.count("video_mode")) {
+          Shape shape;
+          CameraModeType mode;
+          shape.width = doc.get<int>("width");
+          shape.height = doc.get<int>("height");
 
-      string mode_str = doc.get<string>("video_mode");
-      if (mode_str == "mode_0") {
-        mode = CAMERA_MODE_0;
-      } else if (mode_str == "mode_1") {
-        mode = CAMERA_MODE_1;
-      } else {
-        string warning_message = mode_str + "is not a supported mode";
-        LOG(WARNING) << warning_message;
-        Send400Response(response, warning_message);
-        return;
-      }
-      camera->SetImageSizeAndMode(shape, mode);
-    }
+          string mode_str = doc.get<string>("video_mode");
+          if (mode_str == "mode_0") {
+            mode = CAMERA_MODE_0;
+          } else if (mode_str == "mode_1") {
+            mode = CAMERA_MODE_1;
+          } else {
+            string warning_message = mode_str + "is not a supported mode";
+            LOG(WARNING) << warning_message;
+            Send400Response(response, warning_message);
+            return;
+          }
+          camera->SetImageSizeAndMode(shape, mode);
+        }
 
-    if (doc.count("sharpness")) {
-      float sharpness = doc.get<float>("sharpness");
-      camera->SetSharpness(sharpness);
-    }
+        if (doc.count("sharpness")) {
+          float sharpness = doc.get<float>("sharpness");
+          camera->SetSharpness(sharpness);
+        }
 
-    if (doc.count("exposure")) {
-      float exposure = doc.get<float>("exposure");
-      camera->SetExposure(exposure);
-    }
+        if (doc.count("exposure")) {
+          float exposure = doc.get<float>("exposure");
+          camera->SetExposure(exposure);
+        }
 
-    if (doc.count("gain")) {
-      float gain = doc.get<float>("gain");
-      camera->SetGain(gain);
-    }
+        if (doc.count("gain")) {
+          float gain = doc.get<float>("gain");
+          camera->SetGain(gain);
+        }
 
-    if (doc.count("move")) {
-      string direction = doc.get<string>("move");
-      if (direction == "up") {
-        camera->MoveUp();
-      } else if (direction == "down") {
-        camera->MoveDown();
-      } else if (direction == "left") {
-        camera->MoveLeft();
-      } else if (direction == "right") {
-        camera->MoveRight();
-      } else {
-        Send400Response(response,
-                        string("Not valid move direction: ") + direction);
-      }
-    }
+        if (doc.count("move")) {
+          string direction = doc.get<string>("move");
+          if (direction == "up") {
+            camera->MoveUp();
+          } else if (direction == "down") {
+            camera->MoveDown();
+          } else if (direction == "left") {
+            camera->MoveLeft();
+          } else if (direction == "right") {
+            camera->MoveRight();
+          } else {
+            Send400Response(response,
+                            string("Not valid move direction: ") + direction);
+          }
+        }
 
-    SendResponseSuccess(response);
-  };
+        SendResponseSuccess(response);
+      };
 
   // GET /cameras/:cam_name/capture
   server.resource["^/cameras/" STRING_PATTERN "/capture$"]["GET"] =
@@ -140,7 +140,7 @@ static void SetUpEndpoints(HttpServer &server) {
             // Compress image to JPEG
             std::vector<uchar> buf;
             cv::imencode(".jpeg", image, buf);
-            SendBytes(server, response, (char *)buf.data(), buf.size(),
+            SendBytes(server, response, (char*)buf.data(), buf.size(),
                       "image/jpeg");
           }
         } else {
@@ -211,25 +211,25 @@ static void SetUpEndpoints(HttpServer &server) {
 
   // DELETE /pipelines => Kill an existing pipeline by its name
   // data: name
-  server.resource["^/pipelines/" STRING_PATTERN "$"]["DELETE"] = [](
-      HttpServerResponse response, HttpServerRequest request) {
-    string pipeline_name = request->path_match[1];
+  server.resource["^/pipelines/" STRING_PATTERN "$"]["DELETE"] =
+      [](HttpServerResponse response, HttpServerRequest request) {
+        string pipeline_name = request->path_match[1];
 
-    if (pipelines.count(pipeline_name) == 0) {
-      Send400Response(response,
-                      string("Pipeline: ") + pipeline_name + " does not exist");
-      return;
-    }
+        if (pipelines.count(pipeline_name) == 0) {
+          Send400Response(response, string("Pipeline: ") + pipeline_name +
+                                        " does not exist");
+          return;
+        }
 
-    auto pipeline = pipelines.at(pipeline_name);
-    LOG(INFO) << "Stopping pipeline: " << pipeline_name;
-    pipeline->Stop();
-    LOG(INFO) << "Stopped";
+        auto pipeline = pipelines.at(pipeline_name);
+        LOG(INFO) << "Stopping pipeline: " << pipeline_name;
+        pipeline->Stop();
+        LOG(INFO) << "Stopped";
 
-    pipelines.erase(pipeline_name);
+        pipelines.erase(pipeline_name);
 
-    SendResponseSuccess(response);
-  };
+        SendResponseSuccess(response);
+      };
 
   // GET /pipelines => List all pipelines
 
@@ -238,24 +238,24 @@ static void SetUpEndpoints(HttpServer &server) {
 
   // POST /files/download => Download a file
   // data: path
-  server.resource["^/download$"]["POST"] = [&server](
-      HttpServerResponse response, HttpServerRequest request) {
-    DLOG(INFO) << "Received " << request->path;
+  server.resource["^/download$"]["POST"] =
+      [&server](HttpServerResponse response, HttpServerRequest request) {
+        DLOG(INFO) << "Received " << request->path;
 
-    pt::ptree doc;
-    pt::read_json(request->content, doc);
+        pt::ptree doc;
+        pt::read_json(request->content, doc);
 
-    string filepath = doc.get<string>("path");
+        string filepath = doc.get<string>("path");
 
-    if (!FileExists(filepath)) {
-      Send400Response(response, "File not exist");
-    } else {
-      SendFile(server, response, filepath, "application");
-    }
-  };
+        if (!FileExists(filepath)) {
+          Send400Response(response, "File not exist");
+        } else {
+          SendFile(server, response, filepath, "application");
+        }
+      };
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // Set up gstreamer and google-log
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;
@@ -291,7 +291,9 @@ int main(int argc, char *argv[]) {
 
   size_t server_thread_num = 1;
   unsigned short server_port = (unsigned short)vm["port"].as<int>();
-  HttpServer server(server_port, server_thread_num);
+  HttpServer server;
+  server.config.port = server_port;
+  server.config.thread_pool_size = server_thread_num;
 
   SetUpEndpoints(server);
 

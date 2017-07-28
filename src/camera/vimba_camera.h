@@ -2,24 +2,24 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/6/16.
 //
 
-#ifndef STREAMER_VIMBA_CAMERA_H
-#define STREAMER_VIMBA_CAMERA_H
+#ifndef STREAMER_CAMERA_VIMBA_CAMERA_H_
+#define STREAMER_CAMERA_VIMBA_CAMERA_H_
 
 #include "camera.h"
 
 #include <VimbaCPP/Include/VimbaCPP.h>
 #include <VimbaImageTransform/Include/VmbTransform.h>
 
-#define CHECK_VIMBA(cmd)                                                       \
-  do {                                                                         \
-    VmbErrorType error;                                                        \
-    error = (cmd);                                                             \
-    if (error != VmbErrorSuccess) {                                            \
-      char error_info[256];                                                    \
-      VmbGetErrorInfo(error, (VmbANSIChar_t *)error_info, sizeof(error_info)); \
-      LOG(FATAL) << "VIMBA Error happened: " << error << " (" << error_info    \
-                 << ")";                                                       \
-    }                                                                          \
+#define CHECK_VIMBA(cmd)                                                      \
+  do {                                                                        \
+    VmbErrorType error;                                                       \
+    error = (cmd);                                                            \
+    if (error != VmbErrorSuccess) {                                           \
+      char error_info[256];                                                   \
+      VmbGetErrorInfo(error, (VmbANSIChar_t*)error_info, sizeof(error_info)); \
+      LOG(FATAL) << "VIMBA Error happened: " << error << " (" << error_info   \
+                 << ")";                                                      \
+    }                                                                         \
   } while (0)
 
 namespace VmbAPI = AVT::VmbAPI;
@@ -34,7 +34,7 @@ class VimbaCamera : public Camera {
   friend class VimbaCameraFrameObserver;
 
  public:
-  VimbaCamera(const string &name, const string &video_uri, int width,
+  VimbaCamera(const string& name, const string& video_uri, int width,
               int height, CameraModeType mode = CAMERA_MODE_0,
               CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW12);
   virtual CameraType GetCameraType() const override;
@@ -62,6 +62,13 @@ class VimbaCamera : public Camera {
   virtual void SetImageSizeAndMode(Shape shape, CameraModeType mode) override;
   virtual CameraPixelFormatType GetPixelFormat() override;
   virtual void SetPixelFormat(CameraPixelFormatType pixel_format) override;
+  virtual void SetFrameRate(float f) override;
+  virtual float GetFrameRate() override;
+  virtual void SetROI(int roi_offset_x, int roi_offset_y, int roi_width,
+                      int roi_height);
+  virtual int GetROIOffsetX() override;
+  virtual int GetROIOffsetY() override;
+  virtual Shape GetROIOffsetShape() override;
 
  protected:
   virtual bool Init() override;
@@ -72,7 +79,7 @@ class VimbaCamera : public Camera {
   void StartCapture();
 
  private:
-  CameraPixelFormatType VimbaPfmt2CameraPfmt(const string &vmb_pfmt);
+  CameraPixelFormatType VimbaPfmt2CameraPfmt(const string& vmb_pfmt);
   string CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt);
 
   void ResetDefaultCameraSettings();
@@ -80,8 +87,8 @@ class VimbaCamera : public Camera {
   CameraPixelFormatType initial_pixel_format_;
   CameraModeType initial_mode_;
 
-  VmbAPI::VimbaSystem &vimba_system_;
+  VmbAPI::VimbaSystem& vimba_system_;
   VmbAPI::CameraPtr camera_;
 };
 
-#endif  // STREAMER_VIMBA_CAMERA_H
+#endif  // STREAMER_CAMERA_VIMBA_CAMERA_H_

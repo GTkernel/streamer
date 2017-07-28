@@ -87,7 +87,7 @@ private:
 #endif
 
 ObjTracker::ObjTracker(const std::string& type, float calibration_duration)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_OBJ_TRACKER, {"input"}, {"output"}),
       type_(type),
       calibration_duration_(calibration_duration) {}
 
@@ -104,9 +104,9 @@ bool ObjTracker::OnStop() {
 void ObjTracker::Process() {
   Timer timer;
   timer.Start();
-  
-  auto md_frame = GetFrame<MetadataFrame>("input");
-  cv::Mat image = md_frame->GetOriginalImage();
+
+  auto frame = GetFrame("input");
+  auto image = frame->GetValue<cv::Mat>("original_image");
   if (image.channels() == 3) {
     cv::cvtColor(image, gray_image_, cv::COLOR_BGR2GRAY);
   } else {
@@ -117,12 +117,12 @@ void ObjTracker::Process() {
   std::vector<string> tracked_tags;
   std::vector<string> tracked_uuids;
   std::vector<std::vector<double>> struck_features;
-  if (md_frame->GetBitset().test(MetadataFrame::Bit_bboxes)) {
-    std::vector<Rect> bboxes = md_frame->GetBboxes();
+  if (frame->Count("bounding_boxes") > 0) {
+    auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
     LOG(INFO) << "Got new MetadataFrame, bboxes size is " << bboxes.size()
               << ", current tracker size is " << tracker_list_.size();
     std::vector<Rect> untracked_bboxes = bboxes;
-    std::vector<string> untracked_tags = md_frame->GetTags();
+    auto untracked_tags = frame->GetValue<std::vector<std::string>>("tags");
     CHECK(untracked_bboxes.size() == untracked_tags.size());
     for (auto it = tracker_list_.begin(); it != tracker_list_.end(); ) {
       (*it)->Track(gray_image_);
@@ -209,14 +209,10 @@ void ObjTracker::Process() {
     }
   }
 
-  md_frame->SetBboxes(tracked_bboxes);
-  md_frame->SetTags(tracked_tags);
-  md_frame->SetUuids(tracked_uuids);
-  md_frame->SetStruckFeatures(struck_features);
-  PushFrame("output", md_frame);
+  frame->SetValue("bounding_boxes", tracked_bboxes);
+  frame->SetValue("tags", tracked_tags);
+  frame->SetValue("uuids", tracked_uuids);
+  frame->SetValue("struck_features", struck_features);
+  PushFrame("output", std::move(frame));
   LOG(INFO) << "ObjTracker took " << timer.ElapsedMSec() << " ms";
-}
-
-ProcessorType ObjTracker::GetType() {
-  return PROCESSOR_TYPE_OBJ_TRACKER;
 }

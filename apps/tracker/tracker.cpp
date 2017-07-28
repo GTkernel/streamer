@@ -55,7 +55,7 @@ void CleanUp() {
   }
 }
 
-void SignalHandler(int signal) {
+void SignalHandler(int) {
   std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
   //  CleanUp();
 
@@ -69,7 +69,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
 
   std::signal(SIGINT, SignalHandler);
 
-  int batch_size = camera_names.size();
+  size_t batch_size = camera_names.size();
   CameraManager &camera_manager = CameraManager::GetInstance();
   ModelManager &model_manager = ModelManager::GetInstance();
   
@@ -102,14 +102,14 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, CROP_TYPE_INVALID, false, false));
+        input_shape, false, false, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
   }
 
   // motion_detector
-  for (int i = 0; i < batch_size; i++) {
+  for (size_t i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> motion_detector(new OpenCVMotionDetector(motion_threshold,
         motion_max_duration));
     motion_detector->SetSource("input", input_streams[i]);
@@ -118,7 +118,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
 
   // mtcnn
   auto model_description = model_manager.GetModelDescription(mtcnn_model_name);
-  for (int i = 0; i < batch_size; i++) {
+  for (size_t i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_description, min_size));
     mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
     mtcnns.push_back(mtcnn);
@@ -135,7 +135,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
   }
 
   // tracker
-  for (int i = 0; i < batch_size; i++) {
+  for (size_t i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> tracker(new ObjectTracker());
     tracker->SetSource("input", facenet->GetSink("output" + std::to_string(i)));
     trackers.push_back(tracker);
@@ -191,22 +191,22 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
 
   //  double fps_to_show = 0.0;
   while (true) {
-    for (int i = 0; i < camera_names.size(); i++) {
+    for (size_t i = 0; i < camera_names.size(); i++) {
       auto reader = tracker_output_readers[i];
-      auto md_frame = reader->PopFrame<MetadataFrame>();
+      auto frame = reader->PopFrame();
       if (display) {
-        cv::Mat image = md_frame->GetOriginalImage();
-        auto bboxes = md_frame->GetBboxes();
+        auto image = frame->GetValue<cv::Mat>("original_image");
+        auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
         for(const auto& m: bboxes) {
           cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
         }
-        auto face_landmarks = md_frame->GetFaceLandmarks();
+        auto face_landmarks = frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
         for(const auto& m: face_landmarks) {
           for(int j=0;j<5;j++)
             cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
         }
-        auto tags = md_frame->GetTags();
-        auto confidences = md_frame->GetConfidences();
+        auto tags = frame->GetValue<std::vector<std::string>>("tags");
+        auto confidences = frame->GetValue<std::vector<float>>("confidences");
         for (size_t j = 0; j < tags.size(); ++j) {
           std::ostringstream text;
           if (tags.size() == confidences.size())
@@ -215,6 +215,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
             text << tags[j];
           cv::putText(image, text.str() , cv::Point(bboxes[j].px,bboxes[j].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
         }
+        #if 0
         auto paths = md_frame->GetPaths();
         for (const auto& m: paths) {
           auto prev_it=m.begin();
@@ -226,6 +227,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
             prev_it = it;
           }
         }
+        #endif
   
         cv::imshow(camera_names[i], image);
       }

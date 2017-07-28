@@ -13,7 +13,7 @@ using std::endl;
 std::shared_ptr<Camera> camera;
 std::shared_ptr<Processor> encoder;
 
-void SignalHandler(int signal) {
+void SignalHandler(int) {
   std::cout << "Received SIGINT, stop encoder" << std::endl;
   if (encoder != nullptr) encoder->Stop();
   if (camera != nullptr) camera->Stop();
@@ -21,16 +21,16 @@ void SignalHandler(int signal) {
   exit(0);
 }
 
-void Run(const string &camera_name, string &dst_file, int port) {
+void Run(const string& camera_name, string& dst_file, int port) {
   if (dst_file == "" && port == -1) {
     cout << "Specify output_filename or port" << endl;
     return;
   }
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                               << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name))
+      << "Camera " << camera_name << " does not exist";
 
   camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
@@ -46,8 +46,8 @@ void Run(const string &camera_name, string &dst_file, int port) {
     encoder->SetSource("input", camera_stream);
   } else if (port != -1) {
     cout << "Stream video on port: " << port << endl;
-    encoder = std::shared_ptr<Processor>(
-        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), port, false));
+    encoder = std::shared_ptr<Processor>(new GstVideoEncoder(
+        camera->GetWidth(), camera->GetHeight(), port, false));
     encoder->SetSource("input", camera_stream);
     // Receive pipeline
     // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
@@ -65,7 +65,7 @@ void Run(const string &camera_name, string &dst_file, int port) {
   camera->Stop();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << endl;
     cout << desc << endl;
     return 1;

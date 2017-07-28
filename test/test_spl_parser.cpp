@@ -11,7 +11,7 @@ classifier = processor(ImageClassifier, model=AlexNet)
 ip_cam = camera(GST_TEST)
 transformer = processor(ImageTransformer, height=227, width=227)
 
-transformer[input] = ip_cam[bgr_output]
+transformer[input] = ip_cam[output]
 classifier[input] = transformer[output]
 )pipeline";
 
@@ -35,7 +35,7 @@ classifier[input] = transformer[output]
   EXPECT_EQ(statement4.lhs_processor_name, "transformer");
   EXPECT_EQ(statement4.lhs_stream_name, "input");
   EXPECT_EQ(statement4.rhs_processor_name, "ip_cam");
-  EXPECT_EQ(statement4.rhs_stream_name, "bgr_output");
+  EXPECT_EQ(statement4.rhs_stream_name, "output");
 }
 
 TEST(SPL_PARSER_TEST, TEST_COMMENT) {
@@ -44,7 +44,7 @@ TEST(SPL_PARSER_TEST, TEST_COMMENT) {
 ip_cam = camera(GST_TEST)
 transformer = processor(ImageTransformer, height=227, width=227)
 
-transformer[input] = ip_cam[bgr_output]
+transformer[input] = ip_cam[output]
 # classifier[input] = transformer[output]
 )pipeline";
 

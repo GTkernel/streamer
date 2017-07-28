@@ -1,132 +1,105 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 10/6/16.
-//
-
 #include "image_classifier.h"
+
 #include "model/model_manager.h"
-#include "utils/utils.h"
+#include "utils/math_utils.h"
+#include "utils/string_utils.h"
 
-ImageClassifier::ImageClassifier(const ModelDesc &model_desc, Shape input_shape,
-                                 size_t batch_size)
-    : Processor({}, {}),  // Sources and sinks will be initialized by ourselves
-      model_desc_(model_desc),
-      input_shape_(input_shape),
-      batch_size_(batch_size) {
-  for (size_t i = 0; i < batch_size; i++) {
-    sources_.insert({"input" + std::to_string(i), nullptr});
-    sinks_.insert(
-        {"output" + std::to_string(i), std::shared_ptr<Stream>(new Stream)});
+constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
+ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
+                                 const Shape& input_shape, size_t num_labels)
+    : NeuralNetConsumer(PROCESSOR_TYPE_IMAGE_CLASSIFIER, model_desc,
+                        input_shape, {}, {SOURCE_NAME}, {SINK_NAME}),
+      num_labels_(num_labels),
+      labels_(LoadLabels(model_desc)) {
+  std::string nne_sink_name = model_desc.GetLastLayer();
+  StreamPtr stream = nne_->GetSink(nne_sink_name);
+  // Call Processor::SetSource() because NeuralNetConsumer::SetSource() would
+  // set the NeuralNetEvaluator's source (because the NeuralNetEvaluator is
+  // private).
+  Processor::SetSource(SOURCE_NAME, stream);
+}
+
+ImageClassifier::ImageClassifier(const ModelDesc& model_desc, size_t num_labels)
+    : NeuralNetConsumer(PROCESSOR_TYPE_IMAGE_CLASSIFIER, {SOURCE_NAME},
+                        {SINK_NAME}),
+      num_labels_(num_labels),
+      labels_(LoadLabels(model_desc)) {}
+
+std::shared_ptr<ImageClassifier> ImageClassifier::Create(
+    const FactoryParamsType& params) {
+  ModelManager& model_manager = ModelManager::GetInstance();
+  std::string model_name = params.at("model");
+  CHECK(model_manager.HasModel(model_name));
+  ModelDesc model_desc = model_manager.GetModelDesc(model_name);
+  size_t num_labels = StringToSizet(params.at("num_labels"));
+
+  auto num_channels_pair = params.find("num_channels");
+  if (num_channels_pair == params.end()) {
+    return std::make_shared<ImageClassifier>(model_desc, num_labels);
+  } else {
+    // If num_channels is specified, then we need to use the constructor that
+    // creates a hidden NeuralNetEvaluator.
+    size_t num_channels = StringToSizet(num_channels_pair->second);
+    Shape input_shape = Shape(num_channels, model_desc.GetInputWidth(),
+                              model_desc.GetInputHeight());
+    return std::make_shared<ImageClassifier>(model_desc, input_shape,
+                                             num_labels);
   }
-  LOG(INFO) << "batch size of " << batch_size_;
 }
 
-bool ImageClassifier::Init() {
-  // Load labels.
-  CHECK(model_desc_.GetLabelFilePath() != "")
-      << "Model " << model_desc_.GetName() << " has an empty label file";
-  std::ifstream labels(model_desc_.GetLabelFilePath());
-  CHECK(labels) << "Unable to open labels file "
-                << model_desc_.GetLabelFilePath();
-  string line;
-  while (std::getline(labels, line)) labels_.push_back(string(line));
-
-  // Load model
-  auto &manager = ModelManager::GetInstance();
-  model_ = manager.CreateModel(model_desc_, input_shape_, batch_size_);
-  model_->Load();
-
-  // Create mean image
-  auto mean_colors = manager.GetMeanColors();
-  mean_image_ =
-      cv::Mat(cv::Size(input_shape_.width, input_shape_.height), CV_32FC3,
-              cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
-
-  // Prepare data buffer
-  input_buffer_ =
-      DataBuffer(batch_size_ * input_shape_.GetSize() * sizeof(float));
-
-  LOG(INFO) << "Classifier initialized";
-  return true;
-}
-
-bool ImageClassifier::OnStop() {
-  model_.reset(nullptr);
-  return true;
-}
-
-#define GET_SOURCE_NAME(i) ("input" + std::to_string(i))
-#define GET_SINK_NAME(i) ("output" + std::to_string(i))
+bool ImageClassifier::Init() { return NeuralNetConsumer::Init(); }
 
 void ImageClassifier::Process() {
-  Timer timer;
-  timer.Start();
+  auto frame = GetFrame(SOURCE_NAME);
 
-  std::vector<std::shared_ptr<ImageFrame>> image_frames;
-  float *data = (float *)input_buffer_.GetBuffer();
-  for (int i = 0; i < batch_size_; i++) {
-    auto image_frame = GetFrame<ImageFrame>(GET_SOURCE_NAME(i));
-    image_frames.push_back(image_frame);
-    cv::Mat img = image_frame->GetImage();
-    CHECK(img.channels() == input_shape_.channel &&
-          img.size[1] == input_shape_.width &&
-          img.size[0] == input_shape_.height);
-    std::vector<cv::Mat> output_channels;
-    for (int j = 0; j < input_shape_.channel; j++) {
-      cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
-      output_channels.push_back(channel);
-      data += input_shape_.width * input_shape_.height;
-    }
-    cv::split(img, output_channels);
+  // Assign labels.
+  std::vector<Prediction> predictions;
+  const cv::Mat& output = frame->GetValue<cv::Mat>("activations");
+  float* scores;
+  // Currently we only support contiguously allocated cv::Mat. Considering this
+  // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
+  if (output.isContinuous()) {
+    scores = (float*)(output.data);
+  } else {
+    LOG(FATAL)
+        << "Non-contiguous allocation of cv::Mat is currently not supported";
+  }
+  // using labels_.size() completely defeats the purpose and also causes issues
+  // elsewhere
+  std::vector<int> top_label_idxs = Argmax(scores, output.size[1], num_labels_);
+  for (decltype(num_labels_) i = 0; i < num_labels_; ++i) {
+    int label_idx = top_label_idxs.at(i);
+    predictions.push_back(
+        std::make_pair(labels_.at(label_idx), scores[label_idx]));
   }
 
-  auto predictions = Classify(1);
-
-  for (int i = 0; i < batch_size_; i++) {
-    auto frame = image_frames[i];
-    cv::Mat img = frame->GetOriginalImage();
-    CHECK(!img.empty());
-    string predict_label = predictions[i][0].first;
-    PushFrame(GET_SINK_NAME(i), new MetadataFrame({predict_label}, img));
-    for (auto prediction : predictions[i]) {
-      LOG(INFO) << prediction.first << " " << prediction.second;
-    }
+  // Create and push a MetadataFrame.
+  std::vector<std::string> tags;
+  std::vector<double> probabilities;
+  for (const auto& pred : predictions) {
+    tags.push_back(pred.first);
+    probabilities.push_back(pred.second);
   }
 
-  LOG(INFO) << "Classification took " << timer.ElapsedMSec() << " ms";
+  frame->SetValue("tags", tags);
+  frame->SetValue("probabilities", probabilities);
+
+  PushFrame(SINK_NAME, std::move(frame));
 }
 
-std::vector<std::vector<Prediction>> ImageClassifier::Classify(int N) {
-  std::vector<std::vector<Prediction>> results;
+std::vector<std::string> ImageClassifier::LoadLabels(
+    const ModelDesc& model_desc) {
+  // Load labels
+  std::string labels_filepath = model_desc.GetLabelFilePath();
+  CHECK(labels_filepath != "") << "Empty label file: " << labels_filepath;
+  std::ifstream labels_stream(labels_filepath);
+  CHECK(labels_stream) << "Unable to open labels file: " << labels_filepath;
 
-  auto input_buffer = model_->GetInputBuffer();
-  input_buffer.Clone(input_buffer_);
-
-  model_->Evaluate();
-  CHECK(model_->GetOutputBuffers().size() == 1 &&
-        model_->GetOutputShapes().size() == model_->GetOutputBuffers().size())
-      << "Classify model does not have one buffer";
-  float *scores = (float *)model_->GetOutputBuffers()[0].GetBuffer();
-  N = std::min<int>(labels_.size(), N);
-  for (int i = 0; i < batch_size_; i++) {
-    CHECK(model_->GetOutputShapes()[0].GetSize() == 1000);
-    std::vector<int> maxN =
-        Argmax(scores, model_->GetOutputShapes()[0].GetSize(), N);
-    std::vector<Prediction> predictions;
-    for (int j = 0; j < N; ++j) {
-      int idx = maxN[j];
-      predictions.push_back(std::make_pair(labels_[idx], scores[idx]));
-    }
-    results.push_back(predictions);
-    scores += model_->GetOutputShapes()[0].GetSize();
+  std::string line;
+  std::vector<std::string> labels;
+  while (std::getline(labels_stream, line)) {
+    labels.push_back(std::string(line));
   }
-
-  return results;
-}
-
-ProcessorType ImageClassifier::GetType() {
-  return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
-}
-
-void ImageClassifier::SetInputStream(int src_id, StreamPtr stream) {
-  SetSource(GET_SOURCE_NAME(src_id), stream);
+  return labels;
 }

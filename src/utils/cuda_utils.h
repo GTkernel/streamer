@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
-#ifndef STREAMER_CUDA_UTILS_H
-#define STREAMER_CUDA_UTILS_H
+#ifndef STREAMER_UTILS_CUDA_UTILS_H_
+#define STREAMER_UTILS_CUDA_UTILS_H_
 
 #include "common/common.h"
 
@@ -18,21 +18,21 @@
     CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
   } while (0)
 
-#endif
+#endif  // USE_CUDA
 
 /**
  * @brief Get a list of GPUs in machine.
  */
-inline void GetCUDAGpus(std::vector<int> &gpus) {
+inline void GetCUDAGpus(std::vector<int>& gpus) {
   int count = 0;
 #ifdef USE_CUDA
   CUDA_CHECK(cudaGetDeviceCount(&count));
 #else
   LOG(FATAL) << "Can't use CUDA function in NO_GPU mode";
-#endif
+#endif  // USE_CUDA
   for (int i = 0; i < count; ++i) {
     gpus.push_back(i);
   }
 }
 
-#endif  // STREAMER_CUDA_UTILS_H
+#endif  // STREAMER_UTILS_CUDA_UTILS_H_
