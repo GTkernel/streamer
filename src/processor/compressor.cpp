@@ -1,30 +1,24 @@
-
 #include "processor/compressor.h"
 
-#include <boost/asio/io_service.hpp>
-#include <boost/bind.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/thread/thread.hpp>
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
-Compressor::Compressor(CompressionType t, unsigned int num_threads)
+Compressor::Compressor(CompressionType t)
     : Processor(PROCESSOR_TYPE_COMPRESSOR, {SOURCE_NAME}, {SINK_NAME}),
       compression_type_(t),
-      io_service_(),
-      threadpool_(),
-      work_(io_service_),
       stop_(false) {
-  for (decltype(num_threads) i = 0; i < num_threads; ++i) {
-    threadpool_.create_thread(
-        boost::bind(&boost::asio::io_service::run, &io_service_));
-  }
-  io_service_.post(boost::bind(&Compressor::CommitAndPushFrames, this));
+  output_thread_ = std::thread(&Compressor::OutputFrames, this);
+}
+
+Compressor::~Compressor() {
+  stop_ = true;
+  output_thread_.join();
 }
 
 std::shared_ptr<Compressor> Compressor::Create(const FactoryParamsType&) {
@@ -40,62 +34,35 @@ StreamPtr Compressor::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 bool Compressor::Init() { return true; }
 
-bool Compressor::OnStop() {
-  stop_ = true;
-  io_service_.stop();
-  threadpool_.join_all();
-  return true;
-}
+bool Compressor::OnStop() { return true; }
 
 void Compressor::Process() {
-  // Get raw image
   auto frame = GetFrame(SOURCE_NAME);
-  std::shared_ptr<LockedFrame> locked_frame =
-      std::make_shared<LockedFrame>(std::move(frame));
+  auto future = std::async(std::launch::async,
+                           [ this, frame = std::move(frame) ]() mutable {
+                             return this->CompressFrame(std::move(frame));
+                           });
   {
-    std::lock_guard<std::mutex> lk(queue_lock_);
-    queue_.emplace(locked_frame);
-  }
-  io_service_.post(boost::bind(&Compressor::DoCompression, this, locked_frame));
-}
-
-void Compressor::CommitAndPushFrames() {
-  // Wait for the queue to have something in it
-  while (true) {
-    queue_lock_.lock();
-    if (queue_.size() <= 0) {
-      queue_lock_.unlock();
-      continue;
-    }
-    auto ptr = queue_.front();
-    queue_lock_.unlock();
-    {
-      std::unique_lock<std::mutex> lk(ptr->frame_lock);
-
-      bool pred = false;
-      // Loop until the wait return true, indicating that it was awoken before
-      // the timeout.
-      while (!pred) {
-        pred = ptr->cv.wait_for(lk, std::chrono::milliseconds(100),
-                                [ptr] { return ptr->count; });
-        if (stop_) {
-          // If the Compressor has been stopped, then we should return
-          // immediately.
-          return;
-        }
-      }
-
-      queue_.pop();
-    }
-    PushFrame(SINK_NAME, std::move(ptr->frame));
+    std::lock_guard<std::mutex> guard(queue_mutex_);
+    queue_.push(std::move(future));
+    queue_cond_.notify_one();
   }
 }
 
-void Compressor::DoCompression(std::shared_ptr<LockedFrame> lf) {
-  // Get raw image
-  auto raw_image = lf->frame->GetValue<std::vector<char>>("original_bytes");
+void Compressor::OutputFrames() {
+  while (!stop_) {
+    std::unique_lock<std::mutex> lock(queue_mutex_);
+    queue_cond_.wait(lock, [this]() { return !queue_.empty(); });
+    auto future = std::move(queue_.front());
+    queue_.pop();
+    auto compressed_frame = future.get();
+    PushFrame(SINK_NAME, std::move(compressed_frame));
+  }
+}
 
-  // Compress raw
+std::unique_ptr<Frame> Compressor::CompressFrame(std::unique_ptr<Frame> frame) {
+  auto raw_image = frame->GetValue<std::vector<char>>("original_bytes");
+
   std::vector<char> compressed_raw;
   boost::iostreams::filtering_ostream compressor;
   if (compression_type_ == CompressionType::BZIP2) {
@@ -108,10 +75,7 @@ void Compressor::DoCompression(std::shared_ptr<LockedFrame> lf) {
   boost::iostreams::close(compressor);
 
   // Write compressed data to the frame and notify committer thread
-  {
-    std::lock_guard<std::mutex> lock(lf->frame_lock);
-    lf->frame->SetValue("compressed_bytes", compressed_raw);
-    lf->count = true;
-  }
-  lf->cv.notify_one();
+  frame->SetValue("compressed_bytes", compressed_raw);
+
+  return frame;
 }
