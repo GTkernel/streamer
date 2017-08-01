@@ -19,7 +19,7 @@ unset(Caffe_FOUND CACHE)
 unset(Caffe_INCLUDE_DIRS CACHE)
 unset(Caffe_LIBRARIES CACHE)
 # Find libraries
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 3.0 REQUIRED)
 find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
 find_package(Glog REQUIRED)
 find_package(GLIB REQUIRED gobject)
