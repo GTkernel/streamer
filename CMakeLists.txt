@@ -23,7 +23,7 @@ unset(Caffe_LIBRARIES CACHE)
 find_package(PkgConfig REQUIRED)
 find_package(OpenCV 3.0 REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-app-1.0)
-find_package(Glog REQUIRED)
+pkg_check_modules(GLOG REQUIRED libglog)
 find_package(Boost REQUIRED COMPONENTS
   system filesystem serialization iostreams thread date_time)
 find_package(JeMalloc)
