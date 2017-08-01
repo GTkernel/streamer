@@ -10,7 +10,7 @@ Streamer is a system built for real-time video ingestion and analytics of live c
 
 **Current status**
 
-You can run an end-to-end ingestion and analytics pipeline on streamer with multiple camera input. An example pipeline: 
+You can run an end-to-end ingestion and analytics pipeline on streamer with multiple camera input. An example pipeline:
 
 * Take frames off cameras from RTSP endpoint
 * Decode the stream with hardware h.264 decoder
@@ -26,7 +26,7 @@ For DNN frameworks, streamer currently supports Caffe, Caffe OpenCL, and Caffe-M
 
 ### Dependencies
 
-Note: Here I will only include minimal requirements to successfully build streamer without additional dependencies. You may want to install various deep learning frameworks (Caffe, etc.). You can refer to their documentation on how to install them on your platform. 
+Note: Here I will only include minimal requirements to successfully build streamer without additional dependencies. You may want to install various deep learning frameworks (Caffe, etc.). You can refer to their documentation on how to install them on your platform.
 
 #### 1. Mac
 
@@ -36,7 +36,7 @@ With homebrew:
 ```
 brew install cmake glog glib gstreamer gst-plugins-base \
 	gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-ffmpeg \
-	boost opencv jemalloc zmq zmqpp eigen
+	boost opencv jemalloc zmq zmqpp
 ```
 
 #### 2. Linux x86 (Ubuntu)
@@ -50,7 +50,7 @@ sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
     libboost-all-dev libopencv-dev gstreamer1.0 libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
     libgstreamer-plugins-bad1.0-dev libjemalloc-dev libzmq3-dev \
-    libzmqpp-dev libeigen3-dev
+    libzmqpp-dev
 ```
 
 For Ubuntu <= 14.04, also need to install cmake 3.
@@ -73,9 +73,8 @@ If the above does not work, you can [compile cmake 3 from source](http://askubun
 ```
 sudo apt-get update
 sudo apt-get install -y cmake libglib2.0-dev \
-    libgoogle-glog-dev libboost-all-dev libjemalloc-dev libzmq3-dev \
-    libeigen3-dev
-# Optinal: install cnmem
+    libgoogle-glog-dev libboost-all-dev libjemalloc-dev libzmq3-dev
+# Optional: install cnmem
 git clone https://github.com/NVIDIA/cnmem
 cd cnmem
 mkdir build
@@ -114,8 +113,8 @@ First you need to configure your cameras and models. In your build directory, th
     * `gst://xxx`: xxx could be any raw GStreamer video pipeline, as long as the pipleine emits valid video frames. For example `gst://videotestsrc`. streamer uses GStreamer heavily for video ingestion, please refer to https://gstreamer.freedesktop.org/ for more information.
 3 `height`: Height of the camera.
 4 `width`: Width of the camera.
-    
-    
+
+
 #### Configure models
 1. `cp config/models.toml.example config/models.toml`
 2. Edit `config/models.toml`, fill in various fields for each of your model.
@@ -129,8 +128,8 @@ First you need to configure your cameras and models. In your build directory, th
 
 #### Configure encoders and decoders
 The default configuration uses software encoder and decoder, to specify other decoders and encoders available on the system, edit `config/config.toml.example`.
-    
-    
+
+
 #### Run the classification demo    
 
 ```
@@ -177,7 +176,7 @@ Apart from various configuations for different frameworks:
     1. Use CPU. `-DBACKEND=cpu`
     2. Use CUDA device. `-DBACKEND=cuda`
     3. Use OpenCL device. `-DBACKEND=opencl`
-    
+
 * Build with different framework: See above sections
 
 * Build with PtGray SDK for their GigE cameras: `-DUSE_PTGRAY=on`
@@ -190,5 +189,3 @@ Apart from various configuations for different frameworks:
 * [x] Tegra as a streaming hub
 * [ ] Video and metadata storage
 * [ ] Support TensorFlow
-
-
