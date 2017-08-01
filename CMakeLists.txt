@@ -19,8 +19,9 @@ unset(Caffe_FOUND CACHE)
 unset(Caffe_INCLUDE_DIRS CACHE)
 unset(Caffe_LIBRARIES CACHE)
 # Find libraries
+find_package(PkgConfig)
 find_package(OpenCV 3.0 REQUIRED)
-find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-app-1.0)
 find_package(Glog REQUIRED)
 find_package(GLIB REQUIRED gobject)
 find_package(Boost REQUIRED COMPONENTS
@@ -105,7 +106,6 @@ include_directories(SYSTEM
   3rdparty
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
-  ${GSTREAMER_APP_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
   )
 
