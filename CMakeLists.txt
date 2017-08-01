@@ -95,7 +95,7 @@ endif()
 
 option(USE_ZMQ "Build ZeroMQ support." OFF)
 if (USE_ZMQ)
-  find_package(ZMQ REQUIRED)
+  pkg_check_modules(ZMQ REQUIRED libzmq)
   add_definitions("-D USE_ZMQ")
 endif ()
 
