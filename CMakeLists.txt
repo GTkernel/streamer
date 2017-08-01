@@ -18,12 +18,12 @@ endif ()
 unset(Caffe_FOUND CACHE)
 unset(Caffe_INCLUDE_DIRS CACHE)
 unset(Caffe_LIBRARIES CACHE)
+
 # Find libraries
-find_package(PkgConfig)
+find_package(PkgConfig REQUIRED)
 find_package(OpenCV 3.0 REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-app-1.0)
 find_package(Glog REQUIRED)
-find_package(GLIB REQUIRED gobject)
 find_package(Boost REQUIRED COMPONENTS
   system filesystem serialization iostreams thread date_time)
 find_package(JeMalloc)
