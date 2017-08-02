@@ -8,6 +8,7 @@
 #include <atomic>
 #include <thread>
 #include <unordered_map>
+#include <zmq.hpp>
 
 #include "common/common.h"
 #include "stream/stream.h"
@@ -100,6 +101,8 @@ class Processor {
    */
   ProcessorType GetType() const;
 
+  zmq::socket_t* GetControlSocket();
+
  protected:
   /**
    * @brief Initialize the processor.
@@ -147,6 +150,7 @@ class Processor {
  private:
   const ProcessorType type_;
   Timer timer_;
+  zmq::socket_t* control_socket_;
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_H_

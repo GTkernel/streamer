@@ -6,6 +6,7 @@
 #define STREAMER_COMMON_CONTEXT_H_
 
 #include <unordered_map>
+#include <zmq.hpp>
 
 #include "common.h"
 #include "utils/utils.h"
@@ -13,6 +14,7 @@
 const string H264_ENCODER_GST_ELEMENT = "h264_encoder_gst_element";
 const string H264_DECODER_GST_ELEMENT = "h264_decoder_gst_element";
 const string DEVICE_NUMBER = "device_number";
+const string CONTROL_CHANNEL_NAME = "inproc://control";
 const int DEVICE_NUMBER_CPU_ONLY = -1;
 
 /**
@@ -35,6 +37,7 @@ class Context {
   void Init() {
     SetEncoderDecoderInformation();
     SetDefaultDeviceInformation();
+    control_context_ = new zmq::context_t(0);
     timer_.Start();
   }
 
@@ -77,6 +80,9 @@ class Context {
   string GetConfigFile(const string& filename) {
     return config_dir_ + "/" + filename;
   }
+
+  zmq::context_t* GetControlContext() { return control_context_; }
+  static string GetControlChannelName() { return CONTROL_CHANNEL_NAME; }
 
  private:
   string ValidateEncoderElement(const string& encoder) {
@@ -161,6 +167,9 @@ class Context {
 
   // Tracks time since start of Streamer
   Timer timer_;
+
+  // Control channel
+  zmq::context_t* control_context_;
 };
 
 #endif  // STREAMER_COMMON_CONTEXT_H_
