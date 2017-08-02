@@ -4,6 +4,8 @@
 
 #include "stream.h"
 
+#include <memory>
+
 /////// Stream
 Stream::Stream() {}
 Stream::Stream(string name) : name_(name) {}
