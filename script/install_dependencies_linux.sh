@@ -5,7 +5,7 @@ sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
      libboost-all-dev gstreamer1.0 libgstreamer1.0-dev \
      libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
      libgstreamer-plugins-bad1.0-dev libjemalloc-dev libzmq3-dev \
-     libzmqpp-dev gcc-5 g++-5
+     libzmqpp-dev libeigen3-dev gcc-5 g++-5
 
 # The nlohmann::json library does not work with gcc/g++ 4.8, so we will use
 # version 5 instead.

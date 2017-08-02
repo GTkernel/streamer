@@ -27,6 +27,7 @@ pkg_check_modules(GLOG REQUIRED libglog)
 find_package(Boost REQUIRED COMPONENTS
   system filesystem serialization iostreams thread date_time)
 find_package(JeMalloc)
+find_package(Eigen3 REQUIRED)
 
 # Determine if is on Tegra
 if (EXISTS /var/libopencv4tegra-repo)
@@ -105,6 +106,7 @@ include_directories(SYSTEM
   3rdparty
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
   )
 
 # Include cblas libraries
