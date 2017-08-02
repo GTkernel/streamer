@@ -18,15 +18,16 @@ endif ()
 unset(Caffe_FOUND CACHE)
 unset(Caffe_INCLUDE_DIRS CACHE)
 unset(Caffe_LIBRARIES CACHE)
+
 # Find libraries
+find_package(PkgConfig REQUIRED)
 find_package(OpenCV 3.0 REQUIRED)
-find_package(GStreamer REQUIRED COMPONENTS gstreamer-app)
-find_package(Glog REQUIRED)
-find_package(GLIB REQUIRED gobject)
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-app-1.0)
+pkg_check_modules(GLOG REQUIRED libglog)
+pkg_check_modules(EIGEN3 REQUIRED eigen3)
 find_package(Boost REQUIRED COMPONENTS
   system filesystem serialization iostreams thread date_time)
 find_package(JeMalloc)
-find_package(Eigen3 REQUIRED)
 
 # Determine if is on Tegra
 if (EXISTS /var/libopencv4tegra-repo)
@@ -95,7 +96,7 @@ endif()
 
 option(USE_ZMQ "Build ZeroMQ support." OFF)
 if (USE_ZMQ)
-  find_package(ZMQ REQUIRED)
+  pkg_check_modules(ZMQ REQUIRED libzmq)
   add_definitions("-D USE_ZMQ")
 endif ()
 
@@ -105,8 +106,7 @@ include_directories(SYSTEM
   3rdparty
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
-  ${GSTREAMER_APP_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIRS}
   )
 
 # Include cblas libraries
