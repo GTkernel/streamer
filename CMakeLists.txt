@@ -24,10 +24,10 @@ find_package(PkgConfig REQUIRED)
 find_package(OpenCV 3.0 REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-app-1.0)
 pkg_check_modules(GLOG REQUIRED libglog)
+pkg_check_modules(EIGEN3 REQUIRED eigen3)
 find_package(Boost REQUIRED COMPONENTS
   system filesystem serialization iostreams thread date_time)
 find_package(JeMalloc)
-find_package(Eigen3 REQUIRED)
 
 # Determine if is on Tegra
 if (EXISTS /var/libopencv4tegra-repo)
@@ -106,7 +106,7 @@ include_directories(SYSTEM
   3rdparty
   ${GLOG_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIRS}
   )
 
 # Include cblas libraries
