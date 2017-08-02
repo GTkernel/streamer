@@ -50,9 +50,14 @@ ModelManager::ModelManager() {
     int input_width = model_value.get<int>("input_width");
     int input_height = model_value.get<int>("input_height");
 
-    CHECK(model_value.has("last_layer"))
-        << "Model \"" << name << "\" is missing the \"last_layer\" parameter!";
-    std::string last_layer = model_value.get<std::string>("last_layer");
+//    CHECK(model_value.has("last_layer"))
+//        << "Model \"" << name << "\" is missing the \"last_layer\" parameter!";
+//    std::string last_layer = model_value.get<std::string>("last_layer");
+
+    std::string last_layer = "prob";
+    if (model_value.has("last_layer")) {
+      last_layer = model_value.get<std::string>("last_layer");
+    }
 
     ModelDesc model_desc(name, type, desc_path, params_path, input_width,
                          input_height, last_layer);
