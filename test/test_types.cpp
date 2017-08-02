@@ -78,14 +78,12 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FRAME_SENDER)));
 #endif  // USE_RPC
-#ifdef USE_ZMQ
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_PUBLISHER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FRAME_PUBLISHER)));
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_SUBSCRIBER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FRAME_SUBSCRIBER)));
-#endif  // USE_ZMQ
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FRAME_WRITER)));
