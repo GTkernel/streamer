@@ -15,7 +15,7 @@ NcsYoloDetector::NcsYoloDetector(const ModelDesc &model_desc,
                                  float confidence_threshold,
                                  float idle_duration,
                                  const std::set<std::string>& targets)
-    : Processor({"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_NCS_YOLO_DETECTOR, {"input"}, {"output"}),
       model_desc_(model_desc),
       input_shape_(input_shape),
       confidence_threshold_(confidence_threshold),
@@ -45,12 +45,12 @@ void NcsYoloDetector::Process() {
   Timer timer;
   timer.Start();
 
-  auto image_frame = GetFrame<ImageFrame>("input");
+  auto frame = GetFrame("input");
 
   auto now = std::chrono::system_clock::now();
   std::chrono::duration<double> diff = now-last_detect_time_;
   if (diff.count() >= idle_duration_) {
-    cv::Mat img = image_frame->GetImage();
+    auto img = frame->GetValue<cv::Mat>("image");
     CHECK(img.channels() == input_shape_.channel &&
             img.size[1] == input_shape_.width &&
             img.size[0] == input_shape_.height);
@@ -74,7 +74,7 @@ void NcsYoloDetector::Process() {
       }
     }
 
-    cv::Mat original_img = image_frame->GetOriginalImage();
+    auto original_img = frame->GetValue<cv::Mat>("original_image");
     CHECK(!original_img.empty());
     std::vector<string> tags;
     std::vector<Rect> bboxes;
@@ -98,20 +98,14 @@ void NcsYoloDetector::Process() {
     }
     
     last_detect_time_ = std::chrono::system_clock::now();
-    auto p_meta = new MetadataFrame(tags, original_img);
-    CHECK(p_meta);
-    p_meta->SetBboxes(bboxes);
-    p_meta->SetConfidences(confidences);
-    PushFrame("output", p_meta);
-
+    frame->SetValue("tags", tags);
+    frame->SetValue("bounding_boxes", bboxes);
+    frame->SetValue("confidences", confidences);
+    PushFrame("output", std::move(frame));
     LOG(INFO) << "NcsYolo detection took " << timer.ElapsedMSec() << " ms";
   } else {
-    PushFrame("output", new MetadataFrame(image_frame->GetOriginalImage()));
+    PushFrame("output", std::move(frame));
   }
-}
-
-ProcessorType NcsYoloDetector::GetType() {
-  return PROCESSOR_TYPE_NCS_YOLO_DETECTOR;
 }
 
 std::string NcsYoloDetector::GetLabelName(int label) const {
