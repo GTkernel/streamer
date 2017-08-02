@@ -42,6 +42,8 @@ ModelManager::ModelManager() {
       type = MODEL_TYPE_CAFFE;
     } else if (type_string == "tensorflow") {
       type = MODEL_TYPE_TENSORFLOW;
+    } else if (type_string == "ncs") {
+      type = MODEL_TYPE_NCS;
     }
     CHECK(type != MODEL_TYPE_INVALID)
         << "Type " << type_string << " is not a valid mode type";
@@ -84,6 +86,8 @@ ModelManager::ModelManager() {
       type = MODEL_TYPE_CAFFE;
     } else if (type_string == "tensorflow") {
       type = MODEL_TYPE_TENSORFLOW;
+    } else if (type_string == "ncs") {
+      type = MODEL_TYPE_NCS;
     }
     CHECK(type != MODEL_TYPE_INVALID) << "Type " << type_string
                                       << " is not a valid mode type";

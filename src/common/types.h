@@ -102,7 +102,8 @@ typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 enum ModelType {
   MODEL_TYPE_INVALID = 0,
   MODEL_TYPE_CAFFE,
-  MODEL_TYPE_TENSORFLOW
+  MODEL_TYPE_TENSORFLOW,
+  MODEL_TYPE_NCS
 };
 
 //// Camera types
