@@ -191,7 +191,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   ParseProtocolAndPath(video_uri, video_protocol, video_path);
 
   if (video_protocol == "rtsp") {
-    video_pipeline = "rtspsrc location=\"" + video_uri + "\"" +
+    video_pipeline = "rtspsrc latency=0 location=\"" + video_uri + "\"" +
                      " ! rtph264depay ! h264parse ! " + decoder_element_;
   } else if (video_protocol == "gst") {
     LOG(WARNING) << "Directly use gst pipeline as video pipeline";
