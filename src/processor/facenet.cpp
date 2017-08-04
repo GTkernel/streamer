@@ -118,9 +118,9 @@ void Facenet::Process() {
   size_t face_total_num = 0;
   for (size_t i = 0; i < batch_size_; i++) {
     auto frame = GetFrame(GET_SOURCE_NAME(i));
-    frames.push_back(std::move(frame));
     auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
     face_total_num += bboxes.size();
+    frames.push_back(std::move(frame));
   }
 
   std::vector<std::vector<float>> face_features;

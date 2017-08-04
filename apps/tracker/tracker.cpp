@@ -107,7 +107,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
   }
-
+#if 0
   // motion_detector
   for (size_t i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> motion_detector(new OpenCVMotionDetector(motion_threshold,
@@ -115,12 +115,13 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
     motion_detector->SetSource("input", input_streams[i]);
     motion_detectors.push_back(motion_detector);
   }
-
+#endif
   // mtcnn
   auto model_description = model_manager.GetModelDescription(mtcnn_model_name);
   for (size_t i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_description, min_size));
-    mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
+    //mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
+    mtcnn->SetSource("input", input_streams[i]);
     mtcnns.push_back(mtcnn);
   }
 
@@ -206,12 +207,12 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
             cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
         }
         auto tags = frame->GetValue<std::vector<std::string>>("tags");
-        auto confidences = frame->GetValue<std::vector<float>>("confidences");
         for (size_t j = 0; j < tags.size(); ++j) {
           std::ostringstream text;
-          if (tags.size() == confidences.size())
+          if (frame->Count("confidences") != 0) {
+            auto confidences = frame->GetValue<std::vector<float>>("confidences");
             text << tags[j] << "  :  " << confidences[j];
-          else
+          } else
             text << tags[j];
           cv::putText(image, text.str() , cv::Point(bboxes[j].px,bboxes[j].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
         }

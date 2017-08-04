@@ -118,7 +118,7 @@ ModelDescription ModelManager::GetModelDescription(const string &name) const {
 }
 
 bool ModelManager::HasModel(const string& name) const {
-  return model_descs_.count(name) != 0;
+  return model_descs_.count(name) != 0 || model_descriptions_.count(name) != 0;
 }
 
 std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
