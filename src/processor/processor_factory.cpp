@@ -16,10 +16,8 @@
 #include "processor/rpc/frame_receiver.h"
 #include "processor/rpc/frame_sender.h"
 #endif  // USE_RPC
-#ifdef USE_ZMQ
 #include "processor/pubsub/frame_publisher.h"
 #include "processor/pubsub/frame_subscriber.h"
-#endif  // USE_ZMQ
 #include "video/gst_video_encoder.h"
 
 std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
@@ -42,12 +40,10 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
     case PROCESSOR_TYPE_FRAME_SENDER:
       return FrameSender::Create(params);
 #endif  // USE_RPC
-#ifdef USE_ZMQ
     case PROCESSOR_TYPE_FRAME_PUBLISHER:
       return FramePublisher::Create(params);
     case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
       return FrameSubscriber::Create(params);
-#endif  // USE_ZMQ
     case PROCESSOR_TYPE_FRAME_WRITER:
       return FrameWriter::Create(params);
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:

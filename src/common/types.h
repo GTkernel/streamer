@@ -158,10 +158,8 @@ enum ProcessorType {
   PROCESSOR_TYPE_FRAME_RECEIVER,
   PROCESSOR_TYPE_FRAME_SENDER,
 #endif  // USE_RPC
-#ifdef USE_ZMQ
   PROCESSOR_TYPE_FRAME_PUBLISHER,
   PROCESSOR_TYPE_FRAME_SUBSCRIBER,
-#endif  // USE_ZMQ
   PROCESSOR_TYPE_FRAME_WRITER,
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
@@ -190,12 +188,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
   } else if (type == "FrameSender") {
     return PROCESSOR_TYPE_FRAME_SENDER;
 #endif  // USE_RPC
-#ifdef USE_ZMQ
   } else if (type == "FramePublisher") {
     return PROCESSOR_TYPE_FRAME_PUBLISHER;
   } else if (type == "FrameSubscriber") {
     return PROCESSOR_TYPE_FRAME_SUBSCRIBER;
-#endif  // USE_ZMQ
   } else if (type == "FrameWriter") {
     return PROCESSOR_TYPE_FRAME_WRITER;
   } else if (type == "ImageClassifier") {
@@ -236,12 +232,10 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
     case PROCESSOR_TYPE_FRAME_SENDER:
       return "FrameSender";
 #endif  // USE_RPC
-#ifdef USE_ZMQ
     case PROCESSOR_TYPE_FRAME_PUBLISHER:
       return "FramePublisher";
     case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
       return "FrameSubscriber";
-#endif  // USE_ZMQ
     case PROCESSOR_TYPE_FRAME_WRITER:
       return "FrameWriter";
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:

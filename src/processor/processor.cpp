@@ -21,9 +21,18 @@ Processor::Processor(ProcessorType type,
   }
 
   Init_();
+
+  control_socket_ = new zmq::socket_t(*Context::GetContext().GetControlContext(), ZMQ_PUSH);
+  // XXX: PUSH sockets can only send
+  control_socket_->connect(Context::GetControlChannelName());
+  int linger = 0;
+  control_socket_->setsockopt(ZMQ_LINGER, &linger, sizeof (linger));
 }
 
-Processor::~Processor() {}
+Processor::~Processor() {
+  control_socket_->close();
+  delete control_socket_;
+}
 
 StreamPtr Processor::GetSink(const string& name) { return sinks_[name]; }
 
@@ -154,6 +163,8 @@ double Processor::GetObservedAvgFps() {
 double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
 
 ProcessorType Processor::GetType() const { return type_; }
+
+zmq::socket_t* Processor::GetControlSocket() { return control_socket_; };
 
 void Processor::PushFrame(const string& sink_name,
                           std::unique_ptr<Frame> frame) {
