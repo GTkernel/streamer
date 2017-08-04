@@ -22,11 +22,12 @@ Processor::Processor(ProcessorType type,
 
   Init_();
 
-  control_socket_ = new zmq::socket_t(*Context::GetContext().GetControlContext(), ZMQ_PUSH);
+  control_socket_ =
+      new zmq::socket_t(*Context::GetContext().GetControlContext(), ZMQ_PUSH);
   // XXX: PUSH sockets can only send
   control_socket_->connect(Context::GetControlChannelName());
   int linger = 0;
-  control_socket_->setsockopt(ZMQ_LINGER, &linger, sizeof (linger));
+  control_socket_->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
 }
 
 Processor::~Processor() {

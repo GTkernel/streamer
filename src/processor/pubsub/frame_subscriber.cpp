@@ -53,8 +53,7 @@ void FrameSubscriber::Process() {
   zmq::poll(items, 1, 0);
   if (items[0].revents & ZMQ_POLLIN) {
     frame_string << s_recv(zmq_subscriber_);
-  }
-  else {
+  } else {
     return;
   }
 
