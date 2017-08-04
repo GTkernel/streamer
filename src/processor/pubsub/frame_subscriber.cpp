@@ -44,7 +44,19 @@ void FrameSubscriber::Process() {
   std::unique_ptr<Frame> frame;
   std::stringstream frame_string;
 
-  frame_string << s_recv(zmq_subscriber_);
+  // Initialize poll set
+  zmq::pollitem_t items[] = {
+      {static_cast<void*>(zmq_subscriber_), 0, ZMQ_POLLIN, 0}};
+
+  // Check to see if there is a message waiting and receive it
+  // Timeout after 100 microseconds
+  zmq::poll(items, 1, 0);
+  if (items[0].revents & ZMQ_POLLIN) {
+    frame_string << s_recv(zmq_subscriber_);
+  }
+  else {
+    return;
+  }
 
   try {
     boost::archive::binary_iarchive ar(frame_string);
