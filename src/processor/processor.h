@@ -134,7 +134,7 @@ class Processor {
   std::unordered_map<string, StreamReader*> readers_;
 
   std::thread process_thread_;
-  bool stopped_;
+  std::atomic<bool> stopped_;
 
   // Process latency, sliding window average of 10 samples;
   std::queue<double> latencies_;
