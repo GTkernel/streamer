@@ -117,9 +117,9 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
   }
 #endif
   // mtcnn
-  auto model_description = model_manager.GetModelDescription(mtcnn_model_name);
+  auto model_descs = model_manager.GetModelDescs(mtcnn_model_name);
   for (size_t i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_description, min_size));
+    std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_descs, min_size));
     //mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
     mtcnn->SetSource("input", input_streams[i]);
     mtcnns.push_back(mtcnn);

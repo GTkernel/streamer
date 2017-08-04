@@ -55,7 +55,7 @@ struct FaceInfo {
 
 class MTCNN {
  public:
-  MTCNN(ModelDescription& model_description);
+  MTCNN(const std::vector<ModelDesc>& model_descs);
   void Detect(const cv::Mat& img, std::vector<FaceInfo> &faceInfo, int minSize, double* threshold, double factor);
 
  private:
@@ -96,7 +96,7 @@ class MTCNN {
 
 class MtcnnFaceDetector : public Processor {
 public:
-  MtcnnFaceDetector(const ModelDescription& model_description,
+  MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs,
                     int min_size,
                     float idle_duration = 0.f);
 
@@ -106,7 +106,7 @@ protected:
   virtual void Process() override;
 
 private:
-  ModelDescription model_description_;
+  std::vector<ModelDesc> model_descs_;
   std::unique_ptr<MTCNN> detector_;
   double threshold_[3];
   double factor_;

@@ -174,7 +174,7 @@ void MTCNN::GenerateBoundingBox(Blob<float>* confidence,Blob<float>* reg,
   }
 }
 
-MTCNN::MTCNN(ModelDescription& model_description){
+MTCNN::MTCNN(const std::vector<ModelDesc>& model_descs){
   // Set Caffe backend
   int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
 
@@ -214,12 +214,12 @@ MTCNN::MTCNN(ModelDescription& model_description){
 
   /* Load the network. */
 #ifdef USE_OPENCL
-  PNet_.reset(new Net<float>(model_description["det1_prototxt"].as<std::string>(), TEST,
+  PNet_.reset(new Net<float>(model_descs[0].GetModelDescPath(), TEST,
                                    Caffe::GetDefaultDevice()));
 #else
-  PNet_.reset(new Net<float>(model_description["det1_prototxt"].as<std::string>(), TEST));
+  PNet_.reset(new Net<float>(model_descs[0].GetModelDescPath(), TEST));
 #endif
-  PNet_->CopyTrainedLayersFrom(model_description["det1_caffemodel"].as<std::string>());
+  PNet_->CopyTrainedLayersFrom(model_descs[0].GetModelParamsPath());
 
   CHECK_EQ(PNet_->num_inputs(), 1) << "Network should have exactly one input.";
   CHECK_EQ(PNet_->num_outputs(),2) << "Network should have exactly two output, one"
@@ -227,20 +227,20 @@ MTCNN::MTCNN(ModelDescription& model_description){
 
 #ifdef USE_OPENCL
   if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
-    RNet_.reset(new Net<float>(model_description["det2_prototxt"].as<std::string>(), TEST,
+    RNet_.reset(new Net<float>(model_descs[1].GetModelDescPath(), TEST,
                                Caffe::GetDefaultDevice()));
   } else {
-    RNet_.reset(new Net<float>(model_description["det2_input_prototxt"].as<std::string>(), TEST,
+    RNet_.reset(new Net<float>(model_descs[2].GetModelDescPath(), TEST,
                                Caffe::GetDefaultDevice()));
   }
 #else
   if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
-    RNet_.reset(new Net<float>(model_description["det2_prototxt"].as<std::string>(), TEST));
+    RNet_.reset(new Net<float>(model_descs[1].GetModelDescPath(), TEST));
   } else {
-    RNet_.reset(new Net<float>(model_description["det2_input_prototxt"].as<std::string>(), TEST));
+    RNet_.reset(new Net<float>(model_descs[2].GetModelDescPath(), TEST));
   }
 #endif
-  RNet_->CopyTrainedLayersFrom(model_description["det2_caffemodel"].as<std::string>());
+  RNet_->CopyTrainedLayersFrom(model_descs[1].GetModelParamsPath());
 
 //  CHECK_EQ(RNet_->num_inputs(), 0) << "Network should have exactly one input.";
 //  CHECK_EQ(RNet_->num_outputs(),3) << "Network should have exactly two output, one"
@@ -248,20 +248,20 @@ MTCNN::MTCNN(ModelDescription& model_description){
 
 #ifdef USE_OPENCL
   if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
-    ONet_.reset(new Net<float>(model_description["det3_prototxt"].as<std::string>(), TEST,
+    ONet_.reset(new Net<float>(model_descs[3].GetModelDescPath(), TEST,
                                Caffe::GetDefaultDevice()));
   } else {
-    ONet_.reset(new Net<float>(model_description["det3_input_prototxt"].as<std::string>(), TEST,
+    ONet_.reset(new Net<float>(model_descs[4].GetModelDescPath(), TEST,
                                Caffe::GetDefaultDevice()));
   }
 #else
   if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
-    ONet_.reset(new Net<float>(model_description["det3_prototxt"].as<std::string>(), TEST));
+    ONet_.reset(new Net<float>(model_descs[3].GetModelDescPath(), TEST));
   } else {
-    ONet_.reset(new Net<float>(model_description["det3_input_prototxt"].as<std::string>(), TEST));
+    ONet_.reset(new Net<float>(model_descs[4].GetModelDescPath(), TEST));
   }
 #endif
-  ONet_->CopyTrainedLayersFrom(model_description["det3_caffemodel"].as<std::string>());
+  ONet_->CopyTrainedLayersFrom(model_descs[3].GetModelParamsPath());
 
 //  CHECK_EQ(ONet_->num_inputs(), 1) << "Network should have exactly one input.";
 //  CHECK_EQ(ONet_->num_outputs(),3) << "Network should have exactly three output, one"
@@ -573,11 +573,11 @@ void MTCNN::Detect(const cv::Mat& image,std::vector<FaceInfo>& faceInfo,int minS
   condidate_rects_.clear();
 }
 
-MtcnnFaceDetector::MtcnnFaceDetector(const ModelDescription& model_description,
+MtcnnFaceDetector::MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs,
                                      int min_size,
                                      float idle_duration)
     : Processor(PROCESSOR_TYPE_MTCNN_FACE_DETECTOR, {"input"}, {"output"}),
-      model_description_(model_description),
+      model_descs_(model_descs),
       minSize_(min_size),
       idle_duration_(idle_duration)
 {
@@ -588,7 +588,7 @@ MtcnnFaceDetector::MtcnnFaceDetector(const ModelDescription& model_description,
 }
 
 bool MtcnnFaceDetector::Init() {
-  detector_.reset(new MTCNN(model_description_));
+  detector_.reset(new MTCNN(model_descs_));
   LOG(INFO) << "MtcnnFaceDetector initialized";
   return true;
 }

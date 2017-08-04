@@ -115,8 +115,8 @@ void Run(const std::vector<string> &camera_names,
                    << " not supported, please compile with -DUSE_FRCNN=ON";
 #endif
     } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
-      auto model_description = model_manager.GetModelDescription(detector_model);
-      detector.reset(new MtcnnFaceDetector(model_description, min_size, detector_idle_duration));
+      auto model_descs = model_manager.GetModelDescs(detector_model);
+      detector.reset(new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_SSD_DETECTOR) {
 #ifdef USE_SSD
       auto model_desc = model_manager.GetModelDesc(detector_model);

@@ -47,8 +47,31 @@ ModelManager::ModelManager() {
     }
     CHECK(type != MODEL_TYPE_INVALID)
         << "Type " << type_string << " is not a valid mode type";
-    string desc_path = model_value.get<string>("desc_path");
-    string params_path = model_value.get<string>("params_path");
+    std::vector<string> desc_paths;
+    std::vector<string> params_paths;
+    auto desc_path = model_value.find("desc_path");
+    if (desc_path->is<toml::Array>()) {
+      auto desc_path_array = desc_path->as<toml::Array>();
+      for (const auto& m: desc_path_array) {
+        desc_paths.push_back(m.as<std::string>());
+      }
+    } else {
+      string desc_path_str = desc_path->as<string>();
+      desc_paths.push_back(desc_path_str);
+    }
+    auto params_path = model_value.find("params_path");
+    if (params_path->is<toml::Array>()) {
+      auto params_path_array = params_path->as<toml::Array>();
+      for (const auto& m: params_path_array) {
+        params_paths.push_back(m.as<std::string>());
+      }
+    } else {
+      string params_path_str = params_path->as<string>();
+      params_paths.push_back(params_path_str);
+    }
+    CHECK(desc_paths.size() == params_paths.size());
+    //string desc_path = model_value.get<string>("desc_path");
+    //string params_path = model_value.get<string>("params_path");
     int input_width = model_value.get<int>("input_width");
     int input_height = model_value.get<int>("input_height");
 
@@ -61,64 +84,47 @@ ModelManager::ModelManager() {
       last_layer = model_value.get<std::string>("last_layer");
     }
 
-    ModelDesc model_desc(name, type, desc_path, params_path, input_width,
-                         input_height, last_layer);
+    std::vector<ModelDesc> model_descs;
+    for (size_t i = 0; i < desc_paths.size(); ++i) {
+      ModelDesc model_desc(name, type, desc_paths.at(i), params_paths.at(i), input_width,
+                           input_height, last_layer);
 
-    auto label_file_value = model_value.find("label_file");
-    if (label_file_value != nullptr) {
-      model_desc.SetLabelFilePath(label_file_value->as<string>());
-    }
-    auto voc_config_value = model_value.find("voc_config");
-    if (voc_config_value != nullptr) {
-      model_desc.SetVocConfigPath(voc_config_value->as<string>());
-    }
+      auto label_file_value = model_value.find("label_file");
+      if (label_file_value != nullptr) {
+        model_desc.SetLabelFilePath(label_file_value->as<string>());
+      }
+      auto voc_config_value = model_value.find("voc_config");
+      if (voc_config_value != nullptr) {
+        model_desc.SetVocConfigPath(voc_config_value->as<string>());
+      }
 
-    model_descs_.emplace(name, model_desc);
-  }
-
-  // Get model descriptions
-  model_values = root_value.find("model_description")->as<toml::Array>();
-  for (auto model_value : model_values) {
-    string name = model_value.get<string>("name");
-    string type_string = model_value.get<string>("type");
-    ModelType type = MODEL_TYPE_INVALID;
-    if (type_string == "caffe") {
-      type = MODEL_TYPE_CAFFE;
-    } else if (type_string == "tensorflow") {
-      type = MODEL_TYPE_TENSORFLOW;
-    } else if (type_string == "ncs") {
-      type = MODEL_TYPE_NCS;
+      model_descs.push_back(model_desc);
     }
-    CHECK(type != MODEL_TYPE_INVALID) << "Type " << type_string
-                                      << " is not a valid mode type";
-    ModelDescription model_description(name, type, model_value);
-    model_descriptions_.emplace(name, model_description);
+    model_descs_.emplace(name, model_descs);
   }
 }
 
 std::vector<int> ModelManager::GetMeanColors() const { return mean_colors_; }
-std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
-  return model_descs_;
-}
+//std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
+//  return model_descs_;
+//}
 ModelDesc ModelManager::GetModelDesc(const string& name) const {
+  auto itr = model_descs_.find(name);
+  CHECK(itr != model_descs_.end())
+      << "Model description with name " << name << " is not present";
+  return itr->second.at(0);
+}
+
+std::vector<ModelDesc> ModelManager::GetModelDescs(const string& name) const
+{
   auto itr = model_descs_.find(name);
   CHECK(itr != model_descs_.end())
       << "Model description with name " << name << " is not present";
   return itr->second;
 }
 
-std::unordered_map<string, ModelDescription> ModelManager::GetModelDescriptions() const {
-  return model_descriptions_;
-}
-ModelDescription ModelManager::GetModelDescription(const string &name) const {
-  auto itr = model_descriptions_.find(name);
-  CHECK(itr != model_descriptions_.end()) << "Model description with name " << name
-                                   << " is not present";
-  return itr->second;
-}
-
 bool ModelManager::HasModel(const string& name) const {
-  return model_descs_.count(name) != 0 || model_descriptions_.count(name) != 0;
+  return model_descs_.count(name) != 0;
 }
 
 std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
