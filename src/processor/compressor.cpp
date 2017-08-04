@@ -18,6 +18,7 @@ Compressor::Compressor(CompressionType t)
 
 Compressor::~Compressor() {
   stop_ = true;
+  queue_cond_.notify_one();
   output_thread_.join();
 }
 
@@ -50,9 +51,12 @@ void Compressor::Process() {
 }
 
 void Compressor::OutputFrames() {
-  while (!stop_) {
+  while (true) {
     std::unique_lock<std::mutex> lock(queue_mutex_);
-    queue_cond_.wait(lock, [this]() { return !queue_.empty(); });
+    queue_cond_.wait(lock, [this]() { return stop_ || !queue_.empty(); });
+    if (stop_) {
+      break;
+    }
     auto future = std::move(queue_.front());
     queue_.pop();
     auto compressed_frame = future.get();
