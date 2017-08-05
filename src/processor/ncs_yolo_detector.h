@@ -13,7 +13,7 @@
 #include "common/common.h"
 #include "model/model.h"
 #include "processor.h"
-#include "ncs.h"
+#include "ncs/ncs.h"
 
 class NcsYoloDetector : public Processor {
 public:

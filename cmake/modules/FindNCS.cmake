@@ -1,13 +1,11 @@
 unset(NCS_FOUND)
 
-find_path(NCS_INCLUDE_DIRS NAMES ncs.h
+find_path(NCS_INCLUDE_DIRS NAMES ncs.h mvnc.h
     HINTS
-    ${NCS_HOME}/include
     /usr/local/include)
 
 find_library(NCS_LIBRARIES NAMES ncs mvnc
     HINTS
-    ${NCS_HOME}/bin
     /usr/local/lib)
 
 INCLUDE(FindPackageHandleStandardArgs)

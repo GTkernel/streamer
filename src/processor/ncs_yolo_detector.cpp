@@ -7,7 +7,7 @@
 
 #include "common/context.h"
 #include "ncs_yolo_detector.h"
-#include "yolo_utils.h"
+#include "utils/yolo_utils.h"
 #include "model/model_manager.h"
 
 NcsYoloDetector::NcsYoloDetector(const ModelDesc &model_desc,
