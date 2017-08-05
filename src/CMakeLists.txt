@@ -13,6 +13,7 @@ file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/
 file(GLOB_RECURSE FRCNN_SOURCE_FILES ${SRC_ROOT}/processor/object_detector.cpp ${SRC_ROOT}/processor/object_detector.h)
 file(GLOB_RECURSE NCS_SOURCE_FILES ${SRC_ROOT}/processor/ncs_yolo_detector.cpp ${SRC_ROOT}/processor/ncs_yolo_detector.h)
 file(GLOB_RECURSE SSD_SOURCE_FILES ${SRC_ROOT}/processor/ssd_detector.cpp ${SRC_ROOT}/processor/ssd_detector.h)
+file(GLOB_RECURSE DLIB_SOURCE_FILES ${PROJECT_SOURCE_DIR}/3rdparty/dlib/dlib/all/source.cpp)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${RPC_SOURCE_FILES}
   ${ZMQ_SOURCE_FILES}
@@ -23,6 +24,7 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${FRCNN_SOURCE_FILES}
   ${NCS_SOURCE_FILES}
   ${SSD_SOURCE_FILES}
+  ${DLIB_SOURCE_FILES}
 )
 
 # Pick libraries
@@ -118,7 +120,7 @@ endif ()
 
 # Build with DLIB libraries
 if (USE_DLIB)
-  list(APPEND STREAMER_LIBRARIES ${Dlib_LIBRARIES})
+  list(APPEND STREAMER_SOURCE_FILES ${DLIB_SOURCE_FILES})
 endif ()
 
 # Build with NCS libraries

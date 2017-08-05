@@ -75,8 +75,6 @@ endif ()
 
 option(USE_DLIB "Build with Dlib" OFF)
 if (USE_DLIB)
-  find_package(Dlib REQUIRED)
-  include_directories(${Dlib_INCLUDE_DIRS})
   add_definitions("-D USE_DLIB")
   message("Build with Dlib")
 endif ()

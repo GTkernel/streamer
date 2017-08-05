@@ -13,8 +13,8 @@
 #include "struck/src/Tracker.h"
 #include "struck/src/Config.h"
 #ifdef USE_DLIB
-#include <dlib/image_processing.h>
-#include <dlib/opencv.h>
+#include <dlib/dlib/image_processing.h>
+#include <dlib/dlib/opencv.h>
 #endif
 #include "obj_tracker.h"
 
