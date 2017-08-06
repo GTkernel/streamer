@@ -23,6 +23,10 @@
 #include "common/common.h"
 #include "common/context.h"
 
+// Forward declaration to break the cycle:
+//   frame.h -> flow_control_entrance.h -> processor.h -> stream.h -> frame.h
+class FlowControlEntrance;
+
 class Frame {
  public:
   Frame(double start_time = Context::GetContext().GetTimer().ElapsedMSec());
@@ -32,6 +36,9 @@ class Frame {
   // Creates a new Frame object that contains the fields in "fields" copied from
   // "frame". If "fields" is empty, then all fields will be copied.
   Frame(const Frame& frame, std::unordered_set<std::string> fields);
+
+  void SetFlowControlEntrance(FlowControlEntrance* flow_control_entrance);
+  FlowControlEntrance* GetFlowControlEntrance();
 
   template <typename T>
   void SetValue(std::string key, const T& val);
@@ -49,6 +56,11 @@ class Frame {
 
  private:
   friend class boost::serialization::access;
+
+  // If this is not null, then this frame owns a flow control token from the
+  // specified FlowControlEntrance. The token should be released when this frame
+  // leaves the pipeline or encounters a FlowControlExit processor.
+  FlowControlEntrance* flow_control_entrance_ = nullptr;
 
   template <class Archive>
   void serialize(Archive& ar, const unsigned int) {

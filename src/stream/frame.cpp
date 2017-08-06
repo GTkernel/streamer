@@ -148,6 +148,7 @@ Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
 Frame::Frame(const Frame& frame) : Frame(frame, {}) {}
 
 Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
+  flow_control_entrance_ = frame.flow_control_entrance_;
   frame_data_ = frame.frame_data_;
 
   bool inherit_all_fields = fields.empty();
@@ -168,6 +169,14 @@ Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
     frame_data_["original_bytes"] =
         boost::get<std::vector<char>>(other_it->second);
   }
+}
+
+void Frame::SetFlowControlEntrance(FlowControlEntrance* flow_control_entrance) {
+  flow_control_entrance_ = flow_control_entrance;
+}
+
+FlowControlEntrance* Frame::GetFlowControlEntrance() {
+  return flow_control_entrance_;
 }
 
 template <typename T>

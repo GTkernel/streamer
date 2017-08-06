@@ -4,6 +4,8 @@
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
 #include "processor/compressor.h"
+#include "processor/flow_control/flow_control_entrance.h"
+#include "processor/flow_control/flow_control_exit.h"
 #include "processor/frame_writer.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
@@ -34,6 +36,10 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return nullptr;
     case PROCESSOR_TYPE_ENCODER:
       return GstVideoEncoder::Create(params);
+    case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
+      return FlowControlEntrance::Create(params);
+    case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
+      return FlowControlExit::Create(params);
 #ifdef USE_RPC
     case PROCESSOR_TYPE_FRAME_RECEIVER:
       return FrameReceiver::Create(params);

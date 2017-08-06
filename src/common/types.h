@@ -154,6 +154,8 @@ enum ProcessorType {
   PROCESSOR_TYPE_COMPRESSOR,
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_ENCODER,
+  PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
+  PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
 #ifdef USE_RPC
   PROCESSOR_TYPE_FRAME_RECEIVER,
   PROCESSOR_TYPE_FRAME_SENDER,
@@ -182,6 +184,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_CUSTOM;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
+  } else if (type == "FlowControlEntrance") {
+    return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
+  } else if (type == "FlowControlExit") {
+    return PROCESSOR_TYPE_FLOW_CONTROL_EXIT;
 #ifdef USE_RPC
   } else if (type == "FrameReceiver") {
     return PROCESSOR_TYPE_FRAME_RECEIVER;
@@ -226,6 +232,10 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "Custom";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
+    case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
+      return "FlowControlEntrance";
+    case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
+      return "FlowControlExit";
 #ifdef USE_RPC
     case PROCESSOR_TYPE_FRAME_RECEIVER:
       return "FrameReceiver";
