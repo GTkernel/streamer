@@ -2,24 +2,15 @@
  * @brief encoder.cpp - An example application showing the usage of encoder.
  */
 
+#include <cstdio>
+
 #include <boost/program_options.hpp>
-#include <csignal>
+
 #include "streamer.h"
 
 namespace po = boost::program_options;
 using std::cout;
 using std::endl;
-
-std::shared_ptr<Camera> camera;
-std::shared_ptr<Processor> encoder;
-
-void SignalHandler(int) {
-  std::cout << "Received SIGINT, stop encoder" << std::endl;
-  if (encoder != nullptr) encoder->Stop();
-  if (camera != nullptr) camera->Stop();
-
-  exit(0);
-}
 
 void Run(const string& camera_name, string& dst_file, int port) {
   if (dst_file == "" && port == -1) {
@@ -32,13 +23,14 @@ void Run(const string& camera_name, string& dst_file, int port) {
   CHECK(camera_manager.HasCamera(camera_name))
       << "Camera " << camera_name << " does not exist";
 
-  camera = camera_manager.GetCamera(camera_name);
+  auto camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
 
   LOG(INFO) << "Camera image size: " << camera->GetWidth() << "x"
             << camera->GetHeight();
 
   // Encoder
+  std::shared_ptr<Processor> encoder;
   if (dst_file != "") {
     cout << "Store video to: " << dst_file << endl;
     encoder = std::shared_ptr<Processor>(
@@ -58,7 +50,7 @@ void Run(const string& camera_name, string& dst_file, int port) {
   camera->Start();
   encoder->Start();
 
-  std::cout << "Press any key to stop" << std::endl;
+  std::cout << "Press \"Enter\" to stop." << std::endl;
   getchar();
 
   encoder->Stop();
@@ -85,8 +77,6 @@ int main(int argc, char* argv[]) {
   desc.add_options()("config_dir,C",
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
-
-  std::signal(SIGINT, SignalHandler);
 
   po::variables_map vm;
   try {

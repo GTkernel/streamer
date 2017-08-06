@@ -2,7 +2,7 @@
 // immediately saves several of their fields to disk as JSON files.
 
 #include <chrono>
-#include <csignal>
+#include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -21,19 +21,9 @@
 
 namespace po = boost::program_options;
 
-std::vector<std::shared_ptr<Processor>> procs;
-
-void SignalHandler(int) {
-  LOG(INFO) << "Received SIGINT, stopping...";
-
-  // Stop the processors in forward order.
-  for (const auto& proc : procs) {
-    if (proc->IsStarted()) proc->Stop();
-  }
-  exit(0);
-}
-
 void Run(const std::string& camera_name, const std::string& output_dir) {
+  std::vector<std::shared_ptr<Processor>> procs;
+
   // Create Camera.
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
@@ -56,7 +46,13 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
     (*procs_it)->Start();
   }
 
-  while (true) std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::cout << "Press \"Enter\" to stop" << std::endl;
+  getchar();
+
+  // Stop the processors in forward order.
+  for (const auto& proc : procs) {
+    proc->Stop();
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -85,8 +81,6 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Register the signal handler that will stop the processors.
-  std::signal(SIGINT, SignalHandler);
   // Set up GStreamer.
   gst_init(&argc, &argv);
   // Set up glog.

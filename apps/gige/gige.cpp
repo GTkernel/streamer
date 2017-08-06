@@ -6,11 +6,12 @@
  * @brief A demo showing how to stream, control and record from a GigE camera.
  */
 
-#include "gige_file_writer.h"
-#include "streamer.h"
+#include <cstdio>
 
 #include <boost/program_options.hpp>
-#include <csignal>
+
+#include "gige_file_writer.h"
+#include "streamer.h"
 
 namespace po = boost::program_options;
 using std::cout;
@@ -88,7 +89,6 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
          "camera now";
 
   auto camera_stream = camera->GetSink("output");
-  auto camera_reader = camera_stream->Subscribe();
 
   std::shared_ptr<GigeFileWriter> file_writer(
       new GigeFileWriter("", frames_per_file));
@@ -98,13 +98,14 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
   STREAMER_SLEEP(10);
 
   if (display) {
+    std::cout << "Press \"q\" to stop." << std::endl;
+
+    auto camera_reader = camera_stream->Subscribe();
     cv::namedWindow("Camera");
-  }
-  while (true) {
-    cv::Mat image =
-        camera_reader->PopFrame()->GetValue<cv::Mat>("original_image");
-    cv::Mat image_to_show;
-    if (display) {
+    while (true) {
+      cv::Mat image =
+          camera_reader->PopFrame()->GetValue<cv::Mat>("original_image");
+      cv::Mat image_to_show;
       int width = image.cols;
       int height = image.rows;
       int new_width = 1280;
@@ -253,9 +254,12 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
         }
       }
     }
-  }
 
-  camera_reader->UnSubscribe();
+    camera_reader->UnSubscribe();
+  } else {
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
+  }
 
   if (file_writer->IsStarted()) file_writer->Stop();
 

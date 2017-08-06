@@ -25,6 +25,8 @@ void Run(std::string& server, float zoom, unsigned int angle) {
   cv::namedWindow(window_name);
   subscriber->Start();
 
+  std::cout << "Press \"q\" to stop." << std::endl;
+
   while (true) {
     auto frame = reader->PopFrame(30);
     if (frame != nullptr) {

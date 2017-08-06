@@ -2,25 +2,13 @@
  * @brief classifier.cpp - An example application to classify images.
  */
 
+#include <cstdio>
+
 #include <boost/program_options.hpp>
-#include <csignal>
 
 #include "streamer.h"
 
 namespace po = boost::program_options;
-
-std::shared_ptr<Camera> camera;
-std::shared_ptr<ImageTransformer> transformer;
-std::shared_ptr<ImageClassifier> classifier;
-
-void SignalHandler(int) {
-  std::cout << "Received SIGINT, stopping" << std::endl;
-  if (classifier != nullptr) classifier->Stop();
-  if (transformer != nullptr) transformer->Stop();
-  if (camera != nullptr) camera->Stop();
-
-  exit(0);
-}
 
 void Run(const string& camera_name, const string& net_name, bool display) {
   CameraManager& camera_manager = CameraManager::GetInstance();
@@ -29,17 +17,18 @@ void Run(const string& camera_name, const string& net_name, bool display) {
   CHECK(camera_manager.HasCamera(camera_name))
       << "Camera " << camera_name << " does not exist";
 
-  camera = camera_manager.GetCamera(camera_name);
+  auto camera = camera_manager.GetCamera(camera_name);
 
   // Transformer
   Shape input_shape(3, 227, 227);
-  transformer =
+  auto transformer =
       std::make_shared<ImageTransformer>(input_shape, true /* subtract mean */);
   transformer->SetSource("input", camera->GetSink("output"));
 
   // Image classifier
   auto model_desc = model_manager.GetModelDesc(net_name);
-  classifier = std::make_shared<ImageClassifier>(model_desc, input_shape, 1);
+  auto classifier =
+      std::make_shared<ImageClassifier>(model_desc, input_shape, 1);
   classifier->SetSource("input", transformer->GetSink("output"));
 
   // Run
@@ -47,17 +36,17 @@ void Run(const string& camera_name, const string& net_name, bool display) {
   transformer->Start();
   classifier->Start();
 
-  LOG(INFO) << "Classifier running. CTRL-C to stop";
+  if (display) {
+    std::cout << "Press \"q\" to stop." << std::endl;
 
-  auto reader = classifier->GetSink("output")->Subscribe();
-  while (true) {
-    auto frame = reader->PopFrame();
-    auto tags = frame->GetValue<std::vector<std::string>>("tags");
-    auto probs = frame->GetValue<std::vector<double>>("probabilities");
-    std::string tag = tags.front();
-    double prob = probs.front();
+    auto reader = classifier->GetSink("output")->Subscribe();
+    while (true) {
+      auto frame = reader->PopFrame();
+      auto tags = frame->GetValue<std::vector<std::string>>("tags");
+      auto probs = frame->GetValue<std::vector<double>>("probabilities");
+      std::string tag = tags.front();
+      double prob = probs.front();
 
-    if (display) {
       cv::Mat img = frame->GetValue<cv::Mat>("original_image");
 
       // Overlay classification label and probability
@@ -85,7 +74,14 @@ void Run(const string& camera_name, const string& net_name, bool display) {
       int q = cv::waitKey(10);
       if (q == 'q') break;
     }
+  } else {
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
   }
+
+  classifier->Stop();
+  transformer->Stop();
+  camera->Stop();
 }
 
 int main(int argc, char* argv[]) {
@@ -106,8 +102,6 @@ int main(int argc, char* argv[]) {
   desc.add_options()("net,n",
                      po::value<string>()->value_name("NET")->required(),
                      "The name of the neural net to run");
-
-  std::signal(SIGINT, SignalHandler);
 
   po::variables_map vm;
   try {

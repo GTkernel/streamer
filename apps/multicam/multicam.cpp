@@ -5,51 +5,24 @@
  * `unimportant' videos and store the video and classification results locally.
  */
 
+#include <cstdio>
+
 #include <boost/program_options.hpp>
-#include <csignal>
+
 #include "streamer.h"
 
 namespace po = boost::program_options;
 using std::cout;
 using std::endl;
 
-/////// Global vars
-std::vector<std::shared_ptr<Camera>> cameras;
-std::vector<std::shared_ptr<Processor>> transformers;
-std::vector<std::shared_ptr<ImageClassifier>> classifiers;
-std::vector<StreamPtr> classifier_streams;
-std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
-
-void CleanUp() {
-  for (const auto& encoder : encoders) {
-    if (encoder->IsStarted()) encoder->Stop();
-  }
-
-  for (const auto& classifier : classifiers) {
-    if (classifier->IsStarted()) classifier->Stop();
-  }
-
-  for (const auto& transformer : transformers) {
-    if (transformer->IsStarted()) transformer->Stop();
-  }
-
-  for (const auto& camera : cameras) {
-    if (camera->IsStarted()) camera->Stop();
-  }
-}
-
-void SignalHandler(int) {
-  std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
-  //  CleanUp();
-
-  exit(0);
-}
-
 void Run(const std::vector<string>& camera_names, const string& model_name,
          bool display) {
   cout << "Run multicam demo" << endl;
 
-  std::signal(SIGINT, SignalHandler);
+  std::vector<std::shared_ptr<Camera>> cameras;
+  std::vector<std::shared_ptr<Processor>> transformers;
+  std::vector<std::shared_ptr<ImageClassifier>> classifiers;
+  std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
@@ -95,18 +68,16 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
         std::make_shared<ImageClassifier>(model_desc, input_shape, 5);
     classifiers.push_back(classifier);
     classifier->SetSource("input", input_stream);
-    classifier_streams.push_back(classifier->GetSink("output"));
   }
 
   // encoders, encode each camera stream
-  for (decltype(classifier_streams.size()) i = 0; i < classifier_streams.size();
-       ++i) {
+  for (decltype(classifiers.size()) i = 0; i < classifiers.size(); ++i) {
     string output_filename = camera_names.at(i) + ".mp4";
 
     std::shared_ptr<GstVideoEncoder> encoder(
         new GstVideoEncoder(cameras.at(i)->GetWidth(),
                             cameras.at(i)->GetHeight(), output_filename));
-    encoder->SetSource("input", classifier_streams.at(i));
+    encoder->SetSource("input", classifiers.at(i)->GetSink("output"));
     encoders.push_back(encoder);
   }
 
@@ -128,69 +99,91 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     encoder->Start();
   }
 
-  //////// Processor started, display the results
-
   if (display) {
+    std::cout << "Press \"q\" to stop." << std::endl;
+
+    std::vector<StreamReader*> classifier_readers;
+    for (auto classifier : classifiers) {
+      classifier_readers.push_back(classifier->GetSink("output")->Subscribe());
+    }
+
     for (const auto& camera_name : camera_names) {
       cv::namedWindow(camera_name);
     }
-  }
 
-  int update_overlay = 0;
-  const int UPDATE_OVERLAY_INTERVAL = 10;
-  std::vector<string> label_to_show(camera_names.size());
-  //  double fps_to_show = 0.0;
-  while (true) {
-    for (decltype(camera_names.size()) i = 0; i < camera_names.size(); ++i) {
-      auto classifier = classifiers.at(i);
-      double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
-      auto reader = classifier_streams.at(i)->Subscribe();
-      auto frame = reader->PopFrame();
-      if (display) {
-        cv::Mat img = frame->GetValue<cv::Mat>("original_image");
-        string label = frame->GetValue<std::vector<std::string>>("tags").at(0);
-        if (update_overlay == 1) {
-          label_to_show.at(i) = label;
-          fps_to_show = classifier->GetAvgFps();
+    int update_overlay = 0;
+    const int UPDATE_OVERLAY_INTERVAL = 10;
+    std::vector<string> label_to_show(camera_names.size());
+    //  double fps_to_show = 0.0;
+    while (true) {
+      for (decltype(camera_names.size()) i = 0; i < camera_names.size(); ++i) {
+        auto classifier = classifiers.at(i);
+        double fps_to_show = (1000.0 / classifier->GetSlidingLatencyMs());
+        auto reader = classifier_readers.at(i);
+        auto frame = reader->PopFrame();
+        if (display) {
+          cv::Mat img = frame->GetValue<cv::Mat>("original_image");
+          string label =
+              frame->GetValue<std::vector<std::string>>("tags").at(0);
+          if (update_overlay == 1) {
+            label_to_show.at(i) = label;
+            fps_to_show = classifier->GetAvgFps();
+          }
+
+          // Overlay FPS label and classification label
+          double font_size = 0.8 * img.size[0] / 320.0;
+          cv::Point label_point(img.rows / 6, img.cols / 3);
+          cv::Scalar outline_color(0, 0, 0);
+          cv::Scalar label_color(200, 200, 250);
+
+          cv::putText(img, label_to_show.at(i), label_point,
+                      CV_FONT_HERSHEY_DUPLEX, font_size, outline_color, 8,
+                      CV_AA);
+          cv::putText(img, label_to_show.at(i), label_point,
+                      CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
+
+          cv::Point fps_point(img.rows / 3, img.cols / 6);
+
+          char fps_string[256];
+          sprintf(fps_string, "%.2lffps", fps_to_show);
+          cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
+                      font_size, outline_color, 8, CV_AA);
+          cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
+                      font_size, label_color, 2, CV_AA);
+
+          cv::imshow(camera_names.at(i), img);
         }
-
-        // Overlay FPS label and classification label
-        double font_size = 0.8 * img.size[0] / 320.0;
-        cv::Point label_point(img.rows / 6, img.cols / 3);
-        cv::Scalar outline_color(0, 0, 0);
-        cv::Scalar label_color(200, 200, 250);
-
-        cv::putText(img, label_to_show.at(i), label_point,
-                    CV_FONT_HERSHEY_DUPLEX, font_size, outline_color, 8, CV_AA);
-        cv::putText(img, label_to_show.at(i), label_point,
-                    CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
-
-        cv::Point fps_point(img.rows / 3, img.cols / 6);
-
-        char fps_string[256];
-        sprintf(fps_string, "%.2lffps", fps_to_show);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, outline_color, 8, CV_AA);
-        cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX,
-                    font_size, label_color, 2, CV_AA);
-
-        cv::imshow(camera_names.at(i), img);
       }
-    }
 
-    if (display) {
       int q = cv::waitKey(10);
       if (q == 'q') break;
-    }
 
-    update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
+      update_overlay = (update_overlay + 1) % UPDATE_OVERLAY_INTERVAL;
+    }
+  } else {
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
   }
 
   LOG(INFO) << "Done";
 
   //////// Clean up
+  for (const auto& encoder : encoders) {
+    if (encoder->IsStarted()) encoder->Stop();
+  }
 
-  CleanUp();
+  for (const auto& classifier : classifiers) {
+    if (classifier->IsStarted()) classifier->Stop();
+  }
+
+  for (const auto& transformer : transformers) {
+    if (transformer->IsStarted()) transformer->Stop();
+  }
+
+  for (const auto& camera : cameras) {
+    if (camera->IsStarted()) camera->Stop();
+  }
+
   cv::destroyAllWindows();
 }
 
