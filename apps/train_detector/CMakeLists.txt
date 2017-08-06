@@ -22,6 +22,8 @@ add_custom_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+set_source_files_properties(${framesdb_sources} PROPERTIES COMPILE_FLAGS -Wno-implicit-fallthrough)
+
 add_executable(train_detector_publisher EXCLUDE_FROM_ALL
   train_detector_publisher.cpp)
 
