@@ -208,9 +208,11 @@ template void Frame::SetValue(std::string, const std::vector<Rect>&);
 template void Frame::SetValue(std::string, const std::vector<char>&);
 template void Frame::SetValue(std::string, const cv::Mat&);
 template void Frame::SetValue(std::string, const std::vector<FaceLandmark>&);
-template void Frame::SetValue(std::string, const std::vector<std::vector<float>>&);
+template void Frame::SetValue(std::string,
+                              const std::vector<std::vector<float>>&);
 template void Frame::SetValue(std::string, const std::vector<float>&);
-template void Frame::SetValue(std::string, const std::vector<std::vector<double>>&);
+template void Frame::SetValue(std::string,
+                              const std::vector<std::vector<double>>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;

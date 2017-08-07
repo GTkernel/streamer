@@ -8,10 +8,8 @@
 
 #include "model/model_manager.h"
 
-ImageTransformer::ImageTransformer(const Shape& target_shape,
-                                   bool crop,
-                                   bool convert,
-                                   bool subtract_mean)
+ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
+                                   bool convert, bool subtract_mean)
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {"input"}, {"output"}),
       target_shape_(target_shape),
       crop_(crop),

@@ -33,8 +33,8 @@ void Run(const string& camera_name, const string& net_name, bool display) {
 
   // Transformer
   Shape input_shape(3, 227, 227);
-  transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true, true /* subtract mean */);
+  transformer = std::make_shared<ImageTransformer>(input_shape, true, true,
+                                                   true /* subtract mean */);
   transformer->SetSource("input", camera->GetSink("output"));
 
   // Image classifier

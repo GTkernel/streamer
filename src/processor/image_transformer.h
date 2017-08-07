@@ -11,7 +11,8 @@
 
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(const Shape& target_shape, bool crop, bool convert, bool subtract_mean = true);
+  ImageTransformer(const Shape& target_shape, bool crop, bool convert,
+                   bool subtract_mean = true);
 
   static std::shared_ptr<ImageTransformer> Create(
       const FactoryParamsType& params);

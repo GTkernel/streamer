@@ -1,6 +1,6 @@
 //
 // Created by Abhinav Garlapati (abhinav2710@gmail.com) on 1/21/16.
-// 
+//
 
 #include <iostream>
 #include "streamer.h"
@@ -8,7 +8,7 @@
 using std::cout;
 using std::endl;
 
-int main(int argc, char*argv[]) {
+int main(int argc, char* argv[]) {
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
@@ -16,7 +16,7 @@ int main(int argc, char*argv[]) {
   // Init stramer context, this must be called before usign streamer.
   Context::GetContext().Init();
 
-  CameraManager &camera_manager = CameraManager::GetInstance();
+  CameraManager& camera_manager = CameraManager::GetInstance();
 
   if (string(argv[1]) == "-h" || argc < 2) {
     std::cerr << "Usage: ./people CAMERA DISPLAY \n"
@@ -28,7 +28,7 @@ int main(int argc, char*argv[]) {
   string camera_name = argv[1];
   string display = argv[2];
   bool display_on = (display == "true");
-  
+
   auto camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
 
@@ -57,4 +57,3 @@ int main(int argc, char*argv[]) {
     }
   }
 }
-

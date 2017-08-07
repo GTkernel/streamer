@@ -1,24 +1,25 @@
 /**
-* Send metadata to the database
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * Send metadata to the database
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
-#include <chrono>
-#include <iostream>
-#include <fstream>
 #include <algorithm>
+#include <chrono>
+#include <fstream>
+#include <iostream>
 #include <regex>
 
-#include "boost/tokenizer.hpp"
-#include "boost/spirit/include/qi.hpp"
-#include "boost/property_tree/ptree.hpp"
 #include "boost/property_tree/json_parser.hpp"
+#include "boost/property_tree/ptree.hpp"
+#include "boost/spirit/include/qi.hpp"
+#include "boost/tokenizer.hpp"
 
 #include "db_writer.h"
 
-DbWriter::DbWriter(std::shared_ptr<Camera> camera, bool write_to_file, const std::string& athena_address) 
+DbWriter::DbWriter(std::shared_ptr<Camera> camera, bool write_to_file,
+                   const std::string& athena_address)
     : Processor(PROCESSOR_TYPE_DB_WRITER, {"input"}, {}),
       camera_(camera),
       write_to_file_(write_to_file),
@@ -33,7 +34,8 @@ bool DbWriter::Init() {
 #ifdef USE_ATHENA
       aclient_.reset(new athena::AthenaClient(athena_address_));
 #else
-      LOG(FATAL) << "Athena client not supported, please compile with -DUSE_ATHENA=ON";
+      LOG(FATAL)
+          << "Athena client not supported, please compile with -DUSE_ATHENA=ON";
 #endif
     }
   }
@@ -47,11 +49,11 @@ bool DbWriter::OnStop() {
   return true;
 }
 
-static unsigned long GetTimeSinceEpochMillis()
-{
-    return static_cast<unsigned long>
-        (std::chrono::duration_cast<std::chrono::milliseconds>
-            (std::chrono::system_clock::now().time_since_epoch()).count());
+static unsigned long GetTimeSinceEpochMillis() {
+  return static_cast<unsigned long>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count());
 }
 
 void DbWriter::Process() {
@@ -60,8 +62,9 @@ void DbWriter::Process() {
   auto uuids = frame->GetValue<std::vector<std::string>>("uuids");
   auto timestamp = GetTimeSinceEpochMillis();
   auto tags = frame->GetValue<std::vector<std::string>>("tags");
-  auto struck_features = frame->GetValue<std::vector<std::vector<double>>>("struck_features");
-  //auto bboxes = md_frame->GetBboxes();
+  auto struck_features =
+      frame->GetValue<std::vector<std::vector<double>>>("struck_features");
+  // auto bboxes = md_frame->GetBboxes();
   CHECK(uuids.size() == tags.size());
   if (write_to_file_) {
     WriteFile(camera_id, uuids, timestamp, tags, struck_features);
@@ -73,16 +76,16 @@ void DbWriter::Process() {
   }
 }
 
-void DbWriter::WriteFile(const std::string& camera_id,
-                         const std::vector<std::string>& uuids,
-                         unsigned long timestamp,
-                         const std::vector<string>& tags,
-                         const std::vector<std::vector<double>>& struck_features) {
+void DbWriter::WriteFile(
+    const std::string& camera_id, const std::vector<std::string>& uuids,
+    unsigned long timestamp, const std::vector<string>& tags,
+    const std::vector<std::vector<double>>& struck_features) {
   for (size_t i = 0; i < uuids.size(); ++i) {
     if (uuids.size() == struck_features.size()) {
-      ofs_ << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
+      ofs_ << camera_id << "," << uuids[i] << "," << timestamp << ","
+           << tags[i];
       bool flag = true;
-      for (const auto& m: struck_features[i]) {
+      for (const auto& m : struck_features[i]) {
         if (flag) {
           ofs_ << "," << m;
           flag = false;
@@ -92,21 +95,22 @@ void DbWriter::WriteFile(const std::string& camera_id,
       }
       ofs_ << "\n";
     } else {
-      ofs_ << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
+      ofs_ << camera_id << "," << uuids[i] << "," << timestamp << ","
+           << tags[i];
       ofs_ << "\n";
     }
   }
 }
 
 #ifdef USE_ATHENA
-void DbWriter::WriteAthena(const std::string& camera_id,
-                           const std::vector<std::string>& uuids,
-                           unsigned long timestamp,
-                           const std::vector<string>& tags,
-                           const std::vector<std::vector<double>>& struck_features) {
+void DbWriter::WriteAthena(
+    const std::string& camera_id, const std::vector<std::string>& uuids,
+    unsigned long timestamp, const std::vector<string>& tags,
+    const std::vector<std::vector<double>>& struck_features) {
   for (size_t i = 0; i < uuids.size(); ++i) {
     if (uuids.size() == struck_features.size()) {
-      //LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i] << "[struck_feature]";
+      // LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," <<
+      // tags[i] << "[struck_feature]";
 
       const std::string& streamId = camera_id;
       const std::string& objectId = uuids[i];
@@ -125,10 +129,9 @@ void DbWriter::WriteAthena(const std::string& camera_id,
       ptree fv_array;
 
       tag_array.push_back(std::make_pair("", ptree(tags[i])));
-      std::for_each(fv.begin(), fv.end(),
-              [&](const double& v) {
-              fv_array.push_back(
-                      std::make_pair("", ptree(std::to_string(v)))); });
+      std::for_each(fv.begin(), fv.end(), [&](const double& v) {
+        fv_array.push_back(std::make_pair("", ptree(std::to_string(v))));
+      });
 
       root.put_child("tg", tag_array);
       root.put_child("fv", fv_array);
@@ -138,14 +141,15 @@ void DbWriter::WriteAthena(const std::string& camera_id,
 
       // The following is for JSON compliance
 
-      std::string json_str = std::regex_replace(oss.str(),
-              std::regex(R"sy("([-+]?[0-9]*\.?[0-9]*)")sy"), "$1");
+      std::string json_str = std::regex_replace(
+          oss.str(), std::regex(R"sy("([-+]?[0-9]*\.?[0-9]*)")sy"), "$1");
 
       std::cout << json_str << std::endl;
 
       std::cout << aclient_->query(json_str) << std::endl;
     } else {
-      //LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," << tags[i];
+      // LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," <<
+      // tags[i];
     }
   }
 }

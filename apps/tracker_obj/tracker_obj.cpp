@@ -1,9 +1,9 @@
 /**
-* An example application showing the usage of Struck tracker.
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * An example application showing the usage of Struck tracker.
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
 #include <boost/program_options.hpp>
 #include <csignal>
@@ -18,7 +18,7 @@ std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
 std::vector<std::shared_ptr<Processor>> detectors;
 std::vector<std::shared_ptr<Processor>> trackers;
-std::vector<StreamReader *> tracker_output_readers;
+std::vector<StreamReader*> tracker_output_readers;
 std::vector<std::shared_ptr<Processor>> db_writers;
 
 void CleanUp() {
@@ -54,31 +54,26 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names,
-         const string &detector_type,
-         const string &detector_model,
-         bool display, float scale, int min_size,
-         float detector_confidence_threshold,
-         float detector_idle_duration,
-         const string &detector_targets,
-         const std::string& tracker_type,
-         float tracker_calibration_duration,
-         bool db_write_to_file,
+void Run(const std::vector<string>& camera_names, const string& detector_type,
+         const string& detector_model, bool display, float scale, int min_size,
+         float detector_confidence_threshold, float detector_idle_duration,
+         const string& detector_targets, const std::string& tracker_type,
+         float tracker_calibration_duration, bool db_write_to_file,
          const std::string& athena_address) {
   cout << "Run tracker_obj demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
   int batch_size = camera_names.size();
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  ModelManager &model_manager = ModelManager::GetInstance();
-  
-// Check options
-  CHECK(model_manager.HasModel(detector_model)) << "Model " << detector_model
-                                            << " does not exist";
+  CameraManager& camera_manager = CameraManager::GetInstance();
+  ModelManager& model_manager = ModelManager::GetInstance();
+
+  // Check options
+  CHECK(model_manager.HasModel(detector_model))
+      << "Model " << detector_model << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                                 << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name))
+        << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -94,13 +89,14 @@ void Run(const std::vector<string> &camera_names,
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
-  Shape input_shape(3, cameras[0]->GetWidth()*scale, cameras[0]->GetHeight()*scale);
+  Shape input_shape(3, cameras[0]->GetWidth() * scale,
+                    cameras[0]->GetHeight() * scale);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
   for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, false, false, false));
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(input_shape, false, false, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -115,31 +111,35 @@ void Run(const std::vector<string> &camera_names,
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
-      for (const auto& m: t) {
+      for (const auto& m : t) {
         if (!m.empty()) targets.insert(m);
       }
-      detector.reset(new ObjectDetector(model_desc, input_shape, detector_idle_duration, targets));
+      detector.reset(new ObjectDetector(model_desc, input_shape,
+                                        detector_idle_duration, targets));
 #else
       CHECK(false) << "detector_type " << detector_type
                    << " not supported, please compile with -DUSE_FRCNN=ON";
 #endif
     } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
       auto model_descs = model_manager.GetModelDescs(detector_model);
-      detector.reset(new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
+      detector.reset(
+          new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_SSD_DETECTOR) {
 #ifdef USE_SSD
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
-      for (const auto& m: t) {
+      for (const auto& m : t) {
         if (!m.empty()) targets.insert(m);
       }
-      detector.reset(new SsdDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
+      detector.reset(new SsdDetector(model_desc, input_shape,
+                                     detector_confidence_threshold,
+                                     detector_idle_duration, targets));
 #else
       LOG(FATAL) << "Detector type " << detector_type
-                   << " not supported, please compile with -DUSE_SSD=ON";
+                 << " not supported, please compile with -DUSE_SSD=ON";
 #endif
-  	} else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
+    } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       detector.reset(new YoloDetector(model_desc, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_NCS_YOLO_DETECTOR) {
@@ -147,15 +147,17 @@ void Run(const std::vector<string> &camera_names,
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
-      for (const auto& m: t) {
+      for (const auto& m : t) {
         if (!m.empty()) targets.insert(m);
       }
-      detector.reset(new NcsYoloDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
+      detector.reset(new NcsYoloDetector(model_desc, input_shape,
+                                         detector_confidence_threshold,
+                                         detector_idle_duration, targets));
 #else
       LOG(FATAL) << "Detector type " << detector_type
-                   << " not supported, please compile with -DUSE_NCS=ON";
+                 << " not supported, please compile with -DUSE_NCS=ON";
 #endif
-  	} else {
+    } else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
     detector->SetSource("input", input_streams[i]);
@@ -164,7 +166,8 @@ void Run(const std::vector<string> &camera_names,
 
   // tracker
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> tracker(new ObjTracker(tracker_type, tracker_calibration_duration));
+    std::shared_ptr<Processor> tracker(
+        new ObjTracker(tracker_type, tracker_calibration_duration));
     tracker->SetSource("input", detectors[i]->GetSink("output"));
     trackers.push_back(tracker);
 
@@ -172,7 +175,8 @@ void Run(const std::vector<string> &camera_names,
     auto tracker_output = tracker->GetSink("output");
     tracker_output_readers.push_back(tracker_output->Subscribe());
 
-    std::shared_ptr<Processor> db_writer(new DbWriter(cameras[i], db_write_to_file, athena_address));
+    std::shared_ptr<Processor> db_writer(
+        new DbWriter(cameras[i], db_write_to_file, athena_address));
     db_writer->SetSource("input", tracker->GetSink("output"));
     db_writers.push_back(db_writer);
   }
@@ -222,18 +226,21 @@ void Run(const std::vector<string> &camera_names,
       if (display) {
         auto image = frame->GetValue<cv::Mat>("original_image");
         auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
-        //for(const auto& m: bboxes) {
-        //  cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
+        // for(const auto& m: bboxes) {
+        //  cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height),
+        //  cv::Scalar(255,0,0), 5);
         //}
         if (frame->Count("face_landmarks") > 0) {
-          auto face_landmarks = frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
-          for(const auto& m: face_landmarks) {
-            for(int j=0;j<5;j++)
-              cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
+          auto face_landmarks =
+              frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
+          for (const auto& m : face_landmarks) {
+            for (int j = 0; j < 5; j++)
+              cv::circle(image, cv::Point(m.x[j], m.y[j]), 1,
+                         cv::Scalar(255, 255, 0), 5);
           }
         }
         auto tags = frame->GetValue<std::vector<std::string>>("tags");
-        //auto confidences = md_frame->GetConfidences();
+        // auto confidences = md_frame->GetConfidences();
         for (size_t j = 0; j < tags.size(); ++j) {
           // Get the color
           int color_index;
@@ -248,26 +255,32 @@ void Run(const std::vector<string> &camera_names,
 
           // Draw bboxes
           cv::Point top_left_pt(bboxes[j].px, bboxes[j].py);
-          cv::Point bottom_right_pt(bboxes[j].px+bboxes[j].width, bboxes[j].py+bboxes[j].height);
+          cv::Point bottom_right_pt(bboxes[j].px + bboxes[j].width,
+                                    bboxes[j].py + bboxes[j].height);
           cv::rectangle(image, top_left_pt, bottom_right_pt, color, 4);
-          cv::Point bottom_left_pt(bboxes[j].px, bboxes[j].py+bboxes[j].height);
+          cv::Point bottom_left_pt(bboxes[j].px,
+                                   bboxes[j].py + bboxes[j].height);
           std::ostringstream text;
           text << tags[j];
-          //if (tags.size() == confidences.size())
+          // if (tags.size() == confidences.size())
           //  text << "  :  " << confidences[j];
           if (frame->Count("uuids") > 0) {
             auto uuids = frame->GetValue<std::vector<std::string>>("uuids");
             std::size_t pos = uuids[j].size();
-            auto sheared_uuid = uuids[j].substr(pos-5);
+            auto sheared_uuid = uuids[j].substr(pos - 5);
             text << ": " << sheared_uuid;
           }
-          cv::Size text_size = cv::getTextSize(text.str().c_str(), fontface, d_scale, thickness, &baseline);
+          cv::Size text_size = cv::getTextSize(text.str().c_str(), fontface,
+                                               d_scale, thickness, &baseline);
           cv::rectangle(
-            image, bottom_left_pt + cv::Point(0, 0),
-            bottom_left_pt + cv::Point(text_size.width, -text_size.height-baseline),
-            color, CV_FILLED);
-          cv::putText(image, text.str(), bottom_left_pt - cv::Point(0, baseline), fontface , d_scale , CV_RGB(0, 0, 0), thickness, 8);
-        }  
+              image, bottom_left_pt + cv::Point(0, 0),
+              bottom_left_pt +
+                  cv::Point(text_size.width, -text_size.height - baseline),
+              color, CV_FILLED);
+          cv::putText(image, text.str(),
+                      bottom_left_pt - cv::Point(0, baseline), fontface,
+                      d_scale, CV_RGB(0, 0, 0), thickness, 8);
+        }
         cv::imshow(camera_names[i], image);
       }
     }
@@ -286,7 +299,7 @@ void Run(const std::vector<string> &camera_names,
   cv::destroyAllWindows();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -296,12 +309,14 @@ int main(int argc, char *argv[]) {
 
   po::options_description desc("Multi-camera end to end video ingestion demo");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("detector_type",
-                     po::value<string>()->value_name("DETECTOR_TYPE")->required(),
-                     "The name of the detector type to run");
-  desc.add_options()("detector_model,m",
-                     po::value<string>()->value_name("DETECTOR_MODEL")->required(),
-                     "The name of the detector model to run");
+  desc.add_options()(
+      "detector_type",
+      po::value<string>()->value_name("DETECTOR_TYPE")->required(),
+      "The name of the detector type to run");
+  desc.add_options()(
+      "detector_model,m",
+      po::value<string>()->value_name("DETECTOR_MODEL")->required(),
+      "The name of the detector model to run");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
@@ -316,29 +331,31 @@ int main(int argc, char *argv[]) {
                      "scale factor before mtcnn");
   desc.add_options()("min_size", po::value<int>()->default_value(40),
                      "face minimum size");
-  desc.add_options()("detector_confidence_threshold", po::value<float>()->default_value(0.5),
+  desc.add_options()("detector_confidence_threshold",
+                     po::value<float>()->default_value(0.5),
                      "detector confidence threshold");
-  desc.add_options()("detector_idle_duration", po::value<float>()->default_value(1.0),
+  desc.add_options()("detector_idle_duration",
+                     po::value<float>()->default_value(1.0),
                      "detector idle duration");
-  desc.add_options()("detector_targets",
-                     po::value<string>()->default_value(""),
+  desc.add_options()("detector_targets", po::value<string>()->default_value(""),
                      "The name of the target to detect, separate with ,");
   desc.add_options()("tracker_type",
                      po::value<string>()->default_value("struck"),
                      "The name of the tracker type to run");
-  desc.add_options()("tracker_calibration_duration", po::value<float>()->default_value(2.0),
+  desc.add_options()("tracker_calibration_duration",
+                     po::value<float>()->default_value(2.0),
                      "tracker calibration duration");
-  desc.add_options()("db_write_to_file", po::value<bool>()->default_value(false),
+  desc.add_options()("db_write_to_file",
+                     po::value<bool>()->default_value(false),
                      "Enable db write to file or not");
-  desc.add_options()("athena_address",
-                     po::value<string>()->default_value(""),
+  desc.add_options()("athena_address", po::value<string>()->default_value(""),
                      "The address of the athena server");
 
   po::variables_map vm;
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;
@@ -364,16 +381,19 @@ int main(int argc, char *argv[]) {
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
-  float detector_confidence_threshold = vm["detector_confidence_threshold"].as<float>();
+  float detector_confidence_threshold =
+      vm["detector_confidence_threshold"].as<float>();
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
   auto detector_targets = vm["detector_targets"].as<string>();
   auto tracker_type = vm["tracker_type"].as<string>();
-  float tracker_calibration_duration = vm["tracker_calibration_duration"].as<float>();
+  float tracker_calibration_duration =
+      vm["tracker_calibration_duration"].as<float>();
   bool db_write_to_file = vm["db_write_to_file"].as<bool>();
   auto athena_address = vm["athena_address"].as<string>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
       detector_confidence_threshold, detector_idle_duration, detector_targets,
-      tracker_type, tracker_calibration_duration, db_write_to_file, athena_address);
+      tracker_type, tracker_calibration_duration, db_write_to_file,
+      athena_address);
 
   return 0;
 }

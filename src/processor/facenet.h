@@ -1,9 +1,9 @@
 /**
-* Face feature extractor using facenet
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * Face feature extractor using facenet
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
 #ifndef STREAMER_FACENET_H
 #define STREAMER_FACENET_H
@@ -15,8 +15,7 @@
 
 class Facenet : public Processor {
  public:
-  Facenet(const ModelDesc &model_desc, Shape input_shape,
-          size_t batch_size);
+  Facenet(const ModelDesc& model_desc, Shape input_shape, size_t batch_size);
   void SetInputStream(int src_id, StreamPtr stream);
 
  protected:

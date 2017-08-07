@@ -4,7 +4,7 @@
 
 #include "opencv_people_detector.h"
 
-OpenCVPeopleDetector::OpenCVPeopleDetector() 
+OpenCVPeopleDetector::OpenCVPeopleDetector()
     : Processor(PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR, {"input"}, {"output"}) {}
 
 bool OpenCVPeopleDetector::Init() {
@@ -13,7 +13,7 @@ bool OpenCVPeopleDetector::Init() {
 }
 
 bool OpenCVPeopleDetector::OnStop() {
-  //hog_.empty();
+  // hog_.empty();
   return true;
 }
 
@@ -27,12 +27,12 @@ void OpenCVPeopleDetector::Process() {
 
 #ifdef USE_CUDA
   cv::gpu::GpuMat image_gpu(image);
-  
+
   hog_.detectMultiScale(image_gpu, results, 0, cv::Size(8, 8), cv::Size(32, 32),
-                        1.05, 2); 
+                        1.05, 2);
 #else
   hog_.detectMultiScale(image, results, 0, cv::Size(8, 8), cv::Size(32, 32),
-                        1.05, 2); 
+                        1.05, 2);
 #endif
   for (auto result : results) {
     results_rect.emplace_back(result.x, result.y, result.width, result.height);

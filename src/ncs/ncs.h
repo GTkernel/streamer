@@ -3,4 +3,4 @@
 
 #include "ncs_manager.h"
 
-#endif // __NCS_API__
+#endif  // __NCS_API__

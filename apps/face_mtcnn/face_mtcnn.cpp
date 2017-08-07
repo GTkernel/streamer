@@ -1,9 +1,9 @@
 /**
-* An example application showing the usage of mtcnn detector.
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * An example application showing the usage of mtcnn detector.
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
 #include <boost/program_options.hpp>
 #include <csignal>
@@ -17,7 +17,7 @@ using std::endl;
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
 std::vector<std::shared_ptr<Processor>> mtcnns;
-std::vector<StreamReader *> mtcnn_output_readers;
+std::vector<StreamReader*> mtcnn_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
@@ -49,22 +49,22 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names, const string &model_name,
+void Run(const std::vector<string>& camera_names, const string& model_name,
          bool display, float scale, int min_size) {
   cout << "Run face mtcnn demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
   int batch_size = camera_names.size();
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  ModelManager &model_manager = ModelManager::GetInstance();
-  
-// Check options
-  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
-                                            << " does not exist";
+  CameraManager& camera_manager = CameraManager::GetInstance();
+  ModelManager& model_manager = ModelManager::GetInstance();
+
+  // Check options
+  CHECK(model_manager.HasModel(model_name))
+      << "Model " << model_name << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                                 << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name))
+        << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -80,13 +80,14 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
-  Shape input_shape(3, cameras[0]->GetWidth()*scale, cameras[0]->GetHeight()*scale);
+  Shape input_shape(3, cameras[0]->GetWidth() * scale,
+                    cameras[0]->GetHeight() * scale);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
   for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, false, false, false));
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(input_shape, false, false, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -95,7 +96,8 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   // mtcnn
   auto model_descs = model_manager.GetModelDescs(model_name);
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_descs, min_size));
+    std::shared_ptr<Processor> mtcnn(
+        new MtcnnFaceDetector(model_descs, min_size));
     mtcnn->SetSource("input", input_streams[i]);
     mtcnns.push_back(mtcnn);
 
@@ -146,13 +148,16 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
       if (display) {
         auto image = frame->GetValue<cv::Mat>("original_image");
         auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
-        for(const auto& m: bboxes) {
-          cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
+        for (const auto& m : bboxes) {
+          cv::rectangle(image, cv::Rect(m.px, m.py, m.width, m.height),
+                        cv::Scalar(255, 0, 0), 5);
         }
-        auto face_landmarks = frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
-        for(const auto& m: face_landmarks) {
-          for(int j=0;j<5;j++)
-            cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
+        auto face_landmarks =
+            frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
+        for (const auto& m : face_landmarks) {
+          for (int j = 0; j < 5; j++)
+            cv::circle(image, cv::Point(m.x[j], m.y[j]), 1,
+                       cv::Scalar(255, 255, 0), 5);
         }
         cv::imshow(camera_names[i], image);
       }
@@ -172,7 +177,7 @@ void Run(const std::vector<string> &camera_names, const string &model_name,
   cv::destroyAllWindows();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -204,7 +209,7 @@ int main(int argc, char *argv[]) {
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;

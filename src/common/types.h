@@ -65,7 +65,7 @@ struct Rect {
 struct FaceLandmark {
   template <class Archive>
   void serialize(Archive&, const unsigned int) {}
-  float x[5],y[5];
+  float x[5], y[5];
 };
 
 /**
@@ -73,7 +73,7 @@ struct FaceLandmark {
  */
 struct PointFeature {
   PointFeature(const cv::Point& p, const std::vector<float>& f)
-    : point(p), face_feature(f) {}
+      : point(p), face_feature(f) {}
   template <class Archive>
   void serialize(Archive&, const unsigned int) {}
   cv::Point point;

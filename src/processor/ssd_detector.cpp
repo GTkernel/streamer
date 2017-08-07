@@ -1,19 +1,17 @@
 /**
-* Multi-target detection using SSD
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * Multi-target detection using SSD
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
-#include "common/context.h"
 #include "ssd_detector.h"
+#include "common/context.h"
 #include "model/model_manager.h"
 
 namespace ssd {
-Detector::Detector(const string& model_file,
-                   const string& weights_file,
-                   const string& mean_file,
-                   const string& mean_value) {
+Detector::Detector(const string& model_file, const string& weights_file,
+                   const string& mean_file, const string& mean_value) {
   // Set Caffe backend
   int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
 
@@ -61,7 +59,7 @@ Detector::Detector(const string& model_file,
   caffe::Blob<float>* input_layer = net_->input_blobs()[0];
   num_channels_ = input_layer->channels();
   CHECK(num_channels_ == 3 || num_channels_ == 1)
-    << "Input layer should have 1 or 3 channels.";
+      << "Input layer should have 1 or 3 channels.";
   input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
 
   /* Load the binaryproto mean file. */
@@ -70,8 +68,8 @@ Detector::Detector(const string& model_file,
 
 std::vector<std::vector<float> > Detector::Detect(const cv::Mat& img) {
   caffe::Blob<float>* input_layer = net_->input_blobs()[0];
-  input_layer->Reshape(1, num_channels_,
-                       input_geometry_.height, input_geometry_.width);
+  input_layer->Reshape(1, num_channels_, input_geometry_.height,
+                       input_geometry_.width);
   /* Forward dimension change to all layers. */
   net_->Reshape();
 
@@ -104,8 +102,8 @@ std::vector<std::vector<float> > Detector::Detect(const cv::Mat& img) {
 void Detector::SetMean(const string& mean_file, const string& mean_value) {
   cv::Scalar channel_mean;
   if (!mean_file.empty()) {
-    CHECK(mean_value.empty()) <<
-      "Cannot specify mean_file and mean_value at the same time";
+    CHECK(mean_value.empty())
+        << "Cannot specify mean_file and mean_value at the same time";
     caffe::BlobProto blob_proto;
     ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
 
@@ -113,7 +111,7 @@ void Detector::SetMean(const string& mean_file, const string& mean_value) {
     caffe::Blob<float> mean_blob;
     mean_blob.FromProto(blob_proto);
     CHECK_EQ(mean_blob.channels(), num_channels_)
-      << "Number of channels of mean file doesn't match input layer.";
+        << "Number of channels of mean file doesn't match input layer.";
 
     /* The format of the mean file is planar 32-bit float BGR or grayscale. */
     std::vector<cv::Mat> channels;
@@ -135,8 +133,8 @@ void Detector::SetMean(const string& mean_file, const string& mean_value) {
     mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
   }
   if (!mean_value.empty()) {
-    CHECK(mean_file.empty()) <<
-      "Cannot specify mean_file and mean_value at the same time";
+    CHECK(mean_file.empty())
+        << "Cannot specify mean_file and mean_value at the same time";
     std::stringstream ss(mean_value);
     std::vector<float> values;
     string item;
@@ -144,14 +142,15 @@ void Detector::SetMean(const string& mean_file, const string& mean_value) {
       float value = std::atof(item.c_str());
       values.push_back(value);
     }
-    CHECK(values.size() == 1 || values.size() == num_channels_) <<
-      "Specify either 1 mean_value or as many as channels: " << num_channels_;
+    CHECK(values.size() == 1 || values.size() == num_channels_)
+        << "Specify either 1 mean_value or as many as channels: "
+        << num_channels_;
 
     std::vector<cv::Mat> channels;
     for (int i = 0; i < num_channels_; ++i) {
       /* Extract an individual channel. */
       cv::Mat channel(input_geometry_.height, input_geometry_.width, CV_32FC1,
-          cv::Scalar(values[i]));
+                      cv::Scalar(values[i]));
       channels.push_back(channel);
     }
     cv::merge(channels, mean_);
@@ -177,7 +176,7 @@ void Detector::WrapInputLayer(std::vector<cv::Mat>* input_channels) {
 }
 
 void Detector::Preprocess(const cv::Mat& img,
-                            std::vector<cv::Mat>* input_channels) {
+                          std::vector<cv::Mat>* input_channels) {
   /* Convert the input image to the input image format of the network. */
   cv::Mat sample;
   if (img.channels() == 3 && num_channels_ == 1)
@@ -211,16 +210,14 @@ void Detector::Preprocess(const cv::Mat& img,
    * objects in input_channels. */
   cv::split(sample_normalized, *input_channels);
 
-  CHECK(reinterpret_cast<float*>(input_channels->at(0).data)
-        == net_->input_blobs()[0]->cpu_data())
-    << "Input channels are not wrapping the input layer of the network.";
+  CHECK(reinterpret_cast<float*>(input_channels->at(0).data) ==
+        net_->input_blobs()[0]->cpu_data())
+      << "Input channels are not wrapping the input layer of the network.";
 }
-}
+}  // namespace ssd
 
-SsdDetector::SsdDetector(const ModelDesc &model_desc,
-                         Shape input_shape,
-                         float confidence_threshold,
-                         float idle_duration,
+SsdDetector::SsdDetector(const ModelDesc& model_desc, Shape input_shape,
+                         float confidence_threshold, float idle_duration,
                          const std::set<std::string>& targets)
     : Processor(PROCESSOR_TYPE_SSD_DETECTOR, {"input"}, {"output"}),
       model_desc_(model_desc),
@@ -236,9 +233,11 @@ bool SsdDetector::Init() {
   LOG(INFO) << "weights_file: " << weights_file;
   auto mean_colors = ModelManager::GetInstance().GetMeanColors();
   std::ostringstream mean_colors_stream;
-  mean_colors_stream << mean_colors[0] << "," << mean_colors[1] << "," << mean_colors[2];
+  mean_colors_stream << mean_colors[0] << "," << mean_colors[1] << ","
+                     << mean_colors[2];
 
-  detector_.reset(new ssd::Detector(model_file, weights_file, "", mean_colors_stream.str()));
+  detector_.reset(new ssd::Detector(model_file, weights_file, "",
+                                    mean_colors_stream.str()));
 
   std::string labelmap_file = model_desc_.GetLabelFilePath();
   CHECK(ReadProtoFromTextFile(labelmap_file, &label_map_))
@@ -248,9 +247,7 @@ bool SsdDetector::Init() {
   return true;
 }
 
-bool SsdDetector::OnStop() {
-  return true;
-}
+bool SsdDetector::OnStop() { return true; }
 
 void SsdDetector::Process() {
   Timer timer;
@@ -258,12 +255,12 @@ void SsdDetector::Process() {
 
   auto frame = GetFrame("input");
   auto now = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = now-last_detect_time_;
+  std::chrono::duration<double> diff = now - last_detect_time_;
   if (diff.count() >= idle_duration_) {
     auto image = frame->GetValue<cv::Mat>("image");
     CHECK(image.channels() == input_shape_.channel &&
-            image.size[1] == input_shape_.width &&
-            image.size[0] == input_shape_.height);
+          image.size[1] == input_shape_.width &&
+          image.size[0] == input_shape_.height);
     std::vector<std::vector<float> > detections = detector_->Detect(image);
     std::vector<std::vector<float> > filtered_res;
     for (int i = 0; i < detections.size(); ++i) {
@@ -276,8 +273,7 @@ void SsdDetector::Process() {
           filtered_res.push_back(d);
         } else {
           auto it = targets_.find(GetLabelName((int)d[1]));
-          if (it != targets_.end())
-            filtered_res.push_back(d);
+          if (it != targets_.end()) filtered_res.push_back(d);
         }
       }
     }
@@ -287,21 +283,21 @@ void SsdDetector::Process() {
     std::vector<string> tags;
     std::vector<Rect> bboxes;
     std::vector<float> confidences;
-    for (const auto& m: filtered_res) {
-      int xmin = m[3]*original_img.cols;
-      int ymin = m[4]*original_img.rows;
-      int xmax = m[5]*original_img.cols;
-      int ymax = m[6]*original_img.rows;
+    for (const auto& m : filtered_res) {
+      int xmin = m[3] * original_img.cols;
+      int ymin = m[4] * original_img.rows;
+      int xmax = m[5] * original_img.cols;
+      int ymax = m[6] * original_img.rows;
       if (xmin < 0) xmin = 0;
       if (ymin < 0) ymin = 0;
       if (xmax > original_img.cols) xmax = original_img.cols;
       if (ymax > original_img.rows) ymax = original_img.rows;
-      
+
       tags.push_back(GetLabelName((int)m[1]));
-      bboxes.push_back(Rect(xmin, ymin, xmax-xmin, ymax-ymin));
+      bboxes.push_back(Rect(xmin, ymin, xmax - xmin, ymax - ymin));
       confidences.push_back(m[2]);
     }
-    
+
     last_detect_time_ = std::chrono::system_clock::now();
     frame->SetValue("tags", tags);
     frame->SetValue("bounding_boxes", bboxes);

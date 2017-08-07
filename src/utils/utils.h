@@ -6,12 +6,12 @@
 #define STREAMER_UTILS_UTILS_H_
 
 #include "cuda_utils.h"
+#include "cv_utils.h"
 #include "file_utils.h"
 #include "gst_utils.h"
 #include "math_utils.h"
 #include "string_utils.h"
 #include "time_utils.h"
-#include "cv_utils.h"
 
 #include <sched.h>
 #include <condition_variable>

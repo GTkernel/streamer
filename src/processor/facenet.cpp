@@ -1,17 +1,17 @@
 /**
-* Face feature extractor using facenet
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * Face feature extractor using facenet
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
-#include "cv.h"
-#include "common/context.h"
 #include "facenet.h"
+#include "common/context.h"
+#include "cv.h"
 #include "model/model_manager.h"
 #include "utils/utils.h"
 
-Facenet::Facenet(const ModelDesc &model_desc, Shape input_shape,
+Facenet::Facenet(const ModelDesc& model_desc, Shape input_shape,
                  size_t batch_size)
     : Processor(PROCESSOR_TYPE_FACENET, {}, {}),
       model_desc_(model_desc),
@@ -24,10 +24,9 @@ Facenet::Facenet(const ModelDesc &model_desc, Shape input_shape,
         {"output" + std::to_string(i), std::shared_ptr<Stream>(new Stream)});
   }
 
-  mean_image_ =
-      cv::Mat(cv::Size(input_shape_.width, input_shape_.height),
-              input_shape_.channel == 3 ? CV_32FC3 : CV_32FC1,
-              cv::Scalar(127.5, 127.5, 127.5));
+  mean_image_ = cv::Mat(cv::Size(input_shape_.width, input_shape_.height),
+                        input_shape_.channel == 3 ? CV_32FC3 : CV_32FC1,
+                        cv::Scalar(127.5, 127.5, 127.5));
   LOG(INFO) << "batch size of " << batch_size_;
 }
 
@@ -85,15 +84,15 @@ bool Facenet::Init() {
   CHECK(input_shape_.channel == 3 || input_shape_.channel == 1)
       << "Input layer should have 1 or 3 channels.";
 
-  caffe::Blob<float> *input_layer = net_->input_blobs()[0];
+  caffe::Blob<float>* input_layer = net_->input_blobs()[0];
   // Adjust input dimensions
-  input_layer->Reshape(face_batch_size_ /*batch_size_*/, input_shape_.channel, input_shape_.height,
-                       input_shape_.width);
+  input_layer->Reshape(face_batch_size_ /*batch_size_*/, input_shape_.channel,
+                       input_shape_.height, input_shape_.width);
   // Forward dimension change to all layers.
   net_->Reshape();
   // Prepare input buffer
   input_layer = net_->input_blobs()[0];
-  float *input_data = input_layer->mutable_cpu_data();
+  float* input_data = input_layer->mutable_cpu_data();
 
   input_buffer_ = input_data;
 
@@ -128,32 +127,34 @@ void Facenet::Process() {
     // reshape
     if (face_batch_size_ != face_total_num) {
       face_batch_size_ = face_total_num;
-      caffe::Blob<float> *input_layer = net_->input_blobs()[0];
+      caffe::Blob<float>* input_layer = net_->input_blobs()[0];
       // Adjust input dimensions
-      input_layer->Reshape(face_batch_size_ /*batch_size_*/, input_shape_.channel, input_shape_.height,
+      input_layer->Reshape(face_batch_size_ /*batch_size_*/,
+                           input_shape_.channel, input_shape_.height,
                            input_shape_.width);
       // Forward dimension change to all layers.
       net_->Reshape();
       // Prepare input buffer
       input_layer = net_->input_blobs()[0];
-      float *input_data = input_layer->mutable_cpu_data();
+      float* input_data = input_layer->mutable_cpu_data();
 
       input_buffer_ = input_data;
     }
-    float *data = (float *)input_buffer_;
+    float* data = (float*)input_buffer_;
 
     // load data
     for (size_t i = 0; i < batch_size_; i++) {
       cv::Mat img = frames[i]->GetValue<cv::Mat>("original_image");
       auto bboxes = frames[i]->GetValue<std::vector<Rect>>("bounding_boxes");
-      for(const auto& m: bboxes){
+      for (const auto& m : bboxes) {
         int x = m.px;
         int y = m.py;
         int w = m.width;
         int h = m.height;
-        CHECK((x>=0) && (y>=0) && (x+w<=img.cols) && (y+h<=img.rows));
-        cv::Rect roi(x,y,w,h);
-        //printf("%d, %d, %d, %d\n", roi.x ,roi.width, roi.y ,roi.height);
+        CHECK((x >= 0) && (y >= 0) && (x + w <= img.cols) &&
+              (y + h <= img.rows));
+        cv::Rect roi(x, y, w, h);
+        // printf("%d, %d, %d, %d\n", roi.x ,roi.width, roi.y ,roi.height);
         face_image_ = img(roi);
 
         // Resize
@@ -170,15 +171,19 @@ void Facenet::Process() {
         cv::subtract(face_image_float_, mean_image_, face_image_subtract_);
 
         if (input_shape_.channel == 3)
-          face_image_subtract_.convertTo(face_image_normalized_, CV_32FC3, 1.0/128);
+          face_image_subtract_.convertTo(face_image_normalized_, CV_32FC3,
+                                         1.0 / 128);
         else
-          face_image_subtract_.convertTo(face_image_normalized_, CV_32FC1, 1.0/128);
+          face_image_subtract_.convertTo(face_image_normalized_, CV_32FC1,
+                                         1.0 / 128);
 
-        cv::cvtColor(face_image_normalized_, face_image_bgr_, cv::COLOR_RGB2BGR);
+        cv::cvtColor(face_image_normalized_, face_image_bgr_,
+                     cv::COLOR_RGB2BGR);
 
         std::vector<cv::Mat> output_channels;
         for (int j = 0; j < input_shape_.channel; j++) {
-          cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1, data);
+          cv::Mat channel(input_shape_.height, input_shape_.width, CV_32FC1,
+                          data);
           output_channels.push_back(channel);
           data += input_shape_.width * input_shape_.height;
         }
@@ -186,16 +191,16 @@ void Facenet::Process() {
       }
     }
 
-    CHECK(net_->input_blobs()[0]->mutable_cpu_data() ==
-          input_buffer_);
+    CHECK(net_->input_blobs()[0]->mutable_cpu_data() == input_buffer_);
 
     net_->Forward();
     auto output_blob = net_->output_blobs()[0];
-    float *output_data = output_blob->mutable_cpu_data();
+    float* output_data = output_blob->mutable_cpu_data();
     int shape0 = output_blob->shape(0);
     int shape1 = output_blob->shape(1);
     for (int i = 0; i < shape0; ++i) {
-      std::vector<float> face_feature(&output_data[i*shape1], &output_data[i*shape1]+shape1);
+      std::vector<float> face_feature(&output_data[i * shape1],
+                                      &output_data[i * shape1] + shape1);
       face_features.push_back(face_feature);
     }
   }

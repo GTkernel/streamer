@@ -14,24 +14,21 @@
 #include "processor.h"
 
 class OpenCVPeopleDetector : public Processor {
+ public:
+  OpenCVPeopleDetector();
 
-  public:
-    OpenCVPeopleDetector();
+ protected:
+  virtual bool Init() override;
+  virtual bool OnStop() override;
+  virtual void Process() override;
 
-  protected:
-    virtual bool Init() override;
-    virtual bool OnStop() override;
-    virtual void Process() override;
-
-  private:
-
+ private:
 #ifdef USE_CUDA
-  //cv::cuda::HOG hog_;
+  // cv::cuda::HOG hog_;
   cv::cuda::HOG hog_;
 #else
   cv::HOGDescriptor hog_;
 #endif
-
 };
 
-#endif // STREAMER_OPENCV_PEOPLE_DETECTOR_H
+#endif  // STREAMER_OPENCV_PEOPLE_DETECTOR_H

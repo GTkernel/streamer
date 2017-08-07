@@ -52,7 +52,7 @@ ModelManager::ModelManager() {
     auto desc_path = model_value.find("desc_path");
     if (desc_path->is<toml::Array>()) {
       auto desc_path_array = desc_path->as<toml::Array>();
-      for (const auto& m: desc_path_array) {
+      for (const auto& m : desc_path_array) {
         desc_paths.push_back(m.as<std::string>());
       }
     } else {
@@ -62,7 +62,7 @@ ModelManager::ModelManager() {
     auto params_path = model_value.find("params_path");
     if (params_path->is<toml::Array>()) {
       auto params_path_array = params_path->as<toml::Array>();
-      for (const auto& m: params_path_array) {
+      for (const auto& m : params_path_array) {
         params_paths.push_back(m.as<std::string>());
       }
     } else {
@@ -70,14 +70,15 @@ ModelManager::ModelManager() {
       params_paths.push_back(params_path_str);
     }
     CHECK(desc_paths.size() == params_paths.size());
-    //string desc_path = model_value.get<string>("desc_path");
-    //string params_path = model_value.get<string>("params_path");
+    // string desc_path = model_value.get<string>("desc_path");
+    // string params_path = model_value.get<string>("params_path");
     int input_width = model_value.get<int>("input_width");
     int input_height = model_value.get<int>("input_height");
 
-//    CHECK(model_value.has("last_layer"))
-//        << "Model \"" << name << "\" is missing the \"last_layer\" parameter!";
-//    std::string last_layer = model_value.get<std::string>("last_layer");
+    //    CHECK(model_value.has("last_layer"))
+    //        << "Model \"" << name << "\" is missing the \"last_layer\"
+    //        parameter!";
+    //    std::string last_layer = model_value.get<std::string>("last_layer");
 
     std::string last_layer = "prob";
     if (model_value.has("last_layer")) {
@@ -86,8 +87,8 @@ ModelManager::ModelManager() {
 
     std::vector<ModelDesc> model_descs;
     for (size_t i = 0; i < desc_paths.size(); ++i) {
-      ModelDesc model_desc(name, type, desc_paths.at(i), params_paths.at(i), input_width,
-                           input_height, last_layer);
+      ModelDesc model_desc(name, type, desc_paths.at(i), params_paths.at(i),
+                           input_width, input_height, last_layer);
 
       auto label_file_value = model_value.find("label_file");
       if (label_file_value != nullptr) {
@@ -105,7 +106,7 @@ ModelManager::ModelManager() {
 }
 
 std::vector<int> ModelManager::GetMeanColors() const { return mean_colors_; }
-//std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
+// std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
 //  return model_descs_;
 //}
 ModelDesc ModelManager::GetModelDesc(const string& name) const {
@@ -115,8 +116,7 @@ ModelDesc ModelManager::GetModelDesc(const string& name) const {
   return itr->second.at(0);
 }
 
-std::vector<ModelDesc> ModelManager::GetModelDescs(const string& name) const
-{
+std::vector<ModelDesc> ModelManager::GetModelDescs(const string& name) const {
   auto itr = model_descs_.find(name);
   CHECK(itr != model_descs_.end())
       << "Model description with name " << name << " is not present";

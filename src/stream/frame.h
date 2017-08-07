@@ -7,6 +7,7 @@
 
 #include "common/types.h"
 
+#include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/unique_ptr.hpp>
 #include <boost/serialization/unordered_map.hpp>
@@ -14,7 +15,6 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
-#include <boost/optional.hpp>
 
 #include "common/common.h"
 #include "common/context.h"
@@ -33,9 +33,10 @@ class Frame {
   using field_types =
       boost::variant<int, std::string, float, double, unsigned long, cv::Mat,
                      std::vector<char>, std::vector<std::string>,
-                     std::vector<double>, std::vector<Rect>, std::vector<FaceLandmark>,
-                     std::vector<std::vector<float>>, std::vector<float>,
-                     //std::list<std::list<boost::optional<PointFeature>>>,
+                     std::vector<double>, std::vector<Rect>,
+                     std::vector<FaceLandmark>, std::vector<std::vector<float>>,
+                     std::vector<float>,
+                     // std::list<std::list<boost::optional<PointFeature>>>,
                      std::vector<std::vector<double>>>;
   using map_size_type = std::unordered_map<std::string, field_types>::size_type;
   map_size_type Count(std::string key) const { return frame_data_.count(key); }

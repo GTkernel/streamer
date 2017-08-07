@@ -1,9 +1,9 @@
 /**
-* Multi-target detection using MTCNN
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * Multi-target detection using MTCNN
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
 #ifndef STREAMER_CAFFE_MTCNN_H
 #define STREAMER_CAFFE_MTCNN_H
@@ -13,9 +13,9 @@
 #include <caffe/layers/memory_data_layer.hpp>
 
 // c++
+#include <fstream>
 #include <string>
 #include <vector>
-#include <fstream>
 // opencv
 #include <opencv2/opencv.hpp>
 // boost
@@ -41,7 +41,7 @@ struct FaceRect {
 };
 
 struct FacePts {
-  float x[5],y[5];
+  float x[5], y[5];
 };
 
 struct FaceInfo {
@@ -56,25 +56,31 @@ struct FaceInfo {
 class MTCNN {
  public:
   MTCNN(const std::vector<ModelDesc>& model_descs);
-  void Detect(const cv::Mat& img, std::vector<FaceInfo> &faceInfo, int minSize, double* threshold, double factor);
+  void Detect(const cv::Mat& img, std::vector<FaceInfo>& faceInfo, int minSize,
+              double* threshold, double factor);
 
  private:
   bool CvMatToDatumSignalChannel(const cv::Mat& cv_mat, Datum* datum);
-  void Preprocess(const cv::Mat& img,
-                  std::vector<cv::Mat>* input_channels);
-  void WrapInputLayer(std::vector<cv::Mat>* input_channels,Blob<float>* input_layer,
-          const int height,const int width);
+  void Preprocess(const cv::Mat& img, std::vector<cv::Mat>* input_channels);
+  void WrapInputLayer(std::vector<cv::Mat>* input_channels,
+                      Blob<float>* input_layer, const int height,
+                      const int width);
   void SetMean();
-  void GenerateBoundingBox( Blob<float>* confidence,Blob<float>* reg,
-          float scale,float thresh,int image_width,int image_height);
-  void ClassifyFace(const std::vector<FaceInfo>& regressed_rects,cv::Mat &sample_single,
-        boost::shared_ptr<Net<float> >& net,double thresh,char netName);
-  void ClassifyFace_MulImage(const std::vector<FaceInfo> &regressed_rects, cv::Mat &sample_single,
-        boost::shared_ptr<Net<float> >& net, double thresh, char netName);
-  std::vector<FaceInfo> NonMaximumSuppression(std::vector<FaceInfo>& bboxes,float thresh,char methodType);
+  void GenerateBoundingBox(Blob<float>* confidence, Blob<float>* reg,
+                           float scale, float thresh, int image_width,
+                           int image_height);
+  void ClassifyFace(const std::vector<FaceInfo>& regressed_rects,
+                    cv::Mat& sample_single, boost::shared_ptr<Net<float> >& net,
+                    double thresh, char netName);
+  void ClassifyFace_MulImage(const std::vector<FaceInfo>& regressed_rects,
+                             cv::Mat& sample_single,
+                             boost::shared_ptr<Net<float> >& net, double thresh,
+                             char netName);
+  std::vector<FaceInfo> NonMaximumSuppression(std::vector<FaceInfo>& bboxes,
+                                              float thresh, char methodType);
   void Bbox2Square(std::vector<FaceInfo>& bboxes);
   void Padding(int img_w, int img_h);
-  std::vector<FaceInfo> BoxRegress(std::vector<FaceInfo> &faceInfo_, int stage);
+  std::vector<FaceInfo> BoxRegress(std::vector<FaceInfo>& faceInfo_, int stage);
   void RegressPoint(const std::vector<FaceInfo>& faceInfo);
 
  private:
@@ -95,17 +101,16 @@ class MTCNN {
 };
 
 class MtcnnFaceDetector : public Processor {
-public:
-  MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs,
-                    int min_size,
+ public:
+  MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs, int min_size,
                     float idle_duration = 0.f);
 
-protected:
+ protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
   virtual void Process() override;
 
-private:
+ private:
   std::vector<ModelDesc> model_descs_;
   std::unique_ptr<MTCNN> detector_;
   double threshold_[3];

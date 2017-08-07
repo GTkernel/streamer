@@ -40,7 +40,7 @@ class ModelDesc {
     label_file_path_ = file_path;
   }
   const string& GetLabelFilePath() const { return label_file_path_; }
-  void SetVocConfigPath(const string &file_path) {
+  void SetVocConfigPath(const string& file_path) {
     voc_config_path_ = file_path;
   }
   const string& GetVocConfigPath() const { return voc_config_path_; }

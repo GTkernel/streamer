@@ -1,9 +1,9 @@
 /**
-* An example application showing the usage of facenet tracker.
-* 
-* @author Tony Chen <xiaolongx.chen@intel.com>
-* @author Shao-Wen Yang <shao-wen.yang@intel.com>
-*/
+ * An example application showing the usage of facenet tracker.
+ *
+ * @author Tony Chen <xiaolongx.chen@intel.com>
+ * @author Shao-Wen Yang <shao-wen.yang@intel.com>
+ */
 
 #include <boost/program_options.hpp>
 #include <csignal>
@@ -20,7 +20,7 @@ std::vector<std::shared_ptr<Processor>> motion_detectors;
 std::vector<std::shared_ptr<Processor>> mtcnns;
 std::shared_ptr<Facenet> facenet;
 std::vector<std::shared_ptr<Processor>> trackers;
-std::vector<StreamReader *> tracker_output_readers;
+std::vector<StreamReader*> tracker_output_readers;
 std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
 
 void CleanUp() {
@@ -62,25 +62,26 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name,
-         const string &facenet_model_name, bool display, float scale, int min_size,
-         float motion_threshold, float motion_max_duration) {
+void Run(const std::vector<string>& camera_names,
+         const string& mtcnn_model_name, const string& facenet_model_name,
+         bool display, float scale, int min_size, float motion_threshold,
+         float motion_max_duration) {
   cout << "Run tracker demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
   size_t batch_size = camera_names.size();
-  CameraManager &camera_manager = CameraManager::GetInstance();
-  ModelManager &model_manager = ModelManager::GetInstance();
-  
-// Check options
-  CHECK(model_manager.HasModel(mtcnn_model_name)) << "Model " << mtcnn_model_name
-                                            << " does not exist";
-  CHECK(model_manager.HasModel(facenet_model_name)) << "Model " << facenet_model_name
-                                            << " does not exist";
+  CameraManager& camera_manager = CameraManager::GetInstance();
+  ModelManager& model_manager = ModelManager::GetInstance();
+
+  // Check options
+  CHECK(model_manager.HasModel(mtcnn_model_name))
+      << "Model " << mtcnn_model_name << " does not exist";
+  CHECK(model_manager.HasModel(facenet_model_name))
+      << "Model " << facenet_model_name << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                                 << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name))
+        << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -96,13 +97,14 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
     auto camera_stream = camera->GetStream();
     camera_streams.push_back(camera_stream);
   }
-  Shape input_shape(3, cameras[0]->GetWidth()*scale, cameras[0]->GetHeight()*scale);
+  Shape input_shape(3, cameras[0]->GetWidth() * scale,
+                    cameras[0]->GetHeight() * scale);
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
   for (auto camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, false, false, false));
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(input_shape, false, false, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -119,15 +121,17 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
   // mtcnn
   auto model_descs = model_manager.GetModelDescs(mtcnn_model_name);
   for (size_t i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> mtcnn(new MtcnnFaceDetector(model_descs, min_size));
-    //mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
+    std::shared_ptr<Processor> mtcnn(
+        new MtcnnFaceDetector(model_descs, min_size));
+    // mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
     mtcnn->SetSource("input", input_streams[i]);
     mtcnns.push_back(mtcnn);
   }
 
   // facenet
   auto model_desc = model_manager.GetModelDesc(facenet_model_name);
-  Shape input_shape_facenet(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
+  Shape input_shape_facenet(3, model_desc.GetInputWidth(),
+                            model_desc.GetInputHeight());
   facenet.reset(
       new Facenet(model_desc, input_shape_facenet, input_streams.size()));
 
@@ -198,25 +202,31 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
       if (display) {
         auto image = frame->GetValue<cv::Mat>("original_image");
         auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
-        for(const auto& m: bboxes) {
-          cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height), cv::Scalar(255,0,0), 5);
+        for (const auto& m : bboxes) {
+          cv::rectangle(image, cv::Rect(m.px, m.py, m.width, m.height),
+                        cv::Scalar(255, 0, 0), 5);
         }
-        auto face_landmarks = frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
-        for(const auto& m: face_landmarks) {
-          for(int j=0;j<5;j++)
-            cv::circle(image,cv::Point(m.x[j],m.y[j]),1,cv::Scalar(255,255,0),5);
+        auto face_landmarks =
+            frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
+        for (const auto& m : face_landmarks) {
+          for (int j = 0; j < 5; j++)
+            cv::circle(image, cv::Point(m.x[j], m.y[j]), 1,
+                       cv::Scalar(255, 255, 0), 5);
         }
         auto tags = frame->GetValue<std::vector<std::string>>("tags");
         for (size_t j = 0; j < tags.size(); ++j) {
           std::ostringstream text;
           if (frame->Count("confidences") != 0) {
-            auto confidences = frame->GetValue<std::vector<float>>("confidences");
+            auto confidences =
+                frame->GetValue<std::vector<float>>("confidences");
             text << tags[j] << "  :  " << confidences[j];
           } else
             text << tags[j];
-          cv::putText(image, text.str() , cv::Point(bboxes[j].px,bboxes[j].py+30) , 0 , 1.0 , cv::Scalar(0,255,0), 3 );
+          cv::putText(image, text.str(),
+                      cv::Point(bboxes[j].px, bboxes[j].py + 30), 0, 1.0,
+                      cv::Scalar(0, 255, 0), 3);
         }
-        #if 0
+#if 0
         auto paths = md_frame->GetPaths();
         for (const auto& m: paths) {
           auto prev_it=m.begin();
@@ -228,8 +238,8 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
             prev_it = it;
           }
         }
-        #endif
-  
+#endif
+
         cv::imshow(camera_names[i], image);
       }
     }
@@ -248,7 +258,7 @@ void Run(const std::vector<string> &camera_names, const string &mtcnn_model_name
   cv::destroyAllWindows();
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
   // Set up glog
   gst_init(&argc, &argv);
@@ -261,9 +271,10 @@ int main(int argc, char *argv[]) {
   desc.add_options()("mtcnn_model,m",
                      po::value<string>()->value_name("MTCNN_MODEL")->required(),
                      "The name of the mtcnn model to run");
-  desc.add_options()("facenet_model",
-                     po::value<string>()->value_name("FACENET_MODEL")->required(),
-                     "The name of the facenet model to run");
+  desc.add_options()(
+      "facenet_model",
+      po::value<string>()->value_name("FACENET_MODEL")->required(),
+      "The name of the facenet model to run");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
@@ -280,14 +291,15 @@ int main(int argc, char *argv[]) {
                      "face minimum size");
   desc.add_options()("motion_threshold", po::value<float>()->default_value(0.5),
                      "motion threshold");
-  desc.add_options()("motion_max_duration", po::value<float>()->default_value(1.0),
+  desc.add_options()("motion_max_duration",
+                     po::value<float>()->default_value(1.0),
                      "motion max duration");
 
   po::variables_map vm;
   try {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-  } catch (const po::error &e) {
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;
@@ -315,8 +327,8 @@ int main(int argc, char *argv[]) {
   int min_size = vm["min_size"].as<int>();
   float motion_threshold = vm["motion_threshold"].as<float>();
   float motion_max_duration = vm["motion_max_duration"].as<float>();
-  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size, motion_threshold,
-      motion_max_duration);
+  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size,
+      motion_threshold, motion_max_duration);
 
   return 0;
 }
