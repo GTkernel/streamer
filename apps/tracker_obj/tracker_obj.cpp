@@ -54,18 +54,12 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names,
-         const string &detector_type,
-         const string &detector_model,
-         bool display, float scale, int min_size,
-         float detector_confidence_threshold,
-         float detector_idle_duration,
-         const string &detector_targets,
-         const string &classifier_xml_path,
-         const std::string& tracker_type,
-         float tracker_calibration_duration,
-         bool db_write_to_file,
-         const std::string& athena_address) {
+void Run(const std::vector<string>& camera_names, const string& detector_type,
+         const string& detector_model, bool display, float scale, int min_size,
+         float detector_confidence_threshold, float detector_idle_duration,
+         const string& detector_targets, const string& classifier_xml_path,
+         const std::string& tracker_type, float tracker_calibration_duration,
+         bool db_write_to_file, const std::string& athena_address) {
   // Silence complier warning sayings when certain options are turned off.
   (void)detector_confidence_threshold;
   (void)detector_targets;
@@ -155,10 +149,13 @@ void Run(const std::vector<string> &camera_names,
       for (const auto& m : t) {
         if (!m.empty()) targets.insert(m);
       }
-      detector.reset(new NcsYoloDetector(model_desc, input_shape, detector_confidence_threshold, detector_idle_duration, targets));
+      detector.reset(new NcsYoloDetector(model_desc, input_shape,
+                                         detector_confidence_threshold,
+                                         detector_idle_duration, targets));
 #endif  // USE_NCS
     } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
-      detector.reset(new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
+      detector.reset(
+          new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
     } else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
@@ -397,8 +394,9 @@ int main(int argc, char* argv[]) {
   bool db_write_to_file = vm["db_write_to_file"].as<bool>();
   auto athena_address = vm["athena_address"].as<string>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_confidence_threshold, detector_idle_duration, detector_targets, classifier_xml_path,
-      tracker_type, tracker_calibration_duration, db_write_to_file, athena_address);
+      detector_confidence_threshold, detector_idle_duration, detector_targets,
+      classifier_xml_path, tracker_type, tracker_calibration_duration,
+      db_write_to_file, athena_address);
 
   return 0;
 }

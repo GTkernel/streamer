@@ -49,13 +49,10 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string> &camera_names,
-         const string &detector_type,
-         const string &detector_model,
-         bool display, float scale, int min_size,
-         float detector_confidence_threshold,
-         const string &detector_targets,
-         const string &classifier_xml_path) {
+void Run(const std::vector<string>& camera_names, const string& detector_type,
+         const string& detector_model, bool display, float scale, int min_size,
+         float detector_confidence_threshold, const string& detector_targets,
+         const string& classifier_xml_path) {
   // Silence complier warning sayings when certain options are turned off.
   (void)detector_confidence_threshold;
   (void)detector_targets;
@@ -150,7 +147,8 @@ void Run(const std::vector<string> &camera_names,
                                          detector_idle_duration, targets));
 #endif  // USE_NCS
     } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
-      detector.reset(new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
+      detector.reset(
+          new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
     } else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
@@ -361,7 +359,8 @@ int main(int argc, char* argv[]) {
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
-  float detector_confidence_threshold = vm["detector_confidence_threshold"].as<float>();
+  float detector_confidence_threshold =
+      vm["detector_confidence_threshold"].as<float>();
   auto classifier_xml_path = vm["classifier_xml_path"].as<string>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
       detector_confidence_threshold, detector_targets, classifier_xml_path);

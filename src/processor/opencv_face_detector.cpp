@@ -4,7 +4,8 @@
 
 #include "opencv_face_detector.h"
 
-OpenCVFaceDetector::OpenCVFaceDetector(float idle_duration, string classifier_xml_path)
+OpenCVFaceDetector::OpenCVFaceDetector(float idle_duration,
+                                       string classifier_xml_path)
     : Processor(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR, {"input"}, {"output"}),
       idle_duration_(idle_duration),
       classifier_xml_path_(classifier_xml_path) {}
@@ -27,7 +28,7 @@ bool OpenCVFaceDetector::OnStop() {
 void OpenCVFaceDetector::Process() {
   auto frame = GetFrame("input");
   auto now = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = now-last_detect_time_;
+  std::chrono::duration<double> diff = now - last_detect_time_;
   if (diff.count() >= idle_duration_) {
     const cv::Mat& image = frame->GetValue<cv::Mat>("image");
 
@@ -51,7 +52,8 @@ void OpenCVFaceDetector::Process() {
 #else
     classifier_.detectMultiScale(image, results);
     for (const auto& result : results) {
-      results_rect.emplace_back(result.x, result.y, result.width, result.height);
+      results_rect.emplace_back(result.x, result.y, result.width,
+                                result.height);
       tags.push_back("face");
     }
 #endif  // USE_CUDA
