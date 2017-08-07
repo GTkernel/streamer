@@ -8,7 +8,7 @@ find_path(Caffe_INCLUDE_DIRS NAMES caffe/caffe.hpp
 
 find_library(Caffe_LIBRARIES NAMES caffe-nv caffe
   HINTS
-  ${CAFFE_HOME}/build/lib
+  ${CAFFE_HOME}/lib
   /usr/local/lib)
 
 INCLUDE(FindPackageHandleStandardArgs)

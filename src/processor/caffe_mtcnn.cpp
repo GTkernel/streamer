@@ -642,6 +642,12 @@ MtcnnFaceDetector::MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs,
   factor_ = 0.709;
 }
 
+std::shared_ptr<MtcnnFaceDetector> MtcnnFaceDetector::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool MtcnnFaceDetector::Init() {
   detector_.reset(new MTCNN(model_descs_));
   LOG(INFO) << "MtcnnFaceDetector initialized";

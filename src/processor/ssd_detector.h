@@ -32,7 +32,7 @@ class Detector {
  private:
   std::shared_ptr<caffe::Net<float> > net_;
   cv::Size input_geometry_;
-  int num_channels_;
+  size_t num_channels_;
   cv::Mat mean_;
 };
 }  // namespace ssd
@@ -42,6 +42,7 @@ class SsdDetector : public Processor {
   SsdDetector(const ModelDesc& model_desc, Shape input_shape,
               float confidence_threshold, float idle_duration = 0.f,
               const std::set<std::string>& targets = std::set<std::string>());
+  static std::shared_ptr<SsdDetector> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

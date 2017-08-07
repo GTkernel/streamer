@@ -5,6 +5,7 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
+#include <stdlib.h>
 #include <algorithm>
 #include <chrono>
 #include <fstream>
@@ -25,9 +26,18 @@ DbWriter::DbWriter(std::shared_ptr<Camera> camera, bool write_to_file,
       write_to_file_(write_to_file),
       athena_address_(athena_address) {}
 
+std::shared_ptr<DbWriter> DbWriter::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool DbWriter::Init() {
   if (write_to_file_) {
-    ofs_.open(std::tmpnam(nullptr));
+    char tplate[7] = "XXXXXX";
+    if (mkstemp(tplate) == -1) {
+      throw std::runtime_error("Unable to create temporary file!");
+    }
+    ofs_.open(tplate);
     CHECK(ofs_.is_open()) << "Error opening file";
   } else {
     if (!athena_address_.empty()) {

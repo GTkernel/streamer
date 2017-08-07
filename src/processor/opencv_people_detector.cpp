@@ -7,6 +7,12 @@
 OpenCVPeopleDetector::OpenCVPeopleDetector()
     : Processor(PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR, {"input"}, {"output"}) {}
 
+std::shared_ptr<OpenCVPeopleDetector> OpenCVPeopleDetector::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool OpenCVPeopleDetector::Init() {
   hog_.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
   return true;

@@ -86,6 +86,11 @@ ObjTracker::ObjTracker(const std::string& type, float calibration_duration)
       type_(type),
       calibration_duration_(calibration_duration) {}
 
+std::shared_ptr<ObjTracker> ObjTracker::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool ObjTracker::Init() {
   LOG(INFO) << "ObjTracker initialized";
   return true;

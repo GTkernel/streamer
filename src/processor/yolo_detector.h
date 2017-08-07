@@ -32,6 +32,7 @@ class Detector {
 class YoloDetector : public Processor {
  public:
   YoloDetector(const ModelDesc& model_desc, float idle_duration = 0.f);
+  static std::shared_ptr<YoloDetector> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

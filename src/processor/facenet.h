@@ -16,6 +16,7 @@
 class Facenet : public Processor {
  public:
   Facenet(const ModelDesc& model_desc, Shape input_shape, size_t batch_size);
+  static std::shared_ptr<Facenet> Create(const FactoryParamsType& params);
   void SetInputStream(int src_id, StreamPtr stream);
 
  protected:

@@ -16,6 +16,8 @@
 class OpenCVPeopleDetector : public Processor {
  public:
   OpenCVPeopleDetector();
+  static std::shared_ptr<OpenCVPeopleDetector> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

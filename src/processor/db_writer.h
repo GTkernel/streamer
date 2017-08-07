@@ -19,6 +19,7 @@ class DbWriter : public Processor {
  public:
   DbWriter(std::shared_ptr<Camera> camera, bool write_to_file,
            const std::string& athena_address);
+  static std::shared_ptr<DbWriter> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

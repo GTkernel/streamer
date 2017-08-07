@@ -16,6 +16,7 @@
 class ObjectTracker : public Processor {
  public:
   ObjectTracker(size_t rem_size = 5);
+  static std::shared_ptr<ObjectTracker> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

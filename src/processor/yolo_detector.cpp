@@ -5,9 +5,11 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "yolo_detector.h"
+#include <sstream>
+
 #include "common/context.h"
 #include "model/model_manager.h"
+#include "yolo_detector.h"
 
 namespace yolo {
 Detector::Detector(const string& model_file, const string& weights_file) {
@@ -103,15 +105,14 @@ cv::Mat Detector::Detect(const cv::Mat& img) {
 cv::Mat Detector::GetBox(std::vector<float> DetectionResult, float* pro_obj,
                          int* idx_class, std::vector<std::vector<int>>& bboxs,
                          float thresh, cv::Mat img) {
-  char* labelname[] = {"aeroplane", "bicycle",   "bird",        "boat",
-                       "bottle",    "bus",       "car",         "cat",
-                       "chair",     "cow",       "diningtable", "dog",
-                       "horse",     "motorbike", "person",      "pottedplant",
-                       "sheep",     "sofa",      "train",       "tvmonitor"};
+  std::vector<std::string> labelname = {
+      "aeroplane",   "bicycle", "bird",  "boat",      "bottle",
+      "bus",         "car",     "cat",   "chair",     "cow",
+      "diningtable", "dog",     "horse", "motorbike", "person",
+      "pottedplant", "sheep",   "sofa",  "train",     "tvmonitor"};
 
   float overlap;
   float overlap_thresh = 0.4;
-  float pro_class[49];
   int idx;
   int idx2;
   float max_idx;
@@ -129,7 +130,6 @@ cv::Mat Detector::GetBox(std::vector<float> DetectionResult, float* pro_obj,
         }
       }
       idx_class[i * 7 + j] = max_idx;
-      pro_class[i * 7 + j] = max;
 
       pro_obj[(i * 7 + j) * 2] =
           max * DetectionResult[7 * 7 * 20 + (i * 7 + j) * 2];
@@ -151,7 +151,8 @@ cv::Mat Detector::GetBox(std::vector<float> DetectionResult, float* pro_obj,
           idx = 49 * 20 + 49 * 2 + ((i * 7 + j) * 2 + k) * 4;
           x = img.cols * (DetectionResult[idx++] + j) / 7;
           y = img.rows * (DetectionResult[idx++] + i) / 7;
-          w = img.cols * DetectionResult[idx] * DetectionResult[idx++];
+          w = img.cols * DetectionResult[idx] * DetectionResult[idx];
+          idx++;
           h = img.rows * DetectionResult[idx] * DetectionResult[idx];
           x_min = x - w / 2;
           y_min = y - h / 2;
@@ -171,8 +172,8 @@ cv::Mat Detector::GetBox(std::vector<float> DetectionResult, float* pro_obj,
   }
 
   std::vector<bool> mark(bboxs.size(), true);
-  for (int i = 0; i < bboxs.size(); ++i) {
-    for (int j = i + 1; j < bboxs.size(); ++j) {
+  for (decltype(bboxs.size()) i = 0; i < bboxs.size(); ++i) {
+    for (decltype(bboxs.size()) j = i + 1; j < bboxs.size(); ++j) {
       int overlap_x = lap(bboxs[i][0], bboxs[i][2], bboxs[j][0], bboxs[j][2]);
       int overlap_y = lap(bboxs[i][1], bboxs[i][3], bboxs[j][1], bboxs[j][3]);
       overlap = (overlap_x * overlap_y) * 1.0 /
@@ -189,18 +190,18 @@ cv::Mat Detector::GetBox(std::vector<float> DetectionResult, float* pro_obj,
     }
   }
 
-  for (int i = 0; i < bboxs.size(); ++i) {
+  for (decltype(bboxs.size()) i = 0; i < bboxs.size(); ++i) {
     if (mark[i]) {
       cv::Point point1(bboxs[i][1], bboxs[i][2]);
       cv::Point point2(bboxs[i][3], bboxs[i][4]);
       cv::rectangle(img, cv::Rect(point1, point2),
                     cv::Scalar(0, bboxs[i][0] / 20.0 * 225, 255),
                     bboxs[i][5] / 8);
-      char ch[100];
-      sprintf(ch, "%s %.2f", labelname[bboxs[i][0] - 1],
-              bboxs[i][5] * 1.0 / 100);
-      std::string temp(ch);
-      cv::putText(img, temp, point1, CV_FONT_HERSHEY_COMPLEX, 0.4,
+
+      std::ostringstream msg;
+      msg << labelname[bboxs[i][0] - 1] << std::setw(2)
+          << bboxs[i][5] * 1.0 / 100;
+      cv::putText(img, msg.str(), point1, CV_FONT_HERSHEY_COMPLEX, 0.4,
                   cv::Scalar(255, 255, 255));
     }
   }
@@ -213,6 +214,11 @@ YoloDetector::YoloDetector(const ModelDesc& model_desc, float idle_duration)
     : Processor(PROCESSOR_TYPE_YOLO_DETECTOR, {"input"}, {"output"}),
       model_desc_(model_desc),
       idle_duration_(idle_duration) {}
+
+std::shared_ptr<YoloDetector> YoloDetector::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
 
 bool YoloDetector::Init() {
   std::string model_file = model_desc_.GetModelDescPath();

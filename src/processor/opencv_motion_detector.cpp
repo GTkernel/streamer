@@ -14,6 +14,12 @@ OpenCVMotionDetector::OpenCVMotionDetector(float threshold, float max_duration)
       threshold_(threshold),
       max_duration_(max_duration) {}
 
+std::shared_ptr<OpenCVMotionDetector> OpenCVMotionDetector::Create(
+    const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool OpenCVMotionDetector::Init() {
   mog2_.reset(cv::createBackgroundSubtractorMOG2());
   return true;

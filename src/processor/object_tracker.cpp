@@ -13,6 +13,11 @@ ObjectTracker::ObjectTracker(size_t rem_size)
       rem_size_(rem_size),
       first_frame_(true) {}
 
+std::shared_ptr<ObjectTracker> ObjectTracker::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool ObjectTracker::Init() {
   LOG(INFO) << "ObjectTracker initialized";
   return true;

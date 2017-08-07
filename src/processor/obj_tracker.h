@@ -33,6 +33,7 @@ class BaseTracker {
 class ObjTracker : public Processor {
  public:
   ObjTracker(const std::string& type, float calibration_duration);
+  static std::shared_ptr<ObjTracker> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

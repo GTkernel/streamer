@@ -118,17 +118,12 @@ class FramePrinter : public boost::static_visitor<std::string> {
   std::string operator()(const std::vector<std::vector<float>>& v) const {
     std::ostringstream output;
     output << "std::vector<std::vector<float>> = [" << std::endl;
-    for (auto& m : v) {
-      output << "std::vector<float>(";
-      bool flag = true;
-      for (auto& n : m) {
-        if (flag) {
-          output << n;
-        } else {
-          output << "," << n;
-        }
+    for (auto& v1 : v) {
+      output << "std::vector<float> = [" << std::endl;
+      for (auto& f : v1) {
+        output << f << std::endl;
       }
-      output << ")" << std::endl;
+      output << "]" << std::endl;
     }
     output << "]";
     return output.str();
@@ -147,17 +142,12 @@ class FramePrinter : public boost::static_visitor<std::string> {
   std::string operator()(const std::vector<std::vector<double>>& v) const {
     std::ostringstream output;
     output << "std::vector<std::vector<double>> = [" << std::endl;
-    for (auto& m : v) {
-      output << "std::vector<double>(";
-      bool flag = true;
-      for (auto& n : m) {
-        if (flag) {
-          output << n;
-        } else {
-          output << "," << n;
-        }
+    for (auto& v1 : v) {
+      output << "std::vector<double> = [" << std::endl;
+      for (auto& d : v1) {
+        output << d << std::endl;
       }
-      output << ")" << std::endl;
+      output << "]" << std::endl;
     }
     output << "]";
     return output.str();
@@ -202,6 +192,24 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
                                     cv::FileStorage::FORMAT_JSON);
     fs << "cvMat" << v;
     return fs.releaseAndGetString();
+  }
+
+  nlohmann::json operator()(const std::vector<float>& v) const { return v; }
+
+  nlohmann::json operator()(const std::vector<FaceLandmark>& v) const {
+    nlohmann::json j;
+    for (const auto& f : v) {
+      j.push_back(f.ToJson());
+    }
+    return j;
+  }
+
+  nlohmann::json operator()(const std::vector<std::vector<double>>& v) {
+    return v;
+  }
+
+  nlohmann::json operator()(const std::vector<std::vector<float>>& v) {
+    return v;
   }
 };
 

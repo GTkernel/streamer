@@ -116,7 +116,7 @@ void Detector::SetMean(const string& mean_file, const string& mean_value) {
     /* The format of the mean file is planar 32-bit float BGR or grayscale. */
     std::vector<cv::Mat> channels;
     float* data = mean_blob.mutable_cpu_data();
-    for (int i = 0; i < num_channels_; ++i) {
+    for (decltype(num_channels_) i = 0; i < num_channels_; ++i) {
       /* Extract an individual channel. */
       cv::Mat channel(mean_blob.height(), mean_blob.width(), CV_32FC1, data);
       channels.push_back(channel);
@@ -147,7 +147,7 @@ void Detector::SetMean(const string& mean_file, const string& mean_value) {
         << num_channels_;
 
     std::vector<cv::Mat> channels;
-    for (int i = 0; i < num_channels_; ++i) {
+    for (decltype(num_channels_) i = 0; i < num_channels_; ++i) {
       /* Extract an individual channel. */
       cv::Mat channel(input_geometry_.height, input_geometry_.width, CV_32FC1,
                       cv::Scalar(values[i]));
@@ -226,6 +226,11 @@ SsdDetector::SsdDetector(const ModelDesc& model_desc, Shape input_shape,
       idle_duration_(idle_duration),
       targets_(targets) {}
 
+std::shared_ptr<SsdDetector> SsdDetector::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool SsdDetector::Init() {
   std::string model_file = model_desc_.GetModelDescPath();
   std::string weights_file = model_desc_.GetModelParamsPath();
@@ -263,7 +268,7 @@ void SsdDetector::Process() {
           image.size[0] == input_shape_.height);
     std::vector<std::vector<float> > detections = detector_->Detect(image);
     std::vector<std::vector<float> > filtered_res;
-    for (int i = 0; i < detections.size(); ++i) {
+    for (decltype(detections.size()) i = 0; i < detections.size(); ++i) {
       const std::vector<float>& d = detections[i];
       // Detection format: [image_id, label, score, xmin, ymin, xmax, ymax].
       CHECK_EQ(d.size(), 7);

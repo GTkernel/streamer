@@ -9,10 +9,19 @@ file(GLOB_RECURSE CAFFE_SOURCE_FILES ${SRC_ROOT}/caffe_*.cpp ${SRC_ROOT}/caffe_*
 file(GLOB_RECURSE CAFFE_OPENCL_SOURCE_FILES ${SRC_ROOT}/caffe_opencl*.cpp ${SRC_ROOT}/caffe_opencl*.h)
 file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/camera/pgr_*.h)
 file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/camera/vimba_*.h)
-file(GLOB_RECURSE FRCNN_SOURCE_FILES ${SRC_ROOT}/processor/object_detector.cpp ${SRC_ROOT}/processor/object_detector.h)
-file(GLOB_RECURSE NCS_SOURCE_FILES ${SRC_ROOT}/src/ncs/*.cpp ${SRC_ROOT}/src/ncs/*.h ${SRC_ROOT}/processor/ncs_yolo_detector.cpp ${SRC_ROOT}/processor/ncs_yolo_detector.h)
-file(GLOB_RECURSE SSD_SOURCE_FILES ${SRC_ROOT}/processor/ssd_detector.cpp ${SRC_ROOT}/processor/ssd_detector.h)
-file(GLOB_RECURSE DLIB_SOURCE_FILES ${PROJECT_SOURCE_DIR}/3rdparty/dlib/dlib/all/source.cpp)
+file(GLOB_RECURSE FRCNN_SOURCE_FILES
+  ${SRC_ROOT}/processor/object_detector.cpp
+  ${SRC_ROOT}/processor/object_detector.h)
+file(GLOB_RECURSE NCS_SOURCE_FILES
+  ${SRC_ROOT}/ncs/*.cpp
+  ${SRC_ROOT}/ncs/*.h
+  ${SRC_ROOT}/processor/ncs_yolo_detector.cpp
+  ${SRC_ROOT}/processor/ncs_yolo_detector.h)
+file(GLOB_RECURSE SSD_SOURCE_FILES
+  ${SRC_ROOT}/processor/ssd_detector.cpp
+  ${SRC_ROOT}/processor/ssd_detector.h)
+file(GLOB_RECURSE DLIB_SOURCE_FILES
+  ${PROJECT_SOURCE_DIR}/3rdparty/dlib/dlib/all/source.cpp)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${RPC_SOURCE_FILES}
   ${CAFFE_SOURCE_FILES}
@@ -24,6 +33,8 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${SSD_SOURCE_FILES}
   ${DLIB_SOURCE_FILES}
 )
+
+set_source_files_properties(${DLIB_SOURCE_FILES} PROPERTIES COMPILE_FLAGS -w)
 
 # Pick libraries
 set(STREAMER_LIBRARIES

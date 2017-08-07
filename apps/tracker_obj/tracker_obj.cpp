@@ -60,6 +60,10 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
          const string& detector_targets, const std::string& tracker_type,
          float tracker_calibration_duration, bool db_write_to_file,
          const std::string& athena_address) {
+  // Silence complier warning sayings when certain options are turned off.
+  (void)detector_confidence_threshold;
+  (void)detector_targets;
+
   cout << "Run tracker_obj demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -106,8 +110,16 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
   for (int i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> detector;
     auto p = GetProcessorTypeByString(detector_type);
-    if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
+
+    if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
+      auto model_descs = model_manager.GetModelDescs(detector_model);
+      detector.reset(
+          new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
+    } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
+      auto model_desc = model_manager.GetModelDesc(detector_model);
+      detector.reset(new YoloDetector(model_desc, detector_idle_duration));
 #ifdef USE_FRCNN
+    } else if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
@@ -116,16 +128,9 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       }
       detector.reset(new ObjectDetector(model_desc, input_shape,
                                         detector_idle_duration, targets));
-#else
-      CHECK(false) << "detector_type " << detector_type
-                   << " not supported, please compile with -DUSE_FRCNN=ON";
-#endif
-    } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
-      auto model_descs = model_manager.GetModelDescs(detector_model);
-      detector.reset(
-          new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
-    } else if (p == PROCESSOR_TYPE_SSD_DETECTOR) {
+#endif  // USE_FRCNN
 #ifdef USE_SSD
+    } else if (p == PROCESSOR_TYPE_SSD_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
@@ -135,15 +140,9 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       detector.reset(new SsdDetector(model_desc, input_shape,
                                      detector_confidence_threshold,
                                      detector_idle_duration, targets));
-#else
-      LOG(FATAL) << "Detector type " << detector_type
-                 << " not supported, please compile with -DUSE_SSD=ON";
-#endif
-    } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
-      auto model_desc = model_manager.GetModelDesc(detector_model);
-      detector.reset(new YoloDetector(model_desc, detector_idle_duration));
-    } else if (p == PROCESSOR_TYPE_NCS_YOLO_DETECTOR) {
+#endif  // USE_SSD
 #ifdef USE_NCS
+    } else if (p == PROCESSOR_TYPE_NCS_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
       std::set<std::string> targets;
@@ -153,10 +152,7 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       detector.reset(new NcsYoloDetector(model_desc, input_shape,
                                          detector_confidence_threshold,
                                          detector_idle_duration, targets));
-#else
-      LOG(FATAL) << "Detector type " << detector_type
-                 << " not supported, please compile with -DUSE_NCS=ON";
-#endif
+#endif  // USE_NCS
     } else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }

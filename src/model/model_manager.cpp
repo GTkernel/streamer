@@ -75,15 +75,10 @@ ModelManager::ModelManager() {
     int input_width = model_value.get<int>("input_width");
     int input_height = model_value.get<int>("input_height");
 
-    //    CHECK(model_value.has("last_layer"))
-    //        << "Model \"" << name << "\" is missing the \"last_layer\"
-    //        parameter!";
-    //    std::string last_layer = model_value.get<std::string>("last_layer");
-
-    std::string last_layer = "prob";
-    if (model_value.has("last_layer")) {
-      last_layer = model_value.get<std::string>("last_layer");
-    }
+    CHECK(model_value.has("last_layer"))
+        << "Model \"" << name << "\" is missing the \"last_layer\""
+        << "parameter!";
+    std::string last_layer = model_value.get<std::string>("last_layer");
 
     std::vector<ModelDesc> model_descs;
     for (size_t i = 0; i < desc_paths.size(); ++i) {
@@ -106,14 +101,14 @@ ModelManager::ModelManager() {
 }
 
 std::vector<int> ModelManager::GetMeanColors() const { return mean_colors_; }
-// std::unordered_map<string, ModelDesc> ModelManager::GetModelDescs() const {
-//  return model_descs_;
-//}
+
+std::unordered_map<std::string, std::vector<ModelDesc>>
+ModelManager::GetAllModelDescs() const {
+  return model_descs_;
+}
+
 ModelDesc ModelManager::GetModelDesc(const string& name) const {
-  auto itr = model_descs_.find(name);
-  CHECK(itr != model_descs_.end())
-      << "Model description with name " << name << " is not present";
-  return itr->second.at(0);
+  return GetModelDescs(name).at(0);
 }
 
 std::vector<ModelDesc> ModelManager::GetModelDescs(const string& name) const {

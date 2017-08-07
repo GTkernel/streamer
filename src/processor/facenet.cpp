@@ -30,6 +30,11 @@ Facenet::Facenet(const ModelDesc& model_desc, Shape input_shape,
   LOG(INFO) << "batch size of " << batch_size_;
 }
 
+std::shared_ptr<Facenet> Facenet::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool Facenet::Init() {
   // Set Caffe backend
   int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);

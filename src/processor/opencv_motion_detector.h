@@ -16,6 +16,8 @@
 class OpenCVMotionDetector : public Processor {
  public:
   OpenCVMotionDetector(float threshold = 0.5, float max_duration = 1.0);
+  static std::shared_ptr<OpenCVMotionDetector> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

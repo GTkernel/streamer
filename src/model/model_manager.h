@@ -21,7 +21,8 @@ class ModelManager {
   ModelManager();
   ModelManager(const ModelManager& other) = delete;
   std::vector<int> GetMeanColors() const;
-  // std::unordered_map<string, ModelDesc> GetModelDescs() const;
+  std::unordered_map<std::string, std::vector<ModelDesc>> GetAllModelDescs()
+      const;
   ModelDesc GetModelDesc(const string& name) const;
   std::vector<ModelDesc> GetModelDescs(const string& name) const;
   bool HasModel(const string& name) const;

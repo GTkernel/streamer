@@ -104,6 +104,8 @@ class MtcnnFaceDetector : public Processor {
  public:
   MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs, int min_size,
                     float idle_duration = 0.f);
+  static std::shared_ptr<MtcnnFaceDetector> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

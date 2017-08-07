@@ -10,7 +10,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <boost/optional.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/unique_ptr.hpp>
@@ -48,13 +47,11 @@ class Frame {
   std::string ToString() const;
   nlohmann::json ToJson() const;
   using field_types =
-    boost::variant<int, std::string, float, double, unsigned long,
-                     boost::posix_time::ptime, cv::Mat,
-                     std::vector<char>, std::vector<std::string>,
-                     std::vector<double>, std::vector<Rect>,
-                     std::vector<FaceLandmark>, std::vector<std::vector<float>>,
-                     std::vector<float>,
-                     // std::list<std::list<boost::optional<PointFeature>>>,
+      boost::variant<int, std::string, float, double, unsigned long,
+                     boost::posix_time::ptime, cv::Mat, std::vector<char>,
+                     std::vector<std::string>, std::vector<double>,
+                     std::vector<Rect>, std::vector<FaceLandmark>,
+                     std::vector<std::vector<float>>, std::vector<float>,
                      std::vector<std::vector<double>>>;
   using map_size_type = std::unordered_map<std::string, field_types>::size_type;
   map_size_type Count(std::string key) const { return frame_data_.count(key); }

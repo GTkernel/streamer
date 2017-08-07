@@ -66,6 +66,10 @@ void Run(const std::vector<string>& camera_names,
          const string& mtcnn_model_name, const string& facenet_model_name,
          bool display, float scale, int min_size, float motion_threshold,
          float motion_max_duration) {
+  // Silence complier warning sayings when certain options are turned off.
+  (void)motion_threshold;
+  (void)motion_max_duration;
+
   cout << "Run tracker demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
