@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
   auto camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
 
-  OpenCVFaceDetector face_detector;
+  OpenCVFaceDetector face_detector(0.f);
   face_detector.SetSource("input", camera_stream);
   camera->Start();
   face_detector.Start();
