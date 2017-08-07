@@ -85,7 +85,11 @@ struct Rect {
  * @brief Face landmark
  */
 struct FaceLandmark {
-  FaceLandmark() {}
+  FaceLandmark() {
+    x.resize(5);
+    y.resize(5);
+  }
+
   FaceLandmark(nlohmann::json j) {
     try {
       nlohmann::json face_j = j.at("FaceLandmark");

@@ -34,6 +34,8 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${DLIB_SOURCE_FILES}
 )
 
+# Silence compiler warnings for dlib source files. We should do this more
+# elegantly.
 set_source_files_properties(${DLIB_SOURCE_FILES} PROPERTIES COMPILE_FLAGS -w)
 
 # Pick libraries
