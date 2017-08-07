@@ -54,7 +54,8 @@ void Run(const std::vector<string> &camera_names,
          const string &detector_model,
          bool display, float scale, int min_size,
          float detector_confidence_threshold,
-         const string &detector_targets) {
+         const string &detector_targets,
+         const string &classifier_xml_path) {
   cout << "Run detection demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
@@ -146,7 +147,9 @@ void Run(const std::vector<string> &camera_names,
       LOG(FATAL) << "Detector type " << detector_type
                    << " not supported, please compile with -DUSE_NCS=ON";
 #endif
-  	} else {
+  	} else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
+      detector.reset(new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
+    } else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
     detector->SetSource("input", input_streams[i]);
@@ -310,6 +313,9 @@ int main(int argc, char *argv[]) {
                      "face minimum size");
   desc.add_options()("detector_confidence_threshold", po::value<float>()->default_value(0.5),
                      "detector confidence threshold");
+  desc.add_options()("classifier_xml_path",
+                     po::value<string>()->default_value(""),
+                     "A xml classifier file load in OpenCVFaceDetector");
 
   po::variables_map vm;
   try {
@@ -343,8 +349,9 @@ int main(int argc, char *argv[]) {
   float scale = vm["scale"].as<float>();
   int min_size = vm["min_size"].as<int>();
   float detector_confidence_threshold = vm["detector_confidence_threshold"].as<float>();
+  auto classifier_xml_path = vm["classifier_xml_path"].as<string>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_confidence_threshold, detector_targets);
+      detector_confidence_threshold, detector_targets, classifier_xml_path);
 
   return 0;
 }

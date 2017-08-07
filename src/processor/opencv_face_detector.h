@@ -18,6 +18,7 @@ class OpenCVFaceDetector : public Processor {
  public:
   // TODO: Use a configurable path
   OpenCVFaceDetector(
+      float idle_duration,
       string classifier_xml_path =
           "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml");
 
@@ -30,6 +31,8 @@ class OpenCVFaceDetector : public Processor {
   virtual void Process() override;
 
  private:
+  float idle_duration_;
+  std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
   string classifier_xml_path_;
 #ifdef USE_CUDA
   cv::cuda::CascadeClassifier classifier_;
