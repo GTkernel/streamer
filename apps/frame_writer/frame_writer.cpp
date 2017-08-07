@@ -1,10 +1,13 @@
-// The JpegWriter is a simple app that reads frames from a single camera and
-// immediately saves them as JPEG images.
+// The frame_writer is a simple app that reads frames from a single camera and
+// immediately saves several of their fields to disk as JSON files.
 
+#include <chrono>
 #include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
+#include <unordered_set>
 #include <vector>
 
 #include <glog/logging.h>
@@ -13,7 +16,7 @@
 
 #include "camera/camera_manager.h"
 #include "common/context.h"
-#include "processor/jpeg_writer.h"
+#include "processor/frame_writer.h"
 #include "processor/processor.h"
 
 namespace po = boost::program_options;
@@ -25,8 +28,16 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
-  // Create JpegWriter.
-  auto writer = std::make_shared<JpegWriter>("original_image", output_dir);
+  // Create FrameWriter.
+  std::unordered_set<std::string> fields = {
+      "capture_time_micros",       "frame_id",
+      "CameraSettings.Exposure",   "CameraSettings.Sharpness",
+      "CameraSettings.Brightness", "CameraSettings.Saturation",
+      "CameraSettings.Hue",        "CameraSettings.Gain",
+      "CameraSettings.Gamma",      "CameraSettings.WBRed",
+      "CameraSettings.WBBlue"};
+  auto writer = std::make_shared<FrameWriter>(fields, output_dir,
+                                              FrameWriter::FileFormat::JSON);
   writer->SetSource(camera->GetStream());
   procs.push_back(writer);
 
@@ -35,7 +46,7 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
     (*procs_it)->Start();
   }
 
-  std::cout << "Press \"Enter\" to stop." << std::endl;
+  std::cout << "Press \"Enter\" to stop" << std::endl;
   getchar();
 
   // Stop the processors in forward order.
@@ -45,7 +56,7 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Stores frames as JPEG images");
+  po::options_description desc("Stores frames as text files.");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
@@ -53,7 +64,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
-                     "The directory in which to store the frame JPEGs.");
+                     "The directory in which to store the frame files.");
 
   // Parse the command line arguments.
   po::variables_map args;

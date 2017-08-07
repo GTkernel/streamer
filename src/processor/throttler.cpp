@@ -1,6 +1,8 @@
 
-#include "throttler.h"
+#include "processor/throttler.h"
+
 #include "model/model_manager.h"
+#include "processor/flow_control/flow_control_entrance.h"
 #include "streamer.h"
 
 Throttler::Throttler(int fps)
@@ -24,8 +26,21 @@ void Throttler::Process() {
   double elapsed_ms = timer_.ElapsedMSec();
   if (elapsed_ms < delay_ms_) {
     // Drop frame
+    auto flow_control_entrance = frame->GetFlowControlEntrance();
+    if (flow_control_entrance) {
+      // If a flow control entrance exists, then we need to inform it that a
+      // frame is being dropped so that the flow control token is returned.
+      flow_control_entrance->ReturnToken();
+      // Change the frame's FlowControlEntrance to null so that it does not try
+      // to release the token again.
+      frame->SetFlowControlEntrance(nullptr);
+    }
     return;
+  } else {
+    LOG(WARNING) << "Frame rate too high. Dropping frame: "
+                 << frame->GetValue<unsigned long>("frame_id");
   }
+
   // Restart timer
   timer_.Start();
   PushFrame("output", std::move(frame));

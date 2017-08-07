@@ -2,7 +2,9 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/11/16.
 //
 
+#include <cstdio>
 #include <iostream>
+
 #include "streamer.h"
 
 using std::cout;
@@ -38,26 +40,34 @@ int main(int argc, char* argv[]) {
   camera->Start();
   face_detector.Start();
 
-  auto output_stream = face_detector.GetSink("output");
-  auto output_reader = output_stream->Subscribe();
-  if (display_on) cv::namedWindow("Image");
-  while (true) {
-    auto frame = output_reader->PopFrame();
-    cv::Mat image = frame->GetValue<cv::Mat>("original_image");
-    auto results = frame->GetValue<std::vector<Rect>>("bounding_boxes");
-    cv::Scalar box_color(255, 0, 0);
-    for (const auto& result : results) {
-      cv::Rect rect(result.px, result.py, result.width, result.height);
-      cv::rectangle(image, rect, box_color, 2);
+  if (display_on) {
+    std::cout << "Press \"q\" to stop." << std::endl;
+
+    auto output_stream = face_detector.GetSink("output");
+    auto output_reader = output_stream->Subscribe();
+    cv::namedWindow("Image");
+    while (true) {
+      auto frame = output_reader->PopFrame();
+      cv::Mat image = frame->GetValue<cv::Mat>("original_image");
+      auto results = frame->GetValue<std::vector<Rect>>("bounding_boxes");
+      cv::Scalar box_color(255, 0, 0);
+      for (const auto& result : results) {
+        cv::Rect rect(result.px, result.py, result.width, result.height);
+        cv::rectangle(image, rect, box_color, 2);
+      }
+      cv::imshow("Image", image);
+      int q = cv::waitKey(10);
+      if (q == 'q') {
+        break;
+      }
     }
-    if (display_on) cv::imshow("Image", image);
-    int q = cv::waitKey(10);
-    if (q == 'q') {
-      break;
-    }
+
+    output_reader->UnSubscribe();
+  } else {
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
   }
 
-  output_reader->UnSubscribe();
   face_detector.Stop();
   camera->Stop();
 }

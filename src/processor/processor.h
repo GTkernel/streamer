@@ -8,6 +8,7 @@
 #include <atomic>
 #include <thread>
 #include <unordered_map>
+#include <zmq.hpp>
 
 #include "common/common.h"
 #include "stream/stream.h"
@@ -100,6 +101,8 @@ class Processor {
    */
   ProcessorType GetType() const;
 
+  zmq::socket_t* GetControlSocket();
+
  protected:
   /**
    * @brief Initialize the processor.
@@ -131,7 +134,7 @@ class Processor {
   std::unordered_map<string, StreamReader*> readers_;
 
   std::thread process_thread_;
-  bool stopped_;
+  std::atomic<bool> stopped_;
 
   // Process latency, sliding window average of 10 samples;
   std::queue<double> latencies_;
@@ -147,6 +150,7 @@ class Processor {
  private:
   const ProcessorType type_;
   Timer timer_;
+  zmq::socket_t* control_socket_;
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_H_

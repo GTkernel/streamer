@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include <boost/serialization/access.hpp>
+#include <json/src/json.hpp>
 
 #include "common/common.h"
 #include "common/serialization.h"
@@ -40,7 +41,17 @@ struct Shape {
 struct Rect {
   Rect() : px(0), py(0), width(0), height(0){};
   Rect(int x, int y, int w, int h) : px(x), py(y), width(w), height(h){};
-
+  Rect(nlohmann::json j) {
+    try {
+      nlohmann::json rect_j = j.at("Rect");
+      px = rect_j.at("px").get<int>();
+      py = rect_j.at("py").get<int>();
+      width = rect_j.at("width").get<int>();
+      height = rect_j.at("height").get<int>();
+    } catch (std::out_of_range& e) {
+      LOG(FATAL) << "Malformed Rect JSON: " << j.dump() << "\n" << e.what();
+    }
+  }
   friend class boost::serialization::access;
 
   template <class Archive>
@@ -49,6 +60,17 @@ struct Rect {
   bool operator==(const Rect& rhs) const {
     return (px == rhs.px) && (py == rhs.py) && (width == rhs.width) &&
            (height == rhs.height);
+  }
+
+  nlohmann::json ToJson() const {
+    nlohmann::json rect_j;
+    rect_j["px"] = px;
+    rect_j["py"] = py;
+    rect_j["width"] = width;
+    rect_j["height"] = height;
+    nlohmann::json j;
+    j["Rect"] = rect_j;
+    return j;
   }
 
   // The top left point of the rectangle
@@ -151,17 +173,18 @@ std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
 enum ProcessorType {
   PROCESSOR_TYPE_BINARY_FILE_WRITER = 0,
   PROCESSOR_TYPE_CAMERA,
+  PROCESSOR_TYPE_COMPRESSOR,
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_ENCODER,
-  PROCESSOR_TYPE_FILE_WRITER,
+  PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
+  PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
 #ifdef USE_RPC
   PROCESSOR_TYPE_FRAME_RECEIVER,
   PROCESSOR_TYPE_FRAME_SENDER,
 #endif  // USE_RPC
-#ifdef USE_ZMQ
   PROCESSOR_TYPE_FRAME_PUBLISHER,
   PROCESSOR_TYPE_FRAME_SUBSCRIBER,
-#endif  // USE_ZMQ
+  PROCESSOR_TYPE_FRAME_WRITER,
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
@@ -189,24 +212,28 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_BINARY_FILE_WRITER;
   } else if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
+  } else if (type == "Compressor") {
+    return PROCESSOR_TYPE_COMPRESSOR;
   } else if (type == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
-  } else if (type == "FileWriter") {
-    return PROCESSOR_TYPE_FILE_WRITER;
+  } else if (type == "FlowControlEntrance") {
+    return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
+  } else if (type == "FlowControlExit") {
+    return PROCESSOR_TYPE_FLOW_CONTROL_EXIT;
 #ifdef USE_RPC
   } else if (type == "FrameReceiver") {
     return PROCESSOR_TYPE_FRAME_RECEIVER;
   } else if (type == "FrameSender") {
     return PROCESSOR_TYPE_FRAME_SENDER;
 #endif  // USE_RPC
-#ifdef USE_ZMQ
   } else if (type == "FramePublisher") {
     return PROCESSOR_TYPE_FRAME_PUBLISHER;
   } else if (type == "FrameSubscriber") {
     return PROCESSOR_TYPE_FRAME_SUBSCRIBER;
-#endif  // USE_ZMQ
+  } else if (type == "FrameWriter") {
+    return PROCESSOR_TYPE_FRAME_WRITER;
   } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
   } else if (type == "ImageSegmenter") {
@@ -257,24 +284,28 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "BinaryFileWriter";
     case PROCESSOR_TYPE_CAMERA:
       return "Camera";
+    case PROCESSOR_TYPE_COMPRESSOR:
+      return "Compressor";
     case PROCESSOR_TYPE_CUSTOM:
       return "Custom";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
-    case PROCESSOR_TYPE_FILE_WRITER:
-      return "FileWriter";
+    case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
+      return "FlowControlEntrance";
+    case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
+      return "FlowControlExit";
 #ifdef USE_RPC
     case PROCESSOR_TYPE_FRAME_RECEIVER:
       return "FrameReceiver";
     case PROCESSOR_TYPE_FRAME_SENDER:
       return "FrameSender";
 #endif  // USE_RPC
-#ifdef USE_ZMQ
     case PROCESSOR_TYPE_FRAME_PUBLISHER:
       return "FramePublisher";
     case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
       return "FrameSubscriber";
-#endif  // USE_ZMQ
+    case PROCESSOR_TYPE_FRAME_WRITER:
+      return "FrameWriter";
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return "ImageClassifier";
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:

@@ -3,7 +3,10 @@
 
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
-#include "processor/file_writer.h"
+#include "processor/compressor.h"
+#include "processor/flow_control/flow_control_entrance.h"
+#include "processor/flow_control/flow_control_exit.h"
+#include "processor/frame_writer.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
@@ -15,10 +18,8 @@
 #include "processor/rpc/frame_receiver.h"
 #include "processor/rpc/frame_sender.h"
 #endif  // USE_RPC
-#ifdef USE_ZMQ
 #include "processor/pubsub/frame_publisher.h"
 #include "processor/pubsub/frame_subscriber.h"
-#endif  // USE_ZMQ
 #include "video/gst_video_encoder.h"
 
 std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
@@ -28,25 +29,29 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return BinaryFileWriter::Create(params);
     case PROCESSOR_TYPE_CAMERA:
       return CameraManager::GetInstance().GetCamera(params.at("camera_name"));
+    case PROCESSOR_TYPE_COMPRESSOR:
+      return Compressor::Create(params);
     case PROCESSOR_TYPE_CUSTOM:
       STREAMER_NOT_IMPLEMENTED;
       return nullptr;
     case PROCESSOR_TYPE_ENCODER:
       return GstVideoEncoder::Create(params);
-    case PROCESSOR_TYPE_FILE_WRITER:
-      return FileWriter::Create(params);
+    case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
+      return FlowControlEntrance::Create(params);
+    case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
+      return FlowControlExit::Create(params);
 #ifdef USE_RPC
     case PROCESSOR_TYPE_FRAME_RECEIVER:
       return FrameReceiver::Create(params);
     case PROCESSOR_TYPE_FRAME_SENDER:
       return FrameSender::Create(params);
 #endif  // USE_RPC
-#ifdef USE_ZMQ
     case PROCESSOR_TYPE_FRAME_PUBLISHER:
       return FramePublisher::Create(params);
     case PROCESSOR_TYPE_FRAME_SUBSCRIBER:
       return FrameSubscriber::Create(params);
-#endif  // USE_ZMQ
+    case PROCESSOR_TYPE_FRAME_WRITER:
+      return FrameWriter::Create(params);
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return ImageClassifier::Create(params);
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:

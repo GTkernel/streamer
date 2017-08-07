@@ -2,6 +2,8 @@
  * @brief publish.cpp - Send frames over ZMQ
  */
 
+#include <cstdio>
+
 #include <boost/program_options.hpp>
 
 #include "camera/camera_manager.h"
@@ -28,8 +30,8 @@ void Run(std::string camera_name, std::string server) {
   publisher->Start();
   camera->Start();
 
-  while (true) {
-  }
+  std::cout << "Press \"Enter\" to stop." << std::endl;
+  getchar();
 
   camera->Stop();
   publisher->Stop();

@@ -2,7 +2,7 @@
  * @brief simple.cpp - An example application to display camera data.
  */
 
-#include <csignal>
+#include <cstdio>
 
 #include <boost/program_options.hpp>
 
@@ -11,41 +11,36 @@
 
 namespace po = boost::program_options;
 
-std::shared_ptr<Camera> camera;
-
-void SignalHandler(int) {
-  std::cout << "Received SIGINT, stopping" << std::endl;
-  if (camera != nullptr) camera->Stop();
-
-  exit(0);
-}
-
-void Run(const string& camera_name, float zoom, unsigned int angle) {
+void Run(const string& camera_name, float zoom, unsigned int angle,
+         bool display) {
+  std::shared_ptr<Camera> camera;
   CameraManager& camera_manager = CameraManager::GetInstance();
 
   CHECK(camera_manager.HasCamera(camera_name))
       << "Camera " << camera_name << " does not exist";
 
   camera = camera_manager.GetCamera(camera_name);
-  auto reader = camera->GetStream()->Subscribe();
-  // cv::namedWindow(camera_name);
-
   camera->Start();
+
+  std::cout << "Press \"Ctrl-C\" to stop." << std::endl;
+
+  auto reader = camera->GetStream()->Subscribe();
 
   while (true) {
     auto frame = reader->PopFrame();
     if (frame != nullptr) {
-      const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
-      cv::Mat m;
-      cv::resize(img, m, cv::Size(), zoom, zoom);
-      RotateImage(m, angle);
-      cv::imshow(camera_name, m);
+      if (display) {
+        const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
+        cv::Mat m;
+        cv::resize(img, m, cv::Size(), zoom, zoom);
+        RotateImage(m, angle);
+        cv::imshow(camera_name, m);
 
+        unsigned char q = cv::waitKey(10);
+        if (q == 'q') break;
+      }
       std::cout << frame->ToString() << std::endl;
     }
-
-    unsigned char q = cv::waitKey(10);
-    if (q == 'q') break;
   }
 
   camera->Stop();
@@ -71,8 +66,7 @@ int main(int argc, char* argv[]) {
                      "Angle to rotate image; must be 0, 90, 180, or 270");
   desc.add_options()("zoom,z", po::value<float>()->default_value(1.0),
                      "Zoom factor by which to scale image for display");
-
-  std::signal(SIGINT, SignalHandler);
+  desc.add_options()("display,d", "Display the video stream.");
 
   po::variables_map vm;
   try {
@@ -107,8 +101,9 @@ int main(int argc, char* argv[]) {
     std::cout << desc << std::endl;
     return 1;
   }
+  bool display = vm.count("display");
 
-  Run(camera_name, zoom, angle);
+  Run(camera_name, zoom, angle, display);
 
   return 0;
 }

@@ -4,9 +4,6 @@ find_package(Boost REQUIRED COMPONENTS program_options)
 if (USE_RPC)
   include_directories(SYSTEM ${CMAKE_BINARY_DIR}/src)
 endif ()
-if (USE_ZMQ)
-  include_directories(SYSTEM ${ZMQ_INCLUDE_DIRS})
-endif ()
 
 # Macro to get sub directories
 MACRO(SUBDIRLIST result curdir)

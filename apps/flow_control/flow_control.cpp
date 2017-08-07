@@ -1,5 +1,11 @@
-// The JpegWriter is a simple app that reads frames from a single camera and
-// immediately saves them as JPEG images.
+// The flow_control app is a simple example of using the FlowControlEntrance and
+// FlowControlExit processors. The pipeline is:
+//   Camera -> FlowControlEntrace -> Throttler -> FlowControlExit -> Throttler
+//
+// The presence of the first Throttler verifies that the Throttler releases
+// tokens when dropping frames while under flow control. The presence of the
+// second Throttler verifies that the Throttler does not release tokens when
+// dropping frames while not under flow control.
 
 #include <cstdio>
 #include <iostream>
@@ -13,22 +19,39 @@
 
 #include "camera/camera_manager.h"
 #include "common/context.h"
-#include "processor/jpeg_writer.h"
+#include "processor/flow_control/flow_control_entrance.h"
+#include "processor/flow_control/flow_control_exit.h"
 #include "processor/processor.h"
+#include "processor/throttler.h"
 
 namespace po = boost::program_options;
 
-void Run(const std::string& camera_name, const std::string& output_dir) {
+void Run(const std::string& camera_name, unsigned int tokens) {
   std::vector<std::shared_ptr<Processor>> procs;
 
-  // Create Camera.
+  // Camera
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
-  // Create JpegWriter.
-  auto writer = std::make_shared<JpegWriter>("original_image", output_dir);
-  writer->SetSource(camera->GetStream());
-  procs.push_back(writer);
+  // FlowControlEntrance
+  auto entrance = std::make_shared<FlowControlEntrance>(tokens);
+  entrance->SetSource(camera->GetStream());
+  procs.push_back(entrance);
+
+  // First Throttler
+  auto throttler1 = std::make_shared<Throttler>(10);
+  throttler1->SetSource("input", entrance->GetSink());
+  procs.push_back(throttler1);
+
+  // FlowControlExit
+  auto exit = std::make_shared<FlowControlExit>();
+  exit->SetSource(throttler1->GetSink("output"));
+  procs.push_back(exit);
+
+  // Second Throttler
+  auto throttler2 = std::make_shared<Throttler>(5);
+  throttler2->SetSource("input", exit->GetSink());
+  procs.push_back(throttler2);
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
@@ -45,15 +68,15 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Stores frames as JPEG images");
+  po::options_description desc("Simple camera display test");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
       "The directory containing streamer's configuration files.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
-  desc.add_options()("output-dir,o", po::value<std::string>()->required(),
-                     "The directory in which to store the frame JPEGs.");
+  desc.add_options()("tokens,t", po::value<int>()->default_value(50),
+                     "The number of flow control tokens to issue.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -83,8 +106,15 @@ int main(int argc, char* argv[]) {
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
-  std::string camera = args["camera"].as<std::string>();
-  std::string output_dir = args["output-dir"].as<std::string>();
-  Run(camera, output_dir);
+  std::string camera_name = args["camera"].as<std::string>();
+  int tokens = args["tokens"].as<int>();
+  if (tokens < 0) {
+    std::cerr << "\"--tokens\" cannot be negative, but is: " << tokens
+              << std::endl;
+    std::cout << desc << std::endl;
+    return 1;
+  }
+
+  Run(camera_name, (unsigned int)tokens);
   return 0;
 }

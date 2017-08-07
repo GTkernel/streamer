@@ -2,6 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/5/16.
 //
 
+#include <cstdio>
+
 #include "streamer.h"
 
 int main(int argc, char* argv[]) {
@@ -43,14 +45,9 @@ int main(int argc, char* argv[]) {
       << "Camera " << camera_name << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
-  bool display = (display_on == "true");
 
   // Do video stream classification
   LOG(INFO) << "Do video stream segmentation on " + camera_name;
-  if (display) {
-    cv::namedWindow("Camera", cv::WINDOW_NORMAL);
-    cv::namedWindow("Result", cv::WINDOW_NORMAL);
-  }
 
   // Processor
   camera->Start();
@@ -70,12 +67,18 @@ int main(int argc, char* argv[]) {
   transform_processor.Start();
   segmentation_processor.Start();
 
-  auto seg_stream = segmentation_processor.GetSink("output");
-  auto reader = seg_stream->Subscribe();
+  bool display = (display_on == "true");
+  if (display) {
+    std::cout << "Press \"q\" to stop." << std::endl;
 
-  while (true) {
-    auto frame = reader->PopFrame();
-    if (display) {
+    auto seg_stream = segmentation_processor.GetSink("output");
+    auto reader = seg_stream->Subscribe();
+
+    cv::namedWindow("Camera", cv::WINDOW_NORMAL);
+    cv::namedWindow("Result", cv::WINDOW_NORMAL);
+
+    while (true) {
+      auto frame = reader->PopFrame();
       cv::imshow("Result", frame->GetValue<cv::Mat>("image"));
       cv::imshow("Camera", frame->GetValue<cv::Mat>("original_image"));
       int k = cv::waitKey(10);
@@ -83,9 +86,12 @@ int main(int argc, char* argv[]) {
         break;
       }
     }
-  }
 
-  reader->UnSubscribe();
+    reader->UnSubscribe();
+  } else {
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
+  }
 
   segmentation_processor.Stop();
   transform_processor.Stop();

@@ -1,12 +1,14 @@
 
 #include "db_filewriter.h"
 
+#include <ctime>
+#include <fstream>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <chrono>
-#include <fstream>
 
 #include "json/src/json.hpp"
 #include "sys/stat.h"
@@ -79,22 +81,22 @@ bool DBFileWriter::OnStop() { return true; }
 void DBFileWriter::Process() {
   auto frame = GetFrame("input");
   cv::Mat image = frame->GetValue<cv::Mat>("original_image");
-  auto raw_image = frame->GetValue<std::vector<char>>("original_bytes");
-  // TODO?: These should probably come from the frame, but not sure what format
-  struct tm local_time;
-  std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
-  time_t now = std::chrono::system_clock::to_time_t(t);
-  localtime_r(&now, &local_time);
-  const std::chrono::duration<double> tse = t.time_since_epoch();
+  auto raw_image = frame->GetValue<std::vector<char>>("compressed_bytes");
 
-  int sec = local_time.tm_sec;
-  int min = local_time.tm_min;
-  int hour = local_time.tm_hour;
-  int day = local_time.tm_mday;
-  int month = local_time.tm_mon + 1;
-  int year = local_time.tm_year + 1900;
-  int ms =
-      std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
+  boost::posix_time::ptime pt =
+      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+  tm time_s = boost::posix_time::to_tm(pt);
+  int sec = time_s.tm_sec;
+  int min = time_s.tm_min;
+  int hour = time_s.tm_hour;
+  int day = time_s.tm_mday;
+  int month = time_s.tm_mon + 1;
+  int year = time_s.tm_year + 1900;
+  // This is the time offset into the current day.
+  boost::posix_time::time_duration time_of_day = pt.time_of_day();
+  // We divide by 1000 because the return value of "fractional_seconds()" is in
+  // microseconds.
+  long ms = time_of_day.fractional_seconds() / 1000;
 
   std::stringstream directory_name;
   directory_name << root_dir_ << "/";
@@ -167,6 +169,11 @@ void DBFileWriter::Process() {
     imwrite(filename.str(), dst, params);
     std::cout << frame->ToString() << std::endl;
   }
+
+  boost::posix_time::ptime epoch(boost::gregorian::date(1970, 1, 1));
+  boost::posix_time::time_duration time_since_epoch = pt - epoch;
+  // This time representation is at the granularity of seconds.
+  time_t tt = time_t(time_since_epoch.total_seconds());
   // Write to DB
-  DoWriteDB(filename.str(), now, frame, root_dir_);
+  DoWriteDB(filename.str(), tt, frame, root_dir_);
 }

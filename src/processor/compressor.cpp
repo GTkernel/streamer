@@ -1,4 +1,4 @@
-#include "compressor.h"
+#include "processor/compressor.h"
 
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/device/file.hpp>
@@ -6,63 +6,72 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
-#include <boost/asio/io_service.hpp>
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
+constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
 
-Compressor::Compressor(Compressor::CompressionType t, int num_threads)
-    : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {}),
+Compressor::Compressor(CompressionType t)
+    : Processor(PROCESSOR_TYPE_COMPRESSOR, {SOURCE_NAME}, {SINK_NAME}),
       compression_type_(t),
-      ioService_(),
-      threadpool_(),
-      work_(ioService_) {
-  for (int i = 0; i < num_threads; ++i) {
-    threadpool_.create_thread(
-        boost::bind(&boost::asio::io_service::run, &ioService_));
-  }
-  ioService_.post(boost::bind(&Compressor::CommitAndPushFrames, this));
-  sinks_.insert({"output", std::make_shared<Stream>("output")});
+      stop_(false) {
+  output_thread_ = std::thread(&Compressor::OutputFrames, this);
 }
 
-void Compressor::CommitAndPushFrames() {
-  // Wait for the queue to have something in it
-  while (true) {
-    queue_lock_.lock();
-    if (queue_.size() <= 0) {
-      queue_lock_.unlock();
-      continue;
-    }
-    auto ptr = queue_.front();
-    queue_lock_.unlock();
-    {
-      std::unique_lock<std::mutex> lk(ptr->lock);
-      while (ptr->count < 1) {
-        ptr->cv.wait(lk);
-      }
-      queue_.pop();
-    }
-    PushFrame("output", std::move(ptr->frame));
-  }
+Compressor::~Compressor() {
+  stop_ = true;
+  queue_cond_.notify_one();
+  output_thread_.join();
 }
+
+std::shared_ptr<Compressor> Compressor::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
+void Compressor::SetSource(StreamPtr stream) {
+  Processor::SetSource(SOURCE_NAME, stream);
+}
+
+StreamPtr Compressor::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 bool Compressor::Init() { return true; }
 
-bool Compressor::OnStop() {
-  ioService_.stop();
-  threadpool_.join_all();
-  return true;
+bool Compressor::OnStop() { return true; }
+
+void Compressor::Process() {
+  auto frame = GetFrame(SOURCE_NAME);
+  auto future = std::async(std::launch::async,
+                           [ this, frame = std::move(frame) ]() mutable {
+                             return this->CompressFrame(std::move(frame));
+                           });
+  {
+    std::lock_guard<std::mutex> guard(queue_mutex_);
+    queue_.push(std::move(future));
+    queue_cond_.notify_one();
+  }
 }
 
-void Compressor::DoCompression(std::shared_ptr<Compressor::LockedFrame> lf) {
-  // Get raw image
-  auto raw_image = lf->frame->GetValue<std::vector<char>>("original_bytes");
+void Compressor::OutputFrames() {
+  while (true) {
+    std::unique_lock<std::mutex> lock(queue_mutex_);
+    queue_cond_.wait(lock, [this]() { return stop_ || !queue_.empty(); });
+    if (stop_) {
+      break;
+    }
+    auto future = std::move(queue_.front());
+    queue_.pop();
+    auto compressed_frame = future.get();
+    PushFrame(SINK_NAME, std::move(compressed_frame));
+  }
+}
 
-  // Compress raw
+std::unique_ptr<Frame> Compressor::CompressFrame(std::unique_ptr<Frame> frame) {
+  auto raw_image = frame->GetValue<std::vector<char>>("original_bytes");
+
   std::vector<char> compressed_raw;
   boost::iostreams::filtering_ostream compressor;
-  if (compression_type_ == Compressor::CompressionType::BZIP2) {
+  if (compression_type_ == CompressionType::BZIP2) {
     compressor.push(boost::iostreams::bzip2_compressor());
-  } else if (compression_type_ == Compressor::CompressionType::GZIP) {
+  } else if (compression_type_ == CompressionType::GZIP) {
     compressor.push(boost::iostreams::gzip_compressor());
   }
   compressor.push(boost::iostreams::back_inserter(compressed_raw));
@@ -70,22 +79,7 @@ void Compressor::DoCompression(std::shared_ptr<Compressor::LockedFrame> lf) {
   boost::iostreams::close(compressor);
 
   // Write compressed data to the frame and notify committer thread
-  {
-    std::lock_guard<std::mutex>(lf->lock);
-    lf->frame->SetValue("compressed_bytes", compressed_raw);
-    lf->count = 1;
-  }
-  lf->cv.notify_one();
-}
+  frame->SetValue("compressed_bytes", compressed_raw);
 
-void Compressor::Process() {
-  // Get raw image
-  auto frame = GetFrame("input");
-  std::shared_ptr<LockedFrame> locked_frame =
-      std::make_shared<LockedFrame>(std::move(frame));
-  {
-    std::lock_guard<std::mutex> lk(queue_lock_);
-    queue_.emplace(locked_frame);
-  }
-  ioService_.post(boost::bind(&Compressor::DoCompression, this, locked_frame));
+  return frame;
 }
