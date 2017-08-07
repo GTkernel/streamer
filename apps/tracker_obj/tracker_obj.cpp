@@ -115,6 +115,9 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       auto model_descs = model_manager.GetModelDescs(detector_model);
       detector.reset(
           new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
+    } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
+      detector.reset(
+          new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
     } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       detector.reset(new YoloDetector(model_desc, detector_idle_duration));
@@ -153,9 +156,6 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
                                          detector_confidence_threshold,
                                          detector_idle_duration, targets));
 #endif  // USE_NCS
-    } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
-      detector.reset(
-          new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
     } else {
       CHECK(false) << "detector_type " << detector_type << " not supported.";
     }
