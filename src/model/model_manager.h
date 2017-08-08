@@ -5,10 +5,12 @@
 #ifndef STREAMER_MODEL_MODEL_MANAGER_H_
 #define STREAMER_MODEL_MODEL_MANAGER_H_
 
+#include <unordered_map>
+
+#include <opencv2/opencv.hpp>
+
 #include "common/common.h"
 #include "model.h"
-
-#include <unordered_map>
 
 /**
  * @brief A singleton class that controls all models.
@@ -20,7 +22,8 @@ class ModelManager {
  public:
   ModelManager();
   ModelManager(const ModelManager& other) = delete;
-  std::vector<int> GetMeanColors() const;
+  cv::Scalar GetMeanColors() const;
+  void SetMeanColors(cv::Scalar mean_colors);
   std::unordered_map<std::string, std::vector<ModelDesc>> GetAllModelDescs()
       const;
   ModelDesc GetModelDesc(const string& name) const;
@@ -31,7 +34,7 @@ class ModelManager {
 
  private:
   // Mean colors, in BGR order.
-  std::vector<int> mean_colors_;
+  cv::Scalar mean_colors_;
   std::unordered_map<string, std::vector<ModelDesc>> model_descs_;
 };
 

@@ -63,12 +63,23 @@ else ()
   message(FATAL_ERROR "Backend ${BACKEND} is invalid")
 endif ()
 
-option(USE_CAFFE "Build with Caffe" ON)
+option(USE_CAFFE "Build with Caffe." OFF)
 if (USE_CAFFE)
   find_package(Caffe REQUIRED)
   include_directories(SYSTEM ${Caffe_INCLUDE_DIRS})
   add_definitions("-D USE_CAFFE")
 endif ()
+
+option(USE_TENSORFLOW "Build with TensorFlow." OFF)
+if (USE_TENSORFLOW)
+  find_package(TensorFlow REQUIRED)
+  find_package(Protobuf REQUIRED)
+  include_directories(SYSTEM
+    ${TensorFlow_INCLUDE_DIRS}
+    ${PROTOBUF_INCLUDE_DIRS}
+  )
+  add_definitions("-D USE_TENSORFLOW")
+endif()
 
 option(USE_FRCNN "Build with Caffe Faster Rcnn" OFF)
 if (USE_FRCNN)

@@ -1,0 +1,15 @@
+if (NOT USE_TENSORFLOW)
+  return ()
+endif ()
+
+MACRO(BUILD_ONE app)
+  if (JEMALLOC_FOUND)
+    target_link_libraries(${app} ${JAMALLOC_LIBRARIES})
+  endif ()
+  target_link_libraries(${app} streamer ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  add_dependencies(apps ${app})
+  ADD_BUILD_REQS(${app})
+ENDMACRO()
+
+add_executable(split_nne EXCLUDE_FROM_ALL split_nne.cpp)
+BUILD_ONE(split_nne)

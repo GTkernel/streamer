@@ -2,7 +2,10 @@
  * @brief benchmark.cpp - Used to run various benchmark of the system.
  */
 
+#include <stdexcept>
+
 #include <boost/program_options.hpp>
+
 #include "streamer.h"
 
 namespace po = boost::program_options;
@@ -49,7 +52,6 @@ void RunEndToEndExperiment() {
   cout << "Run End To End Experiment" << endl;
   // Check argument
   CHECK(CONFIG.camera_names.size() != 0) << "You must give at least one camera";
-  CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
 
   auto& model_manager = ModelManager::GetInstance();
   auto& camera_manager = CameraManager::GetInstance();
@@ -77,8 +79,8 @@ void RunEndToEndExperiment() {
 
   // transformers
   for (const auto& camera_stream : camera_streams) {
-    std::shared_ptr<Processor> transform_processor(new ImageTransformer(
-        input_shape, true, true, true /* subtract mean */));
+    std::shared_ptr<Processor> transform_processor(
+        new ImageTransformer(input_shape, true, true));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -172,15 +174,15 @@ void RunEndToEndExperiment() {
  */
 void RunNNInferenceExperiment() {
   LOG(INFO) << "Run NN Inference Experiment";
-  // Check argument
-  CHECK(CONFIG.net != "") << "You must specify the network by -n or --network";
 
   auto& model_manager = ModelManager::GetInstance();
   auto model_desc = model_manager.GetModelDesc(CONFIG.net);
-  Shape input_shape(3, 227, 227);
-  auto model = model_manager.CreateModel(model_desc, input_shape, 1);
-  model->Load();
+  Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
 
+  std::vector<std::string> output_layers = {model_desc.GetDefaultOutputLayer()};
+  auto model =
+      ModelManager::GetInstance().CreateModel(model_desc, input_shape, 1);
+  model->Load();
   // Prepare fake input
   srand((unsigned)(15213));
   std::vector<decltype(input_shape.channel)> mat_size;
@@ -195,13 +197,11 @@ void RunNNInferenceExperiment() {
     ++mat_it;
   }
 
-  std::string last_layer = model_desc.GetLastLayer();
-  std::vector<std::string> output_layers;
-  output_layers.push_back(last_layer);
-
   Timer timer;
   timer.Start();
-  model->Evaluate(fake_input, output_layers);
+  std::unordered_map<std::string, cv::Mat> input_map(
+      {{model_desc.GetDefaultInputLayer(), fake_input}});
+  model->Evaluate(input_map, output_layers);
   LOG(INFO) << "Inference time: " << timer.ElapsedMSec() << " ms";
 }
 
@@ -214,7 +214,8 @@ int main(int argc, char* argv[]) {
 
   po::options_description desc("Benchmark for streamer");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("net,n", po::value<string>()->value_name("NET"),
+  desc.add_options()("net,n",
+                     po::value<string>()->value_name("NET")->required(),
                      "The name of the neural net to run");
   desc.add_options()("camera,c", po::value<string>()->value_name("CAMERAS"),
                      "The name of the camera to use, if there are multiple "
@@ -308,6 +309,6 @@ int main(int argc, char* argv[]) {
   } else if (CONFIG.experiment == "nninfer") {
     RunNNInferenceExperiment();
   } else {
-    LOG(ERROR) << "Unkown experiment: " << CONFIG.experiment;
+    LOG(ERROR) << "Unknown experiment: " << CONFIG.experiment;
   }
 }

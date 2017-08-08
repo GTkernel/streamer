@@ -4,23 +4,14 @@
 
 #include "image_transformer.h"
 
-#include <stdlib.h>
-
 #include "model/model_manager.h"
 
 ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
-                                   bool convert, bool subtract_mean)
+                                   bool convert)
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {"input"}, {"output"}),
       target_shape_(target_shape),
       crop_(crop),
-      convert_(convert),
-      subtract_mean_(subtract_mean) {
-  auto mean_colors = ModelManager::GetInstance().GetMeanColors();
-  mean_image_ =
-      cv::Mat(cv::Size(target_shape.width, target_shape.height),
-              target_shape.channel == 3 ? CV_32FC3 : CV_32FC1,
-              cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
-}
+      convert_(convert) {}
 
 std::shared_ptr<ImageTransformer> ImageTransformer::Create(
     const FactoryParamsType& params) {
@@ -38,7 +29,7 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
       << ") must not be negative.";
 
   return std::make_shared<ImageTransformer>(Shape(num_channels, width, height),
-                                            true, true, true);
+                                            true, true);
 }
 
 void ImageTransformer::Process() {
@@ -103,15 +94,7 @@ void ImageTransformer::Process() {
     sample_float = sample_resized;
   }
 
-  // Normalize
-  cv::Mat sample_normalized;
-  if (subtract_mean_) {
-    cv::subtract(sample_float, mean_image_, sample_normalized);
-  } else {
-    sample_normalized = sample_float;
-  }
-
-  frame->SetValue("image", sample_normalized);
+  frame->SetValue("image", sample_float);
   PushFrame("output", std::move(frame));
 }
 

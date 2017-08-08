@@ -11,8 +11,7 @@
 
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(const Shape& target_shape, bool crop, bool convert,
-                   bool subtract_mean = true);
+  ImageTransformer(const Shape& target_shape, bool crop, bool convert);
 
   static std::shared_ptr<ImageTransformer> Create(
       const FactoryParamsType& params);
@@ -24,10 +23,8 @@ class ImageTransformer : public Processor {
 
  private:
   Shape target_shape_;
-  cv::Mat mean_image_;
   bool crop_;
   bool convert_;
-  bool subtract_mean_;
 };
 
 #endif  // STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_
