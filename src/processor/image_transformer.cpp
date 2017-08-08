@@ -4,21 +4,11 @@
 
 #include "image_transformer.h"
 
-#include <stdlib.h>
-
 #include "model/model_manager.h"
 
-ImageTransformer::ImageTransformer(const Shape& target_shape,
-                                   bool subtract_mean)
+ImageTransformer::ImageTransformer(const Shape& target_shape)
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {"input"}, {"output"}),
-      target_shape_(target_shape),
-      subtract_mean_(subtract_mean) {
-  auto mean_colors = ModelManager::GetInstance().GetMeanColors();
-  mean_image_ =
-      cv::Mat(cv::Size(target_shape.width, target_shape.height),
-              target_shape.channel == 3 ? CV_32FC3 : CV_32FC1,
-              cv::Scalar(mean_colors[0], mean_colors[1], mean_colors[2]));
-}
+      target_shape_(target_shape) {}
 
 std::shared_ptr<ImageTransformer> ImageTransformer::Create(
     const FactoryParamsType& params) {
@@ -35,8 +25,7 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
       << "), and number of channels (" << num_channels
       << ") must not be negative.";
 
-  return std::make_shared<ImageTransformer>(Shape(num_channels, width, height),
-                                            true);
+  return std::make_shared<ImageTransformer>(Shape(num_channels, width, height));
 }
 
 void ImageTransformer::Process() {
@@ -92,15 +81,7 @@ void ImageTransformer::Process() {
   else
     sample_resized.convertTo(sample_float, CV_32FC1);
 
-  // Normalize
-  cv::Mat sample_normalized;
-  if (subtract_mean_) {
-    cv::subtract(sample_float, mean_image_, sample_normalized);
-  } else {
-    sample_normalized = sample_float;
-  }
-
-  frame->SetValue("image", sample_normalized);
+  frame->SetValue("image", sample_float);
   PushFrame("output", std::move(frame));
 }
 

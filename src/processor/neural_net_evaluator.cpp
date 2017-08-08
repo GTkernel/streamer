@@ -18,7 +18,7 @@ NeuralNetEvaluator::NeuralNetEvaluator(
 
   // Create sinks.
   if (output_layer_names.size() == 0) {
-    std::string layer = model_desc.GetLastLayer();
+    std::string layer = model_desc.GetDefaultOutputLayer();
     LOG(INFO) << "No output layer specified, defaulting to: " << layer;
     PublishLayer(layer);
   } else {
@@ -26,6 +26,11 @@ NeuralNetEvaluator::NeuralNetEvaluator(
       PublishLayer(layer);
     }
   }
+}
+
+NeuralNetEvaluator::~NeuralNetEvaluator() {
+  auto model_raw = model_.release();
+  delete model_raw;
 }
 
 void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
@@ -66,20 +71,39 @@ bool NeuralNetEvaluator::Init() { return true; }
 
 bool NeuralNetEvaluator::OnStop() { return true; }
 
+void NeuralNetEvaluator::SetSource(const std::string& name, StreamPtr stream,
+                                   const std::string& layername) {
+  if (layername == "") {
+    input_layer_name_ = model_->GetModelDesc().GetDefaultInputLayer();
+  } else {
+    input_layer_name_ = layername;
+  }
+  LOG(INFO) << "Using layer \"" << input_layer_name_
+            << "\" as input for source \"" << name << "\"";
+  Processor::SetSource(name, stream);
+}
+
+void NeuralNetEvaluator::SetSource(StreamPtr stream,
+                                   const std::string& layername) {
+  SetSource(SOURCE_NAME, stream, layername);
+}
+
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
-  const cv::Mat& img = input_frame->GetValue<cv::Mat>("image");
-
-  CHECK(img.channels() == input_shape_.channel &&
-        img.size[0] == input_shape_.width &&
-        img.size[1] == input_shape_.height);
+  cv::Mat input_mat;
+  if (input_frame->Count("activations") > 0) {
+    input_mat = input_frame->GetValue<cv::Mat>("activations");
+  } else {
+    input_mat = input_frame->GetValue<cv::Mat>("image");
+  }
 
   std::vector<std::string> output_layer_names;
   for (const auto& sink_pair : sinks_) {
     output_layer_names.push_back(sink_pair.first);
   }
 
-  auto layer_outputs = model_->Evaluate(img, output_layer_names);
+  auto layer_outputs =
+      model_->Evaluate({{input_layer_name_, input_mat}}, output_layer_names);
 
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {

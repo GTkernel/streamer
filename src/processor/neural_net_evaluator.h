@@ -21,6 +21,7 @@ class NeuralNetEvaluator : public Processor {
   // published.
   NeuralNetEvaluator(const ModelDesc& model_desc, const Shape& input_shape,
                      const std::vector<std::string>& output_layer_names = {});
+  ~NeuralNetEvaluator();
 
   // Adds layer_name to the list of the layers whose activations will be
   // published.
@@ -31,6 +32,11 @@ class NeuralNetEvaluator : public Processor {
 
   static std::shared_ptr<NeuralNetEvaluator> Create(
       const FactoryParamsType& params);
+
+  // Hides Processor::SetSource(const std::string&, StreamPtr)
+  void SetSource(const std::string& name, StreamPtr stream,
+                 const std::string& layername = "");
+  void SetSource(StreamPtr stream, const std::string& layername = "");
 
  protected:
   virtual bool Init() override;
@@ -43,6 +49,7 @@ class NeuralNetEvaluator : public Processor {
   std::unordered_map<std::string, cv::Mat> Evaluate();
 
   Shape input_shape_;
+  std::string input_layer_name_;
   std::unique_ptr<Model> model_;
 };
 

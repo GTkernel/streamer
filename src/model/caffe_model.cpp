@@ -5,6 +5,7 @@
 #include "model/caffe_model.h"
 
 #include "common/context.h"
+#include "model/model_manager.h"
 
 template <typename DType>
 CaffeModel<DType>::CaffeModel(const ModelDesc& model_desc, Shape input_shape)
@@ -76,7 +77,27 @@ void CaffeModel<DType>::Load() {
 
 template <typename DType>
 std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
-    cv::Mat input, const std::vector<std::string>& output_layer_names) {
+    const std::unordered_map<std::string, cv::Mat>& input_map,
+    const std::vector<std::string>& output_layer_names) {
+  CHECK_EQ(input_map.size(), 1)
+      << "For Caffe models, exactly one input must be provided.";
+  // There is only one value in the input map, and the second entry in the pair
+  // is the input data.
+  auto input = input_map.begin()->second;
+
+  // Subtract the mean image
+  int format;
+  if (input_shape_.channel == 3) {
+    format = CV_32FC3;
+  } else {
+    format = CV_32FC1;
+  }
+  cv::Scalar mean_colors = ModelManager::GetInstance().GetMeanColors();
+  cv::Mat mean_image = cv::Mat(
+      cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
+  cv::Mat input_normalized;
+  cv::subtract(input, mean_image, input_normalized);
+
   // Format the input data in the way that Caffe expects
   auto input_layer = net_->input_blobs().at(0);
   DType* data = input_layer->mutable_cpu_data();
@@ -90,7 +111,7 @@ std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
     output_channels.push_back(channel);
     data += input_shape_.width * input_shape_.height;
   }
-  cv::split(input, output_channels);
+  cv::split(input_normalized, output_channels);
 
   // Evaluate model on input
   net_->Forward();

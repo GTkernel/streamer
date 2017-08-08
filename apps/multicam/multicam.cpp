@@ -49,20 +49,20 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     camera_streams.push_back(camera_stream);
   }
 
-  Shape input_shape(3, 227, 227);
+  auto model_desc = model_manager.GetModelDesc(model_name);
+  Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   std::vector<std::shared_ptr<Stream>> input_streams;
 
   // Transformers
   for (const auto& camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(
-        new ImageTransformer(input_shape, true /* subtract mean */));
+        new ImageTransformer(input_shape));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
   }
 
   // classifier
-  auto model_desc = model_manager.GetModelDesc(model_name);
   for (const auto& input_stream : input_streams) {
     auto classifier =
         std::make_shared<ImageClassifier>(model_desc, input_shape, 5);

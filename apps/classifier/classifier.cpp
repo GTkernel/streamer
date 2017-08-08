@@ -21,8 +21,7 @@ void Run(const string& camera_name, const string& model_name, bool display) {
 
   // Transformer
   Shape input_shape(3, 227, 227);
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true /* subtract mean */);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape);
   transformer->SetSource("input", camera->GetSink("output"));
 
   // Image classifier

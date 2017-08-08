@@ -13,6 +13,7 @@
 #include "common/serialization.h"
 #include "common/types.h"
 #include "model/model.h"
+#include "model/model_manager.h"
 #include "processor/neural_net_evaluator.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
@@ -209,7 +210,7 @@ void CvMatEqual(cv::Mat lhs, cv::Mat rhs) {
   }
 }
 
-cv::Mat GetMean() {
+cv::Scalar GetMean() {
   caffe::BlobProto blob_proto;
   ReadProtoFromBinaryFileOrDie(MEAN_IMAGE_FILEPATH, &blob_proto);
 
@@ -233,8 +234,7 @@ cv::Mat GetMean() {
 
   // Compute the global mean pixel value and create a mean image
   // filled with this value.
-  cv::Scalar channel_mean = cv::mean(mean);
-  return cv::Mat(SHAPE, mean.type(), channel_mean);
+  return cv::mean(mean);
 }
 
 cv::Mat Preprocess(const cv::Mat& image) {
@@ -248,14 +248,10 @@ cv::Mat Preprocess(const cv::Mat& image) {
   cv::Mat sample_float;
   sample_resized.convertTo(sample_float, CV_32FC3);
 
-  cv::Mat sample_normalized;
-  cv::Mat mean = GetMean();
-  cv::subtract(sample_float, mean, sample_normalized);
-
   // This operation will write the separate BGR planes directly to the
   // input layer of the network because it is wrapped by the cv::Mat
   // objects in input_channels.
-  return sample_normalized;
+  return sample_float;
 }
 
 TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
@@ -269,14 +265,17 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
   // Construct model
   Shape input_shape(CHANNELS, WIDTH, HEIGHT);
-  ModelDesc desc("TestLayerOutputModel", MODEL_TYPE_CAFFE, NETWORK_FILEPATH,
-                 WEIGHTS_FILEPATH, WIDTH, HEIGHT, "prob");
+  ModelDesc desc("TestExtractIntermediateActivationsCaffe", MODEL_TYPE_CAFFE,
+                 NETWORK_FILEPATH, WEIGHTS_FILEPATH, WIDTH, HEIGHT, "", "prob");
   NeuralNetEvaluator nne(desc, input_shape, OUTPUTS);
-  EXPECT_EQ(nne.GetSinkNames().size(), OUTPUTS.size());
+  ASSERT_EQ(nne.GetSinkNames().size(), OUTPUTS.size());
+
+  // Configure the mean image
+  ModelManager::GetInstance().SetMeanColors(GetMean());
 
   // Read the input
   cv::Mat original_image = cv::imread(INPUT_IMAGE_FILEPATH);
-  EXPECT_FALSE(original_image.empty());
+  ASSERT_FALSE(original_image.empty());
   cv::Mat preprocessed_image = Preprocess(original_image);
 
   // Construct frame with input image in it

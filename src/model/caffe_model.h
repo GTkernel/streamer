@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include <caffe/caffe.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "model.h"
 
@@ -21,7 +22,7 @@ class CaffeModel : public Model {
   CaffeModel(const ModelDesc& model_desc, Shape input_shape);
   virtual void Load() override;
   virtual std::unordered_map<std::string, cv::Mat> Evaluate(
-      cv::Mat input,
+      const std::unordered_map<std::string, cv::Mat>& input_map,
       const std::vector<std::string>& output_layer_names) override;
   virtual void Forward();
 
