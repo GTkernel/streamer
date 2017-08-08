@@ -10,7 +10,7 @@
 
 namespace po = boost::program_options;
 
-void Run(const string& camera_name, const string& net_name, bool display) {
+void Run(const string& camera_name, const string& model_name, bool display) {
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
@@ -26,7 +26,7 @@ void Run(const string& camera_name, const string& net_name, bool display) {
   transformer->SetSource("input", camera->GetSink("output"));
 
   // Image classifier
-  auto model_desc = model_manager.GetModelDesc(net_name);
+  auto model_desc = model_manager.GetModelDesc(model_name);
   auto classifier =
       std::make_shared<ImageClassifier>(model_desc, input_shape, 1);
   classifier->SetSource("input", transformer->GetSink("output"));
@@ -99,9 +99,9 @@ int main(int argc, char* argv[]) {
                      po::value<string>()->value_name("CONFIG_DIR")->required(),
                      "The directory to find streamer's configurations");
   desc.add_options()("display,d", "Enable display or not");
-  desc.add_options()("net,n",
-                     po::value<string>()->value_name("NET")->required(),
-                     "The name of the neural net to run");
+  desc.add_options()("model,m",
+                     po::value<string>()->value_name("MODEL")->required(),
+                     "The name of the model to run");
 
   po::variables_map vm;
   try {
@@ -127,11 +127,11 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   auto camera_name = vm["camera"].as<string>();
-  auto net_name = vm["net"].as<string>();
+  auto model = vm["model"].as<string>();
   auto display = vm.count("display") != 0;
 
   // Run classifier
-  Run(camera_name, net_name, display);
+  Run(camera_name, model, display);
 
   return 0;
 }
