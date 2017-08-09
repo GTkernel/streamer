@@ -6,8 +6,10 @@
 #define STREAMER_PROCESSOR_PROCESSOR_H_
 
 #include <atomic>
+#include <queue>
 #include <thread>
 #include <unordered_map>
+
 #include <zmq.hpp>
 
 #include "common/common.h"
@@ -66,35 +68,22 @@ class Processor {
   bool IsStarted() const;
 
   /**
-   * @brief Get sliding window average latency of the processor.
+   * @brief Get trailing (sliding window) average latency of the processor.
    * @return Latency in ms.
    */
-  virtual double GetSlidingLatencyMs() const;
+  virtual double GetTrailingAvgProcessingLatencyMs() const;
 
   /**
    * @brief Get overall average latency.
    * @return Latency in ms.
    */
-  virtual double GetAvgLatencyMs() const;
+  virtual double GetAvgProcessingLatencyMs() const;
 
   /**
    * @brief Get overall average queue latency.
    * @return queue latency in ms.
    */
   virtual double GetAvgQueueLatencyMs() const;
-
-  /**
-   * @brief Get processing speed of the processor, measured in frames / sec. It
-   * is simply computed as 1000.0 / GetLatencyMs().
-   * @return FPS of the processor.
-   */
-  virtual double GetAvgFps() const;
-
-  /**
-   * @brief Get observed throughput of processor
-   * @return throughput in FPS
-   */
-  double GetObservedAvgFps();
 
   /**
    * @brief Get the type of the processor
@@ -136,20 +125,20 @@ class Processor {
   std::thread process_thread_;
   std::atomic<bool> stopped_;
 
-  // Process latency, sliding window average of 10 samples;
-  std::queue<double> latencies_;
-  double latency_sum_;
-  double sliding_latency_;
-  double queue_latency_sum_;
-  double avg_latency_;
-
-  // Processor stats
-  // Number of processed frames
-  size_t n_processed_;
+  unsigned int num_frames_processed_;
+  double avg_processing_latency_ms_;
+  // A queue of recent processing latencies.
+  std::queue<double> processing_latencies_ms_;
+  // The sum of all of the values in "processing_latencies_ms_". This is purely
+  // a performance optimization to avoid needing to sum over
+  // "processing_latencies_ms_" for every frame.
+  double processing_latencies_sum_ms_;
+  // Processing latency, computed using a sliding window average.
+  double trailing_avg_processing_latency_ms_;
+  double queue_latency_sum_ms_;
 
  private:
   const ProcessorType type_;
-  Timer timer_;
   zmq::socket_t* control_socket_;
 };
 

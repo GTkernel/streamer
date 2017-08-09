@@ -41,22 +41,43 @@ void Stream::PushFrame(std::unique_ptr<Frame> frame) {
   }
 }
 
-/////// Stream Reader
+/////// StreamReader
 StreamReader::StreamReader(Stream* stream, size_t max_buffer_size)
-    : stream_(stream), max_buffer_size_(max_buffer_size) {}
+    : stream_(stream),
+      max_buffer_size_(max_buffer_size),
+      num_frames_popped_(0),
+      first_frame_pop_ms_(-1),
+      alpha_(0.25),
+      running_push_ms_(0),
+      running_pop_ms_(0),
+      last_push_ms_(0),
+      last_pop_ms_(0) {
+  timer_.Start();
+}
 
 std::unique_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
-  std::unique_lock<std::mutex> lk(buffer_lock_);
+  std::unique_lock<std::mutex> lock(mtx_);
   if (timeout_ms > 0) {
-    buffer_cv_.wait_for(lk, std::chrono::milliseconds(timeout_ms),
+    buffer_cv_.wait_for(lock, std::chrono::milliseconds(timeout_ms),
                         [this] { return frame_buffer_.size() != 0; });
   } else {
-    buffer_cv_.wait(lk, [this] { return frame_buffer_.size() != 0; });
+    buffer_cv_.wait(lock, [this] { return frame_buffer_.size() != 0; });
   }
 
   if (frame_buffer_.size() != 0) {
     auto frame = std::move(frame_buffer_.front());
     frame_buffer_.pop();
+    ++num_frames_popped_;
+
+    double current_ms = timer_.ElapsedMSec();
+    double delta_ms = current_ms - last_pop_ms_;
+    running_pop_ms_ = running_pop_ms_ * (1 - alpha_) + delta_ms * alpha_;
+    last_pop_ms_ = current_ms;
+
+    if (first_frame_pop_ms_ == -1) {
+      first_frame_pop_ms_ = current_ms;
+    }
+
     return frame;
   } else {
     // Can't get frame within timeout
@@ -65,7 +86,13 @@ std::unique_ptr<Frame> StreamReader::PopFrame(unsigned int timeout_ms) {
 }
 
 void StreamReader::PushFrame(std::unique_ptr<Frame> frame) {
-  std::lock_guard<std::mutex> lock(buffer_lock_);
+  std::lock_guard<std::mutex> lock(mtx_);
+
+  double current_ms = timer_.ElapsedMSec();
+  double delta_ms = current_ms - last_push_ms_;
+  running_push_ms_ = running_push_ms_ * (1 - alpha_) + delta_ms * alpha_;
+  last_push_ms_ = current_ms;
+
   // If buffer is full, the frame is dropped
   if (frame_buffer_.size() < max_buffer_size_) {
     frame_buffer_.push(std::move(frame));
@@ -86,3 +113,12 @@ void StreamReader::PushFrame(std::unique_ptr<Frame> frame) {
 }
 
 void StreamReader::UnSubscribe() { stream_->UnSubscribe(this); }
+
+double StreamReader::GetPushFps() { return 1000 / running_push_ms_; }
+
+double StreamReader::GetPopFps() { return 1000 / running_pop_ms_; }
+
+double StreamReader::GetHistoricalFps() {
+  return num_frames_popped_ /
+         ((timer_.ElapsedMSec() - first_frame_pop_ms_) / 1000);
+}

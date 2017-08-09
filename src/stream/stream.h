@@ -5,13 +5,14 @@
 #ifndef STREAMER_STREAM_STREAM_H_
 #define STREAMER_STREAM_STREAM_H_
 
-#include "common/common.h"
-#include "frame.h"
-
 #include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <unordered_set>
+
+#include "common/common.h"
+#include "common/timer.h"
+#include "frame.h"
 
 /**
  * @brief A reader that reads from a stream. There could be multiple readers
@@ -30,6 +31,9 @@ class StreamReader {
   std::unique_ptr<Frame> PopFrame(unsigned int timeout_ms = 0);
 
   void UnSubscribe();
+  double GetPushFps();
+  double GetPopFps();
+  double GetHistoricalFps();
 
  private:
   /**
@@ -43,8 +47,29 @@ class StreamReader {
   // The frame buffer
   std::queue<std::unique_ptr<Frame>> frame_buffer_;
   // Stream synchronization
-  std::mutex buffer_lock_;
+  std::mutex mtx_;
   std::condition_variable buffer_cv_;
+
+  // The total number of frames that have popped from this StreamReader.
+  unsigned long num_frames_popped_;
+  // Milliseconds between when this StreamReader was constructed and when the
+  // first frame was popped. -1 means that this has not been set yet.
+  double first_frame_pop_ms_;
+  // Alpha parameter for the exponentially weighted moving average (EWMA)
+  // formula.
+  double alpha_;
+  // The EWMA of the milliseconds between frame pushes.
+  double running_push_ms_;
+  // The EWMA of the milliseconds between frame pops.
+  double running_pop_ms_;
+  // Milliseconds between when this StreamReader was constructed and the last
+  // frame push.
+  double last_push_ms_;
+  // Milliseconds between when this StreamReader was constructed and the last
+  // frame pop.
+  double last_pop_ms_;
+  // Started when this StreamReader is constructed.
+  Timer timer_;
 };
 
 /**

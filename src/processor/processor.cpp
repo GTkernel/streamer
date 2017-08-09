@@ -10,7 +10,12 @@ static const size_t SLIDING_WINDOW_SIZE = 25;
 Processor::Processor(ProcessorType type,
                      const std::vector<string>& source_names,
                      const std::vector<string>& sink_names)
-    : type_(type) {
+    : num_frames_processed_(0),
+      avg_processing_latency_ms_(0),
+      processing_latencies_sum_ms_(0),
+      trailing_avg_processing_latency_ms_(0),
+      queue_latency_sum_ms_(0),
+      type_(type) {
   for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
     source_frame_cache_[source_name] = nullptr;
@@ -49,14 +54,7 @@ void Processor::SetSource(const string& name, StreamPtr stream) {
   sources_[name] = stream;
 }
 
-void Processor::Init_() {
-  stopped_ = true;
-  latency_sum_ = 0.0;
-  sliding_latency_ = 99999.0;
-  avg_latency_ = 0.0;
-  queue_latency_sum_ = 0.0;
-  n_processed_ = 0;
-}
+void Processor::Init_() { stopped_ = true; }
 
 bool Processor::Start() {
   LOG(INFO) << "Start called";
@@ -72,8 +70,6 @@ bool Processor::Start() {
   for (auto& source : sources_) {
     readers_.emplace(source.first, source.second->Subscribe());
   }
-
-  timer_.Start();
 
   stopped_ = false;
   process_thread_ = std::thread(&Processor::ProcessorLoop, this);
@@ -98,7 +94,7 @@ bool Processor::Stop() {
 
 void Processor::ProcessorLoop() {
   CHECK(Init()) << "Processor is not able to be initialized";
-  Timer timer;
+  Timer local_timer;
   while (!stopped_) {
     // Cache source frames
     source_frame_cache_.clear();
@@ -117,51 +113,56 @@ void Processor::ProcessorLoop() {
           }
         } else {
           // Calculate queue latency
-          double start = frame->GetValue<double>("start_time_ms");
-          double end = Context::GetContext().GetTimer().ElapsedMSec();
+          double start_ms = frame->GetValue<double>("start_time_ms");
+          double end_ms = Context::GetContext().GetTimer().ElapsedMSec();
+          queue_latency_sum_ms_ += end_ms - start_ms;
           source_frame_cache_[source_name] = std::move(frame);
-          queue_latency_sum_ += end - start;
           break;
         }
       }
     }
 
-    timer.Start();
+    local_timer.Start();
     Process();
-    n_processed_ += 1;
-    double latency = timer.ElapsedMSec();
-    {
-      // Calculate latency
-      latencies_.push(latency);
-      latency_sum_ += latency;
-      while (latencies_.size() > SLIDING_WINDOW_SIZE) {
-        double oldest_latency = latencies_.front();
-        latency_sum_ -= oldest_latency;
-        latencies_.pop();
-      }
+    ++num_frames_processed_;
+    double processing_latency_ms = local_timer.ElapsedMSec();
 
-      sliding_latency_ = latency_sum_ / latencies_.size();
+    // Update average processing latency.
+    avg_processing_latency_ms_ =
+        (avg_processing_latency_ms_ * (num_frames_processed_ - 1) +
+         processing_latency_ms) /
+        num_frames_processed_;
+
+    // Update trailing average processing latency.
+    auto num_latencies = processing_latencies_ms_.size();
+    if (num_latencies == SLIDING_WINDOW_SIZE) {
+      // Pop the oldest latency from the queue and remove it from the running
+      // sum.
+      double oldest_latency_ms = processing_latencies_ms_.front();
+      processing_latencies_ms_.pop();
+      processing_latencies_sum_ms_ -= oldest_latency_ms;
     }
-    avg_latency_ = (avg_latency_ * (n_processed_ - 1) + latency) / n_processed_;
+    // Add the new latency to the queue and the running sum.
+    processing_latencies_ms_.push(processing_latency_ms);
+    processing_latencies_sum_ms_ += processing_latency_ms;
+    trailing_avg_processing_latency_ms_ =
+        processing_latencies_sum_ms_ / num_latencies;
   }
 }
 
 bool Processor::IsStarted() const { return !stopped_; }
 
-double Processor::GetSlidingLatencyMs() const { return sliding_latency_; }
+double Processor::GetTrailingAvgProcessingLatencyMs() const {
+  return trailing_avg_processing_latency_ms_;
+}
 
-double Processor::GetAvgLatencyMs() const { return avg_latency_; }
+double Processor::GetAvgProcessingLatencyMs() const {
+  return avg_processing_latency_ms_;
+}
 
 double Processor::GetAvgQueueLatencyMs() const {
-  return queue_latency_sum_ / n_processed_;
+  return queue_latency_sum_ms_ / num_frames_processed_;
 }
-
-double Processor::GetObservedAvgFps() {
-  double secs_elapsed = timer_.ElapsedMSec() / 1000;
-  return n_processed_ / secs_elapsed;
-}
-
-double Processor::GetAvgFps() const { return 1000.0 / avg_latency_; }
 
 ProcessorType Processor::GetType() const { return type_; }
 

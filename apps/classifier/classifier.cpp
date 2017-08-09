@@ -67,16 +67,34 @@ void Run(const std::string& camera_name, const std::string& model_name,
     auto tag = tags.front();
     std::regex re(".+? (.+)");
     std::smatch results;
+    std::string tag_name;
     if (!std::regex_match(tag, results, re)) {
+      tag_name = tag;
       throw std::runtime_error("Cannot parse tag string: " + tag);
+    } else {
+      tag_name = results[1];
     }
-    auto tag_name = results[1];
+
+    // Get Frame Rate
+    double rate = reader->GetPushFps();
 
     std::ostringstream label;
     label.precision(2);
-    label << prob_percent << "% - " << tag_name;
+    label << rate << " FPS - " << prob_percent << "% - " << tag_name;
     auto label_string = label.str();
     std::cout << label_string << std::endl;
+
+    // For debugging purposes only...
+    std::ostringstream fps_msg;
+    fps_msg.precision(3);
+    fps_msg << "  GetPushFps: " << reader->GetPushFps() << std::endl
+            << "  GetPopFps: " << reader->GetPopFps() << std::endl
+            << "  GetHistoricalFps: " << reader->GetHistoricalFps() << std::endl
+            << "  GetAvgProcessingLatencyMs->FPS: "
+            << (1000 / classifier->GetAvgProcessingLatencyMs()) << std::endl
+            << "  GetTrailingAvgProcessingLatencyMs->FPS: "
+            << (1000 / classifier->GetTrailingAvgProcessingLatencyMs());
+    std::cout << fps_msg.str() << std::endl;
 
     if (display) {
       // Overlay classification label and probability
