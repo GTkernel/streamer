@@ -183,7 +183,7 @@ inline static void draw_detections(
     cv::Mat& image,
     const std::vector<std::tuple<int, cv::Rect, float>>& detections,
     const std::vector<std::string>& classes) {
-  for (int i = 0; i < detections.size(); i++) {
+  for (size_t i = 0; i < detections.size(); i++) {
     cv::rectangle(image, std::get<1>(detections[i]), cv::Scalar(255, 0, 0), 3);
     cv::putText(image,
                 classes[std::get<0>(detections[i])] + " - " +

@@ -120,7 +120,13 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
           new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
     } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
-      detector.reset(new YoloDetector(model_desc, detector_idle_duration));
+      auto t = SplitString(detector_targets, ",");
+      std::set<std::string> targets;
+      for (const auto& m : t) {
+        if (!m.empty()) targets.insert(m);
+      }
+      detector.reset(new YoloDetector(model_desc, detector_confidence_threshold,
+                                      detector_idle_duration, targets));
 #ifdef USE_FRCNN
     } else if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
