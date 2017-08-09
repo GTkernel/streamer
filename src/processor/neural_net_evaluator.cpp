@@ -19,6 +19,17 @@ NeuralNetEvaluator::NeuralNetEvaluator(
   // Create sinks.
   if (output_layer_names.size() == 0) {
     std::string layer = model_desc.GetDefaultOutputLayer();
+    if (layer == "") {
+      // This case will be triggered if "output_layer_names" is empty and the
+      // model's "default_output_layer" parameter was not set. In this case, the
+      // NeuralNetEvaluator does not know which layer to treat as the output
+      // layer.
+      throw std::runtime_error(
+          "Unable to create a NeuralNetEvaluator for model \"" +
+          model_desc.GetName() + "\" because it does not have a value for " +
+          "the \"default_output_layer\" parameter and the NeuralNetEvaluator " +
+          "was not constructed with an explicit output layer.");
+    }
     LOG(INFO) << "No output layer specified, defaulting to: " << layer;
     PublishLayer(layer);
   } else {
