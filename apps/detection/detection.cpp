@@ -51,8 +51,7 @@ void SignalHandler(int) {
 
 void Run(const std::vector<string>& camera_names, const string& detector_type,
          const string& detector_model, bool display, float scale, int min_size,
-         float detector_confidence_threshold, const string& detector_targets,
-         const string& classifier_xml_path) {
+         float detector_confidence_threshold, const string& detector_targets) {
   // Silence complier warning sayings when certain options are turned off.
   (void)detector_confidence_threshold;
   (void)detector_targets;
@@ -109,8 +108,9 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       detector.reset(
           new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
+      auto model_desc = model_manager.GetModelDesc(detector_model);
       detector.reset(
-          new OpenCVFaceDetector(detector_idle_duration, classifier_xml_path));
+          new OpenCVFaceDetector(detector_idle_duration, model_desc.GetModelParamsPath()));
     } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
@@ -330,9 +330,6 @@ int main(int argc, char* argv[]) {
   desc.add_options()("detector_confidence_threshold",
                      po::value<float>()->default_value(0.5),
                      "detector confidence threshold");
-  desc.add_options()("classifier_xml_path",
-                     po::value<string>()->default_value(""),
-                     "A xml classifier file load in OpenCVFaceDetector");
 
   po::variables_map vm;
   try {
@@ -367,9 +364,8 @@ int main(int argc, char* argv[]) {
   int min_size = vm["min_size"].as<int>();
   float detector_confidence_threshold =
       vm["detector_confidence_threshold"].as<float>();
-  auto classifier_xml_path = vm["classifier_xml_path"].as<string>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
-      detector_confidence_threshold, detector_targets, classifier_xml_path);
+      detector_confidence_threshold, detector_targets);
 
   return 0;
 }
