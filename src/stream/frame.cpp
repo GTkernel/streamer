@@ -5,7 +5,6 @@
 #include "frame.h"
 
 #include <algorithm>
-//#include <experimental/unordered_map>
 
 #include <opencv2/core/core.hpp>
 
@@ -225,12 +224,9 @@ Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
 
   bool inherit_all_fields = fields.empty();
   if (!inherit_all_fields) {
-    // std::experimental::erase_if(frame_data_, [&fields](auto& e) {
-    //  return fields.find(e.first) == fields.end();
-    //});
     for (auto it = frame_data_.begin(); it != frame_data_.end();) {
       if (fields.find(it->first) == fields.end()) {
-        frame_data_.erase(it++);
+        it = frame_data_.erase(it);
       } else {
         ++it;
       }
