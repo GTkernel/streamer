@@ -78,11 +78,11 @@ ModelManager::ModelManager() {
     int input_width = model_value.get<int>("input_width");
     int input_height = model_value.get<int>("input_height");
 
-    CHECK(model_value.has("default_output_layer"))
-        << "Model \"" << name
-        << "\" is missing the \"default_output_layer\" parameter!";
-    std::string default_output_layer =
-        model_value.get<std::string>("default_output_layer");
+    std::string default_output_layer = "";
+    if (model_value.has("default_output_layer")) {
+      default_output_layer =
+          model_value.get<std::string>("default_output_layer");
+    }
     std::string default_input_layer;
     if (type_string == "tensorflow") {
       CHECK(model_value.has("default_input_layer"))
