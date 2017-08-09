@@ -117,8 +117,8 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
           new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
-      detector.reset(
-          new OpenCVFaceDetector(detector_idle_duration, model_desc.GetModelParamsPath()));
+      detector.reset(new OpenCVFaceDetector(detector_idle_duration,
+                                            model_desc.GetModelParamsPath()));
     } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
@@ -398,7 +398,8 @@ int main(int argc, char* argv[]) {
   auto athena_address = vm["athena_address"].as<string>();
   Run(camera_names, detector_type, detector_model, display, scale, min_size,
       detector_confidence_threshold, detector_idle_duration, detector_targets,
-      tracker_type, tracker_calibration_duration, db_write_to_file, athena_address);
+      tracker_type, tracker_calibration_duration, db_write_to_file,
+      athena_address);
 
   return 0;
 }

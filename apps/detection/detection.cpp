@@ -109,8 +109,8 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
           new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
-      detector.reset(
-          new OpenCVFaceDetector(detector_idle_duration, model_desc.GetModelParamsPath()));
+      detector.reset(new OpenCVFaceDetector(detector_idle_duration,
+                                            model_desc.GetModelParamsPath()));
     } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
