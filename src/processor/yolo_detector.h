@@ -41,16 +41,13 @@ class YoloDetector : public Processor {
   virtual void Process() override;
 
  private:
-  std::string GetLabelName(int label) const;
-
- private:
   ModelDesc model_desc_;
   std::unique_ptr<yolo::Detector> detector_;
   float confidence_threshold_;
   float idle_duration_;
   std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
   std::set<std::string> targets_;
-  caffe::LabelMap label_map_;
+  std::vector<std::string> voc_names_;
 };
 
 template <typename Dtype>

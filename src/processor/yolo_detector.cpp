@@ -120,8 +120,7 @@ bool YoloDetector::Init() {
 
   detector_.reset(new yolo::Detector(model_file, weights_file));
   std::string labelmap_file = model_desc_.GetLabelFilePath();
-  CHECK(ReadProtoFromTextFile(labelmap_file, &label_map_))
-      << "Failed to parse LabelMap file: " << labelmap_file;
+  voc_names_ = ReadVocNames(labelmap_file);
 
   LOG(INFO) << "YoloDetector initialized";
   return true;
@@ -159,7 +158,7 @@ void YoloDetector::Process() {
       if (targets_.empty()) {
         filtered_res.push_back(d);
       } else {
-        auto it = targets_.find(GetLabelName((int)d[0]));
+        auto it = targets_.find(voc_names_.at(d[0]));
         if (it != targets_.end()) filtered_res.push_back(d);
       }
     }
@@ -174,7 +173,7 @@ void YoloDetector::Process() {
       if (xmax > original_img.cols) xmax = original_img.cols;
       if (ymax > original_img.rows) ymax = original_img.rows;
       
-      tags.push_back(GetLabelName(filtered_res[i][0]));
+      tags.push_back(voc_names_.at(filtered_res[i][0]));
       bbs.push_back(Rect(xmin, ymin,
                          xmax - xmin,
                          ymax - ymin));
@@ -190,18 +189,4 @@ void YoloDetector::Process() {
   } else {
     PushFrame("output", std::move(frame));
   }
-}
-
-std::string YoloDetector::GetLabelName(int label) const {
-  std::string name;
-  int item_size = label_map_.item_size();
-  for (int i = 0; i < item_size; ++i) {
-    auto item = label_map_.item(i);
-    if (item.label() == label) {
-      name = item.name();
-    }
-  }
-
-  CHECK(!name.empty()) << "Cannot find a label name";
-  return name;
 }

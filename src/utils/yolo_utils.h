@@ -5,6 +5,7 @@
 
 #ifndef STREAMER_YOLO_UTILS_H_
 #define STREAMER_YOLO_UTILS_H_
+#include <fstream>
 
 typedef struct {
   int index;
@@ -195,6 +196,20 @@ inline static void draw_detections(
                 std::get<1>(detections[i]).tl(), cv::FONT_HERSHEY_SIMPLEX, 1.0,
                 cv::Scalar(0, 0, 255), 2.0);
   }
+}
+
+inline static std::vector<std::string> ReadVocNames(const std::string& file_path) {
+  std::vector<std::string> result;
+  std::string name;
+  std::ifstream infile;
+  infile.open(file_path.c_str());
+  CHECK(infile) << "Cannot open " << file_path;
+  result.push_back("none_of_the_above");
+  while(std::getline(infile, name)) {
+    result.push_back(name);
+  }
+  infile.close();
+  return result;
 }
 
 #endif  // STREAMER_YOLO_UTILS_H_
