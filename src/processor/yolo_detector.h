@@ -122,7 +122,8 @@ inline std::vector<std::vector<int>> GetBoxes(
           idx = 49 * 20 + 49 * 2 + ((i * 7 + j) * 2 + k) * 4;
           x = img.cols * (DetectionResult[idx++] + j) / 7;
           y = img.rows * (DetectionResult[idx++] + i) / 7;
-          w = img.cols * DetectionResult[idx] * DetectionResult[idx++];
+          w = img.cols * DetectionResult[idx] * DetectionResult[idx];
+          ++idx;
           h = img.rows * DetectionResult[idx] * DetectionResult[idx];
           x_min = x - w / 2;
           y_min = y - h / 2;
