@@ -142,13 +142,6 @@ void YoloDetector::Process() {
     std::vector<std::vector<int>> bboxs;
     float pro_obj[49][2];
     int idx_class[49];
-    // float overlap;
-    // float overlap_thresh=0.4;
-    // float pro_class[49];
-    // int idx;
-    // int idx2;
-    // float max_idx;
-    // float max;
 
     std::vector<std::vector<int>> bboxes =
         GetBoxes(DetectionOutput, &pro_obj[0][0], idx_class, bboxs,
@@ -172,10 +165,19 @@ void YoloDetector::Process() {
     }
 
     for (size_t i = 0; i < filtered_res.size(); ++i) {
+      int xmin = filtered_res[i][1];
+      int ymin = filtered_res[i][2];
+      int xmax = filtered_res[i][3];
+      int ymax = filtered_res[i][4];
+      if (xmin < 0) xmin = 0;
+      if (ymin < 0) ymin = 0;
+      if (xmax > original_img.cols) xmax = original_img.cols;
+      if (ymax > original_img.rows) ymax = original_img.rows;
+      
       tags.push_back(GetLabelName(filtered_res[i][0]));
-      bbs.push_back(Rect(filtered_res[i][1], filtered_res[i][2],
-                         filtered_res[i][3] - filtered_res[i][1],
-                         filtered_res[i][4] - filtered_res[i][2]));
+      bbs.push_back(Rect(xmin, ymin,
+                         xmax - xmin,
+                         ymax - ymin));
       confidences.push_back(filtered_res[i][5] * 1.0 / 100);
     }
 
