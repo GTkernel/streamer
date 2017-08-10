@@ -21,6 +21,11 @@ NcsYoloDetector::NcsYoloDetector(const ModelDesc& model_desc, Shape input_shape,
       idle_duration_(idle_duration),
       targets_(targets) {}
 
+std::shared_ptr<NcsYoloDetector> NcsYoloDetector::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
+
 bool NcsYoloDetector::Init() {
   std::string weights_file = model_desc_.GetModelParamsPath();
   LOG(INFO) << "weights_file: " << weights_file;

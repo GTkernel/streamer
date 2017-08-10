@@ -21,6 +21,7 @@ class NcsYoloDetector : public Processor {
       const ModelDesc& model_desc, Shape input_shape,
       float confidence_threshold, float idle_duration = 0.f,
       const std::set<std::string>& targets = std::set<std::string>());
+  static std::shared_ptr<NcsYoloDetector> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

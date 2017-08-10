@@ -47,6 +47,8 @@ ModelManager::ModelManager() {
       type = MODEL_TYPE_CAFFE;
     } else if (type_string == "tensorflow") {
       type = MODEL_TYPE_TENSORFLOW;
+    } else if (type_string == "opencv") {
+      type = MODEL_TYPE_OPENCV;
     } else if (type_string == "ncs") {
       type = MODEL_TYPE_NCS;
     }
@@ -161,9 +163,10 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
       throw std::logic_error(
           "Not built with Caffe. Failed to initialize model!");
 #endif  // USE_CAFFE
+    case MODEL_TYPE_OPENCV:
+      return nullptr;
     case MODEL_TYPE_NCS:
 #ifdef USE_NCS
-      STREAMER_NOT_IMPLEMENTER;
       return nullptr;
 #else  // USE_NCS
       throw std::logic_error("Not built with NCS. Failed to initialize model!");
