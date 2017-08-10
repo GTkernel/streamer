@@ -285,7 +285,7 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
   // Prepare stream
   StreamPtr stream = std::make_shared<Stream>();
-  nne.SetSource("input", stream);
+  nne.SetSource("input", stream, "");
 
   // We need to set up the StreamReaders before calling Start().
   std::unordered_map<std::string, StreamReader*> readers;
