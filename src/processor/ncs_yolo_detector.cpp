@@ -34,8 +34,7 @@ bool NcsYoloDetector::Init() {
   CHECK(detector_->Open()) << "Failed to open NCSManager";
 
   std::string labelmap_file = model_desc_.GetLabelFilePath();
-  CHECK(ReadProtoFromTextFile(labelmap_file, &label_map_))
-      << "Failed to parse LabelMap file: " << labelmap_file;
+  voc_names_ = ReadVocNames(labelmap_file);
 
   LOG(INFO) << "NcsYoloDetector initialized";
   return true;
@@ -69,7 +68,7 @@ void NcsYoloDetector::Process() {
         if (targets_.empty()) {
           filtered_res.push_back(d);
         } else {
-          auto it = targets_.find(GetLabelName(std::get<0>(d) + 1));
+          auto it = targets_.find(voc_names_.at(std::get<0>(d) + 1));
           if (it != targets_.end()) filtered_res.push_back(d);
         }
       }
@@ -93,7 +92,7 @@ void NcsYoloDetector::Process() {
       if (xmax > original_img.cols) xmax = original_img.cols;
       if (ymax > original_img.rows) ymax = original_img.rows;
 
-      tags.push_back(GetLabelName(std::get<0>(m) + 1));
+      tags.push_back(voc_names_.at(std::get<0>(m) + 1));
       bboxes.push_back(Rect(xmin, ymin, xmax - xmin, ymax - ymin));
       confidences.push_back(std::get<2>(m));
     }
@@ -107,18 +106,4 @@ void NcsYoloDetector::Process() {
   } else {
     PushFrame("output", std::move(frame));
   }
-}
-
-std::string NcsYoloDetector::GetLabelName(int label) const {
-  std::string name;
-  int item_size = label_map_.item_size();
-  for (int i = 0; i < item_size; ++i) {
-    auto item = label_map_.item(i);
-    if (item.label() == label) {
-      name = item.name();
-    }
-  }
-
-  CHECK(!name.empty()) << "Cannot find a label name";
-  return name;
 }
