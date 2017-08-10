@@ -3,6 +3,9 @@
  *
  */
 
+#ifndef STREAMER_YOLO_UTILS_H_
+#define STREAMER_YOLO_UTILS_H_
+
 typedef struct {
   int index;
   int nclass;
@@ -193,3 +196,5 @@ inline static void draw_detections(
                 cv::Scalar(0, 0, 255), 2.0);
   }
 }
+
+#endif  // STREAMER_YOLO_UTILS_H_
