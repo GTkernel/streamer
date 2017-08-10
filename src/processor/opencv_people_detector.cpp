@@ -39,7 +39,7 @@ void OpenCVPeopleDetector::Process() {
 #else
   hog_.detectMultiScale(image, results, 0, cv::Size(8, 8), cv::Size(32, 32),
                         1.05, 2);
-#endif
+#endif  // USE_CUDA
   for (auto result : results) {
     results_rect.emplace_back(result.x, result.y, result.width, result.height);
   }

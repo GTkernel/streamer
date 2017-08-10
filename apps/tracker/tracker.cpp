@@ -121,7 +121,7 @@ void Run(const std::vector<string>& camera_names,
     motion_detector->SetSource("input", input_streams[i]);
     motion_detectors.push_back(motion_detector);
   }
-#endif
+#endif  // 0
   // mtcnn
   auto model_descs = model_manager.GetModelDescs(mtcnn_model_name);
   for (size_t i = 0; i < batch_size; i++) {
@@ -242,7 +242,7 @@ void Run(const std::vector<string>& camera_names,
             prev_it = it;
           }
         }
-#endif
+#endif  // 0
 
         cv::imshow(camera_names[i], image);
       }

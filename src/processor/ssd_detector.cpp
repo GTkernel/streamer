@@ -46,7 +46,7 @@ Detector::Detector(const string& model_file, const string& weights_file,
 #else
     LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
                   "configured rather than -1";
-#endif
+#endif  // USE_CUDA
   }
 
   /* Load the network. */

@@ -70,7 +70,7 @@ bool Facenet::Init() {
 #else
     LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
                   "configured rather than -1";
-#endif
+#endif  // USE_CUDA
   }
 
 // Load the network.
@@ -80,7 +80,7 @@ bool Facenet::Init() {
 #else
   net_.reset(
       new caffe::Net<float>(model_desc_.GetModelDescPath(), caffe::TEST));
-#endif
+#endif  // USE_OPENCL
   net_->CopyTrainedLayersFrom(model_desc_.GetModelParamsPath());
 
   CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";

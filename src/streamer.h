@@ -18,7 +18,7 @@
 #include "processor/opencv_face_detector.h"
 #ifdef USE_FRCNN
 #include "processor/object_detector.h"
-#endif
+#endif  // USE_FRCNN
 #include "processor/caffe_mtcnn.h"
 #include "processor/db_writer.h"
 #include "processor/facenet.h"
@@ -29,10 +29,10 @@
 #include "processor/yolo_detector.h"
 #ifdef USE_SSD
 #include "processor/ssd_detector.h"
-#endif
+#endif  // USE_SSD
 #ifdef USE_NCS
 #include "processor/ncs_yolo_detector.h"
-#endif
+#endif  // USE_NCS
 #include "processor/processor.h"
 #include "processor/processor_factory.h"
 #include "utils/utils.h"

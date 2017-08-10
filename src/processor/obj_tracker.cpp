@@ -15,7 +15,7 @@
 #ifdef USE_DLIB
 #include <dlib/dlib/image_processing.h>
 #include <dlib/dlib/opencv.h>
-#endif
+#endif  // USE_DLIB
 #include "obj_tracker.h"
 
 static const string STRUCK_CONF_FILENAME = "struck_config.txt";
@@ -79,7 +79,7 @@ class DlibTracker : public BaseTracker {
  private:
   std::unique_ptr<dlib::correlation_tracker> impl_;
 };
-#endif
+#endif  // USE_DLIB
 
 ObjTracker::ObjTracker(const std::string& type, float calibration_duration)
     : Processor(PROCESSOR_TYPE_OBJ_TRACKER, {"input"}, {"output"}),
@@ -176,7 +176,7 @@ void ObjTracker::Process() {
 #else
         LOG(FATAL) << "Tracker type " << type_
                    << " not supported, please compile with -DUSE_DLIB=ON";
-#endif
+#endif  // USE_DLIB
       } else {
         LOG(FATAL) << "Tracker type " << type_ << " not supported.";
       }

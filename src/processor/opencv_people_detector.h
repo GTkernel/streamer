@@ -9,7 +9,7 @@
 #include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
 #else
 #include <opencv2/objdetect/objdetect.hpp>
-#endif
+#endif  // USE_CUDA
 #include "common/common.h"
 #include "processor.h"
 
@@ -30,7 +30,7 @@ class OpenCVPeopleDetector : public Processor {
   cv::cuda::HOG hog_;
 #else
   cv::HOGDescriptor hog_;
-#endif
+#endif  // USE_CUDA
 };
 
 #endif  // STREAMER_OPENCV_PEOPLE_DETECTOR_H

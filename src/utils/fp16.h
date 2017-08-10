@@ -57,7 +57,7 @@ static inline unsigned short float2half(unsigned f) {
 /* overflow to signed inf */
 #if NPY_HALF_GENERATE_OVERFLOW
       npy_set_floatstatus_overflow();
-#endif
+#endif  // NPY_HALF_GENERATE_OVERFLOW
       return (unsigned short)(h_sgn + 0x7c00u);
     }
   }
@@ -74,7 +74,7 @@ static inline unsigned short float2half(unsigned f) {
       if ((f & 0x7fffffff) != 0) {
         npy_set_floatstatus_underflow();
       }
-#endif
+#endif  // NPY_HALF_GENERATE_UNDERFLOW
       return h_sgn;
     }
     /* Make the subnormal significand */
@@ -85,7 +85,7 @@ static inline unsigned short float2half(unsigned f) {
     if ((f_sig & (((unsigned)1 << (126 - f_exp)) - 1)) != 0) {
       npy_set_floatstatus_underflow();
     }
-#endif
+#endif  // NPY_HALF_GENERATE_UNDERFLOW
     f_sig >>= (113 - f_exp);
 /* Handle rounding by adding 1 to the bit beyond half precision */
 #if NPY_HALF_ROUND_TIES_TO_EVEN
@@ -99,7 +99,7 @@ static inline unsigned short float2half(unsigned f) {
     }
 #else
     f_sig += 0x00001000u;
-#endif
+#endif  // NPY_HALF_ROUND_TIES_TO_EVEN
     h_sig = (unsigned short)(f_sig >> 13);
     /*
      * If the rounding causes a bit to spill into h_exp, it will
@@ -124,7 +124,7 @@ static inline unsigned short float2half(unsigned f) {
   }
 #else
   f_sig += 0x00001000u;
-#endif
+#endif  // NPY_HALF_ROUND_TIES_TO_EVEN
   h_sig = (unsigned short)(f_sig >> 13);
 /*
  * If the rounding causes a bit to spill into h_exp, it will
@@ -140,7 +140,7 @@ static inline unsigned short float2half(unsigned f) {
   return h_sgn + h_sig;
 #else
   return h_sgn + h_exp + h_sig;
-#endif
+#endif  // NPY_HALF_GENERATE_OVERFLOW
 }
 
 static inline void floattofp16(unsigned char* dst, float* src, unsigned nelem) {

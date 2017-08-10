@@ -46,7 +46,7 @@ bool DbWriter::Init() {
 #else
       LOG(FATAL)
           << "Athena client not supported, please compile with -DUSE_ATHENA=ON";
-#endif
+#endif  // USE_ATHENA
     }
   }
   return true;
@@ -82,7 +82,7 @@ void DbWriter::Process() {
 #ifdef USE_ATHENA
     if (!athena_address_.empty() && aclient_)
       WriteAthena(camera_id, uuids, timestamp, tags, struck_features);
-#endif
+#endif  // USE_ATHENA
   }
 }
 
@@ -163,4 +163,4 @@ void DbWriter::WriteAthena(
     }
   }
 }
-#endif
+#endif  // USE_ATHENA

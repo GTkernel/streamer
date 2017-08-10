@@ -168,9 +168,9 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
     case MODEL_TYPE_NCS:
 #ifdef USE_NCS
       return nullptr;
-#else  // USE_NCS
+#else
       throw std::logic_error("Not built with NCS. Failed to initialize model!");
-#endif
+#endif  // USE_NCS
     case MODEL_TYPE_TENSORFLOW:
 #ifdef USE_TENSORFLOW
       return std::make_unique<TFModel>(model_desc, input_shape);

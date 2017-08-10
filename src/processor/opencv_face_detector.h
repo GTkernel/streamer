@@ -9,7 +9,7 @@
 #include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
 #else
 #include <opencv2/objdetect/objdetect.hpp>
-#endif
+#endif  // USE_CUDA
 #include "common/common.h"
 #include "common/types.h"
 #include "processor/processor.h"

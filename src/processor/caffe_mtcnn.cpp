@@ -226,7 +226,7 @@ MTCNN::MTCNN(const std::vector<ModelDesc>& model_descs) {
 #else
     LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
                   "configured rather than -1";
-#endif
+#endif  // USE_CUDA
   }
 
 /* Load the network. */
@@ -235,7 +235,7 @@ MTCNN::MTCNN(const std::vector<ModelDesc>& model_descs) {
                              Caffe::GetDefaultDevice()));
 #else
   PNet_.reset(new Net<float>(model_descs[0].GetModelDescPath(), TEST));
-#endif
+#endif  // USE_OPENCL
   PNet_->CopyTrainedLayersFrom(model_descs[0].GetModelParamsPath());
 
   CHECK_EQ(PNet_->num_inputs(), 1) << "Network should have exactly one input.";
@@ -257,7 +257,7 @@ MTCNN::MTCNN(const std::vector<ModelDesc>& model_descs) {
   } else {
     RNet_.reset(new Net<float>(model_descs[2].GetModelDescPath(), TEST));
   }
-#endif
+#endif  // USE_OPENCL
   RNet_->CopyTrainedLayersFrom(model_descs[1].GetModelParamsPath());
 
 //  CHECK_EQ(RNet_->num_inputs(), 0) << "Network should have exactly one
@@ -279,7 +279,7 @@ MTCNN::MTCNN(const std::vector<ModelDesc>& model_descs) {
   } else {
     ONet_.reset(new Net<float>(model_descs[4].GetModelDescPath(), TEST));
   }
-#endif
+#endif  // USE_OPENCL
   ONet_->CopyTrainedLayersFrom(model_descs[3].GetModelParamsPath());
 
   //  CHECK_EQ(ONet_->num_inputs(), 1) << "Network should have exactly one
@@ -343,7 +343,7 @@ void MTCNN::ClassifyFace(const std::vector<FaceInfo>& regressed_rects,
 #else
     cv::resize(crop_img, crop_img, cv::Size(input_width, input_height), 0, 0,
                cv::INTER_AREA);
-#endif
+#endif  // INTER_FAST
     crop_img = (crop_img - 127.5) * 0.0078125;
     cv::split(crop_img, channels);
 
@@ -435,7 +435,7 @@ void MTCNN::ClassifyFace_MulImage(const std::vector<FaceInfo>& regressed_rects,
 #else
     cv::resize(crop_img, crop_img, cv::Size(input_width, input_height), 0, 0,
                cv::INTER_AREA);
-#endif
+#endif  // INTER_FAST
     crop_img = (crop_img - 127.5) * 0.0078125;
     Datum datum;
     CvMatToDatumSignalChannel(crop_img, &datum);
@@ -563,7 +563,7 @@ void MTCNN::Detect(const cv::Mat& image, std::vector<FaceInfo>& faceInfo,
                cv::INTER_NEAREST);
 #else
     cv::resize(sample_single, resized, cv::Size(ws, hs), 0, 0, cv::INTER_AREA);
-#endif
+#endif  // INTER_FAST
     resized.convertTo(resized, CV_32FC3, 0.0078125, -127.5 * 0.0078125);
 
     // input data

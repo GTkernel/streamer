@@ -10,7 +10,7 @@
 
 #ifdef USE_ATHENA
 #include "client/AthenaClient.h"
-#endif
+#endif  // USE_ATHENA
 #include "camera/camera.h"
 #include "common/common.h"
 #include "processor.h"
@@ -43,7 +43,7 @@ class DbWriter : public Processor {
   std::string athena_address_;
 #ifdef USE_ATHENA
   std::unique_ptr<athena::AthenaClient> aclient_;
-#endif
+#endif  // USE_ATHENA
 };
 
 #endif  // STREAMER_DB_WRITER_H

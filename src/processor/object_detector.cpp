@@ -54,7 +54,7 @@ bool ObjectDetector::Init() {
 #else
     LOG(FATAL) << "Compiled in CPU_ONLY mode but have a device number "
                   "configured rather than -1";
-#endif
+#endif  // USE_CUDA
   }
 
   std::string proto_file = model_desc_.GetModelDescPath();
