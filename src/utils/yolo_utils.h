@@ -198,14 +198,15 @@ inline static void draw_detections(
   }
 }
 
-inline static std::vector<std::string> ReadVocNames(const std::string& file_path) {
+inline static std::vector<std::string> ReadVocNames(
+    const std::string& file_path) {
   std::vector<std::string> result;
   std::string name;
   std::ifstream infile;
   infile.open(file_path.c_str());
   CHECK(infile) << "Cannot open " << file_path;
   result.push_back("none_of_the_above");
-  while(std::getline(infile, name)) {
+  while (std::getline(infile, name)) {
     result.push_back(name);
   }
   infile.close();

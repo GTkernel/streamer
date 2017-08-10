@@ -172,11 +172,9 @@ void YoloDetector::Process() {
       if (ymin < 0) ymin = 0;
       if (xmax > original_img.cols) xmax = original_img.cols;
       if (ymax > original_img.rows) ymax = original_img.rows;
-      
+
       tags.push_back(voc_names_.at(filtered_res[i][0]));
-      bbs.push_back(Rect(xmin, ymin,
-                         xmax - xmin,
-                         ymax - ymin));
+      bbs.push_back(Rect(xmin, ymin, xmax - xmin, ymax - ymin));
       confidences.push_back(filtered_res[i][5] * 1.0 / 100);
     }
 
