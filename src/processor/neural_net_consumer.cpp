@@ -20,7 +20,7 @@ NeuralNetConsumer::NeuralNetConsumer(
 void NeuralNetConsumer::SetSource(const string& name, StreamPtr stream) {
   if (NneIsPrivate()) {
     // If we are managing the NeuralNetEvaluator, then set its source instead.
-    nne_->SetSource(name, stream);
+    nne_->SetSource(name, stream, "");
   } else {
     Processor::SetSource(name, stream);
   }

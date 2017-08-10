@@ -37,6 +37,7 @@ class NeuralNetEvaluator : public Processor {
   void SetSource(const std::string& name, StreamPtr stream,
                  const std::string& layername = "");
   void SetSource(StreamPtr stream, const std::string& layername = "");
+  using Processor::SetSource;
 
  protected:
   virtual bool Init() override;
