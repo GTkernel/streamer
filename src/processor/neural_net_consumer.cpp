@@ -20,37 +20,29 @@ NeuralNetConsumer::NeuralNetConsumer(
 void NeuralNetConsumer::SetSource(const string& name, StreamPtr stream) {
   if (NneIsPrivate()) {
     // If we are managing the NeuralNetEvaluator, then set its source instead.
-    nne_->SetSource(name, stream);
+    nne_->SetSource(name, stream, "");
   } else {
     Processor::SetSource(name, stream);
   }
 }
 
-double NeuralNetConsumer::GetSlidingLatencyMs() const {
-  double our_latency = Processor::GetSlidingLatencyMs();
+double NeuralNetConsumer::GetTrailingAvgProcessingLatencyMs() const {
+  double our_latency = Processor::GetTrailingAvgProcessingLatencyMs();
   if (NneIsPrivate()) {
     // We add our latency to the latency of our hidden NeuralNetEvaluator.
-    return nne_->GetSlidingLatencyMs();
+    return nne_->GetTrailingAvgProcessingLatencyMs() + our_latency;
   } else {
     return our_latency;
   }
 }
 
-double NeuralNetConsumer::GetAvgLatencyMs() const {
-  double our_latency = Processor::GetAvgLatencyMs();
+double NeuralNetConsumer::GetAvgProcessingLatencyMs() const {
+  double our_latency = Processor::GetAvgProcessingLatencyMs();
   if (NneIsPrivate()) {
     // We add our latency to the latency of our hidden NeuralNetEvaluator.
-    return nne_->GetAvgLatencyMs() + our_latency;
+    return nne_->GetAvgProcessingLatencyMs() + our_latency;
   } else {
     return our_latency;
-  }
-}
-
-double NeuralNetConsumer::GetAvgFps() const {
-  if (NneIsPrivate()) {
-    return 1000.0 / GetAvgLatencyMs();
-  } else {
-    return Processor::GetAvgFps();
   }
 }
 

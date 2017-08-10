@@ -1,137 +1,168 @@
-/**
- * @brief classifier.cpp - An example application to classify images.
- */
+// The classifier app demonstrates how to use an ImageClassifier processor.
 
 #include <cstdio>
+#include <iostream>
+#include <memory>
+#include <regex>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
+#include <glog/logging.h>
+#include <gst/gst.h>
 #include <boost/program_options.hpp>
+#include <opencv2/opencv.hpp>
 
-#include "streamer.h"
+#include "camera/camera_manager.h"
+#include "common/context.h"
+#include "model/model_manager.h"
+#include "processor/image_classifier.h"
+#include "processor/image_transformer.h"
 
 namespace po = boost::program_options;
 
-void Run(const string& camera_name, const string& model_name, bool display) {
-  CameraManager& camera_manager = CameraManager::GetInstance();
-  ModelManager& model_manager = ModelManager::GetInstance();
+void Run(const std::string& camera_name, const std::string& model_name,
+         bool display) {
+  std::vector<std::shared_ptr<Processor>> procs;
 
-  CHECK(camera_manager.HasCamera(camera_name))
-      << "Camera " << camera_name << " does not exist";
+  // Camera
+  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  procs.push_back(camera);
 
-  auto camera = camera_manager.GetCamera(camera_name);
-
-  // Transformer
-  Shape input_shape(3, 227, 227);
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true);
+  // ImageTransformer
+  auto model_desc = ModelManager::GetInstance().GetModelDesc(model_name);
+  Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true, true);
   transformer->SetSource("input", camera->GetSink("output"));
+  procs.push_back(transformer);
 
-  // Image classifier
-  auto model_desc = model_manager.GetModelDesc(model_name);
+  // ImageClassifier
   auto classifier =
       std::make_shared<ImageClassifier>(model_desc, input_shape, 1);
   classifier->SetSource("input", transformer->GetSink("output"));
+  procs.push_back(classifier);
 
-  // Run
-  camera->Start();
-  transformer->Start();
-  classifier->Start();
+  // Start the processors in reverse order.
+  for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
+    (*procs_it)->Start();
+  }
 
   if (display) {
     std::cout << "Press \"q\" to stop." << std::endl;
-
-    auto reader = classifier->GetSink("output")->Subscribe();
-    while (true) {
-      auto frame = reader->PopFrame();
-      auto tags = frame->GetValue<std::vector<std::string>>("tags");
-      auto probs = frame->GetValue<std::vector<double>>("probabilities");
-      std::string tag = tags.front();
-      double prob = probs.front();
-
-      cv::Mat img = frame->GetValue<cv::Mat>("original_image");
-
-      // Overlay classification label and probability
-      double font_size = 0.8 * img.size[0] / 320.0;
-      cv::Point label_point(img.rows / 6, img.cols / 3);
-      cv::Scalar outline_color(0, 0, 0);
-      cv::Scalar label_color(200, 200, 250);
-
-      cv::putText(img, tag, label_point, CV_FONT_HERSHEY_DUPLEX, font_size,
-                  outline_color, 8, CV_AA);
-      cv::putText(img, tag, label_point, CV_FONT_HERSHEY_DUPLEX, font_size,
-                  label_color, 2, CV_AA);
-
-      cv::Point fps_point(img.rows / 3, img.cols / 6);
-
-      char fps_string[256];
-      sprintf(fps_string, "Prob: %.2lf", prob);
-      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
-                  outline_color, 8, CV_AA);
-      cv::putText(img, fps_string, fps_point, CV_FONT_HERSHEY_DUPLEX, font_size,
-                  label_color, 2, CV_AA);
-
-      cv::imshow(camera_name, img);
-
-      int q = cv::waitKey(10);
-      if (q == 'q') break;
-    }
   } else {
-    std::cout << "Press \"Enter\" to stop." << std::endl;
-    getchar();
+    std::cout << "Press \"Control-C\" to stop." << std::endl;
   }
 
-  classifier->Stop();
-  transformer->Stop();
-  camera->Stop();
+  auto reader = classifier->GetSink("output")->Subscribe();
+  while (true) {
+    auto frame = reader->PopFrame();
+
+    // Extract match percentage.
+    auto probs = frame->GetValue<std::vector<double>>("probabilities");
+    auto prob_percent = probs.front() * 100;
+
+    // Extract tag.
+    auto tags = frame->GetValue<std::vector<std::string>>("tags");
+    auto tag = tags.front();
+    std::regex re(".+? (.+)");
+    std::smatch results;
+    std::string tag_name;
+    if (!std::regex_match(tag, results, re)) {
+      tag_name = tag;
+      throw std::runtime_error("Cannot parse tag string: " + tag);
+    } else {
+      tag_name = results[1];
+    }
+
+    // Get Frame Rate
+    double rate = reader->GetPushFps();
+
+    std::ostringstream label;
+    label.precision(2);
+    label << rate << " FPS - " << prob_percent << "% - " << tag_name;
+    auto label_string = label.str();
+    std::cout << label_string << std::endl;
+
+    // For debugging purposes only...
+    std::ostringstream fps_msg;
+    fps_msg.precision(3);
+    fps_msg << "  GetPushFps: " << reader->GetPushFps() << std::endl
+            << "  GetPopFps: " << reader->GetPopFps() << std::endl
+            << "  GetHistoricalFps: " << reader->GetHistoricalFps() << std::endl
+            << "  GetAvgProcessingLatencyMs->FPS: "
+            << (1000 / classifier->GetAvgProcessingLatencyMs()) << std::endl
+            << "  GetTrailingAvgProcessingLatencyMs->FPS: "
+            << (1000 / classifier->GetTrailingAvgProcessingLatencyMs());
+    std::cout << fps_msg.str() << std::endl;
+
+    if (display) {
+      // Overlay classification label and probability
+      auto font_scale = 2.0;
+      cv::Point label_point(25, 50);
+      cv::Scalar label_color(200, 200, 250);
+      cv::Scalar outline_color(0, 0, 0);
+
+      auto img = frame->GetValue<cv::Mat>("original_image");
+      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
+                  font_scale, outline_color, 8, CV_AA);
+      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
+                  font_scale, label_color, 2, CV_AA);
+      cv::imshow(camera_name, img);
+
+      if (cv::waitKey(10) == 'q') break;
+    }
+  }
+
+  // Stop the processors in forward order.
+  for (const auto& proc : procs) {
+    proc->Stop();
+  }
 }
 
 int main(int argc, char* argv[]) {
-  gst_init(&argc, &argv);
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_alsologtostderr = 1;
-  FLAGS_colorlogtostderr = 1;
-
-  po::options_description desc("Simple camera display test");
-  desc.add_options()("help,h", "print the help message");
-  desc.add_options()("camera",
-                     po::value<string>()->value_name("CAMERA")->required(),
-                     "The name of the camera to use");
-  desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR")->required(),
-                     "The directory to find streamer's configurations");
+  po::options_description desc("Stores frames as text files.");
+  desc.add_options()("help,h", "Print the help message.");
+  desc.add_options()(
+      "config-dir,C", po::value<std::string>(),
+      "The directory containing streamer's configuration files.");
+  desc.add_options()("camera,c", po::value<std::string>()->required(),
+                     "The name of the camera to use.");
+  desc.add_options()("model,m", po::value<std::string>()->required(),
+                     "The name of the model to evaluate.");
   desc.add_options()("display,d", "Enable display or not");
-  desc.add_options()("model,m",
-                     po::value<string>()->value_name("MODEL")->required(),
-                     "The name of the model to run");
 
-  po::variables_map vm;
+  // Parse the command line arguments.
+  po::variables_map args;
   try {
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
+    po::store(po::parse_command_line(argc, argv, desc), args);
+    if (args.count("help")) {
+      std::cout << desc << std::endl;
+      return 1;
+    }
+    po::notify(args);
   } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;
   }
 
-  if (vm.count("help")) {
-    std::cout << desc << std::endl;
-    return 1;
-  }
-
-  // Parse arguments
-  if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
-  }
-
-  // Init streamer context, this must be called before using streamer.
+  // Set up GStreamer.
+  gst_init(&argc, &argv);
+  // Set up glog.
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_alsologtostderr = 1;
+  FLAGS_colorlogtostderr = 1;
+  // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  auto camera_name = vm["camera"].as<string>();
-  auto model = vm["model"].as<string>();
-  auto display = vm.count("display") != 0;
-
-  // Run classifier
+  // Extract the command line arguments.
+  if (args.count("config-dir")) {
+    Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
+  }
+  auto camera_name = args["camera"].as<std::string>();
+  auto model = args["model"].as<std::string>();
+  bool display = args.count("display");
   Run(camera_name, model, display);
-
   return 0;
 }

@@ -148,23 +148,23 @@ void RunEndToEndExperiment() {
 
   /////////////// PRINT STATS
   for (decltype(cameras.size()) i = 0; i < cameras.size(); ++i) {
-    cout << "-- camera[" << i << "] fps is " << cameras.at(i)->GetAvgFps()
-         << endl;
+    cout << "-- camera[" << i << "] latency is "
+         << cameras.at(i)->GetAvgProcessingLatencyMs() << endl;
   }
   for (decltype(transformers.size()) i = 0; i < transformers.size(); ++i) {
-    cout << "-- transformer[" << i << "] fps is "
-         << transformers.at(i)->GetAvgFps() << endl;
+    cout << "-- transformer[" << i << "] latency is "
+         << transformers.at(i)->GetAvgProcessingLatencyMs() << endl;
   }
 
   for (decltype(classifiers.size()) i = 0; i < classifiers.size(); ++i) {
-    cout << "-- classifier << " << i << " fps is "
-         << classifiers.at(i)->GetAvgFps() << endl;
+    cout << "-- classifier << " << i << " latency is "
+         << classifiers.at(i)->GetAvgProcessingLatencyMs() << endl;
   }
 
   if (CONFIG.store) {
     for (decltype(encoders.size()) i = 0; i < encoders.size(); ++i) {
-      cout << "-- encoder[" << i << "] fps is " << encoders.at(i)->GetAvgFps()
-           << endl;
+      cout << "-- encoder[" << i << "] latency is "
+           << encoders.at(i)->GetAvgProcessingLatencyMs() << endl;
     }
   }
 }
