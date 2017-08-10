@@ -1,7 +1,7 @@
 [mean_image]
-BLUE  = 104
-GREEN = 117
-RED   = 123
+BLUE  = 104.0
+GREEN = 117.0
+RED   = 123.0
 
 [[model]]
 name = "AlexNet"
