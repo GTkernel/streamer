@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __NCS_MANAGER_H__
-#define __NCS_MANAGER_H__
+#ifndef STREAMER_NCS_NCS_MANAGER_H_
+#define STREAMER_NCS_NCS_MANAGER_H_
 
 #include <string>
 #include <vector>
@@ -71,4 +71,4 @@ class NCSManager {
   ~NCSManager();
 };
 
-#endif  // __NCS_MANAGER_H__
+#endif  // STREAMER_NCS_NCS_MANAGER_H_

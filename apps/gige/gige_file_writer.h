@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/2/16.
 //
 
-#ifndef STREAMER_FILE_WRITER_H
-#define STREAMER_FILE_WRITER_H
+#ifndef STREAMER_GIGE_GIGE_FILE_WRITER_H_
+#define STREAMER_GIGE_GIGE_FILE_WRITER_H_
 
 #include "streamer.h"
 
@@ -43,4 +43,4 @@ class GigeFileWriter : public Processor {
   std::ofstream current_file_;
 };
 
-#endif  // STREAMER_FILE_WRITER_H
+#endif  // STREAMER_GIGE_GIGE_FILE_WRITER_H_

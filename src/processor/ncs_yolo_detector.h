@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_NCS_YOLO_DETECTOR_H
-#define STREAMER_NCS_YOLO_DETECTOR_H
+#ifndef STREAMER_PROCESSOR_NCS_YOLO_DETECTOR_H_
+#define STREAMER_PROCESSOR_NCS_YOLO_DETECTOR_H_
 
 #include <caffe/caffe.hpp>
 #include <set>
@@ -39,4 +39,4 @@ class NcsYoloDetector : public Processor {
   std::vector<std::string> voc_names_;
 };
 
-#endif  // STREAMER_NCS_YOLO_DETECTOR_H
+#endif  // STREAMER_PROCESSOR_NCS_YOLO_DETECTOR_H_

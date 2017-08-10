@@ -5,8 +5,9 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_CV_UTILS_H_H
-#define STREAMER_CV_UTILS_H_H
+#ifndef STREAMER_UTILS_CV_UTILS_H_
+#define STREAMER_UTILS_CV_UTILS_H_
+
 #include "common/common.h"
 
 inline cv::Scalar HSV2RGB(const float h, const float s, const float v) {
@@ -71,4 +72,4 @@ inline std::vector<cv::Scalar> GetColors(const int n) {
   return colors;
 }
 
-#endif  // STREAMER_CV_UTILS_H_H
+#endif  // STREAMER_UTILS_CV_UTILS_H_

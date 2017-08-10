@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_OPENCV_MOTION_DETECTOR_H
-#define STREAMER_OPENCV_MOTION_DETECTOR_H
+#ifndef STREAMER_PROCESSOR_OPENCV_MOTION_DETECTOR_H_
+#define STREAMER_PROCESSOR_OPENCV_MOTION_DETECTOR_H_
 
 #include <chrono>
 #include <opencv2/opencv.hpp>
@@ -37,4 +37,4 @@ class OpenCVMotionDetector : public Processor {
   float max_duration_;
 };
 
-#endif  // STREAMER_OPENCV_MOTION_DETECTOR_H
+#endif  // STREAMER_PROCESSOR_OPENCV_MOTION_DETECTOR_H_

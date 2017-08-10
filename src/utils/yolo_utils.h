@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef STREAMER_YOLO_UTILS_H_
-#define STREAMER_YOLO_UTILS_H_
+#ifndef STREAMER_UTILS_YOLO_UTILS_H_
+#define STREAMER_UTILS_YOLO_UTILS_H_
 #include <fstream>
 
 typedef struct {
@@ -212,4 +212,4 @@ inline static std::vector<std::string> ReadVocNames(const std::string& file_path
   return result;
 }
 
-#endif  // STREAMER_YOLO_UTILS_H_
+#endif  // STREAMER_UTILS_YOLO_UTILS_H_

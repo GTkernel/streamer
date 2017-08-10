@@ -1,3 +1,7 @@
+
+#ifndef STREAMER_UTILS_FP16_H_
+#define STREAMER_UTILS_FP16_H_
+
 static inline unsigned half2float(unsigned short h) {
   unsigned short h_exp, h_sig;
   unsigned f_sgn, f_exp, f_sig;
@@ -158,3 +162,5 @@ static inline void fp16tofloat(float* dst, unsigned char* src, unsigned nelem) {
 
   for (i = 0; i < nelem; i++) _dst[i] = half2float(_src[i]);
 }
+
+#endif  // STREAMER_UTILS_FP16_H_

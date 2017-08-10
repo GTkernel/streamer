@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_OBJECT_TRACKER_H
-#define STREAMER_OBJECT_TRACKER_H
+#ifndef STREAMER_PROCESSOR_OBJECT_TRACKER_H_
+#define STREAMER_PROCESSOR_OBJECT_TRACKER_H_
 
 #include <boost/optional.hpp>
 #include "common/common.h"
@@ -34,4 +34,4 @@ class ObjectTracker : public Processor {
   bool first_frame_;
 };
 
-#endif  // STREAMER_OBJECT_TRACKER_H
+#endif  // STREAMER_PROCESSOR_OBJECT_TRACKER_H_

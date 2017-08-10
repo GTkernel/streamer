@@ -5,8 +5,9 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_YOLO_DETECTOR_H
-#define STREAMER_YOLO_DETECTOR_H
+#ifndef STREAMER_PROCESSOR_YOLO_DETECTOR_H_
+#define STREAMER_PROCESSOR_YOLO_DETECTOR_H_
+
 #include <caffe/caffe.hpp>
 #include <set>
 #include "common/common.h"
@@ -173,4 +174,4 @@ inline std::vector<std::vector<int>> GetBoxes(
   return Boxes;
 }
 
-#endif  // STREAMER_YOLO_DETECTOR_H
+#endif  // STREAMER_PROCESSOR_YOLO_DETECTOR_H_

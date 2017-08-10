@@ -2,8 +2,8 @@
 // Created by Abhinav Garlapati (abhinav2710@gmail.com) on 1/21/17.
 //
 
-#ifndef STREAMER_OPENCV_PEOPLE_DETECTOR_H
-#define STREAMER_OPENCV_PEOPLE_DETECTOR_H
+#ifndef STREAMER_PROCESSOR_OPENCV_PEOPLE_DETECTOR_H_
+#define STREAMER_PROCESSOR_OPENCV_PEOPLE_DETECTOR_H_
 
 #ifdef USE_CUDA
 #include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
@@ -33,4 +33,4 @@ class OpenCVPeopleDetector : public Processor {
 #endif  // USE_CUDA
 };
 
-#endif  // STREAMER_OPENCV_PEOPLE_DETECTOR_H
+#endif  // STREAMER_PROCESSOR_OPENCV_PEOPLE_DETECTOR_H_

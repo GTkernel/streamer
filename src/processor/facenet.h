@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_FACENET_H
-#define STREAMER_FACENET_H
+#ifndef STREAMER_PROCESSOR_FACENET_H_
+#define STREAMER_PROCESSOR_FACENET_H_
 
 #include <caffe/caffe.hpp>
 #include "common/common.h"
@@ -41,4 +41,4 @@ class Facenet : public Processor {
   cv::Mat face_image_bgr_;
 };
 
-#endif  // STREAMER_FACENET_H
+#endif  // STREAMER_PROCESSOR_FACENET_H_

@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_SSD_DETECTOR_H
-#define STREAMER_SSD_DETECTOR_H
+#ifndef STREAMER_PROCESSOR_SSD_DETECTOR_H_
+#define STREAMER_PROCESSOR_SSD_DETECTOR_H_
 
 #include <caffe/caffe.hpp>
 #include <set>
@@ -63,4 +63,4 @@ class SsdDetector : public Processor {
   caffe::LabelMap label_map_;
 };
 
-#endif  // STREAMER_SSD_DETECTOR_H
+#endif  // STREAMER_PROCESSOR_SSD_DETECTOR_H_

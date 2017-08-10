@@ -38,4 +38,4 @@ class ModelManager {
   std::unordered_map<string, std::vector<ModelDesc>> model_descs_;
 };
 
-#endif  // STREAMER_MODEL_CONTROLLER_H
+#endif  // STREAMER_MODEL_MODEL_MANAGER_H_

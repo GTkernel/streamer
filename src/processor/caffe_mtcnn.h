@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_CAFFE_MTCNN_H
-#define STREAMER_CAFFE_MTCNN_H
+#ifndef STREAMER_PROCESSOR_CAFFE_MTCNN_H_
+#define STREAMER_PROCESSOR_CAFFE_MTCNN_H_
 
 // caffe
 #include <caffe/caffe.hpp>
@@ -122,4 +122,4 @@ class MtcnnFaceDetector : public Processor {
   std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
 };
 
-#endif  // STREAMER_CAFFE_MTCNN_H
+#endif  // STREAMER_PROCESSOR_CAFFE_MTCNN_H_

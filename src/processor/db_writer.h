@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_DB_WRITER_H
-#define STREAMER_DB_WRITER_H
+#ifndef STREAMER_PROCESSOR_DB_WRITER_H_
+#define STREAMER_PROCESSOR_DB_WRITER_H_
 
 #ifdef USE_ATHENA
 #include "client/AthenaClient.h"
@@ -46,4 +46,4 @@ class DbWriter : public Processor {
 #endif  // USE_ATHENA
 };
 
-#endif  // STREAMER_DB_WRITER_H
+#endif  // STREAMER_PROCESSOR_DB_WRITER_H_

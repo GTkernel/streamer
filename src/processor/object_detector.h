@@ -5,8 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_OBJECT_DETECTOR_H
-#define STREAMER_OBJECT_DETECTOR_H
+#ifndef STREAMER_PROCESSOR_OBJECT_DETECTOR_H_
+#define STREAMER_PROCESSOR_OBJECT_DETECTOR_H_
 
 #include <set>
 #include "api/api.hpp"
@@ -34,4 +34,4 @@ class ObjectDetector : public Processor {
   std::set<std::string> targets_;
 };
 
-#endif  // STREAMER_OBJECT_DETECTOR_H
+#endif  // STREAMER_PROCESSOR_OBJECT_DETECTOR_H_
