@@ -151,7 +151,10 @@ if (USE_SSD)
   list(APPEND STREAMER_SOURCE_FILES ${SSD_SOURCE_FILES})
 endif ()
 
-list(APPEND STREAMER_LIBRARIES struck)
+# Build with STRUCK libraries
+if (USE_STRUCK)
+  list(APPEND STREAMER_LIBRARIES ${Struck_LIBRARIES})
+endif ()
 message(${STREAMER_LIBRARIES})
 
 add_library(streamer SHARED ${STREAMER_SOURCE_FILES})

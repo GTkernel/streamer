@@ -10,14 +10,17 @@
 #include <boost/uuid/uuid_generators.hpp>  // generators
 #include <boost/uuid/uuid_io.hpp>          // streaming operators etc.
 #include "common/context.h"
-#include "struck/src/Config.h"
-#include "struck/src/Tracker.h"
+#ifdef USE_STRUCK
+#include "src/Config.h"
+#include "src/Tracker.h"
+#endif
 #ifdef USE_DLIB
 #include <dlib/dlib/image_processing.h>
 #include <dlib/dlib/opencv.h>
 #endif  // USE_DLIB
 #include "obj_tracker.h"
 
+#ifdef USE_STRUCK
 static const string STRUCK_CONF_FILENAME = "struck_config.txt";
 
 class StruckTracker : public BaseTracker {
@@ -44,6 +47,7 @@ class StruckTracker : public BaseTracker {
   std::unique_ptr<struck::Tracker> impl_;
   struck::Config conf_;
 };
+#endif
 
 #ifdef USE_DLIB
 class DlibTracker : public BaseTracker {
@@ -169,7 +173,12 @@ void ObjTracker::Process() {
       std::string uuid_str = boost::lexical_cast<std::string>(uuid);
       std::shared_ptr<BaseTracker> new_tracker;
       if (type_ == "struck") {
+#ifdef USE_STRUCK
         new_tracker.reset(new StruckTracker(uuid_str, untracked_tags[i]));
+#else
+        LOG(FATAL) << "Tracker type " << type_
+                   << " not supported, please compile with -DUSE_STRUCK=ON";
+#endif
       } else if (type_ == "dlib") {
 #ifdef USE_DLIB
         new_tracker.reset(new DlibTracker(uuid_str, untracked_tags[i]));
