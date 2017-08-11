@@ -113,15 +113,6 @@ void Run(const std::vector<string>& camera_names,
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
   }
-#if 0
-  // motion_detector
-  for (size_t i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> motion_detector(new OpenCVMotionDetector(motion_threshold,
-        motion_max_duration));
-    motion_detector->SetSource("input", input_streams[i]);
-    motion_detectors.push_back(motion_detector);
-  }
-#endif  // 0
   // mtcnn
   auto model_descs = model_manager.GetModelDescs(mtcnn_model_name);
   for (size_t i = 0; i < batch_size; i++) {
@@ -230,19 +221,6 @@ void Run(const std::vector<string>& camera_names,
                       cv::Point(bboxes[j].px, bboxes[j].py + 30), 0, 1.0,
                       cv::Scalar(0, 255, 0), 3);
         }
-#if 0
-        auto paths = md_frame->GetPaths();
-        for (const auto& m: paths) {
-          auto prev_it=m.begin();
-          for (auto it=m.begin(); it != m.end(); ++it) {
-            if (it != m.begin()) {
-              if ((*it) && (*prev_it))
-                cv::line(image, (*prev_it)->point, (*it)->point, cv::Scalar(255,0,0), 5);
-            }
-            prev_it = it;
-          }
-        }
-#endif  // 0
 
         cv::imshow(camera_names[i], image);
       }
