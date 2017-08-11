@@ -92,6 +92,10 @@ class Processor {
 
   zmq::socket_t* GetControlSocket();
 
+  // Configure whether this processor should block when pushing frames to its
+  // outputs streams if any of its output streams is full.
+  void SetBlockOnPush(bool block);
+
  protected:
   /**
    * @brief Initialize the processor.
@@ -140,6 +144,8 @@ class Processor {
  private:
   const ProcessorType type_;
   zmq::socket_t* control_socket_;
+  // Whether to block when pushing frames if any output streams are full.
+  std::atomic<bool> block_on_push_;
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_H_

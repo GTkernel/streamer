@@ -12,6 +12,16 @@ GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
 bool GSTCamera::Init() {
   bool opened = capture_.CreatePipeline(video_uri_);
 
+  // Determine if we should block when pushing frames.
+  std::string video_protocol;
+  std::string video_path;
+  ParseProtocolAndPath(video_uri_, video_protocol, video_path);
+  if (video_protocol == "file") {
+    // If we're reading from a file, then by default we don't want the camera to
+    // drop any frames.
+    SetBlockOnPush(true);
+  }
+
   if (!opened) {
     LOG(INFO) << "can't open camera";
     return false;

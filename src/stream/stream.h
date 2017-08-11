@@ -5,6 +5,7 @@
 #ifndef STREAMER_STREAM_STREAM_H_
 #define STREAMER_STREAM_STREAM_H_
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
@@ -34,21 +35,32 @@ class StreamReader {
   double GetPushFps();
   double GetPopFps();
   double GetHistoricalFps();
+  // Signals that this StreamReader should stop any currently-waiting attempts
+  // to push or pop frames. This is required because Processor::Stop() joins the
+  // processing threads, and the processing threads may call
+  // StreamReader::PushFrame() and StreamReader::PopFrame() in a blocking
+  // manner.
+  void Stop();
 
  private:
   /**
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.
    */
-  void PushFrame(std::unique_ptr<Frame> frame);
+  void PushFrame(std::unique_ptr<Frame> frame, bool block = false);
   Stream* stream_;
   // Max size of the buffer to hold frames in the stream
   size_t max_buffer_size_;
   // The frame buffer
   std::queue<std::unique_ptr<Frame>> frame_buffer_;
-  // Stream synchronization
   std::mutex mtx_;
-  std::condition_variable buffer_cv_;
+  // Used to wait if the queue is full when trying to push.
+  std::condition_variable push_cv_;
+  // Used to wait if the queue is empty when trying to pop.
+  std::condition_variable pop_cv_;
+  // Used to signal PushFrame() and PopFrame() that they should return
+  // immediately.
+  std::atomic<bool> stopped_;
 
   // The total number of frames that have popped from this StreamReader.
   unsigned long num_frames_popped_;
@@ -78,13 +90,13 @@ class StreamReader {
  */
 class Stream {
  public:
-  Stream();
-  Stream(string name);
+  Stream(string name = "");
   /**
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.
+   * @param block Whether to block if any of the StreamReaders are full.
    */
-  void PushFrame(std::unique_ptr<Frame> frame);
+  void PushFrame(std::unique_ptr<Frame> frame, bool block = false);
 
   /**
    * @brief Get the name of the stream.
@@ -101,6 +113,11 @@ class Stream {
    * @brief Unsubscribe from the stream
    */
   void UnSubscribe(StreamReader* reader);
+
+  // Stops all of the StreamReaders attached to this Stream, waking up any
+  // threads that are trying to push or pop frames from this Stream. See the
+  // documentation for StreamReader::Stop().
+  void Stop();
 
  private:
   // Stream name for profiling and debugging
