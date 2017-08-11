@@ -47,7 +47,7 @@ void* NCSManager::LoadGraph(const char* path, unsigned int* length) {
   char* buf;
 
   fp = fopen(path, "rb");
-  if (!fp) return NULL;
+  if (!fp) return nullptr;
   fseek(fp, 0, SEEK_END);
   *length = ftell(fp);
   rewind(fp);
@@ -125,7 +125,7 @@ void NCSManager::GetResult(std::vector<float>& result) {
 void NCSManager::Stop() {
   _done = true;
   _it->join();
-  _it = NULL;
+  _it = nullptr;
 }
 
 void NCSManager::Close() {
@@ -187,7 +187,7 @@ bool NCSManager::IsOpened() const { return GetNumDevices() > 0; }
 int NCSManager::GetNumDevices() const { return _names.size(); }
 
 void* NCSManager::OpenDevice(const std::string& name) {
-  void* handle = NULL;
+  void* handle = nullptr;
   if (mvncOpenDevice(name.c_str(), &handle)) {
     throw std::runtime_error("Failed to open device");
   }
