@@ -60,7 +60,7 @@ void NcsYoloDetector::Process() {
     std::vector<float> result;
     detector_->GetResult(result);
     std::vector<std::tuple<int, cv::Rect, float>> detections;
-    get_detections(detections, result, img.size(), label_map_.item_size() - 1);
+    get_detections(detections, result, img.size(), voc_names_.size() - 1);
     std::vector<std::tuple<int, cv::Rect, float>> filtered_res;
     for (int i = 0; i < detections.size(); ++i) {
       const auto& d = detections[i];
