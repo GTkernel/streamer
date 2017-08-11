@@ -70,7 +70,6 @@ void Run(const std::string& camera_name, const std::string& model_name,
     std::string tag_name;
     if (!std::regex_match(tag, results, re)) {
       tag_name = tag;
-      throw std::runtime_error("Cannot parse tag string: " + tag);
     } else {
       tag_name = results[1];
     }
