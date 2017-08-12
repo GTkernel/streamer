@@ -120,7 +120,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Stores frames as text files.");
+  po::options_description desc("Runs image classification on a video stream");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
