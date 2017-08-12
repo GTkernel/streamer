@@ -99,9 +99,9 @@ To run unit tests:
 * `make tests`
 * `ctest -j4`
 
-### Run multi-camera end-to-end demo
+### Run single-camera end-to-end demo
 
-This is an example of running imagenet netowrk in Caffe with multiple camera streams.
+This is an example of running image classification on a single camera stream.
 
 First you need to configure your cameras and models. In your build directory, there should be a `config` directory.
 
@@ -134,21 +134,21 @@ The default configuration uses software encoder and decoder, to specify other de
 
 ```
 export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/multicam -h
-Multi-camera end to end video ingestion demo:
-  -h [ --help ]                  print the help message
-  -m [ --model ] MODEL           The name of the model to run
-  -c [ --camera ] CAMERAS        The name of the camera to use, if there are
-                                 multiple cameras to be used, separate with ,
-  -d [ --display ]               Enable display or not
-  -C [ --config_dir ] CONFIG_DIR The directory to find streamer's configuations
+apps/classifier -h
+Runs image classification on a video stream:
+  -h [ --help ]           Print the help message.
+  -C [ --config-dir ] arg The directory containing streamer's configuration
+                          files.
+  -c [ --camera ] arg     The name of the camera to use.
+  -m [ --model ] arg      The name of the model to evaluate.
+  -d [ --display ]        Enable display or not
 ```
 
-Use `apps/multicam -h` to show helps. For example to run AlexNet on Mac's iSight built-in camera:
+Use `apps/classifier -h` to show helps. For example to run AlexNet on Mac's iSight built-in camera:
 
 ```
 export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/multicam -m AlexNet -c Facetime -d
+apps/classifier -m AlexNet -c Facetime -d
 ```
 
 ## Run with different frameworks
