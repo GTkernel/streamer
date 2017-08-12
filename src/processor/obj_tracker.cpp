@@ -11,8 +11,8 @@
 #include <boost/uuid/uuid_io.hpp>          // streaming operators etc.
 #include "common/context.h"
 #ifdef USE_STRUCK
-#include "src/Config.h"
-#include "src/Tracker.h"
+#include "struck/src/Config.h"
+#include "struck/src/Tracker.h"
 #endif
 #ifdef USE_DLIB
 #include <dlib/dlib/image_processing.h>

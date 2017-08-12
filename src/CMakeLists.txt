@@ -153,7 +153,7 @@ endif ()
 
 # Build with STRUCK libraries
 if (USE_STRUCK)
-  list(APPEND STREAMER_LIBRARIES ${Struck_LIBRARIES})
+  list(APPEND STREAMER_LIBRARIES struck)
 endif ()
 message(${STREAMER_LIBRARIES})
 

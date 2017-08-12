@@ -89,8 +89,6 @@ endif ()
 
 option(USE_STRUCK "Build with Struck" OFF)
 if (USE_STRUCK)
-  find_package(Struck REQUIRED)
-  include_directories(${Struck_INCLUDE_DIRS})
   add_definitions("-D USE_STRUCK")
   message("Build with Struck")
 endif ()
