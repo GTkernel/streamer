@@ -1,191 +1,104 @@
-## streamer
+## Streamer Overview
 
 [![GitHub license](https://img.shields.io/badge/license-apache-green.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Build Status](https://travis-ci.com/viscloud/streamer.svg?token=Khh4txHVr3EZjYCRAdze&branch=master)](https://travis-ci.com/viscloud/streamer)
 
-Streamer is a system built for real-time video ingestion and analytics of live camera streams, with a special focus on running state-of-the-art deep learning based vision algorithms. The goal of streamer is twofold:
+Streamer is a platform for real-time video ingestion and analytics, primarily of
+live camera streams, with a special focus on running state-of-the-art machine
+learning-based vision algorithms. The goal of streamer is twofold:
 
-* A near camera system that provides computation resources and programming models for real-time, low-latency tasks.
-* A multi-camera infrastructure that provides camera controlling, sensor and application data storage and retrieval, tasks (potentially user-defined) planning and execution across a network of cameras.
+* An edge-to-cloud compute system that deploys real-time machine learning-based
+computer vision applications across many geo-distributed cameras.
+* An expressive pipeline-based programming model that makes it easy to define
+complex applications the operate on multitudes of camera streams.
 
-**Current status**
+An example end-to-end ingestion and analytics pipeline:
+* Take frames from cameras over RTSP.
+* Decode the stream with a hardware H.264 decoder.
+* Transform, scale, and normalize the frames into BGR images that can be fed
+into a deep neural network.
+* Run an image classification deep neural network (e.g. GoogleNet, MobileNet).
+* Collect the classification results as well as the original video data and
+store them locally on disk.
 
-You can run an end-to-end ingestion and analytics pipeline on streamer with multiple camera input. An example pipeline:
+Streamer currently supports these DNN frameworks:
+* [BVLC Caffe](https://github.com/BVLC/caffe)
+* [OpenCL Caffe](https://github.com/BVLC/caffe/tree/opencl)
+* [Intel Caffe](https://github.com/intel/caffe)
+* [TensorFlow](https://github.com/tensorflow/tensorflow)
 
-* Take frames off cameras from RTSP endpoint
-* Decode the stream with hardware h.264 decoder
-* Transform, scale and normalize the frames into BGR image that could feed directly into a neural network
-* Run an imagenet network (GoogleNet, AlexNet)
-* Collect the classification results as well as the original video data, and store them locally on disk. Videos can be re-encoded to save disk space.
+## Quick Start
 
+See [these detailed instructions](INSTALL.md) for more information about
+installing Streamer and its dependencies.
 
-
-For DNN frameworks, streamer currently supports Caffe, Caffe OpenCL, and Caffe-MKL. The support of tensorflow is on the way.
-
-## Getting Started
-
-### Dependencies
-
-Note: Here I will only include minimal requirements to successfully build streamer without additional dependencies. You may want to install various deep learning frameworks (Caffe, etc.). You can refer to their documentation on how to install them on your platform.
-
-#### 1. Mac
-
-
-With homebrew:
-
-```
-brew install cmake glog glib gstreamer gst-plugins-base \
-	gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-ffmpeg \
-	boost opencv jemalloc zmq zmqpp eigen
-```
-
-#### 2. Linux x86 (Ubuntu)
-
-Ubuntu 16.04
-
-```
-# install OpenCV from http://opencv.org/
-sudo apt-get update
-sudo apt-get install -y cmake libglib2.0-dev libgoogle-glog-dev \
-    libboost-all-dev libopencv-dev gstreamer1.0 libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
-    libgstreamer-plugins-bad1.0-dev libjemalloc-dev libzmq3-dev libeigen3-dev
-```
-
-For Ubuntu <= 14.04, also need to install cmake 3.
-
-```
-sudo add-apt-repository ppa:george-edison55/cmake-3.x
-sudo apt-get update
-# When cmake is not installed
-sudo apt-get install cmake
-# When cmake is already installed
-sudo apt-get upgrade
-```
-
-If the above does not work, you can [compile cmake 3 from source](http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04)
-
-#### 3. Tegra X1
-
-* gstreamer and opencv is already installed on TX1
-
-```
-sudo apt-get update
-sudo apt-get install -y cmake libglib2.0-dev \
-    libgoogle-glog-dev libboost-all-dev libjemalloc-dev libzmq3-dev \
-    libeigen3-dev
-# Optinal: install cnmem
-git clone https://github.com/NVIDIA/cnmem
-cd cnmem
+### 1. Compile Streamer
+```sh
+git clone https://github.com/viscloud/streamer
+cd streamer
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release -DBACKEND=cpu -DTEST_ON=yes ..
 make
-sudo make install
+make tests
+make test
 ```
 
+### 2. View frames from a camera
 
-### Compile
+The `simple` example app displays frames from a "camera" on the screen. A few
+examples are included below. See the `config/cameras.toml` file for more
+details.
 
-* `git clone https://github.com/ranxian/streamer`
-* `mkdir build`
-* `cd build`
-* `cmake -DCMAKE_BUILD_TYPE=Release -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true -DBACKEND=cuda ..` (this is an example of building with Caffe on a machine supports CUDA). If you don't have a GPU from NVIDIA, you could specify `-DBACKEND=cpu`.
-* `make`
+**Note 1:** The `--display` option requires X11, but the `simple` app works without
+it and will display some basic frame statistics on the terminal.
 
-To run unit tests:
+**Note 2:** By default, the "file" camera reads from a file `video.mp4` in the
+current directory (see `cameras.toml`).
 
-* `cmake -DTEST_ON=true ..`
-* `make tests`
-* `ctest -j4`
+```sh
+make apps
+./apps/simple --display --camera GST_TEST
+./apps/simple --display --camera webcam-linux
+./apps/simple --display --camera webcam-mac
+./apps/simple --display --camera file
+```
 
-### Run single-camera end-to-end demo
+### 3. Run basic image classification
 
 This is an example of running image classification on a single camera stream.
 
-First you need to configure your cameras and models. In your build directory, there should be a `config` directory.
+#### Add Caffe support to Streamer
 
-#### Configure cameras
-1. `cp config/cameras.toml.example config/cameras.toml`.
-2. Edit `config/cameras.toml`, you need to fill in the `name` of the camera, and the `video_uri` of the camera. `video_uri` could be
-    * `rtsp://xxx`: An rtsp endpoint.
-    * `facetime`: The iSight camera available on Mac.
-    * `gst://xxx`: xxx could be any raw GStreamer video pipeline, as long as the pipleine emits valid video frames. For example `gst://videotestsrc`. streamer uses GStreamer heavily for video ingestion, please refer to https://gstreamer.freedesktop.org/ for more information.
-3 `height`: Height of the camera.
-4 `width`: Width of the camera.
-
-
-#### Configure models
-1. `cp config/models.toml.example config/models.toml`
-2. Edit `config/models.toml`, fill in various fields for each of your model.
-    * `name`: name of the model
-    * `type`: currently only `caffe` is supported
-    * `desc_path`: The path to the model description file. For caffe it is a `.prototxt` file.
-    * `params_path`: The path to the model weights. For caffe it is a `.caffemodel` file.
-    * `input_width`: The suggested width of the input image.
-    * `input_height`: The suggested height of the input image.
-    * `label_file`: this is optional. For classification network or other network that requires a label file to produce a string label, you may add the path to that file here.
-
-#### Configure encoders and decoders
-The default configuration uses software encoder and decoder, to specify other decoders and encoders available on the system, edit `config/config.toml.example`.
-
-
-#### Run the classification demo    
-
-```
-export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/classifier -h
-Runs image classification on a video stream:
-  -h [ --help ]           Print the help message.
-  -C [ --config-dir ] arg The directory containing streamer's configuration
-                          files.
-  -c [ --camera ] arg     The name of the camera to use.
-  -m [ --model ] arg      The name of the model to evaluate.
-  -d [ --display ]        Enable display or not
+First, we need to recompile Streamer with Caffe support. If Caffe is installed
+globally, then you can omit `-DCAFFE_HOME`. The `cmake` command below assumes
+that you have compiled Caffe using its offical `make` build system, not its
+unofficial `cmake` system.
+```sh
+cmake -DUSE_CAFFE=yes -DCAFFE_HOME=/path/to/caffe/distribute ..
+make apps
 ```
 
-Use `apps/classifier -h` to show helps. For example to run AlexNet on Mac's iSight built-in camera:
+#### Configure the models
 
+Next, we need to configure our models. In your build directory, there should be
+a `config` directory. The example `models.toml` file has configurations for
+using Caffe to perform image classification using GoogleNet and MobileNet. Note
+that some of the parameters (e.g., the ones starting with `input_`) are model
+specific.
+
+The `models.toml` file also has the URLs for the various model files. There are
+three files for each of the two models, but one of the files is shared--thus a
+total of five files for both GoogleNet and MobileNet. Download the model files:
+```sh
+mkdir ../models
+# Download the model files into ../models
 ```
-export LD_LIBRARY=$LD_LIBRARY:/path/to/caffe/lib
-apps/classifier -m AlexNet -c Facetime -d
+
+#### Run the classification demo
+
+```sh
+./apps/classifier --display --camera webcam-linux --model googlenet
+./apps/classifier --display --camera webcam-linux --model mobilenet
 ```
 
-## Run with different frameworks
-
-Currently we support BVLC caffe, Caffe's OpenCL branch, and Intel's Caffe. Different frameworks are supported through several cmake flags.
-**Cmake will cache the variables**, when you switch to another framework, better clean existed build.
-
-* Caffe
-	* Installation: http://caffe.berkeleyvision.org/installation.html
-	* Build with: `cmake -DCAFFE_HOME=/path/to/caffe -DUSE_CAFFE=true ..`
-* Caffe OpenCL
-    * Installation`git clone https://github.com/BVLC/caffe/tree/opencl`
-    * I can successfully built it with cmake, the steps are
-    * `mkdir build`
-    * `cmake ..`, check that `-DCPU_ONLY=off` if you want to use OpenCL
-    * `make -j && make install`, built targets should be in `build/install`
-    * Then build `streamer` with `cmake -DCAFFE_HOME=/path/to/opencl-caffe -DBACKEND=opencl`
-    * Notice that OpenCL caffe has a different interface than the original caffe.
-
-## Compile configurations
-
-Apart from various configuations for different frameworks:
-
-* Control the backend
-    1. Use CPU. `-DBACKEND=cpu`
-    2. Use CUDA device. `-DBACKEND=cuda`
-    3. Use OpenCL device. `-DBACKEND=opencl`
-
-* Build with different framework: See above sections
-
-* Build with PtGray SDK for their GigE cameras: `-DUSE_PTGRAY=on`
-
-## TODO
-
-* [x] Refactor cmake files
-* [x] Port to CPU
-* [x] Support Intel integrated gpu
-* [x] Tegra as a streaming hub
-* [ ] Video and metadata storage
-* [ ] Support TensorFlow
+The `classifier` app also works without the `--display` option.
