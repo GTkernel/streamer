@@ -99,7 +99,6 @@ if (USE_VIMBA)
   list(APPEND STREAMER_LIBRARIES ${Vimba_LIBRARIES})
 endif ()
 
-
 # Build RPC support
 if (USE_RPC)
   file(GLOB PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/processor/rpc/*.proto")
