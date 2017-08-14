@@ -28,7 +28,8 @@ class ModelDesc {
         input_width_(input_width),
         input_height_(input_height),
         default_input_layer_(default_input_layer),
-        default_output_layer_(default_output_layer) {}
+        default_output_layer_(default_output_layer),
+        input_scale_(1.0) {}
 
   const string& GetName() const { return name_; }
   const ModelType& GetModelType() const { return type_; }
@@ -46,6 +47,10 @@ class ModelDesc {
     label_file_path_ = file_path;
   }
   const string& GetLabelFilePath() const { return label_file_path_; }
+  void SetInputScale(const double& input_scale) {
+    input_scale_ = input_scale;
+  }
+  const double& GetInputScale() const { return input_scale_; }
 
  private:
   string name_;
@@ -58,6 +63,7 @@ class ModelDesc {
   std::string default_output_layer_;
   // Optional attributes
   string label_file_path_;
+  double input_scale_;
 };
 
 /**

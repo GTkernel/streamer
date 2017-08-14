@@ -97,6 +97,7 @@ std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
       cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
   cv::Mat input_normalized;
   cv::subtract(input, mean_image, input_normalized);
+  input_normalized *= model_desc_.GetInputScale();
 
   // Format the input data in the way that Caffe expects
   auto input_layer = net_->input_blobs().at(0);

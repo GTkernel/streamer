@@ -87,6 +87,17 @@ ModelManager::ModelManager() {
       model_desc.SetLabelFilePath(label_file_value->as<string>());
     }
 
+    auto input_scale_value = model_value.find("input_scale");
+    if (input_scale_value != nullptr) {
+      if (type_string == "tensorflow") {
+        LOG(WARNING)
+            << "TensorFlow does not support specifying an input scale factor. "
+            << "Ignoring \"input_scale\" param.";
+      } else {
+        model_desc.SetInputScale(input_scale_value->as<double>());
+      }
+    }
+
     model_descs_.emplace(name, model_desc);
   }
 }
