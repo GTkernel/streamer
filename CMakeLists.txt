@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(streamer)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(cmake/summary.cmake)
 include(cmake/clangformat.cmake)
 include(cmake/build.cmake)

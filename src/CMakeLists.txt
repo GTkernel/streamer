@@ -21,8 +21,6 @@ file(GLOB_RECURSE NCS_SOURCE_FILES
 file(GLOB_RECURSE SSD_SOURCE_FILES
   ${SRC_ROOT}/processor/ssd_detector.cpp
   ${SRC_ROOT}/processor/ssd_detector.h)
-file(GLOB_RECURSE DLIB_SOURCE_FILES
-  ${PROJECT_SOURCE_DIR}/3rdparty/dlib/dlib/all/source.cpp)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${RPC_SOURCE_FILES}
   ${CAFFE_SOURCE_FILES}
@@ -33,12 +31,7 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${FRCNN_SOURCE_FILES}
   ${NCS_SOURCE_FILES}
   ${SSD_SOURCE_FILES}
-  ${DLIB_SOURCE_FILES}
 )
-
-# Silence compiler warnings for dlib source files. We should do this more
-# elegantly.
-set_source_files_properties(${DLIB_SOURCE_FILES} PROPERTIES COMPILE_FLAGS -w)
 
 # Pick libraries
 set(STREAMER_LIBRARIES
@@ -132,7 +125,7 @@ endif ()
 
 # Build with DLIB libraries
 if (USE_DLIB)
-  list(APPEND STREAMER_SOURCE_FILES ${DLIB_SOURCE_FILES})
+  list(APPEND STREAMER_LIBRARIES dlib)
 endif ()
 
 # Build with NCS libraries
