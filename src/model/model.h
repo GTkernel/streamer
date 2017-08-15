@@ -51,9 +51,7 @@ class ModelDesc {
     voc_config_path_ = file_path;
   }
   const string& GetVocConfigPath() const { return voc_config_path_; }
-  void SetInputScale(const double& input_scale) {
-    input_scale_ = input_scale;
-  }
+  void SetInputScale(const double& input_scale) { input_scale_ = input_scale; }
   const double& GetInputScale() const { return input_scale_; }
 
  private:
