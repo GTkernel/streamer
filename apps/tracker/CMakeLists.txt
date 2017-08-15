@@ -1,0 +1,15 @@
+if (NOT USE_CAFFE)
+  return ()
+endif ()
+
+MACRO(BUILD_ONE app)
+  if (JEMALLOC_FOUND)
+    target_link_libraries(${app} ${JAMALLOC_LIBRARIES})
+  endif ()
+  target_link_libraries(${app} streamer ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  add_dependencies(apps ${app})
+  ADD_BUILD_REQS(${app})
+ENDMACRO()
+
+add_executable(tracker EXCLUDE_FROM_ALL tracker.cpp)
+BUILD_ONE(tracker)

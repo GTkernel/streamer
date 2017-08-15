@@ -205,7 +205,9 @@ enum ProcessorType {
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_DB_WRITER,
   PROCESSOR_TYPE_ENCODER,
+#ifdef USE_CAFFE
   PROCESSOR_TYPE_FACENET,
+#endif  // USE_CAFFE
   PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
   PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
 #ifdef USE_RPC
@@ -219,7 +221,9 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_JPEG_WRITER,
+#ifdef USE_CAFFE
   PROCESSOR_TYPE_MTCNN_FACE_DETECTOR,
+#endif  // USE_CAFFE
 #ifdef USE_NCS
   PROCESSOR_TYPE_NCS_YOLO_DETECTOR,
 #endif  // USE_NCS
@@ -236,7 +240,9 @@ enum ProcessorType {
   PROCESSOR_TYPE_SSD_DETECTOR,
 #endif  // USE_SSD
   PROCESSOR_TYPE_THROTTLER,
+#ifdef USE_CAFFE
   PROCESSOR_TYPE_YOLO_DETECTOR,
+#endif  // USE_CAFFE
   PROCESSOR_TYPE_INVALID
 };
 // Returns the ProcessorType enum value corresponding to the string.
@@ -253,8 +259,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_DB_WRITER;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
+#ifdef USE_CAFFE
   } else if (type == "Facenet") {
     return PROCESSOR_TYPE_FACENET;
+#endif  // USE_CAFFE
   } else if (type == "FlowControlEntrance") {
     return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
   } else if (type == "FlowControlExit") {
@@ -279,8 +287,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
   } else if (type == "JpegWriter") {
     return PROCESSOR_TYPE_JPEG_WRITER;
+#ifdef USE_CAFFE
   } else if (type == "MtcnnFaceDetector") {
     return PROCESSOR_TYPE_MTCNN_FACE_DETECTOR;
+#endif  // USE_CAFFE
 #ifdef USE_NCS
   } else if (type == "NcsYoloDetector") {
     return PROCESSOR_TYPE_NCS_YOLO_DETECTOR;
@@ -307,8 +317,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
 #endif  // USE_SSD
   } else if (type == "Throttler") {
     return PROCESSOR_TYPE_THROTTLER;
+#ifdef USE_CAFFE
   } else if (type == "YoloDetector") {
     return PROCESSOR_TYPE_YOLO_DETECTOR;
+#endif  // USE_CAFFE
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
@@ -329,8 +341,10 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "DbWriter";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
+#ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return "Facenet";
+#endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return "FlowControlEntrance";
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
@@ -355,8 +369,10 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "ImageTransformer";
     case PROCESSOR_TYPE_JPEG_WRITER:
       return "JpegWriter";
+#ifdef USE_CAFFE
     case PROCESSOR_TYPE_MTCNN_FACE_DETECTOR:
       return "MtcnnFaceDetector";
+#endif  // USE_CAFFE
 #ifdef USE_NCS
     case PROCESSOR_TYPE_NCS_YOLO_DETECTOR:
       return "NcsYoloDetector";
@@ -383,8 +399,10 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
 #endif  // USE_SSD
     case PROCESSOR_TYPE_THROTTLER:
       return "Throttler";
+#ifdef USE_CAFFE
     case PROCESSOR_TYPE_YOLO_DETECTOR:
       return "YoloDetector";
+#endif  // USE_CAFFE
     case PROCESSOR_TYPE_INVALID:
       return "Invalid";
   }

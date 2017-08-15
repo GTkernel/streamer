@@ -53,6 +53,7 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
          const string& detector_model, bool display, float scale, int min_size,
          float detector_confidence_threshold, const string& detector_targets) {
   // Silence complier warning sayings when certain options are turned off.
+  (void)min_size;
   (void)detector_confidence_threshold;
   (void)detector_targets;
 
@@ -103,14 +104,15 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
   for (int i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> detector;
     auto p = GetProcessorTypeByString(detector_type);
-    if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
-      auto model_descs = model_manager.GetModelDescs(detector_model);
-      detector.reset(
-          new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
-    } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
+    if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       detector.reset(new OpenCVFaceDetector(detector_idle_duration,
                                             model_desc.GetModelParamsPath()));
+#ifdef USE_CAFFE
+    } else if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
+      auto model_descs = model_manager.GetModelDescs(detector_model);
+      detector.reset(
+          new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
     } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
       auto t = SplitString(detector_targets, ",");
@@ -120,6 +122,7 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       }
       detector.reset(new YoloDetector(model_desc, detector_confidence_threshold,
                                       detector_idle_duration, targets));
+#endif  // USE_CAFFE
 #ifdef USE_FRCNN
     } else if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
       auto model_desc = model_manager.GetModelDesc(detector_model);
