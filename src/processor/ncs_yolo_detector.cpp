@@ -56,9 +56,8 @@ void NcsYoloDetector::Process() {
     CHECK(img.channels() == input_shape_.channel &&
           img.size[1] == input_shape_.width &&
           img.size[0] == input_shape_.height);
-    detector_->LoadImage(img);
     std::vector<float> result;
-    detector_->GetResult(result);
+    detector_->LoadImageAndGetResult(result, img);
     std::vector<std::tuple<int, cv::Rect, float>> detections;
     get_detections(detections, result, img.size(), voc_names_.size() - 1);
     std::vector<std::tuple<int, cv::Rect, float>> filtered_res;
