@@ -53,7 +53,10 @@ class NCSManager {
 
   void LoadImage(int i, const char* filename);
   void LoadImage(int i, const cv::Mat& image);
-  void GetResult(int, std::vector<float>& result);
+  void GetResult(int i, std::vector<float>& result);
+
+  void LoadImageAndGetResult(std::vector<float>& result, const char* filename);
+  void LoadImageAndGetResult(std::vector<float>& result, const cv::Mat& image);
 
   void Close();
 
