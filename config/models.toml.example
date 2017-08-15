@@ -14,17 +14,5 @@ label_file = "/path/to/caffe/data/ilsvrc12/synset_words.txt" # Optional
 last_layer = "prob"
 voc_config = "/path/to/caffe-faster-rcnn/examples/FRCNN/config/streamer_config.json" # Optional
 
-[[model_description]]
-name = "caffe-mtcnn"
-type = "caffe"
-det1_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det1.prototxt"
-det1_caffemodel = "/path/to/caffe-mtcnn/examples/MTmodel/det1.caffemodel"
-det2_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det2.prototxt"
-det2_input_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det2_input.prototxt"
-det2_caffemodel = "/path/to/caffe-mtcnn/examples/MTmodel/det2.caffemodel"
-det3_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det3.prototxt"
-det3_input_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det3_input.prototxt"
-det3_caffemodel = "/path/to/caffe-mtcnn/examples/MTmodel/det3.caffemodel"
-
 # [[model]]
 # Your other models
