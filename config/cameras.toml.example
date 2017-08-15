@@ -1,18 +1,34 @@
 # Configurations for cameras
+
+# Color bars
 [[camera]]
 name = "GST_TEST"
 video_uri = "gst://videotestsrc ! video/x-raw,width=640,height=480"
 width = 640
 height = 480
 
+#  Linux webcam
 [[camera]]
-name = "Facetime"
+name = "webcam-linux"
+video_uri = "gst://v4l2src ! capsfilter caps=video/x-raw,width=(int)640,height=(int)480,framerate=(fraction)30/1"
+width = 640
+height = 480
+
+# iSight camera available on the Mac
+[[camera]]
+name = "webcam-mac"
 video_uri = "gst://avfvideosrc ! capsfilter caps=video/x-raw,width=(int)640,height=(int)480,framerate=(fraction)30/1"
 width = 640
 height = 480
 
 [[camera]]
-name = "YOUR IP CAMERA"
+name = "file"
+video_uri = "file://video.mp4"
+width = 640
+height = 480
+
+[[camera]]
+name = "rtsp"
 video_uri = "rtsp://username:password@camera_url"
 width = 640
 height = 480
@@ -23,9 +39,8 @@ video_uri = "pgr://0"
 width = 1600
 height = 1200
 
-
 [[camera]]
-name = "gt1930"
+name = "vimba"
 video_uri = "vmb://0"
 width = 1600
 height = 1200

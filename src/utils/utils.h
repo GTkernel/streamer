@@ -5,13 +5,14 @@
 #ifndef STREAMER_UTILS_UTILS_H_
 #define STREAMER_UTILS_UTILS_H_
 
-#include "cuda_utils.h"
-#include "cv_utils.h"
-#include "file_utils.h"
-#include "gst_utils.h"
-#include "math_utils.h"
-#include "string_utils.h"
-#include "time_utils.h"
+#include "utils/cuda_utils.h"
+#include "utils/cv_utils.h"
+#include "utils/file_utils.h"
+#include "utils/gst_utils.h"
+#include "utils/math_utils.h"
+#include "utils/string_utils.h"
+#include "utils/time_utils.h"
+#include "utils/yolo_utils.h"
 
 #include <sched.h>
 #include <condition_variable>

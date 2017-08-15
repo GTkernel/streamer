@@ -88,14 +88,14 @@ class Context {
   string ValidateEncoderElement(const string& encoder) {
     if (IsGstElementExists(encoder)) {
       return encoder;
+    } else if (IsGstElementExists("vaapih264enc")) {
+      return "vaapih264enc";
     } else if (IsGstElementExists("vtenc_h264")) {
       return "vtenc_h264";
     } else if (IsGstElementExists("omxh264enc")) {
       return "omxh264enc";
-    } else if (IsGstElementExists("x264enc")) {
-      return "x264enc";
-    } else if (IsGstElementExists("vaapih264enc")) {
-      return "vaapih264enc";
+    } else if (IsGstElementExists("avenc_h264_omx")) {
+      return "avenc_h264_omx";
     }
 
     LOG(WARNING) << "No known gst encoder element exists on the system";
