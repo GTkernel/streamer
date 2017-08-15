@@ -7,7 +7,7 @@
 ```sh
 brew install cmake glog glib gstreamer gst-plugins-base \
 	gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-ffmpeg \
-	boost opencv jemalloc zmq eigen
+	boost opencv3 jemalloc zmq eigen
 ```
 
 Install the ZeroMQ C++ header files manually. See the
