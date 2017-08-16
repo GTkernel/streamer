@@ -55,6 +55,9 @@ TEST(TestTypes, TestJsonToRect) {
 }
 
 TEST(TestTypes, TestProcessorTypesStringConversion) {
+  EXPECT_EQ(PROCESSOR_TYPE_BINARY_FILE_WRITER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_BINARY_FILE_WRITER)));
   EXPECT_EQ(PROCESSOR_TYPE_CAMERA,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CAMERA)));
@@ -114,6 +117,24 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_NEURAL_NET_EVALUATOR)));
+  EXPECT_EQ(PROCESSOR_TYPE_OBJ_TRACKER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_OBJ_TRACKER)));
+  EXPECT_EQ(PROCESSOR_TYPE_OBJECT_DETECTOR,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_OBJECT_DETECTOR)));
+  EXPECT_EQ(PROCESSOR_TYPE_OBJECT_TRACKER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_OBJECT_TRACKER)));
+  EXPECT_EQ(PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
+            GetProcessorTypeByString(GetStringForProcessorType(
+                PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR)));
+  EXPECT_EQ(PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
+            GetProcessorTypeByString(GetStringForProcessorType(
+                PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR)));
+  EXPECT_EQ(PROCESSOR_TYPE_THROTTLER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_THROTTLER)));
   EXPECT_EQ(PROCESSOR_TYPE_INVALID,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_INVALID)));

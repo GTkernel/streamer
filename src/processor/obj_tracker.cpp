@@ -13,7 +13,7 @@
 #ifdef USE_STRUCK
 #include "struck/src/Config.h"
 #include "struck/src/Tracker.h"
-#endif
+#endif  // USE_STRUCK
 #ifdef USE_DLIB
 #include <dlib/dlib/image_processing.h>
 #include <dlib/dlib/opencv.h>
@@ -47,7 +47,7 @@ class StruckTracker : public BaseTracker {
   std::unique_ptr<struck::Tracker> impl_;
   struck::Config conf_;
 };
-#endif
+#endif  // USE_STRUCK
 
 #ifdef USE_DLIB
 class DlibTracker : public BaseTracker {
@@ -178,7 +178,7 @@ void ObjTracker::Process() {
 #else
         LOG(FATAL) << "Tracker type " << type_
                    << " not supported, please compile with -DUSE_STRUCK=ON";
-#endif
+#endif  // USE_STRUCK
       } else if (type_ == "dlib") {
 #ifdef USE_DLIB
         new_tracker.reset(new DlibTracker(uuid_str, untracked_tags[i]));

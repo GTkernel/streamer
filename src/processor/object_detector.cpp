@@ -5,19 +5,24 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "object_detector.h"
+#include "processor/object_detector.h"
+
 #include "common/context.h"
 #include "model/model_manager.h"
+#ifdef USE_CAFFE
+#include "processor/caffe_mtcnn.h"
+#include "processor/caffe_yolo_detector.h"
+#endif  // USE_CAFFE
 #ifdef USE_FRCNN
-#include "frcnn_detector.h"
-#endif
+#include "processor/frcnn_detector.h"
+#endif  // USE_FRCNN
+#ifdef USE_NCS
+#include "processor/ncs_yolo_detector.h"
+#endif  // USE_NCS
+#include "processor/opencv_face_detector.h"
 #ifdef USE_SSD
-#include "ssd_detector.h"
-#endif
-#include "caffe_mtcnn.h"
-#include "caffe_yolo_detector.h"
-#include "ncs_yolo_detector.h"
-#include "opencv_face_detector.h"
+#include "processor/ssd_detector.h"
+#endif  // USE_SSD
 
 ObjectDetector::ObjectDetector(const std::string& type,
                                const std::vector<ModelDesc>& model_descs,
@@ -43,27 +48,29 @@ bool ObjectDetector::Init() {
   if (type_ == "opencv-face") {
     detector_.reset(new OpenCVFaceDetector(model_descs_.at(0)));
     result = detector_->Init();
+#ifdef USE_CAFFE
   } else if (type_ == "mtcnn-face") {
     detector_.reset(new MtcnnFaceDetector(model_descs_));
     result = detector_->Init();
   } else if (type_ == "yolo") {
     detector_.reset(new YoloDetector(model_descs_.at(0)));
     result = detector_->Init();
+#endif  // USE_CAFFE
 #ifdef USE_FRCNN
   } else if (type_ == "frcnn") {
     detector_.reset(new FrcnnDetector(model_descs_.at(0)));
     result = detector_->Init();
-#endif
+#endif  // USE_FRCNN
 #ifdef USE_SSD
   } else if (type_ == "ssd") {
     detector_.reset(new SsdDetector(model_descs_.at(0)));
     result = detector_->Init();
-#endif
+#endif  // USE_SSD
 #ifdef USE_NCS
   } else if (type_ == "ncs-yolo") {
     detector_.reset(new NcsYoloDetector(model_descs_.at(0)));
     result = detector_->Init();
-#endif
+#endif  // USE_NCS
   } else {
     LOG(FATAL) << "Detector type " << type_ << " not supported.";
   }

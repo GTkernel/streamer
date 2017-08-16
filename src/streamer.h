@@ -13,7 +13,6 @@
 #include "processor/caffe_mtcnn.h"
 #include "processor/caffe_yolo_detector.h"
 #endif  // USE_CAFFE
-#include "processor/caffe_mtcnn.h"
 #include "processor/db_writer.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
