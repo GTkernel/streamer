@@ -103,7 +103,7 @@ class MTCNN {
 class MtcnnFaceDetector : public BaseDetector {
  public:
   MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs)
-    : model_descs_(model_descs) {
+      : model_descs_(model_descs) {
     threshold_[0] = 0.6;
     threshold_[1] = 0.7;
     threshold_[2] = 0.7;

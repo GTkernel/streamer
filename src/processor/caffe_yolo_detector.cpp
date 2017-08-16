@@ -120,9 +120,8 @@ std::vector<ObjectInfo> YoloDetector::Detect(const cv::Mat& image) {
   float pro_obj[49][2];
   int idx_class[49];
   std::vector<std::vector<int>> bboxes =
-      GetBoxes(DetectionOutput, &pro_obj[0][0], idx_class, bboxs,
-               0.01, image);
-  
+      GetBoxes(DetectionOutput, &pro_obj[0][0], idx_class, bboxs, 0.01, image);
+
   for (const auto& m : bboxes) {
     ObjectInfo object_info;
     object_info.tag = voc_names_.at(m[0]);

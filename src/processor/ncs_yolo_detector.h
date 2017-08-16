@@ -13,13 +13,12 @@
 #include "common/common.h"
 #include "model/model.h"
 #include "ncs/ncs.h"
-#include "processor.h"
 #include "object_detector.h"
+#include "processor.h"
 
 class NcsYoloDetector : public BaseDetector {
  public:
-  NcsYoloDetector(const ModelDesc& model_desc)
-    : model_desc_(model_desc) {}
+  NcsYoloDetector(const ModelDesc& model_desc) : model_desc_(model_desc) {}
   virtual ~NcsYoloDetector() {}
   virtual bool Init();
   virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);

@@ -14,14 +14,16 @@
 #ifdef USE_SSD
 #include "ssd_detector.h"
 #endif
-#include "caffe_yolo_detector.h"
-#include "opencv_face_detector.h"
 #include "caffe_mtcnn.h"
+#include "caffe_yolo_detector.h"
 #include "ncs_yolo_detector.h"
+#include "opencv_face_detector.h"
 
-ObjectDetector::ObjectDetector(const std::string& type, const std::vector<ModelDesc>& model_descs,
+ObjectDetector::ObjectDetector(const std::string& type,
+                               const std::vector<ModelDesc>& model_descs,
                                Shape input_shape, float confidence_threshold,
-                               float idle_duration, const std::set<std::string>& targets)
+                               float idle_duration,
+                               const std::set<std::string>& targets)
     : Processor(PROCESSOR_TYPE_OBJECT_DETECTOR, {"input"}, {"output"}),
       type_(type),
       model_descs_(model_descs),
@@ -30,7 +32,8 @@ ObjectDetector::ObjectDetector(const std::string& type, const std::vector<ModelD
       idle_duration_(idle_duration),
       targets_(targets) {}
 
-std::shared_ptr<ObjectDetector> ObjectDetector::Create(const FactoryParamsType&) {
+std::shared_ptr<ObjectDetector> ObjectDetector::Create(
+    const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
@@ -91,8 +94,7 @@ void ObjectDetector::Process() {
           filtered_res.push_back(m);
         } else {
           auto it = targets_.find(m.tag);
-          if (it != targets_.end())
-            filtered_res.push_back(m);
+          if (it != targets_.end()) filtered_res.push_back(m);
         }
       }
     }
@@ -115,17 +117,15 @@ void ObjectDetector::Process() {
       int h = cr.height * scale_factor[1];
       if (x < 0) x = 0;
       if (y < 0) y = 0;
-      if ((x+w) > original_img.cols) w = original_img.cols-x;
-      if ((y+h) > original_img.rows) h = original_img.rows-y;
-      bboxes.push_back(Rect(x,y,w,h));
+      if ((x + w) > original_img.cols) w = original_img.cols - x;
+      if ((y + h) > original_img.rows) h = original_img.rows - y;
+      bboxes.push_back(Rect(x, y, w, h));
       confidences.push_back(m.confidence);
 
       if (m.face_landmark_flag) {
         FaceLandmark fl = m.face_landmark;
-        for (auto& m: fl.x)
-          m *= scale_factor[0];
-        for (auto& m: fl.y)
-          m *= scale_factor[1];
+        for (auto& m : fl.x) m *= scale_factor[0];
+        for (auto& m : fl.y) m *= scale_factor[1];
         face_landmarks.push_back(fl);
         face_landmarks_flag = true;
       }
@@ -135,8 +135,7 @@ void ObjectDetector::Process() {
     frame->SetValue("tags", tags);
     frame->SetValue("bounding_boxes", bboxes);
     frame->SetValue("confidences", confidences);
-    if (face_landmarks_flag)
-      frame->SetValue("face_landmarks", face_landmarks);
+    if (face_landmarks_flag) frame->SetValue("face_landmarks", face_landmarks);
     PushFrame("output", std::move(frame));
     LOG(INFO) << "Object detection took " << timer.ElapsedMSec() << " ms";
   } else {

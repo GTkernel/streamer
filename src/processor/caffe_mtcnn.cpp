@@ -644,7 +644,7 @@ std::vector<ObjectInfo> MtcnnFaceDetector::Detect(const cv::Mat& image) {
     ObjectInfo object_info;
     object_info.tag = "face";
     object_info.bbox = cv::Rect(m.bbox.y1, m.bbox.x1, m.bbox.y2 - m.bbox.y1,
-                          m.bbox.x2 - m.bbox.x1);
+                                m.bbox.x2 - m.bbox.x1);
     object_info.confidence = 1.0;
 
     FaceLandmark fl;

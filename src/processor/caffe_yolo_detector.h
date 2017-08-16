@@ -31,8 +31,7 @@ class Detector {
 
 class YoloDetector : public BaseDetector {
  public:
-  YoloDetector(const ModelDesc& model_desc)
-    : model_desc_(model_desc) {}
+  YoloDetector(const ModelDesc& model_desc) : model_desc_(model_desc) {}
   virtual ~YoloDetector() {}
   virtual bool Init();
   virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);

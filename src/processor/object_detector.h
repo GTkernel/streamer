@@ -14,9 +14,7 @@
 #include "processor.h"
 
 struct ObjectInfo {
-  ObjectInfo() {
-    face_landmark_flag = false;
-  }
+  ObjectInfo() { face_landmark_flag = false; }
   std::string tag;
   cv::Rect bbox;
   float confidence;
@@ -38,7 +36,8 @@ class ObjectDetector : public Processor {
       const std::string& type, const std::vector<ModelDesc>& model_descs,
       Shape input_shape, float confidence_threshold, float idle_duration = 0.f,
       const std::set<std::string>& targets = std::set<std::string>());
-  static std::shared_ptr<ObjectDetector> Create(const FactoryParamsType& params);
+  static std::shared_ptr<ObjectDetector> Create(
+      const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;

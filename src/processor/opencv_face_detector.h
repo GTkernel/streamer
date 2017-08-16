@@ -16,8 +16,7 @@
 
 class OpenCVFaceDetector : public BaseDetector {
  public:
-  OpenCVFaceDetector(const ModelDesc& model_desc)
-    : model_desc_(model_desc) {}
+  OpenCVFaceDetector(const ModelDesc& model_desc) : model_desc_(model_desc) {}
   virtual ~OpenCVFaceDetector() {}
   virtual bool Init();
   virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);

@@ -39,8 +39,7 @@ class Detector {
 
 class SsdDetector : public BaseDetector {
  public:
-  SsdDetector(const ModelDesc& model_desc)
-    : model_desc_(model_desc) {}
+  SsdDetector(const ModelDesc& model_desc) : model_desc_(model_desc) {}
   virtual ~SsdDetector() {}
   virtual bool Init();
   virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);

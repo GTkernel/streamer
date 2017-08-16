@@ -8,15 +8,14 @@
 #ifndef STREAMER_PROCESSOR_FRCNN_DETECTOR_H_
 #define STREAMER_PROCESSOR_FRCNN_DETECTOR_H_
 
+#include "api/api.hpp"
 #include "common/common.h"
 #include "model/model.h"
 #include "processor.h"
-#include "api/api.hpp"
 
 class FrcnnDetector : public BaseDetector {
  public:
-  FrcnnDetector(const ModelDesc& model_desc)
-    : model_desc_(model_desc) {}
+  FrcnnDetector(const ModelDesc& model_desc) : model_desc_(model_desc) {}
   virtual ~FrcnnDetector() {}
   virtual bool Init();
   virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);

@@ -6,9 +6,9 @@
  */
 
 #include "frcnn_detector.h"
+#include "caffe/FRCNN/util/frcnn_vis.hpp"
 #include "common/context.h"
 #include "model/model_manager.h"
-#include "caffe/FRCNN/util/frcnn_vis.hpp"
 
 bool FrcnnDetector::Init() {
   // Set Caffe backend
@@ -77,7 +77,8 @@ virtual std::vector<ObjectInfo> FrcnnDetector::Detect(const cv::Mat& image) {
   std::vector<ObjectInfo> result;
   for (const auto& m : results) {
     ObjectInfo object_info;
-    object_info.tag = caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(), m.id);
+    object_info.tag =
+        caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(), m.id);
     object_info.bbox = cv::Rect(m[0], m[1], (m[2] - m[0]), (m[3] - m[1]));
     object_info.confidence = m.confidence;
     result.push_back(object_info);

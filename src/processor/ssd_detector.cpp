@@ -245,7 +245,9 @@ std::vector<ObjectInfo> SsdDetector::Detect(const cv::Mat& image) {
     // Detection format: [image_id, label, score, xmin, ymin, xmax, ymax].
     CHECK_EQ(m.size(), 7);
     object_info.tag = GetLabelName((int)m[1]);
-    object_info.bbox = cv::Rect(m[3]*image.cols, m[4]*image.rows, (m[5] - m[3])*image.cols, (m[6] - m[4])*image.rows);
+    object_info.bbox =
+        cv::Rect(m[3] * image.cols, m[4] * image.rows,
+                 (m[5] - m[3]) * image.cols, (m[6] - m[4]) * image.rows);
     object_info.confidence = m[2];
     result.push_back(object_info);
   }

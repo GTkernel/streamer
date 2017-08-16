@@ -124,18 +124,20 @@ void NCSManager::GetResult(std::vector<float>& result) {
   GetResult(0, result);  // TODO
 }
 
-void NCSManager::LoadImageAndGetResult(std::vector<float>& result, const char* filename) {
+void NCSManager::LoadImageAndGetResult(std::vector<float>& result,
+                                       const char* filename) {
   LoadImageAndGetResult(result, cv::imread(filename));
 }
 
-void NCSManager::LoadImageAndGetResult(std::vector<float>& result, const cv::Mat& image) {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    
-    int i = std::uniform_int_distribution<>{0, _names.size()-1}(gen);
+void NCSManager::LoadImageAndGetResult(std::vector<float>& result,
+                                       const cv::Mat& image) {
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
 
-    LoadImage(i, image);
-    GetResult(i, result);
+  int i = std::uniform_int_distribution<>{0, _names.size() - 1}(gen);
+
+  LoadImage(i, image);
+  GetResult(i, result);
 }
 
 void NCSManager::Stop() {

@@ -108,9 +108,8 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       if (!m.empty()) targets.insert(m);
     }
     std::shared_ptr<Processor> detector(new ObjectDetector(
-                                        detector_type, model_descs, input_shape,
-                                        detector_confidence_threshold,
-                                        detector_idle_duration, targets));
+        detector_type, model_descs, input_shape, detector_confidence_threshold,
+        detector_idle_duration, targets));
     detector->SetSource("input", input_streams[i]);
     detectors.push_back(detector);
   }
