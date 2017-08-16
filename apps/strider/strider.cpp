@@ -26,7 +26,7 @@ void Run(const std::string& camera_name, unsigned int stride) {
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
-  // Stride
+  // Strider
   auto strider = std::make_shared<Strider>(stride);
   strider->SetSource(camera->GetStream());
   procs.push_back(strider);
