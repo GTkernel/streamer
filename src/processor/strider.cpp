@@ -1,15 +1,17 @@
 
 #include "processor/strider.h"
-#include "processor/flow_control/flow_control_entrance.h"
 
 #include <stdexcept>
+
+#include "processor/flow_control/flow_control_entrance.h"
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
 Strider::Strider(unsigned int stride)
     : Processor(PROCESSOR_TYPE_STRIDER, {SOURCE_NAME}, {SINK_NAME}),
-      stride_(stride) {}
+      stride_(stride),
+      num_frames_processed_(0) {}
 
 std::shared_ptr<Strider> Strider::Create(const FactoryParamsType& params) {
   int stride = std::stoi(params.at("stride"));
@@ -34,12 +36,11 @@ void Strider::Process() {
   auto frame = GetFrame(SOURCE_NAME);
   ++num_frames_processed_;
 
-  if (num_frames_processed_ % stride_ == 0) {
-    PushFrame(SINK_NAME, std::move(frame));
-  } else {
-    // Drop frame
-    unsigned long id = frame->GetValue<unsigned long>("frame_id");
-    LOG(WARNING) << "Dropping frame " << id << " in strider.";
+  if (num_frames_processed_ % stride_) {
+    // Drop frames whose IDs are not evenly divisible by the stride.
+    LOG(WARNING) << "Dropping frame "
+                 << frame->GetValue<unsigned long>("frame_id")
+                 << " in strider.";
     auto flow_control_entrance = frame->GetFlowControlEntrance();
     if (flow_control_entrance) {
       // If a flow control entrance exists, then we need to inform it that a
@@ -49,5 +50,7 @@ void Strider::Process() {
       // to release the token again.
       frame->SetFlowControlEntrance(nullptr);
     }
+  } else {
+    PushFrame(SINK_NAME, std::move(frame));
   }
 }

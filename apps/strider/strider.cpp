@@ -1,8 +1,6 @@
 // This is a sample example app that uses the strider processor
 //   Camera -> Strider
-//
 
-#include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -36,12 +34,12 @@ void Run(const std::string& camera_name, unsigned int stride) {
     (*procs_it)->Start();
   }
 
+  std::cout << "Press \"Control-C\" to stop." << std::endl;
   auto reader = strider->GetSink("output")->Subscribe();
-
   while (true) {
     auto frame = reader->PopFrame();
-    unsigned long id = frame->GetValue<unsigned long>("frame_id");
-    LOG(INFO) << "Processed frame: " << id;
+    LOG(INFO) << "Processed frame: "
+              << frame->GetValue<unsigned long>("frame_id");
   }
 
   // Stop the processors in forward order.

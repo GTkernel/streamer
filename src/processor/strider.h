@@ -3,12 +3,12 @@
 #define STREAMER_PROCESSOR_STRIDER_H_
 
 #include <memory>
-#include <mutex>
 
 #include "common/types.h"
 #include "processor/processor.h"
 
-// Strider passes through frames at a user-specific stride
+// The Strider processor passes one out of every "stride" frames and drops all
+// other frames.
 class Strider : public Processor {
  public:
   Strider(unsigned int stride);
@@ -27,7 +27,7 @@ class Strider : public Processor {
 
  private:
   unsigned int stride_;
-  unsigned int num_frames_processed_ = 0;
+  unsigned long num_frames_processed_;
 };
 
 #endif  // STREAMER_PROCESSOR_STRIDER_H_
