@@ -132,6 +132,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR)));
+  EXPECT_EQ(PROCESSOR_TYPE_STRIDER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_STRIDER)));
   EXPECT_EQ(PROCESSOR_TYPE_THROTTLER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_THROTTLER)));

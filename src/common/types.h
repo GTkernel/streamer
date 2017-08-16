@@ -227,6 +227,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_OBJECT_TRACKER,
   PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
   PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
+  PROCESSOR_TYPE_STRIDER,
   PROCESSOR_TYPE_THROTTLER,
   PROCESSOR_TYPE_INVALID
 };
@@ -284,6 +285,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
   } else if (type == "OpenCVPeopleDetector") {
     return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
+  } else if (type == "Strider") {
+    return PROCESSOR_TYPE_STRIDER;
   } else if (type == "Throttler") {
     return PROCESSOR_TYPE_THROTTLER;
   } else {
@@ -346,6 +349,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "OpenCVMotionDetector";
     case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
       return "OpenCVPeopleDetector";
+    case PROCESSOR_TYPE_STRIDER:
+      return "Strider";
     case PROCESSOR_TYPE_THROTTLER:
       return "Throttler";
     case PROCESSOR_TYPE_INVALID:

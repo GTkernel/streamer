@@ -24,7 +24,6 @@
 #include "processor/obj_tracker.h"
 #include "processor/object_detector.h"
 #include "processor/object_tracker.h"
-#include "processor/opencv_face_detector.h"
 #include "processor/opencv_motion_detector.h"
 #include "processor/opencv_people_detector.h"
 #include "processor/pubsub/frame_publisher.h"
@@ -36,6 +35,7 @@
 #ifdef USE_SSD
 #include "processor/ssd_detector.h"
 #endif  // USE_SSD
+#include "processor/strider.h"
 #include "processor/throttler.h"
 #include "video/gst_video_encoder.h"
 
@@ -95,6 +95,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return OpenCVMotionDetector::Create(params);
     case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
       return OpenCVPeopleDetector::Create(params);
+    case PROCESSOR_TYPE_STRIDER:
+      return Strider::Create(params);
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
     case PROCESSOR_TYPE_INVALID:
