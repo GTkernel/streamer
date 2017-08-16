@@ -4,27 +4,34 @@ GREEN = 117.0
 RED   = 123.0
 
 [[model]]
-name = "AlexNet"
+name = "googlenet"
 type = "caffe"
-desc_path = "/path/to/caffe/model.prototxt"
-params_path = "/path/to/caffe/model.caffemodel"
+# https://raw.githubusercontent.com/opencv/opencv/master/samples/data/dnn/bvlc_googlenet.prototxt
+desc_path = "../models/bvlc_googlenet.prototxt"
+# http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel
+params_path = "../models/bvlc_googlenet.caffemodel"
 input_width = 227
 input_height = 227
-label_file = "/path/to/caffe/data/ilsvrc12/synset_words.txt" # Optional
-last_layer = "prob"
-voc_config = "/path/to/caffe-faster-rcnn/examples/FRCNN/config/streamer_config.json" # Optional
+input_scale = 1.0 # Optional
+# https://raw.githubusercontent.com/opencv/opencv/master/samples/data/dnn/synset_words.txt
+label_file = "../models/synset_words.txt" # Optional
+default_output_layer = "prob"
 
-[[model_description]]
-name = "caffe-mtcnn"
+[[model]]
+name = "mobilenet"
 type = "caffe"
-det1_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det1.prototxt"
-det1_caffemodel = "/path/to/caffe-mtcnn/examples/MTmodel/det1.caffemodel"
-det2_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det2.prototxt"
-det2_input_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det2_input.prototxt"
-det2_caffemodel = "/path/to/caffe-mtcnn/examples/MTmodel/det2.caffemodel"
-det3_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det3.prototxt"
-det3_input_prototxt = "/path/to/caffe-mtcnn/examples/MTmodel/det3_input.prototxt"
-det3_caffemodel = "/path/to/caffe-mtcnn/examples/MTmodel/det3.caffemodel"
+# https://raw.githubusercontent.com/cdwat/MobileNet-Caffe/master/mobilenet_deploy.prototxt
+# Add to bottom of 'mobilenet_deploy.prototxt' file:
+#    layer { name: "prob" type: "Softmax" bottom: "fc7" top: "prob" }
+desc_path = "../models/mobilenet_deploy.prototxt"
+# https://raw.githubusercontent.com/cdwat/MobileNet-Caffe/master/mobilenet.caffemodel
+params_path = "../models/mobilenet.caffemodel"
+input_width = 224
+input_height = 224
+input_scale = 0.017
+# https://raw.githubusercontent.com/opencv/opencv/master/samples/data/dnn/synset_words.txt
+label_file = "../models/synset_words.txt"
+default_output_layer = "prob"
 
 # [[model]]
 # Your other models

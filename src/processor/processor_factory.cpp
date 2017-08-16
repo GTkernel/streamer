@@ -3,10 +3,13 @@
 
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
+#ifdef USE_CAFFE
+#include "processor/caffe_facenet.h"
 #include "processor/caffe_mtcnn.h"
+#include "processor/caffe_yolo_detector.h"
+#endif  // USE_CAFFE
 #include "processor/compressor.h"
 #include "processor/db_writer.h"
-#include "processor/facenet.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
 #include "processor/frame_writer.h"
@@ -34,7 +37,6 @@
 #include "processor/ssd_detector.h"
 #endif  // USE_SSD
 #include "processor/throttler.h"
-#include "processor/yolo_detector.h"
 #include "video/gst_video_encoder.h"
 
 std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
@@ -53,8 +55,10 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return DbWriter::Create(params);
     case PROCESSOR_TYPE_ENCODER:
       return GstVideoEncoder::Create(params);
+#ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return Facenet::Create(params);
+#endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return FlowControlEntrance::Create(params);
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:

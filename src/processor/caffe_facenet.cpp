@@ -5,7 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "facenet.h"
+#include "processor/caffe_facenet.h"
+
 #include "common/context.h"
 #include "cv.h"
 #include "model/model_manager.h"

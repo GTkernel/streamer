@@ -205,7 +205,9 @@ enum ProcessorType {
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_DB_WRITER,
   PROCESSOR_TYPE_ENCODER,
+#ifdef USE_CAFFE
   PROCESSOR_TYPE_FACENET,
+#endif  // USE_CAFFE
   PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
   PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
 #ifdef USE_RPC
@@ -242,8 +244,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_DB_WRITER;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
+#ifdef USE_CAFFE
   } else if (type == "Facenet") {
     return PROCESSOR_TYPE_FACENET;
+#endif  // USE_CAFFE
   } else if (type == "FlowControlEntrance") {
     return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
   } else if (type == "FlowControlExit") {
@@ -302,8 +306,10 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "DbWriter";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
+#ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return "Facenet";
+#endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return "FlowControlEntrance";
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:

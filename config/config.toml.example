@@ -1,12 +1,15 @@
 # Configuraions for streamer
 
 [decoder]
-h264_decoder_gst_element = 'avdec_h264' # Mac
-# h264_decoder_gst_element = 'avdec_h264' # Ubuntu
-# h264_decoder_gst_element = 'omxh264dec' # Tegra
+h264_decoder_gst_element = 'default'
+# h264_decoder_gst_element = 'avdec_h264'   # Mac
+# h264_decoder_gst_element = 'omxh264dec'   # Tegra
+# h264_decoder_gst_element = 'avdec_h264'   # Linux (software)
+# h264_decoder_gst_element = 'vaapidecode'  # Linux (hardware)
 
 [encoder]
-h264_encoder_gst_element = 'vtenc_h264' # Mac
-# h264_encoder_gst_element = 'omxh264enc' # Tegra
-# h264_encoder_gst_element = 'x264enc' # Ubuntu
-# h264_encoder_gst_element = 'vaapih264enc' # NUC
+h264_encoder_gst_element = 'default'
+# h264_encoder_gst_element = 'vtenc_h264'   # Mac
+# h264_encoder_gst_element = 'omxh264enc'   # Tegra
+# h264_encoder_gst_element = 'x264enc'      # Linux (software)
+# h264_encoder_gst_element = 'vaapih264enc' # Linux (hardware)

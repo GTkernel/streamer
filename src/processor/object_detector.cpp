@@ -14,7 +14,7 @@
 #ifdef USE_SSD
 #include "ssd_detector.h"
 #endif
-#include "yolo_detector.h"
+#include "caffe_yolo_detector.h"
 #include "opencv_face_detector.h"
 #include "caffe_mtcnn.h"
 #include "ncs_yolo_detector.h"

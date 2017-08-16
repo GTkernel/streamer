@@ -98,6 +98,15 @@ ModelManager::ModelManager() {
       default_input_layer = "";
     }
 
+    auto input_scale_value = model_value.find("input_scale");
+    if (input_scale_value != nullptr) {
+      if (type_string != "caffe") {
+        LOG(WARNING)
+            << "Only Caffe models support specifying an input scale factor. "
+            << "Ignoring \"input_scale\" param.";
+      }
+    }
+
     std::vector<ModelDesc> model_descs;
     for (size_t i = 0; i < desc_paths.size(); ++i) {
       ModelDesc model_desc(name, type, desc_paths.at(i), params_paths.at(i),
@@ -111,6 +120,9 @@ ModelManager::ModelManager() {
       auto voc_config_value = model_value.find("voc_config");
       if (voc_config_value != nullptr) {
         model_desc.SetVocConfigPath(voc_config_value->as<string>());
+      }
+      if ((input_scale_value != nullptr) && (type_string == "caffe")) {
+        model_desc.SetInputScale(input_scale_value->as<double>());
       }
 
       model_descs.push_back(model_desc);
