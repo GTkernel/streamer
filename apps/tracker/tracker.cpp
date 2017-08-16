@@ -64,7 +64,7 @@ void SignalHandler(int) {
 
 void Run(const std::vector<string>& camera_names,
          const string& mtcnn_model_name, const string& facenet_model_name,
-         bool display, float scale, int min_size, float motion_threshold,
+         bool display, float scale, float motion_threshold,
          float motion_max_duration) {
   // Silence complier warning sayings when certain options are turned off.
   (void)motion_threshold;
@@ -117,7 +117,7 @@ void Run(const std::vector<string>& camera_names,
   auto model_descs = model_manager.GetModelDescs(mtcnn_model_name);
   for (size_t i = 0; i < batch_size; i++) {
     std::shared_ptr<Processor> mtcnn(
-        new MtcnnFaceDetector(model_descs, min_size));
+        new ObjectDetector("mtcnn-face", model_descs, input_shape, 0.f, 0.f, std::set<std::string>()));
     // mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
     mtcnn->SetSource("input", input_streams[i]);
     mtcnns.push_back(mtcnn);
@@ -269,8 +269,6 @@ int main(int argc, char* argv[]) {
                      "The directory to find streamer's configurations");
   desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
                      "scale factor before mtcnn");
-  desc.add_options()("min_size", po::value<int>()->default_value(40),
-                     "face minimum size");
   desc.add_options()("motion_threshold", po::value<float>()->default_value(0.5),
                      "motion threshold");
   desc.add_options()("motion_max_duration",
@@ -306,10 +304,9 @@ int main(int argc, char* argv[]) {
   auto facenet_model = vm["facenet_model"].as<string>();
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
-  int min_size = vm["min_size"].as<int>();
   float motion_threshold = vm["motion_threshold"].as<float>();
   float motion_max_duration = vm["motion_max_duration"].as<float>();
-  Run(camera_names, mtcnn_model, facenet_model, display, scale, min_size,
+  Run(camera_names, mtcnn_model, facenet_model, display, scale,
       motion_threshold, motion_max_duration);
 
   return 0;

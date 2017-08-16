@@ -216,21 +216,6 @@ void Detector::Preprocess(const cv::Mat& img,
 }
 }  // namespace ssd
 
-SsdDetector::SsdDetector(const ModelDesc& model_desc, Shape input_shape,
-                         float confidence_threshold, float idle_duration,
-                         const std::set<std::string>& targets)
-    : Processor(PROCESSOR_TYPE_SSD_DETECTOR, {"input"}, {"output"}),
-      model_desc_(model_desc),
-      input_shape_(input_shape),
-      confidence_threshold_(confidence_threshold),
-      idle_duration_(idle_duration),
-      targets_(targets) {}
-
-std::shared_ptr<SsdDetector> SsdDetector::Create(const FactoryParamsType&) {
-  STREAMER_NOT_IMPLEMENTED;
-  return nullptr;
-}
-
 bool SsdDetector::Init() {
   std::string model_file = model_desc_.GetModelDescPath();
   std::string weights_file = model_desc_.GetModelParamsPath();
@@ -252,66 +237,20 @@ bool SsdDetector::Init() {
   return true;
 }
 
-bool SsdDetector::OnStop() { return true; }
-
-void SsdDetector::Process() {
-  Timer timer;
-  timer.Start();
-
-  auto frame = GetFrame("input");
-  auto now = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = now - last_detect_time_;
-  if (diff.count() >= idle_duration_) {
-    auto image = frame->GetValue<cv::Mat>("image");
-    CHECK(image.channels() == input_shape_.channel &&
-          image.size[1] == input_shape_.width &&
-          image.size[0] == input_shape_.height);
-    std::vector<std::vector<float> > detections = detector_->Detect(image);
-    std::vector<std::vector<float> > filtered_res;
-    for (decltype(detections.size()) i = 0; i < detections.size(); ++i) {
-      const std::vector<float>& d = detections[i];
-      // Detection format: [image_id, label, score, xmin, ymin, xmax, ymax].
-      CHECK_EQ(d.size(), 7);
-      const float score = d[2];
-      if (score >= confidence_threshold_) {
-        if (targets_.empty()) {
-          filtered_res.push_back(d);
-        } else {
-          auto it = targets_.find(GetLabelName((int)d[1]));
-          if (it != targets_.end()) filtered_res.push_back(d);
-        }
-      }
-    }
-
-    auto original_img = frame->GetValue<cv::Mat>("original_image");
-    CHECK(!original_img.empty());
-    std::vector<string> tags;
-    std::vector<Rect> bboxes;
-    std::vector<float> confidences;
-    for (const auto& m : filtered_res) {
-      int xmin = m[3] * original_img.cols;
-      int ymin = m[4] * original_img.rows;
-      int xmax = m[5] * original_img.cols;
-      int ymax = m[6] * original_img.rows;
-      if (xmin < 0) xmin = 0;
-      if (ymin < 0) ymin = 0;
-      if (xmax > original_img.cols) xmax = original_img.cols;
-      if (ymax > original_img.rows) ymax = original_img.rows;
-
-      tags.push_back(GetLabelName((int)m[1]));
-      bboxes.push_back(Rect(xmin, ymin, xmax - xmin, ymax - ymin));
-      confidences.push_back(m[2]);
-    }
-
-    last_detect_time_ = std::chrono::system_clock::now();
-    frame->SetValue("tags", tags);
-    frame->SetValue("bounding_boxes", bboxes);
-    frame->SetValue("confidences", confidences);
-    PushFrame("output", std::move(frame));
-    LOG(INFO) << "Ssd detection took " << timer.ElapsedMSec() << " ms";
-  } else {
-    PushFrame("output", std::move(frame));
+std::vector<ObjectInfo> SsdDetector::Detect(const cv::Mat& image) {
+  std::vector<ObjectInfo> result;
+  std::vector<std::vector<float> > detections = detector_->Detect(image);
+  for (const auto& m : detections) {
+    ObjectInfo object_info;
+    // Detection format: [image_id, label, score, xmin, ymin, xmax, ymax].
+    CHECK_EQ(m.size(), 7);
+    object_info.tag = GetLabelName((int)m[1]);
+    object_info.bbox = cv::Rect(m[3]*image.cols, m[4]*image.rows, (m[5] - m[3])*image.cols, (m[6] - m[4])*image.rows);
+    object_info.confidence = m[2];
+    result.push_back(object_info);
   }
+
+  return result;
 }
 
 std::string SsdDetector::GetLabelName(int label) const {
@@ -321,6 +260,7 @@ std::string SsdDetector::GetLabelName(int label) const {
     auto item = label_map_.item(i);
     if (item.label() == label) {
       name = item.name();
+      break;
     }
   }
 

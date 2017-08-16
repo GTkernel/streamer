@@ -4,65 +4,38 @@
 
 #include "opencv_face_detector.h"
 
-OpenCVFaceDetector::OpenCVFaceDetector(float idle_duration,
-                                       string classifier_xml_path)
-    : Processor(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR, {"input"}, {"output"}),
-      idle_duration_(idle_duration),
-      classifier_xml_path_(classifier_xml_path) {}
-
-std::shared_ptr<OpenCVFaceDetector> OpenCVFaceDetector::Create(
-    const FactoryParamsType&) {
-  STREAMER_NOT_IMPLEMENTED;
-  return nullptr;
-}
-
 bool OpenCVFaceDetector::Init() {
-  return classifier_.load(classifier_xml_path_);
+  return classifier_.load(model_desc_.GetModelParamsPath());
 }
 
-bool OpenCVFaceDetector::OnStop() {
-  classifier_.empty();
-  return true;
-}
-
-void OpenCVFaceDetector::Process() {
-  auto frame = GetFrame("input");
-  auto now = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = now - last_detect_time_;
-  if (diff.count() >= idle_duration_) {
-    const cv::Mat& image = frame->GetValue<cv::Mat>("image");
-
-    std::vector<cv::Rect> results;
-
-    std::vector<Rect> results_rect;
-    std::vector<std::string> tags;
+std::vector<ObjectInfo> OpenCVFaceDetector::Detect(const cv::Mat& image) {
+  std::vector<ObjectInfo> result;
 
 #ifdef USE_CUDA
-    cv::gpu::GpuMat image_gpu(image);
-    cv::gpu::GpuMat faces;
-    int num_face = classifier_.detectMultiScale(image_gpu, faces);
-    cv::Mat obj_host;
-    faces.colRange(0, num_face).download(obj_host);
-    cv::Rect* cfaces = obj_host.ptr<cv::Rect>();
-    for (decltype(num_face) i = 0; i < num_face; ++i) {
-      results_rect.emplace_back(cfaces[i].x, cfaces[i].y, cfaces[i].width,
-                                cfaces[i].height);
-      tags.push_back("face");
-    }
+  cv::gpu::GpuMat image_gpu(image);
+  cv::gpu::GpuMat faces;
+  int num_face = classifier_.detectMultiScale(image_gpu, faces);
+  cv::Mat obj_host;
+  faces.colRange(0, num_face).download(obj_host);
+  cv::Rect* cfaces = obj_host.ptr<cv::Rect>();
+  for (decltype(num_face) i = 0; i < num_face; ++i) {
+    ObjectInfo object_info;
+    object_info.tag = "face";
+    object_info.bbox = cfaces[i];
+    object_info.confidence = 1.0;
+    result.push_back(object_info);
+  }
 #else
-    classifier_.detectMultiScale(image, results);
-    for (const auto& result : results) {
-      results_rect.emplace_back(result.x, result.y, result.width,
-                                result.height);
-      tags.push_back("face");
-    }
+  std::vector<cv::Rect> rects;
+  classifier_.detectMultiScale(image, rects);
+  for (const auto& m : rects) {
+    ObjectInfo object_info;
+    object_info.tag = "face";
+    object_info.bbox = m;
+    object_info.confidence = 1.0;
+    result.push_back(object_info);
+  }
 #endif  // USE_CUDA
 
-    last_detect_time_ = std::chrono::system_clock::now();
-    frame->SetValue("bounding_boxes", results_rect);
-    frame->SetValue("tags", tags);
-    PushFrame("output", std::move(frame));
-  } else {
-    PushFrame("output", std::move(frame));
-  }
+  return result;
 }

@@ -11,8 +11,8 @@ file(GLOB_RECURSE CAFFE_OPENCL_SOURCE_FILES ${SRC_ROOT}/caffe_opencl*.cpp ${SRC_
 file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/camera/pgr_*.h)
 file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/camera/vimba_*.h)
 file(GLOB_RECURSE FRCNN_SOURCE_FILES
-  ${SRC_ROOT}/processor/object_detector.cpp
-  ${SRC_ROOT}/processor/object_detector.h)
+  ${SRC_ROOT}/processor/frcnn_detector.cpp
+  ${SRC_ROOT}/processor/frcnn_detector.h)
 file(GLOB_RECURSE NCS_SOURCE_FILES
   ${SRC_ROOT}/ncs/*.cpp
   ${SRC_ROOT}/ncs/*.h

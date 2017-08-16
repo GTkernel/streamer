@@ -630,82 +630,31 @@ void MTCNN::Detect(const cv::Mat& image, std::vector<FaceInfo>& faceInfo,
   condidate_rects_.clear();
 }
 
-MtcnnFaceDetector::MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs,
-                                     int min_size, float idle_duration)
-    : Processor(PROCESSOR_TYPE_MTCNN_FACE_DETECTOR, {"input"}, {"output"}),
-      model_descs_(model_descs),
-      minSize_(min_size),
-      idle_duration_(idle_duration) {
-  threshold_[0] = 0.6;
-  threshold_[1] = 0.7;
-  threshold_[2] = 0.7;
-  factor_ = 0.709;
-}
-
-std::shared_ptr<MtcnnFaceDetector> MtcnnFaceDetector::Create(
-    const FactoryParamsType&) {
-  STREAMER_NOT_IMPLEMENTED;
-  return nullptr;
-}
-
 bool MtcnnFaceDetector::Init() {
   detector_.reset(new MTCNN(model_descs_));
   LOG(INFO) << "MtcnnFaceDetector initialized";
   return true;
 }
 
-bool MtcnnFaceDetector::OnStop() { return true; }
-
-void MtcnnFaceDetector::Process() {
-  Timer timer;
-  timer.Start();
-
+std::vector<ObjectInfo> MtcnnFaceDetector::Detect(const cv::Mat& image) {
   std::vector<FaceInfo> faceInfo;
-  auto frame = GetFrame("input");
+  detector_->Detect(image, faceInfo, minSize_, threshold_, factor_);
+  std::vector<ObjectInfo> result;
+  for (auto& m : faceInfo) {
+    ObjectInfo object_info;
+    object_info.tag = "face";
+    object_info.bbox = cv::Rect(m.bbox.y1, m.bbox.x1, m.bbox.y2 - m.bbox.y1,
+                          m.bbox.x2 - m.bbox.x1);
+    object_info.confidence = 1.0;
 
-  auto now = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = now - last_detect_time_;
-  if (diff.count() >= idle_duration_) {
-    auto image = frame->GetValue<cv::Mat>("image");
-    detector_->Detect(image, faceInfo, minSize_, threshold_, factor_);
-    auto original_img = frame->GetValue<cv::Mat>("original_image");
-    CHECK(!original_img.empty());
-    float scale_factor[] = {(float)original_img.size[1] / (float)image.size[1],
-                            (float)original_img.size[0] / (float)image.size[0]};
-    std::vector<Rect> bboxes;
-    std::vector<FaceLandmark> face_landmarks;
-    std::vector<std::string> tags;
-    for (auto& m : faceInfo) {
-      m.bbox.x1 *= scale_factor[0];
-      m.bbox.y1 *= scale_factor[1];
-      m.bbox.x2 *= scale_factor[0];
-      m.bbox.y2 *= scale_factor[1];
-      if (m.bbox.y1 < 0) m.bbox.y1 = 0;
-      if (m.bbox.x1 < 0) m.bbox.x1 = 0;
-      if (m.bbox.y2 > original_img.cols) m.bbox.y2 = original_img.cols;
-      if (m.bbox.x2 > original_img.rows) m.bbox.x2 = original_img.rows;
-      bboxes.push_back(Rect(m.bbox.y1, m.bbox.x1, m.bbox.y2 - m.bbox.y1,
-                            m.bbox.x2 - m.bbox.x1));
-
-      FaceLandmark fl;
-      for (int i = 0; i < 5; ++i) {
-        m.facePts.x[i] *= scale_factor[0];
-        m.facePts.y[i] *= scale_factor[1];
-        fl.x[i] = m.facePts.y[i];
-        fl.y[i] = m.facePts.x[i];
-      }
-      face_landmarks.push_back(fl);
-
-      tags.push_back("face");
+    FaceLandmark fl;
+    for (int i = 0; i < 5; ++i) {
+      fl.x[i] = m.facePts.y[i];
+      fl.y[i] = m.facePts.x[i];
     }
-    last_detect_time_ = std::chrono::system_clock::now();
-
-    frame->SetValue("bounding_boxes", bboxes);
-    frame->SetValue("face_landmarks", face_landmarks);
-    frame->SetValue("tags", tags);
-    PushFrame("output", std::move(frame));
-    LOG(INFO) << "MtcnnFaceDetector took " << timer.ElapsedMSec() << " ms";
-  } else {
-    PushFrame("output", std::move(frame));
+    object_info.face_landmark = fl;
+    object_info.face_landmark_flag = true;
+    result.push_back(object_info);
   }
+  return result;
 }

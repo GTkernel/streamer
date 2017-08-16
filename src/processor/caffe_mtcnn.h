@@ -23,7 +23,7 @@
 
 #include "common/common.h"
 #include "model/model.h"
-#include "processor.h"
+#include "object_detector.h"
 
 using caffe::Datum;
 using caffe::Blob;
@@ -100,17 +100,19 @@ class MTCNN {
   int num_channels_;
 };
 
-class MtcnnFaceDetector : public Processor {
+class MtcnnFaceDetector : public BaseDetector {
  public:
-  MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs, int min_size,
-                    float idle_duration = 0.f);
-  static std::shared_ptr<MtcnnFaceDetector> Create(
-      const FactoryParamsType& params);
-
- protected:
-  virtual bool Init() override;
-  virtual bool OnStop() override;
-  virtual void Process() override;
+  MtcnnFaceDetector(const std::vector<ModelDesc>& model_descs)
+    : model_descs_(model_descs) {
+    threshold_[0] = 0.6;
+    threshold_[1] = 0.7;
+    threshold_[2] = 0.7;
+    factor_ = 0.709;
+    minSize_ = 40;
+  }
+  virtual ~MtcnnFaceDetector() {}
+  virtual bool Init();
+  virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);
 
  private:
   std::vector<ModelDesc> model_descs_;
@@ -118,8 +120,6 @@ class MtcnnFaceDetector : public Processor {
   double threshold_[3];
   double factor_;
   int minSize_;
-  float idle_duration_;
-  std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
 };
 
 #endif  // STREAMER_PROCESSOR_CAFFE_MTCNN_H_

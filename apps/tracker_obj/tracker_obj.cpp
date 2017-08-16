@@ -55,7 +55,7 @@ void SignalHandler(int) {
 }
 
 void Run(const std::vector<string>& camera_names, const string& detector_type,
-         const string& detector_model, bool display, float scale, int min_size,
+         const string& detector_model, bool display, float scale,
          float detector_confidence_threshold, float detector_idle_duration,
          const string& detector_targets, const std::string& tracker_type,
          float tracker_calibration_duration, bool db_write_to_file,
@@ -108,64 +108,16 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
 
   // detector
   for (int i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> detector;
-    auto p = GetProcessorTypeByString(detector_type);
-
-    if (p == PROCESSOR_TYPE_MTCNN_FACE_DETECTOR) {
-      auto model_descs = model_manager.GetModelDescs(detector_model);
-      detector.reset(
-          new MtcnnFaceDetector(model_descs, min_size, detector_idle_duration));
-    } else if (p == PROCESSOR_TYPE_OPENCV_FACE_DETECTOR) {
-      auto model_desc = model_manager.GetModelDesc(detector_model);
-      detector.reset(new OpenCVFaceDetector(detector_idle_duration,
-                                            model_desc.GetModelParamsPath()));
-    } else if (p == PROCESSOR_TYPE_YOLO_DETECTOR) {
-      auto model_desc = model_manager.GetModelDesc(detector_model);
-      auto t = SplitString(detector_targets, ",");
-      std::set<std::string> targets;
-      for (const auto& m : t) {
-        if (!m.empty()) targets.insert(m);
-      }
-      detector.reset(new YoloDetector(model_desc, detector_confidence_threshold,
-                                      detector_idle_duration, targets));
-#ifdef USE_FRCNN
-    } else if (p == PROCESSOR_TYPE_OBJECT_DETECTOR) {
-      auto model_desc = model_manager.GetModelDesc(detector_model);
-      auto t = SplitString(detector_targets, ",");
-      std::set<std::string> targets;
-      for (const auto& m : t) {
-        if (!m.empty()) targets.insert(m);
-      }
-      detector.reset(new ObjectDetector(model_desc, input_shape,
-                                        detector_idle_duration, targets));
-#endif  // USE_FRCNN
-#ifdef USE_SSD
-    } else if (p == PROCESSOR_TYPE_SSD_DETECTOR) {
-      auto model_desc = model_manager.GetModelDesc(detector_model);
-      auto t = SplitString(detector_targets, ",");
-      std::set<std::string> targets;
-      for (const auto& m : t) {
-        if (!m.empty()) targets.insert(m);
-      }
-      detector.reset(new SsdDetector(model_desc, input_shape,
-                                     detector_confidence_threshold,
-                                     detector_idle_duration, targets));
-#endif  // USE_SSD
-#ifdef USE_NCS
-    } else if (p == PROCESSOR_TYPE_NCS_YOLO_DETECTOR) {
-      auto model_desc = model_manager.GetModelDesc(detector_model);
-      auto t = SplitString(detector_targets, ",");
-      std::set<std::string> targets;
-      for (const auto& m : t) {
-        if (!m.empty()) targets.insert(m);
-      }
-      detector.reset(new NcsYoloDetector(model_desc, input_shape,
-                                         detector_confidence_threshold,
-                                         detector_idle_duration, targets));
-#endif  // USE_NCS
-    } else {
-      CHECK(false) << "detector_type " << detector_type << " not supported.";
+    auto model_descs = model_manager.GetModelDescs(detector_model);
+    auto t = SplitString(detector_targets, ",");
+    std::set<std::string> targets;
+    for (const auto& m : t) {
+      if (!m.empty()) targets.insert(m);
     }
+    std::shared_ptr<Processor> detector(new ObjectDetector(
+                                        detector_type, model_descs, input_shape,
+                                        detector_confidence_threshold,
+                                        detector_idle_duration, targets));
     detector->SetSource("input", input_streams[i]);
     detectors.push_back(detector);
   }
@@ -335,8 +287,6 @@ int main(int argc, char* argv[]) {
                      "The directory to find streamer's configurations");
   desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
                      "scale factor before mtcnn");
-  desc.add_options()("min_size", po::value<int>()->default_value(40),
-                     "face minimum size");
   desc.add_options()("detector_confidence_threshold",
                      po::value<float>()->default_value(0.5),
                      "detector confidence threshold");
@@ -386,7 +336,6 @@ int main(int argc, char* argv[]) {
   auto detector_model = vm["detector_model"].as<string>();
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
-  int min_size = vm["min_size"].as<int>();
   float detector_confidence_threshold =
       vm["detector_confidence_threshold"].as<float>();
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
@@ -396,7 +345,7 @@ int main(int argc, char* argv[]) {
       vm["tracker_calibration_duration"].as<float>();
   bool db_write_to_file = vm["db_write_to_file"].as<bool>();
   auto athena_address = vm["athena_address"].as<string>();
-  Run(camera_names, detector_type, detector_model, display, scale, min_size,
+  Run(camera_names, detector_type, detector_model, display, scale,
       detector_confidence_threshold, detector_idle_duration, detector_targets,
       tracker_type, tracker_calibration_duration, db_write_to_file,
       athena_address);

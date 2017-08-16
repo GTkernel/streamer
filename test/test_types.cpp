@@ -102,9 +102,6 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_NEURAL_NET_EVALUATOR)));
-  EXPECT_EQ(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
-            GetProcessorTypeByString(GetStringForProcessorType(
-                PROCESSOR_TYPE_OPENCV_FACE_DETECTOR)));
   EXPECT_EQ(PROCESSOR_TYPE_INVALID,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_INVALID)));

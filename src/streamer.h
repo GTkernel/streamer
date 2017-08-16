@@ -16,9 +16,7 @@
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
 #include "processor/opencv_face_detector.h"
-#ifdef USE_FRCNN
 #include "processor/object_detector.h"
-#endif  // USE_FRCNN
 #include "processor/caffe_mtcnn.h"
 #include "processor/db_writer.h"
 #include "processor/facenet.h"

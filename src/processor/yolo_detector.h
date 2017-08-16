@@ -12,14 +12,14 @@
 #include <set>
 #include "common/common.h"
 #include "model/model.h"
-#include "processor.h"
+#include "object_detector.h"
 
 namespace yolo {
 class Detector {
  public:
   Detector(const string& model_file, const string& weights_file);
 
-  std::vector<float> Detect(cv::Mat& img);
+  std::vector<float> Detect(const cv::Mat& img);
 
  private:
   std::shared_ptr<caffe::Net<float>> net_;
@@ -29,25 +29,17 @@ class Detector {
 };
 }  // namespace yolo
 
-class YoloDetector : public Processor {
+class YoloDetector : public BaseDetector {
  public:
-  YoloDetector(const ModelDesc& model_desc, float confidence_threshold,
-               float idle_duration = 0.f,
-               const std::set<std::string>& targets = std::set<std::string>());
-  static std::shared_ptr<YoloDetector> Create(const FactoryParamsType& params);
-
- protected:
-  virtual bool Init() override;
-  virtual bool OnStop() override;
-  virtual void Process() override;
+  YoloDetector(const ModelDesc& model_desc)
+    : model_desc_(model_desc) {}
+  virtual ~YoloDetector() {}
+  virtual bool Init();
+  virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);
 
  private:
   ModelDesc model_desc_;
   std::unique_ptr<yolo::Detector> detector_;
-  float confidence_threshold_;
-  float idle_duration_;
-  std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
-  std::set<std::string> targets_;
   std::vector<std::string> voc_names_;
 };
 

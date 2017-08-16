@@ -63,7 +63,7 @@ Detector::Detector(const string& model_file, const string& weights_file) {
   input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
 }
 
-std::vector<float> Detector::Detect(cv::Mat& img) {
+std::vector<float> Detector::Detect(const cv::Mat& img) {
   caffe::Blob<float>* input_layer = net_->input_blobs()[0];
   int width = input_layer->width();
   int height = input_layer->height();
@@ -94,20 +94,6 @@ std::vector<float> Detector::Detect(cv::Mat& img) {
 }
 }  // namespace yolo
 
-YoloDetector::YoloDetector(const ModelDesc& model_desc,
-                           float confidence_threshold, float idle_duration,
-                           const std::set<std::string>& targets)
-    : Processor(PROCESSOR_TYPE_YOLO_DETECTOR, {"input"}, {"output"}),
-      model_desc_(model_desc),
-      confidence_threshold_(confidence_threshold),
-      idle_duration_(idle_duration),
-      targets_(targets) {}
-
-std::shared_ptr<YoloDetector> YoloDetector::Create(const FactoryParamsType&) {
-  STREAMER_NOT_IMPLEMENTED;
-  return nullptr;
-}
-
 bool YoloDetector::Init() {
   std::string model_file = model_desc_.GetModelDescPath();
   std::string weights_file = model_desc_.GetModelParamsPath();
@@ -126,65 +112,23 @@ bool YoloDetector::Init() {
   return true;
 }
 
-bool YoloDetector::OnStop() { return true; }
-
-void YoloDetector::Process() {
-  Timer timer;
-  timer.Start();
-
-  auto frame = GetFrame("input");
-  auto now = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = now - last_detect_time_;
-  if (diff.count() >= idle_duration_) {
-    auto image = frame->GetValue<cv::Mat>("image");
-    std::vector<float> DetectionOutput = detector_->Detect(image);
-    std::vector<std::vector<int>> bboxs;
-    float pro_obj[49][2];
-    int idx_class[49];
-
-    std::vector<std::vector<int>> bboxes =
-        GetBoxes(DetectionOutput, &pro_obj[0][0], idx_class, bboxs,
-                 confidence_threshold_, image);
-
-    std::vector<std::vector<int>> filtered_res;
-    auto original_img = frame->GetValue<cv::Mat>("original_image");
-    CHECK(!original_img.empty());
-    std::vector<Rect> bbs;
-    std::vector<string> tags;
-    std::vector<float> confidences;
-
-    for (size_t i = 0; i < bboxes.size(); ++i) {
-      const std::vector<int>& d = bboxes[i];
-      if (targets_.empty()) {
-        filtered_res.push_back(d);
-      } else {
-        auto it = targets_.find(voc_names_.at(d[0]));
-        if (it != targets_.end()) filtered_res.push_back(d);
-      }
-    }
-
-    for (size_t i = 0; i < filtered_res.size(); ++i) {
-      int xmin = filtered_res[i][1];
-      int ymin = filtered_res[i][2];
-      int xmax = filtered_res[i][3];
-      int ymax = filtered_res[i][4];
-      if (xmin < 0) xmin = 0;
-      if (ymin < 0) ymin = 0;
-      if (xmax > original_img.cols) xmax = original_img.cols;
-      if (ymax > original_img.rows) ymax = original_img.rows;
-
-      tags.push_back(voc_names_.at(filtered_res[i][0]));
-      bbs.push_back(Rect(xmin, ymin, xmax - xmin, ymax - ymin));
-      confidences.push_back(filtered_res[i][5] * 1.0 / 100);
-    }
-
-    last_detect_time_ = std::chrono::system_clock::now();
-    frame->SetValue("tags", tags);
-    frame->SetValue("bounding_boxes", bbs);
-    frame->SetValue("confidences", confidences);
-    PushFrame("output", std::move(frame));
-    LOG(INFO) << "Yolo detection took " << timer.ElapsedMSec() << " ms";
-  } else {
-    PushFrame("output", std::move(frame));
+std::vector<ObjectInfo> YoloDetector::Detect(const cv::Mat& image) {
+  std::vector<ObjectInfo> result;
+  std::vector<float> DetectionOutput = detector_->Detect(image);
+  std::vector<std::vector<int>> bboxs;
+  float pro_obj[49][2];
+  int idx_class[49];
+  std::vector<std::vector<int>> bboxes =
+      GetBoxes(DetectionOutput, &pro_obj[0][0], idx_class, bboxs,
+               0.01, image);
+  
+  for (const auto& m : bboxes) {
+    ObjectInfo object_info;
+    object_info.tag = voc_names_.at(m[0]);
+    object_info.bbox = cv::Rect(m[1], m[2], (m[3] - m[1]), (m[4] - m[2]));
+    object_info.confidence = m[5] * 1.0 / 100;
+    result.push_back(object_info);
   }
+
+  return result;
 }

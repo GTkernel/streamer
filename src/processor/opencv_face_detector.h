@@ -12,28 +12,18 @@
 #endif  // USE_CUDA
 #include "common/common.h"
 #include "common/types.h"
-#include "processor/processor.h"
+#include "object_detector.h"
 
-class OpenCVFaceDetector : public Processor {
+class OpenCVFaceDetector : public BaseDetector {
  public:
-  // TODO: Use a configurable path
-  OpenCVFaceDetector(
-      float idle_duration,
-      string classifier_xml_path =
-          "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml");
-
-  static std::shared_ptr<OpenCVFaceDetector> Create(
-      const FactoryParamsType& params);
-
- protected:
-  virtual bool Init() override;
-  virtual bool OnStop() override;
-  virtual void Process() override;
+  OpenCVFaceDetector(const ModelDesc& model_desc)
+    : model_desc_(model_desc) {}
+  virtual ~OpenCVFaceDetector() {}
+  virtual bool Init();
+  virtual std::vector<ObjectInfo> Detect(const cv::Mat& image);
 
  private:
-  float idle_duration_;
-  std::chrono::time_point<std::chrono::system_clock> last_detect_time_;
-  string classifier_xml_path_;
+  ModelDesc model_desc_;
 #ifdef USE_CUDA
   cv::cuda::CascadeClassifier classifier_;
 #else

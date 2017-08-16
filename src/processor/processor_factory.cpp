@@ -19,9 +19,7 @@
 #endif  // USE_NCS
 #include "processor/neural_net_evaluator.h"
 #include "processor/obj_tracker.h"
-#ifdef USE_FRCNN
 #include "processor/object_detector.h"
-#endif  // USE_FRCNN
 #include "processor/object_tracker.h"
 #include "processor/opencv_face_detector.h"
 #include "processor/opencv_motion_detector.h"
@@ -81,36 +79,20 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return ImageTransformer::Create(params);
     case PROCESSOR_TYPE_JPEG_WRITER:
       return JpegWriter::Create(params);
-    case PROCESSOR_TYPE_MTCNN_FACE_DETECTOR:
-      return MtcnnFaceDetector::Create(params);
-#ifdef USE_NCS
-    case PROCESSOR_TYPE_NCS_YOLO_DETECTOR:
-      return NcsYoloDetector::Create(params);
-#endif  // USE_NCS
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return NeuralNetEvaluator::Create(params);
     case PROCESSOR_TYPE_OBJ_TRACKER:
       return ObjTracker::Create(params);
-#ifdef USE_FRCNN
     case PROCESSOR_TYPE_OBJECT_DETECTOR:
       return ObjectDetector::Create(params);
-#endif  // USE_FRCNN
     case PROCESSOR_TYPE_OBJECT_TRACKER:
       return ObjectTracker::Create(params);
-    case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
-      return OpenCVFaceDetector::Create(params);
     case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
       return OpenCVMotionDetector::Create(params);
     case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
       return OpenCVPeopleDetector::Create(params);
-#ifdef USE_SSD
-    case PROCESSOR_TYPE_SSD_DETECTOR:
-      return SsdDetector::Create(params);
-#endif  // USE_SSD
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
-    case PROCESSOR_TYPE_YOLO_DETECTOR:
-      return YoloDetector::Create(params);
     case PROCESSOR_TYPE_INVALID:
       LOG(FATAL) << "Cannot instantiate a Processor of type: "
                  << GetStringForProcessorType(type);
