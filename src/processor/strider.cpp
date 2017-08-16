@@ -37,7 +37,7 @@ void Strider::Process() {
   ++num_frames_processed_;
 
   if (num_frames_processed_ % stride_) {
-    // Drop frames whose IDs are not evenly divisible by the stride.
+    // Drop frames whose arrival index is not evenly divisible by the stride.
     LOG(WARNING) << "Striding by " << stride_ << " frames. Dropping frame: "
                  << frame->GetValue<unsigned long>("frame_id");
     auto flow_control_entrance = frame->GetFlowControlEntrance();
