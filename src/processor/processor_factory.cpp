@@ -13,6 +13,7 @@
 #include "processor/jpeg_writer.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_face_detector.h"
+#include "processor/strider.h"
 #include "processor/throttler.h"
 #ifdef USE_RPC
 #include "processor/rpc/frame_receiver.h"
@@ -64,6 +65,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return NeuralNetEvaluator::Create(params);
     case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
       return OpenCVFaceDetector::Create(params);
+    case PROCESSOR_TYPE_STRIDER:
+      return Strider::Create(params);
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
     case PROCESSOR_TYPE_INVALID:
