@@ -1,4 +1,4 @@
-// This is a sample example app that uses the strider processor
+// This is an example app that uses the Strider processor. The pipeline is:
 //   Camera -> Strider
 
 #include <iostream>
