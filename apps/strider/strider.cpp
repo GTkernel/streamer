@@ -38,7 +38,7 @@ void Run(const std::string& camera_name, unsigned int stride) {
   auto reader = strider->GetSink("output")->Subscribe();
   while (true) {
     auto frame = reader->PopFrame();
-    LOG(INFO) << "Processed frame: "
+    LOG(INFO) << "Received frame: "
               << frame->GetValue<unsigned long>("frame_id");
   }
 
