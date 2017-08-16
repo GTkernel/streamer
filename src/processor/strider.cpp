@@ -34,7 +34,6 @@ bool Strider::OnStop() { return true; }
 
 void Strider::Process() {
   auto frame = GetFrame(SOURCE_NAME);
-  ++num_frames_processed_;
 
   if (num_frames_processed_ % stride_) {
     // Drop frames whose arrival index is not evenly divisible by the stride.
@@ -52,4 +51,6 @@ void Strider::Process() {
   } else {
     PushFrame(SINK_NAME, std::move(frame));
   }
+
+  ++num_frames_processed_;
 }
