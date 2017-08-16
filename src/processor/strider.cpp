@@ -6,7 +6,7 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
-Strider::Strider(unsigned int stride)
+Strider::Strider(unsigned long stride)
     : Processor(PROCESSOR_TYPE_STRIDER, {SOURCE_NAME}, {SINK_NAME}),
       stride_(stride),
       num_frames_processed_(0) {}

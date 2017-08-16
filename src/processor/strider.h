@@ -11,7 +11,7 @@
 // other frames.
 class Strider : public Processor {
  public:
-  Strider(unsigned int stride);
+  Strider(unsigned long stride);
   static std::shared_ptr<Strider> Create(const FactoryParamsType& params);
 
   void SetSource(StreamPtr stream);
