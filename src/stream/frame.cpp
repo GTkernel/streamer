@@ -203,11 +203,11 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     return j;
   }
 
-  nlohmann::json operator()(const std::vector<std::vector<double>>& v) {
+  nlohmann::json operator()(const std::vector<std::vector<double>>& v) const {
     return v;
   }
 
-  nlohmann::json operator()(const std::vector<std::vector<float>>& v) {
+  nlohmann::json operator()(const std::vector<std::vector<float>>& v) const {
     return v;
   }
 };
