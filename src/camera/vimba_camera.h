@@ -65,7 +65,7 @@ class VimbaCamera : public Camera {
   virtual void SetFrameRate(float f) override;
   virtual float GetFrameRate() override;
   virtual void SetROI(int roi_offset_x, int roi_offset_y, int roi_width,
-                      int roi_height);
+                      int roi_height) override;
   virtual int GetROIOffsetX() override;
   virtual int GetROIOffsetY() override;
   virtual Shape GetROIOffsetShape() override;
