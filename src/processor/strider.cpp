@@ -8,8 +8,7 @@ constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
 Strider::Strider(unsigned int stride)
-    : Processor(PROCESSOR_TYPE_STRIDER, {SOURCE_NAME},
-                {SINK_NAME}),
+    : Processor(PROCESSOR_TYPE_STRIDER, {SOURCE_NAME}, {SINK_NAME}),
       stride_(stride) {}
 
 std::shared_ptr<Strider> Strider::Create(const FactoryParamsType& params) {
@@ -25,9 +24,7 @@ void Strider::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }
 
-StreamPtr Strider::GetSink() {
-  return Processor::GetSink(SINK_NAME);
-}
+StreamPtr Strider::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 bool Strider::Init() { return true; }
 
