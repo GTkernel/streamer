@@ -17,7 +17,7 @@ class TFModel : public Model {
  public:
   TFModel(const ModelDesc& model_desc, Shape input_shape);
   virtual ~TFModel() override;
-  virtual void Load();
+  virtual void Load() override;
   virtual std::unordered_map<std::string, cv::Mat> Evaluate(
       const std::unordered_map<std::string, cv::Mat>& input_map,
       const std::vector<std::string>& output_layer_names) override;
