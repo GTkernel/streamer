@@ -1,4 +1,4 @@
-// This is a sample example opp to use strider
+// This is a sample example app that uses the strider processor
 //   Camera -> Strider
 //
 
