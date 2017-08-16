@@ -41,7 +41,7 @@ void Run(const std::string& camera_name, unsigned int stride) {
   while (true) {
     auto frame = reader->PopFrame();
     unsigned long id = frame->GetValue<unsigned long>("frame_id");
-    LOG(INFO) << id;
+    LOG(INFO) << "Processed frame: " << id;
   }
 
   // Stop the processors in forward order.

@@ -38,6 +38,8 @@ void Strider::Process() {
     PushFrame(SINK_NAME, std::move(frame));
   } else {
     // Drop frame
+    unsigned long id = frame->GetValue<unsigned long>("frame_id");
+    LOG(WARNING) << "Dropping frame " << id << " in strider.";
     auto flow_control_entrance = frame->GetFlowControlEntrance();
     if (flow_control_entrance) {
       // If a flow control entrance exists, then we need to inform it that a
