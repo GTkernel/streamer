@@ -26,7 +26,7 @@ class Strider : public Processor {
   virtual void Process() override;
 
  private:
-  unsigned int stride_;
+  unsigned long stride_;
   unsigned long num_frames_processed_;
 };
 

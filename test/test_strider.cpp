@@ -3,7 +3,7 @@
 #include "processor/strider.h"
 
 TEST(StriderTest, TestBasic) {
-  auto stride = 10;
+  unsigned long stride = 10;
   auto stream = std::make_shared<Stream>();
 
   Strider strider(stride);
@@ -18,7 +18,7 @@ TEST(StriderTest, TestBasic) {
     stream->PushFrame(std::move(frame));
   }
 
-  for (auto i = 0; i < 5; i++) {
+  for (unsigned long i = 0; i < 5; i++) {
     auto current = i * stride;
     LOG(INFO) << "Waiting for frame_id = " << current;
     auto id = reader->PopFrame()->GetValue<unsigned long>("frame_id");

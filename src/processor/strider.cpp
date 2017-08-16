@@ -1,8 +1,6 @@
 
 #include "processor/strider.h"
 
-#include <stdexcept>
-
 #include "processor/flow_control/flow_control_entrance.h"
 
 constexpr auto SOURCE_NAME = "input";
@@ -14,12 +12,8 @@ Strider::Strider(unsigned int stride)
       num_frames_processed_(0) {}
 
 std::shared_ptr<Strider> Strider::Create(const FactoryParamsType& params) {
-  int stride = std::stoi(params.at("stride"));
-  if (stride < 0) {
-    throw std::invalid_argument("\"stride\" cannot be negative, but is: " +
-                                std::to_string(stride));
-  }
-  return std::make_shared<Strider>((unsigned int)stride);
+  unsigned long stride = std::stoul(params.at("stride"));
+  return std::make_shared<Strider>(stride);
 }
 
 void Strider::SetSource(StreamPtr stream) {
