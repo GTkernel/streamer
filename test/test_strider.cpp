@@ -1,4 +1,7 @@
 
+#include <chrono>
+#include <thread>
+
 #include <gtest/gtest.h>
 
 #include "processor/strider.h"
