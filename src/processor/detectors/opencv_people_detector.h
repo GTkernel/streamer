@@ -26,7 +26,6 @@ class OpenCVPeopleDetector : public Processor {
 
  private:
 #ifdef USE_CUDA
-  // cv::cuda::HOG hog_;
   cv::cuda::HOG hog_;
 #else
   cv::HOGDescriptor hog_;
