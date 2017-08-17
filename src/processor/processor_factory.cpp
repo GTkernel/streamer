@@ -18,14 +18,14 @@
 #ifdef USE_NCS
 #include "processor/detectors/ncs_yolo_detector.h"
 #endif  // USE_NCS
-#include "processor/neural_net_evaluator.h"
-#include "processor/face_tracker.h"
 #include "processor/detectors/object_detector.h"
-#include "processor/trackers/object_tracker.h"
-#include "processor/opencv_motion_detector.h"
 #include "processor/detectors/opencv_people_detector.h"
+#include "processor/face_tracker.h"
+#include "processor/neural_net_evaluator.h"
+#include "processor/opencv_motion_detector.h"
 #include "processor/pubsub/frame_publisher.h"
 #include "processor/pubsub/frame_subscriber.h"
+#include "processor/trackers/object_tracker.h"
 #ifdef USE_RPC
 #include "processor/rpc/frame_receiver.h"
 #include "processor/rpc/frame_sender.h"

@@ -69,7 +69,7 @@ void FaceTracker::Process() {
 }
 
 void FaceTracker::AttachNearest(std::vector<PointFeature>& point_features,
-                                  float threshold) {
+                                float threshold) {
   for (auto& m : path_list_) {
     boost::optional<PointFeature> lp = m.back();
     if (!lp) {
@@ -100,7 +100,7 @@ void FaceTracker::AttachNearest(std::vector<PointFeature>& point_features,
 }
 
 float FaceTracker::GetDistance(const std::vector<float>& a,
-                                 const std::vector<float>& b) {
+                               const std::vector<float>& b) {
   float distance = 0;
   for (size_t i = 0; i < a.size(); ++i) {
     distance += pow((a[i] - b[i]), 2);
