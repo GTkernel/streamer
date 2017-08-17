@@ -73,6 +73,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_ENCODER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_ENCODER)));
+  EXPECT_EQ(PROCESSOR_TYPE_FACE_TRACKER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FACE_TRACKER)));
 #ifdef USE_CAFFE
   EXPECT_EQ(PROCESSOR_TYPE_FACENET,
             GetProcessorTypeByString(
@@ -117,15 +120,12 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_NEURAL_NET_EVALUATOR)));
-  EXPECT_EQ(PROCESSOR_TYPE_OBJECT_TRACKER,
-            GetProcessorTypeByString(
-                GetStringForProcessorType(PROCESSOR_TYPE_OBJECT_TRACKER)));
   EXPECT_EQ(PROCESSOR_TYPE_OBJECT_DETECTOR,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_OBJECT_DETECTOR)));
-  EXPECT_EQ(PROCESSOR_TYPE_FACE_TRACKER,
+  EXPECT_EQ(PROCESSOR_TYPE_OBJECT_TRACKER,
             GetProcessorTypeByString(
-                GetStringForProcessorType(PROCESSOR_TYPE_FACE_TRACKER)));
+                GetStringForProcessorType(PROCESSOR_TYPE_OBJECT_TRACKER)));
   EXPECT_EQ(PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR)));

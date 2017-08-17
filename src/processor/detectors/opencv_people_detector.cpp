@@ -2,7 +2,7 @@
 // Created by Abhinav Garlapati (abhinav2710@gmail.com) on 1/21/17.
 //
 
-#include "opencv_people_detector.h"
+#include "processor/detectors/opencv_people_detector.h"
 
 OpenCVPeopleDetector::OpenCVPeopleDetector()
     : Processor(PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR, {"input"}, {"output"}) {}

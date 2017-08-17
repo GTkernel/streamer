@@ -7,8 +7,9 @@
 
 #include "processor/caffe_facenet.h"
 
+#include <cv.h>
+
 #include "common/context.h"
-#include "cv.h"
 #include "model/model_manager.h"
 #include "utils/utils.h"
 

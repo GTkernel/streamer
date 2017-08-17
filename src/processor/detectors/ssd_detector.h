@@ -5,14 +5,16 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_SSD_DETECTOR_H_
-#define STREAMER_PROCESSOR_SSD_DETECTOR_H_
+#ifndef STREAMER_PROCESSOR_DETECTORS_SSD_DETECTOR_H_
+#define STREAMER_PROCESSOR_DETECTORS_SSD_DETECTOR_H_
+
+#include <set>
 
 #include <caffe/caffe.hpp>
-#include <set>
+
 #include "common/common.h"
 #include "model/model.h"
-#include "object_detector.h"
+#include "processor/detectors/object_detector.h"
 
 namespace ssd {
 class Detector {
@@ -53,4 +55,4 @@ class SsdDetector : public BaseDetector {
   caffe::LabelMap label_map_;
 };
 
-#endif  // STREAMER_PROCESSOR_SSD_DETECTOR_H_
+#endif  // STREAMER_PROCESSOR_DETECTORS_SSD_DETECTOR_H_

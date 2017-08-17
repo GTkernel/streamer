@@ -5,7 +5,8 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "face_tracker.h"
+#include "processor/face_tracker.h"
+
 #include "common/context.h"
 
 FaceTracker::FaceTracker(size_t rem_size)

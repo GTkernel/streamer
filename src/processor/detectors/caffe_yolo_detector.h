@@ -5,14 +5,16 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_CAFFE_YOLO_DETECTOR_H_
-#define STREAMER_PROCESSOR_CAFFE_YOLO_DETECTOR_H_
+#ifndef STREAMER_PROCESSOR_DETECTORS_CAFFE_YOLO_DETECTOR_H_
+#define STREAMER_PROCESSOR_DETECTORS_CAFFE_YOLO_DETECTOR_H_
+
+#include <set>
 
 #include <caffe/caffe.hpp>
-#include <set>
+
 #include "common/common.h"
 #include "model/model.h"
-#include "object_detector.h"
+#include "processor/detectors/object_detector.h"
 
 namespace yolo {
 class Detector {
@@ -165,4 +167,4 @@ inline std::vector<std::vector<int>> GetBoxes(
   return Boxes;
 }
 
-#endif  // STREAMER_PROCESSOR_CAFFE_YOLO_DETECTOR_H_
+#endif  // STREAMER_PROCESSOR_DETECTORS_CAFFE_YOLO_DETECTOR_H_

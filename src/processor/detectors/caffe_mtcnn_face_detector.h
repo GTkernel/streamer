@@ -5,25 +5,21 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_CAFFE_MTCNN_H_
-#define STREAMER_PROCESSOR_CAFFE_MTCNN_H_
+#ifndef STREAMER_PROCESSOR_DETECTORS_CAFFE_MTCNN_FACE_DETECTOR_H_
+#define STREAMER_PROCESSOR_DETECTORS_CAFFE_MTCNN_FACE_DETECTOR_H_
 
-// caffe
-#include <caffe/caffe.hpp>
-#include <caffe/layers/memory_data_layer.hpp>
-
-// c++
 #include <fstream>
 #include <string>
 #include <vector>
-// opencv
+
 #include <opencv2/opencv.hpp>
-// boost
-#include "boost/make_shared.hpp"
+#include <boost/make_shared.hpp>
+#include <caffe/caffe.hpp>
+#include <caffe/layers/memory_data_layer.hpp>
 
 #include "common/common.h"
 #include "model/model.h"
-#include "object_detector.h"
+#include "processor/detectors/object_detector.h"
 
 using caffe::Datum;
 using caffe::Blob;
@@ -122,4 +118,4 @@ class MtcnnFaceDetector : public BaseDetector {
   int minSize_;
 };
 
-#endif  // STREAMER_PROCESSOR_CAFFE_MTCNN_H_
+#endif  // STREAMER_PROCESSOR_DETECTORS_CAFFE_MTCNN_FACE_DETECTOR_H_

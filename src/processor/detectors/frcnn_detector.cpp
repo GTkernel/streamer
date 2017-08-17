@@ -5,8 +5,10 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "frcnn_detector.h"
-#include "caffe/FRCNN/util/frcnn_vis.hpp"
+#include "processor/detectors/frcnn_detector.h"
+
+#include <caffe/FRCNN/util/frcnn_vis.hpp>
+
 #include "common/context.h"
 #include "model/model_manager.h"
 

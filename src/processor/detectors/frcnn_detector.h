@@ -5,13 +5,14 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_FRCNN_DETECTOR_H_
-#define STREAMER_PROCESSOR_FRCNN_DETECTOR_H_
+#ifndef STREAMER_PROCESSOR_DETECTORS_FRCNN_DETECTOR_H_
+#define STREAMER_PROCESSOR_DETECTORS_FRCNN_DETECTOR_H_
 
-#include "api/api.hpp"
+#include <api/api.hpp>
+
 #include "common/common.h"
 #include "model/model.h"
-#include "processor.h"
+#include "processor/processor.h"
 
 class FrcnnDetector : public BaseDetector {
  public:
@@ -25,4 +26,4 @@ class FrcnnDetector : public BaseDetector {
   std::unique_ptr<API::Detector> detector_;
 };
 
-#endif  // STREAMER_PROCESSOR_FRCNN_DETECTOR_H_
+#endif  // STREAMER_PROCESSOR_DETECTORS_FRCNN_DETECTOR_H_

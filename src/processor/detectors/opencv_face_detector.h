@@ -2,17 +2,18 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/11/16.
 //
 
-#ifndef STREAMER_PROCESSOR_OPENCV_FACE_DETECTOR_H_
-#define STREAMER_PROCESSOR_OPENCV_FACE_DETECTOR_H_
+#ifndef STREAMER_PROCESSOR_DETECTORS_OPENCV_FACE_DETECTOR_H_
+#define STREAMER_PROCESSOR_DETECTORS_OPENCV_FACE_DETECTOR_H_
 
 #ifdef USE_CUDA
 #include <opencv2/cudaobjdetect/cudaobjdetect.hpp>
 #else
 #include <opencv2/objdetect/objdetect.hpp>
 #endif  // USE_CUDA
+
 #include "common/common.h"
 #include "common/types.h"
-#include "object_detector.h"
+#include "processor/detectors/object_detector.h"
 
 class OpenCVFaceDetector : public BaseDetector {
  public:
@@ -30,4 +31,4 @@ class OpenCVFaceDetector : public BaseDetector {
 #endif  // USE_CUDA
 };
 
-#endif  // STREAMER_PROCESSOR_OPENCV_FACE_DETECTOR_H_
+#endif  // STREAMER_PROCESSOR_DETECTORS_OPENCV_FACE_DETECTOR_H_

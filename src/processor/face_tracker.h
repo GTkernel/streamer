@@ -9,8 +9,9 @@
 #define STREAMER_PROCESSOR_FACE_TRACKER_H_
 
 #include <boost/optional.hpp>
+#include <cv.h>
+
 #include "common/common.h"
-#include "cv.h"
 #include "processor.h"
 
 class FaceTracker : public Processor {

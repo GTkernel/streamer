@@ -2,7 +2,7 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/11/16.
 //
 
-#include "opencv_face_detector.h"
+#include "processor/detectors/opencv_face_detector.h"
 
 bool OpenCVFaceDetector::Init() {
   return classifier_.load(model_desc_.GetModelParamsPath());

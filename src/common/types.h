@@ -205,6 +205,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_DB_WRITER,
   PROCESSOR_TYPE_ENCODER,
+  PROCESSOR_TYPE_FACE_TRACKER,
 #ifdef USE_CAFFE
   PROCESSOR_TYPE_FACENET,
 #endif  // USE_CAFFE
@@ -222,9 +223,8 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_JPEG_WRITER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
-  PROCESSOR_TYPE_OBJECT_TRACKER,
   PROCESSOR_TYPE_OBJECT_DETECTOR,
-  PROCESSOR_TYPE_FACE_TRACKER,
+  PROCESSOR_TYPE_OBJECT_TRACKER,
   PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
   PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
   PROCESSOR_TYPE_STRIDER,
@@ -245,6 +245,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_DB_WRITER;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
+  } else if (type == "FaceTracker") {
+    return PROCESSOR_TYPE_FACE_TRACKER;
 #ifdef USE_CAFFE
   } else if (type == "Facenet") {
     return PROCESSOR_TYPE_FACENET;
@@ -275,12 +277,10 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_JPEG_WRITER;
   } else if (type == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
-  } else if (type == "ObjectTracker") {
-    return PROCESSOR_TYPE_OBJECT_TRACKER;
   } else if (type == "ObjectDetector") {
     return PROCESSOR_TYPE_OBJECT_DETECTOR;
-  } else if (type == "FaceTracker") {
-    return PROCESSOR_TYPE_FACE_TRACKER;
+  } else if (type == "ObjectTracker") {
+    return PROCESSOR_TYPE_OBJECT_TRACKER;
   } else if (type == "OpenCVMotionDetector") {
     return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
   } else if (type == "OpenCVPeopleDetector") {
@@ -309,6 +309,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "DbWriter";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
+    case PROCESSOR_TYPE_FACE_TRACKER:
+      return "FaceTracker";
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return "Facenet";
@@ -339,12 +341,10 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "JpegWriter";
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return "NeuralNetEvaluator";
-    case PROCESSOR_TYPE_OBJECT_TRACKER:
-      return "ObjectTracker";
     case PROCESSOR_TYPE_OBJECT_DETECTOR:
       return "ObjectDetector";
-    case PROCESSOR_TYPE_FACE_TRACKER:
-      return "FaceTracker";
+    case PROCESSOR_TYPE_OBJECT_TRACKER:
+      return "ObjectTracker";
     case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
       return "OpenCVMotionDetector";
     case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:

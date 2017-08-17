@@ -5,11 +5,13 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_DLIB_TRACKER_H_
-#define STREAMER_PROCESSOR_DLIB_TRACKER_H_
+#ifndef STREAMER_PROCESSOR_TRACKERS_DLIB_TRACKER_H_
+#define STREAMER_PROCESSOR_TRACKERS_DLIB_TRACKER_H_
 
 #include <dlib/dlib/image_processing.h>
 #include <dlib/dlib/opencv.h>
+
+#include "processor/trackers/object_tracker.h"
 
 class DlibTracker : public BaseTracker {
  public:
@@ -45,4 +47,4 @@ class DlibTracker : public BaseTracker {
   std::unique_ptr<dlib::correlation_tracker> impl_;
 };
 
-#endif  // STREAMER_PROCESSOR_DLIB_TRACKER_H_
+#endif  // STREAMER_PROCESSOR_TRACKERS_DLIB_TRACKER_H_

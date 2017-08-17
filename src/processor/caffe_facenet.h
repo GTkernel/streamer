@@ -9,9 +9,10 @@
 #define STREAMER_PROCESSOR_CAFFE_FACENET_H_
 
 #include <caffe/caffe.hpp>
+
 #include "common/common.h"
 #include "model/model.h"
-#include "processor.h"
+#include "processor/processor.h"
 
 class Facenet : public Processor {
  public:

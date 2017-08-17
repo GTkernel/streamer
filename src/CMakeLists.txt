@@ -3,28 +3,55 @@ set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 
 #Pick source files
 set(SRC_ROOT ${PROJECT_SOURCE_DIR}/src)
-file(GLOB_RECURSE STREAMER_SOURCE_FILES ${SRC_ROOT}/*.cpp ${SRC_ROOT}/*.h)
-file(GLOB_RECURSE RPC_SOURCE_FILES ${SRC_ROOT}/processor/rpc/*.cpp ${SRC_ROOT}/processor/rpc/*.h)
-file(GLOB_RECURSE CAFFE_SOURCE_FILES ${SRC_ROOT}/caffe_*.cpp ${SRC_ROOT}/caffe_*.h)
-file(GLOB_RECURSE TENSORFLOW_SOURCE_FILES ${SRC_ROOT}/tf_*.cpp ${SRC_ROOT}/tf_*.h)
-file(GLOB_RECURSE CAFFE_OPENCL_SOURCE_FILES ${SRC_ROOT}/caffe_opencl*.cpp ${SRC_ROOT}/caffe_opencl*.h)
-file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/camera/pgr_*.h)
-file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/camera/vimba_*.h)
+file(GLOB_RECURSE STREAMER_SOURCE_FILES
+  ${SRC_ROOT}/*.cpp
+  ${SRC_ROOT}/*.h
+)
+file(GLOB_RECURSE RPC_SOURCE_FILES
+  ${SRC_ROOT}/processor/rpc/*.cpp
+  ${SRC_ROOT}/processor/rpc/*.h
+)
+file(GLOB_RECURSE CAFFE_SOURCE_FILES
+  ${SRC_ROOT}/caffe_*.cpp
+  ${SRC_ROOT}/caffe_*.h
+)
+file(GLOB_RECURSE TENSORFLOW_SOURCE_FILES
+  ${SRC_ROOT}/tf_*.cpp
+  ${SRC_ROOT}/tf_*.h
+)
+file(GLOB_RECURSE CAFFE_OPENCL_SOURCE_FILES
+  ${SRC_ROOT}/caffe_opencl*.cpp
+  ${SRC_ROOT}/caffe_opencl*.h
+)
+file(GLOB_RECURSE PTGRAY_SOURCE_FILES
+  ${SRC_ROOT}/camera/pgr_*.cpp
+  ${SRC_ROOT}/camera/pgr_*.h
+)
+file(GLOB_RECURSE VIMBA_SOURCE_FILES
+  ${SRC_ROOT}/camera/vimba_*.cpp
+  ${SRC_ROOT}/camera/vimba_*.h
+)
 file(GLOB_RECURSE FRCNN_SOURCE_FILES
-  ${SRC_ROOT}/processor/detectors/frcnn_detector.cpp
-  ${SRC_ROOT}/processor/detectors/frcnn_detector.h)
+  ${SRC_ROOT}/frcnn_*.cpp
+  ${SRC_ROOT}/frcnn_*.h
+)
 file(GLOB_RECURSE NCS_SOURCE_FILES
-  ${SRC_ROOT}/ncs/*.cpp
-  ${SRC_ROOT}/ncs/*.h
-  ${SRC_ROOT}/processor/detectors/ncs_yolo_detector.cpp
-  ${SRC_ROOT}/processor/detectors/ncs_yolo_detector.h)
+  ${SRC_ROOT}/ncs.h
+  ${SRC_ROOT}/ncs_*.cpp
+  ${SRC_ROOT}/ncs_*.h
+)
 file(GLOB_RECURSE SSD_SOURCE_FILES
-  ${SRC_ROOT}/processor/detectors/ssd_detector.cpp
-  ${SRC_ROOT}/processor/detectors/ssd_detector.h)
+  ${SRC_ROOT}/ssd_*.cpp
+  ${SRC_ROOT}/ssd_*.h
+)
 file(GLOB_RECURSE STRUCK_SOURCE_FILES
-  ${SRC_ROOT}/processor/trackers/struck_tracker.h)
+  ${SRC_ROOT}/struck_*.cpp
+  ${SRC_ROOT}/struck_*.h
+)
 file(GLOB_RECURSE DLIB_SOURCE_FILES
-  ${SRC_ROOT}/processor/trackers/dlib_tracker.h)
+  ${SRC_ROOT}/dlib_*.cpp
+  ${SRC_ROOT}/dlib_*.h
+)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${RPC_SOURCE_FILES}
   ${CAFFE_SOURCE_FILES}

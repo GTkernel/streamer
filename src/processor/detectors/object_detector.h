@@ -5,10 +5,11 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_OBJECT_DETECTOR_H_
-#define STREAMER_PROCESSOR_OBJECT_DETECTOR_H_
+#ifndef STREAMER_PROCESSOR_DETECTORS_OBJECT_DETECTOR_H_
+#define STREAMER_PROCESSOR_DETECTORS_OBJECT_DETECTOR_H_
 
 #include <set>
+
 #include "common/common.h"
 #include "model/model.h"
 #include "processor/processor.h"
@@ -55,4 +56,4 @@ class ObjectDetector : public Processor {
   std::unique_ptr<BaseDetector> detector_;
 };
 
-#endif  // STREAMER_PROCESSOR_OBJECT_DETECTOR_H_
+#endif  // STREAMER_PROCESSOR_DETECTORS_OBJECT_DETECTOR_H_

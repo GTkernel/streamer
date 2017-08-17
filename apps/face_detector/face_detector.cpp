@@ -5,8 +5,10 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include <boost/program_options.hpp>
 #include <csignal>
+
+#include <boost/program_options.hpp>
+
 #include "streamer.h"
 
 namespace po = boost::program_options;
@@ -70,7 +72,7 @@ void Run(const std::vector<string>& camera_names,
   (void)motion_threshold;
   (void)motion_max_duration;
 
-  cout << "Run app_face_tracker demo" << endl;
+  cout << "Run face_detector demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 

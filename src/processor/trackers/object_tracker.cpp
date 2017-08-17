@@ -5,18 +5,20 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "object_tracker.h"
+#include "processor/trackers/object_tracker.h"
+
 #include <boost/lexical_cast.hpp>
-#include <boost/uuid/uuid.hpp>             // uuid class
-#include <boost/uuid/uuid_generators.hpp>  // generators
-#include <boost/uuid/uuid_io.hpp>          // streaming operators etc.
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include "common/context.h"
-#ifdef USE_STRUCK
-#include "struck_tracker.h"
-#endif
 #ifdef USE_DLIB
-#include "dlib_tracker.h"
-#endif
+#include "processor/trackers/dlib_tracker.h"
+#endif  // USE_DLIB
+#ifdef USE_STRUCK
+#include "processor/trakcers/struck_tracker.h"
+#endif  // USE_STRUCK
 
 ObjectTracker::ObjectTracker(const std::string& type,
                              float calibration_duration)

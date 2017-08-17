@@ -5,11 +5,12 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_OBJECT_TRACKER_H_
-#define STREAMER_PROCESSOR_OBJECT_TRACKER_H_
+#ifndef STREAMER_PROCESSOR_TRACKERS_OBJECT_TRACKER_H_
+#define STREAMER_PROCESSOR_TRACKERS_OBJECT_TRACKER_H_
+
+#include <cv.h>
 
 #include "common/common.h"
-#include "cv.h"
 #include "processor/processor.h"
 
 class BaseTracker {
@@ -48,4 +49,4 @@ class ObjectTracker : public Processor {
   std::chrono::time_point<std::chrono::system_clock> last_calibration_time_;
 };
 
-#endif  // STREAMER_PROCESSOR_OBJECT_TRACKER_H_
+#endif  // STREAMER_PROCESSOR_TRAKCERS_OBJECT_TRACKER_H_

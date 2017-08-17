@@ -5,24 +5,24 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "object_detector.h"
+#include "processor/detectors/object_detector.h"
 
 #include "common/context.h"
 #include "model/model_manager.h"
 #ifdef USE_CAFFE
-#include "caffe_mtcnn_face_detector.h"
-#include "caffe_yolo_detector.h"
+#include "processor/detectors/caffe_mtcnn_face_detector.h"
+#include "processor/detectors/caffe_yolo_detector.h"
 #endif  // USE_CAFFE
 #ifdef USE_FRCNN
-#include "frcnn_detector.h"
+#include "processor/detectors/frcnn_detector.h"
 #endif  // USE_FRCNN
 #ifdef USE_NCS
-#include "ncs_yolo_detector.h"
+#include "processor/detectors/ncs_yolo_detector.h"
 #endif  // USE_NCS
+#include "processor/detectors/opencv_face_detector.h"
 #ifdef USE_SSD
-#include "ssd_detector.h"
+#include "processor/detectors/ssd_detector.h"
 #endif  // USE_SSD
-#include "opencv_face_detector.h"
 
 ObjectDetector::ObjectDetector(const std::string& type,
                                const std::vector<ModelDesc>& model_descs,

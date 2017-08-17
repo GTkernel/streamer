@@ -5,11 +5,13 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_STRUCK_TRACKER_H_
-#define STREAMER_PROCESSOR_STRUCK_TRACKER_H_
+#ifndef STREAMER_PROCESSOR_TRACKERS_STRUCK_TRACKER_H_
+#define STREAMER_PROCESSOR_TRACKERS_STRUCK_TRACKER_H_
 
-#include "struck/src/Config.h"
-#include "struck/src/Tracker.h"
+#include <struck/src/Config.h>
+#include <struck/src/Tracker.h>
+
+#include "processor/trackers/object_tracker.h"
 
 static const string STRUCK_CONF_FILENAME = "struck_config.txt";
 
