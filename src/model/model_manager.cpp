@@ -181,9 +181,11 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
           "Not built with Caffe. Failed to initialize model!");
 #endif  // USE_CAFFE
     case MODEL_TYPE_OPENCV:
+      STREAMER_NOT_IMPLEMENTED;
       return nullptr;
     case MODEL_TYPE_NCS:
 #ifdef USE_NCS
+      STREAMER_NOT_IMPLEMENTED;
       return nullptr;
 #else
       throw std::logic_error("Not built with NCS. Failed to initialize model!");
