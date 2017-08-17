@@ -25,9 +25,8 @@ bool NcsYoloDetector::Init() {
 }
 
 std::vector<ObjectInfo> NcsYoloDetector::Detect(const cv::Mat& image) {
-  detector_->LoadImage(image);
   std::vector<float> result_vec;
-  detector_->GetResult(result_vec);
+  detector_->LoadImageAndGetResult(result_vec, image);
   std::vector<std::tuple<int, cv::Rect, float>> detections;
   get_detections(detections, result_vec, image.size(), voc_names_.size() - 1);
 
