@@ -16,7 +16,7 @@
 #include "processor/image_transformer.h"
 #include "processor/jpeg_writer.h"
 #ifdef USE_NCS
-#include "processor/ncs_yolo_detector.h"
+#include "processor/detectors/ncs_yolo_detector.h"
 #endif  // USE_NCS
 #include "processor/neural_net_evaluator.h"
 #include "processor/face_tracker.h"

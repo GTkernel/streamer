@@ -14,7 +14,7 @@
 #include "model/model.h"
 #include "ncs/ncs.h"
 #include "object_detector.h"
-#include "processor.h"
+#include "processor/processor.h"
 
 class NcsYoloDetector : public BaseDetector {
  public:
