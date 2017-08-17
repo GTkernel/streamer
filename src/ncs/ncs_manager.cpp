@@ -33,7 +33,7 @@ inline static half* load_image(const cv::Mat& image, const cv::Size& size,
   if (!data16) {
     throw std::runtime_error("Failed to allocate half precision array");
   }
-  for (int i = 0; i < (int)image32.total(); i++) {
+  for (decltype(image32.total()) i = 0; i < image32.total(); i++) {
     data32[3 * i] = (data32[3 * i] - mean[0]) * std[0];
     data32[3 * i + 1] = (data32[3 * i + 1] - mean[1]) * std[1];
     data32[3 * i + 2] = (data32[3 * i + 2] - mean[2]) * std[2];
@@ -81,7 +81,7 @@ int NCSManager::Open() {
   _devices.reserve(_names.size());
   _graphs.reserve(_names.size());
 
-  for (int i = 0; i < (int)_names.size(); i++) {
+  for (decltype(_name.size()) i = 0; i < _names.size(); i++) {
     _devices.push_back(OpenDevice(_names[i]));
     _graphs.push_back(AllocateGraph(_devices[i], _model_path.c_str()));
   }
@@ -148,7 +148,7 @@ void NCSManager::Stop() {
 
 void NCSManager::Close() {
   Stop();
-  for (int i = 0; i < (int)_devices.size(); i++) {
+  for (decltype(_devices.size()) i = 0; i < _devices.size(); i++) {
     DeallocateGraph(_graphs[i]);
     CloseDevice(_devices[i]);
   }
