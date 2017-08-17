@@ -123,6 +123,9 @@ std::vector<FaceInfo> MTCNN::BoxRegress(std::vector<FaceInfo>& faceInfo,
     tempFaceInfo.bbox = faceRect;
     tempFaceInfo.regression = faceInfo[bboxId].regression;
     if (stage == 3) tempFaceInfo.facePts = faceInfo[bboxId].facePts;
+    tempFaceInfo.roll = 0;
+    tempFaceInfo.pitch = 0;
+    tempFaceInfo.yaw = 0;
     bboxes.push_back(tempFaceInfo);
   }
   return bboxes;
