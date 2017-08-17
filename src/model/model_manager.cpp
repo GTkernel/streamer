@@ -66,15 +66,20 @@ ModelManager::ModelManager() {
       string desc_path_str = desc_path->as<string>();
       desc_paths.push_back(desc_path_str);
     }
-    auto params_path = model_value.find("params_path");
-    if (params_path->is<toml::Array>()) {
-      auto params_path_array = params_path->as<toml::Array>();
-      for (const auto& m : params_path_array) {
-        params_paths.push_back(m.as<std::string>());
+
+    if (model_value.has("params_path")) {
+      auto params_path = model_value.find("params_path");
+      if (params_path->is<toml::Array>()) {
+        auto params_path_array = params_path->as<toml::Array>();
+        for (const auto& m : params_path_array) {
+          params_paths.push_back(m.as<std::string>());
+        }
+      } else {
+        string params_path_str = params_path->as<string>();
+        params_paths.push_back(params_path_str);
       }
     } else {
-      string params_path_str = params_path->as<string>();
-      params_paths.push_back(params_path_str);
+      params_paths.push_back("");
     }
     CHECK(desc_paths.size() == params_paths.size());
     int input_width = model_value.get<int>("input_width");
