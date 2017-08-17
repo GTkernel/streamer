@@ -18,9 +18,7 @@ bool OpenCVPeopleDetector::Init() {
   return true;
 }
 
-bool OpenCVPeopleDetector::OnStop() {
-  return true;
-}
+bool OpenCVPeopleDetector::OnStop() { return true; }
 
 void OpenCVPeopleDetector::Process() {
   auto frame = GetFrame("input");
