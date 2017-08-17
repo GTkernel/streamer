@@ -19,7 +19,6 @@ bool OpenCVPeopleDetector::Init() {
 }
 
 bool OpenCVPeopleDetector::OnStop() {
-  // hog_.empty();
   return true;
 }
 

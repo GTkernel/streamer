@@ -65,7 +65,6 @@ void FaceTracker::Process() {
       it++;
   }
 
-  // frame->SetValue("path_list", path_list_);
   PushFrame("output", std::move(frame));
 }
 
@@ -80,16 +79,13 @@ void FaceTracker::AttachNearest(std::vector<PointFeature>& point_features,
 
     auto it_result = point_features.end();
     float distance = std::numeric_limits<float>::max();
-    // printf("=====================AttachNearest====================\n");
     for (auto it = point_features.begin(); it != point_features.end(); it++) {
       float d = GetDistance(lp->face_feature, it->face_feature);
-      // printf("%f ", d);
       if ((d < distance) && (d < threshold)) {
         distance = d;
         it_result = it;
       }
     }
-    // printf("\n");
 
     if (it_result != point_features.end()) {
       m.push_back(*it_result);

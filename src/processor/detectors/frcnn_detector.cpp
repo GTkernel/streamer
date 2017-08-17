@@ -67,14 +67,6 @@ bool FrcnnDetector::Init() {
 virtual std::vector<ObjectInfo> FrcnnDetector::Detect(const cv::Mat& image) {
   std::vector<caffe::Frcnn::BBox<float>> results;
   detector_->predict(image, results);
-  /*
-  LOG(INFO) << "There are " << results.size() << " objects in picture.";
-  for (size_t obj = 0; obj < results.size(); obj++) {
-    LOG(INFO) << results[obj].to_string() << "\t\t"
-              <<
-    caffe::Frcnn::GetClassName(caffe::Frcnn::LoadVocClass(),results[obj].id);
-  }
-  */
 
   std::vector<ObjectInfo> result;
   for (const auto& m : results) {

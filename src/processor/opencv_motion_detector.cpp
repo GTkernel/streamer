@@ -53,14 +53,12 @@ void OpenCVMotionDetector::Process() {
     cv::absdiff(fore, previous_fore_, frameDelta);
     int diff_pixels = GetPixels(frameDelta);
     if (diff_pixels >= (previous_pixels_ * threshold_)) {
-      // printf("motion happen, diff_pixels[%d]\n", diff_pixels);
       need_send = true;
     }
   }
   previous_fore_ = fore;
   previous_pixels_ = GetPixels(fore);
 
-  // imshow("fore", fore);
   auto now = std::chrono::system_clock::now();
   std::chrono::duration<double> diff = now - last_send_time_;
   if (need_send || (diff.count() >= max_duration_)) {

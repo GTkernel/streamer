@@ -74,7 +74,6 @@ void DbWriter::Process() {
   auto tags = frame->GetValue<std::vector<std::string>>("tags");
   auto struck_features =
       frame->GetValue<std::vector<std::vector<double>>>("struck_features");
-  // auto bboxes = md_frame->GetBboxes();
   CHECK(uuids.size() == tags.size());
   if (write_to_file_) {
     WriteFile(camera_id, uuids, timestamp, tags, struck_features);
@@ -119,9 +118,6 @@ void DbWriter::WriteAthena(
     const std::vector<std::vector<double>>& struck_features) {
   for (size_t i = 0; i < uuids.size(); ++i) {
     if (uuids.size() == struck_features.size()) {
-      // LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," <<
-      // tags[i] << "[struck_feature]";
-
       const std::string& streamId = camera_id;
       const std::string& objectId = uuids[i];
       const std::vector<double>& fv = struck_features[i];
@@ -157,9 +153,6 @@ void DbWriter::WriteAthena(
       std::cout << json_str << std::endl;
 
       std::cout << aclient_->query(json_str) << std::endl;
-    } else {
-      // LOG(INFO) << camera_id << "," << uuids[i] << "," << timestamp << "," <<
-      // tags[i];
     }
   }
 }

@@ -49,8 +49,6 @@ void CleanUp() {
 
 void SignalHandler(int) {
   std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
-  //  CleanUp();
-
   exit(0);
 }
 
@@ -168,7 +166,6 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
     }
   }
 
-  //  double fps_to_show = 0.0;
   const std::vector<cv::Scalar> colors = GetColors(32);
   int color_count = 0;
   std::map<std::string, int> tags_colors;
@@ -183,10 +180,6 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
       if (display) {
         auto image = frame->GetValue<cv::Mat>("original_image");
         auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
-        // for(const auto& m: bboxes) {
-        //  cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height),
-        //  cv::Scalar(255,0,0), 5);
-        //}
         if (frame->Count("face_landmarks") > 0) {
           auto face_landmarks =
               frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
@@ -197,7 +190,6 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
           }
         }
         auto tags = frame->GetValue<std::vector<std::string>>("tags");
-        // auto confidences = md_frame->GetConfidences();
         for (size_t j = 0; j < tags.size(); ++j) {
           // Get the color
           int color_index;
@@ -219,8 +211,6 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
                                    bboxes[j].py + bboxes[j].height);
           std::ostringstream text;
           text << tags[j];
-          // if (tags.size() == confidences.size())
-          //  text << "  :  " << confidences[j];
           if (frame->Count("uuids") > 0) {
             auto uuids = frame->GetValue<std::vector<std::string>>("uuids");
             std::size_t pos = uuids[j].size();

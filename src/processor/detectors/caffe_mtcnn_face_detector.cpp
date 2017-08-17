@@ -11,9 +11,7 @@
 
 #include "common/context.h"
 
-//#define CPU_ONLY
 #define INTER_FAST
-// using namespace caffe;
 
 // compare score
 bool CompareBBox(const FaceInfo& a, const FaceInfo& b) {
@@ -161,8 +159,6 @@ void MTCNN::GenerateBoundingBox(Blob<float>* confidence, Blob<float>* reg,
   int curr_feature_map_h_ =
       std::ceil((image_height - cellSize) * 1.0 / stride) + 1;
 
-  // std::cout << "Feature_map_size:"<< curr_feature_map_w_ <<"
-  // "<<curr_feature_map_h_<<std::endl;
   int regOffset = curr_feature_map_w_ * curr_feature_map_h_;
   // the first count numbers are confidence of face
   int count = confidence->count() / 2;
@@ -265,11 +261,6 @@ MTCNN::MTCNN(const std::vector<ModelDesc>& model_descs) {
 #endif  // USE_OPENCL
   RNet_->CopyTrainedLayersFrom(model_descs[1].GetModelParamsPath());
 
-//  CHECK_EQ(RNet_->num_inputs(), 0) << "Network should have exactly one
-//  input."; CHECK_EQ(RNet_->num_outputs(),3) << "Network should have exactly
-//  two output, one"
-//                                     " is bbox and another is confidence.";
-
 #ifdef USE_OPENCL
   if (desired_device_number == DEVICE_NUMBER_CPU_ONLY) {
     ONet_.reset(new Net<float>(model_descs[3].GetModelDescPath(), TEST,
@@ -286,11 +277,6 @@ MTCNN::MTCNN(const std::vector<ModelDesc>& model_descs) {
   }
 #endif  // USE_OPENCL
   ONet_->CopyTrainedLayersFrom(model_descs[3].GetModelParamsPath());
-
-  //  CHECK_EQ(ONet_->num_inputs(), 1) << "Network should have exactly one
-  //  input."; CHECK_EQ(ONet_->num_outputs(),3) << "Network should have exactly
-  //  three output, one"
-  //                                     " is bbox and another is confidence.";
 
   Blob<float>* input_layer;
   input_layer = PNet_->input_blobs()[0];
@@ -454,10 +440,6 @@ void MTCNN::ClassifyFace_MulImage(const std::vector<FaceInfo>& regressed_rects,
   /* fire the network */
   float no_use_loss = 0;
   net->Forward(&no_use_loss);
-  //  CHECK(reinterpret_cast<float*>(crop_img_set.at(0).data) ==
-  //  net->input_blobs()[0]->cpu_data())
-  //          << "Input channels are not wrapping the input layer of the
-  //          network.";
 
   // return RNet/ONet result
   std::string outPutLayerName = (netName == 'r' ? "conv5-2" : "conv6-2");
@@ -586,7 +568,6 @@ void MTCNN::Detect(const cv::Mat& image, std::vector<FaceInfo>& faceInfo,
 
     // return result
     Blob<float>* reg = PNet_->output_blobs()[0];
-    // const float* reg_data = reg->cpu_data();
     Blob<float>* confidence = PNet_->output_blobs()[1];
     GenerateBoundingBox(confidence, reg, scale, threshold[0], ws, hs);
     std::vector<FaceInfo> bboxes_nms =

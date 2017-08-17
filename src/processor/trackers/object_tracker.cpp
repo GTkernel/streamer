@@ -68,8 +68,6 @@ void ObjectTracker::Process() {
       (*it)->Track(gray_image_);
       cv::Rect rt((*it)->GetBB());
       float best_percent = 0.f;
-      // for (auto u_it = untracked_bboxes.begin(); u_it !=
-      // untracked_bboxes.end(); ++u_it) {
       for (size_t i = 0; i < untracked_bboxes.size(); ++i) {
         cv::Rect ru(untracked_bboxes[i].px, untracked_bboxes[i].py,
                     untracked_bboxes[i].width, untracked_bboxes[i].height);
@@ -95,7 +93,6 @@ void ObjectTracker::Process() {
     }
 
     CHECK(untracked_bboxes.size() == untracked_tags.size());
-    // for (const auto& m: untracked_bboxes) {
     for (size_t i = 0; i < untracked_bboxes.size(); ++i) {
       LOG(INFO) << "Create new tracker";
       int x = untracked_bboxes[i].px;
@@ -127,9 +124,7 @@ void ObjectTracker::Process() {
       }
       new_tracker->Initialise(gray_image_, bb);
       CHECK(new_tracker->IsInitialised());
-      // printf("%s, %d\n", __FUNCTION__, __LINE__);
       new_tracker->Track(gray_image_);
-      // printf("%s, %d\n", __FUNCTION__, __LINE__);
       cv::Rect rt(new_tracker->GetBB());
       tracked_bboxes.push_back(Rect(rt.x, rt.y, rt.width, rt.height));
       tracked_tags.push_back(untracked_tags[i]);

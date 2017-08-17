@@ -161,7 +161,6 @@ void Facenet::Process() {
         CHECK((x >= 0) && (y >= 0) && (x + w <= img.cols) &&
               (y + h <= img.rows));
         cv::Rect roi(x, y, w, h);
-        // printf("%d, %d, %d, %d\n", roi.x ,roi.width, roi.y ,roi.height);
         face_image_ = img(roi);
 
         // Resize

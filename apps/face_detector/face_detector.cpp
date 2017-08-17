@@ -59,8 +59,6 @@ void CleanUp() {
 
 void SignalHandler(int) {
   std::cout << "Received SIGINT, try to gracefully exit" << std::endl;
-  //  CleanUp();
-
   exit(0);
 }
 
@@ -121,7 +119,6 @@ void Run(const std::vector<string>& camera_names,
     std::shared_ptr<Processor> mtcnn(
         new ObjectDetector("mtcnn-face", model_descs, input_shape, 0.f, 0.f,
                            std::set<std::string>()));
-    // mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
     mtcnn->SetSource("input", input_streams[i]);
     mtcnns.push_back(mtcnn);
   }
@@ -192,7 +189,6 @@ void Run(const std::vector<string>& camera_names,
     }
   }
 
-  //  double fps_to_show = 0.0;
   while (true) {
     for (size_t i = 0; i < camera_names.size(); i++) {
       auto reader = tracker_output_readers[i];
