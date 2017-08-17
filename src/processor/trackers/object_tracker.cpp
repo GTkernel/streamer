@@ -17,7 +17,7 @@
 #include "processor/trackers/dlib_tracker.h"
 #endif  // USE_DLIB
 #ifdef USE_STRUCK
-#include "processor/trakcers/struck_tracker.h"
+#include "processor/trackers/struck_tracker.h"
 #endif  // USE_STRUCK
 
 ObjectTracker::ObjectTracker(const std::string& type,

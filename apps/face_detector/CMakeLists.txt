@@ -11,5 +11,5 @@ MACRO(BUILD_ONE app)
   ADD_BUILD_REQS(${app})
 ENDMACRO()
 
-add_executable(face_tracker EXCLUDE_FROM_ALL face_tracker.cpp)
-BUILD_ONE(face_tracker)
+add_executable(face_detector EXCLUDE_FROM_ALL face_detector.cpp)
+BUILD_ONE(face_detector)
