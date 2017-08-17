@@ -12,10 +12,10 @@
 #include <string>
 #include <vector>
 
-#include <opencv2/opencv.hpp>
 #include <boost/make_shared.hpp>
 #include <caffe/caffe.hpp>
 #include <caffe/layers/memory_data_layer.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "common/common.h"
 #include "model/model.h"

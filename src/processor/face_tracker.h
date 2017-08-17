@@ -8,8 +8,8 @@
 #ifndef STREAMER_PROCESSOR_FACE_TRACKER_H_
 #define STREAMER_PROCESSOR_FACE_TRACKER_H_
 
-#include <boost/optional.hpp>
 #include <cv.h>
+#include <boost/optional.hpp>
 
 #include "common/common.h"
 #include "processor.h"
