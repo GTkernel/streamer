@@ -1,5 +1,5 @@
 /**
- * An example application showing the usage of facenet tracker.
+ * An example application showing the usage of Struck tracker.
  *
  * @author Tony Chen <xiaolongx.chen@intel.com>
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
@@ -16,16 +16,14 @@ using std::endl;
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
 std::vector<std::shared_ptr<Processor>> transformers;
-std::vector<std::shared_ptr<Processor>> motion_detectors;
-std::vector<std::shared_ptr<Processor>> mtcnns;
-std::shared_ptr<Facenet> facenet;
+std::vector<std::shared_ptr<Processor>> detectors;
 std::vector<std::shared_ptr<Processor>> trackers;
 std::vector<StreamReader*> tracker_output_readers;
-std::vector<std::shared_ptr<GstVideoEncoder>> encoders;
+std::vector<std::shared_ptr<Processor>> db_writers;
 
 void CleanUp() {
-  for (auto encoder : encoders) {
-    if (encoder->IsStarted()) encoder->Stop();
+  for (auto db_writer : db_writers) {
+    if (db_writer->IsStarted()) db_writer->Stop();
   }
 
   for (auto reader : tracker_output_readers) {
@@ -36,14 +34,8 @@ void CleanUp() {
     if (tracker->IsStarted()) tracker->Stop();
   }
 
-  if (facenet != nullptr && facenet->IsStarted()) facenet->Stop();
-
-  for (auto mtcnn : mtcnns) {
-    if (mtcnn->IsStarted()) mtcnn->Stop();
-  }
-
-  for (auto motion_detector : motion_detectors) {
-    if (motion_detector->IsStarted()) motion_detector->Stop();
+  for (auto detector : detectors) {
+    if (detector->IsStarted()) detector->Stop();
   }
 
   for (auto transformer : transformers) {
@@ -62,27 +54,27 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string>& camera_names,
-         const string& mtcnn_model_name, const string& facenet_model_name,
-         bool display, float scale, float motion_threshold,
-         float motion_max_duration) {
+void Run(const std::vector<string>& camera_names, const string& detector_type,
+         const string& detector_model, bool display, float scale,
+         float detector_confidence_threshold, float detector_idle_duration,
+         const string& detector_targets, const std::string& tracker_type,
+         float tracker_calibration_duration, bool db_write_to_file,
+         const std::string& athena_address) {
   // Silence complier warning sayings when certain options are turned off.
-  (void)motion_threshold;
-  (void)motion_max_duration;
+  (void)detector_confidence_threshold;
+  (void)detector_targets;
 
-  cout << "Run tracker demo" << endl;
+  cout << "Run tracker_obj demo" << endl;
 
   std::signal(SIGINT, SignalHandler);
 
-  size_t batch_size = camera_names.size();
+  int batch_size = camera_names.size();
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
   // Check options
-  CHECK(model_manager.HasModel(mtcnn_model_name))
-      << "Model " << mtcnn_model_name << " does not exist";
-  CHECK(model_manager.HasModel(facenet_model_name))
-      << "Model " << facenet_model_name << " does not exist";
+  CHECK(model_manager.HasModel(detector_model))
+      << "Model " << detector_model << " does not exist";
   for (auto camera_name : camera_names) {
     CHECK(camera_manager.HasCamera(camera_name))
         << "Camera " << camera_name << " does not exist";
@@ -113,45 +105,37 @@ void Run(const std::vector<string>& camera_names,
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
   }
-  // mtcnn
-  auto model_descs = model_manager.GetModelDescs(mtcnn_model_name);
-  for (size_t i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> mtcnn(
-        new ObjectDetector("mtcnn-face", model_descs, input_shape, 0.f, 0.f,
-                           std::set<std::string>()));
-    // mtcnn->SetSource("input", motion_detectors[i]->GetSink("output"));
-    mtcnn->SetSource("input", input_streams[i]);
-    mtcnns.push_back(mtcnn);
-  }
 
-  // facenet
-  auto model_desc = model_manager.GetModelDesc(facenet_model_name);
-  Shape input_shape_facenet(3, model_desc.GetInputWidth(),
-                            model_desc.GetInputHeight());
-  facenet.reset(
-      new Facenet(model_desc, input_shape_facenet, input_streams.size()));
-
-  for (size_t i = 0; i < batch_size; i++) {
-    facenet->SetInputStream(i, mtcnns[i]->GetSink("output"));
+  // detector
+  for (int i = 0; i < batch_size; i++) {
+    auto model_descs = model_manager.GetModelDescs(detector_model);
+    auto t = SplitString(detector_targets, ",");
+    std::set<std::string> targets;
+    for (const auto& m : t) {
+      if (!m.empty()) targets.insert(m);
+    }
+    std::shared_ptr<Processor> detector(new ObjectDetector(
+        detector_type, model_descs, input_shape, detector_confidence_threshold,
+        detector_idle_duration, targets));
+    detector->SetSource("input", input_streams[i]);
+    detectors.push_back(detector);
   }
 
   // tracker
-  for (size_t i = 0; i < batch_size; i++) {
-    std::shared_ptr<Processor> tracker(new ObjectTracker());
-    tracker->SetSource("input", facenet->GetSink("output" + std::to_string(i)));
+  for (int i = 0; i < batch_size; i++) {
+    std::shared_ptr<Processor> tracker(
+        new ObjectTracker(tracker_type, tracker_calibration_duration));
+    tracker->SetSource("input", detectors[i]->GetSink("output"));
     trackers.push_back(tracker);
 
     // tracker readers
     auto tracker_output = tracker->GetSink("output");
     tracker_output_readers.push_back(tracker_output->Subscribe());
 
-    // encoders, encode each camera stream
-    string output_filename = camera_names[i] + ".mp4";
-
-    std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-        cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
-    encoder->SetSource("input", tracker->GetSink("output"));
-    encoders.push_back(encoder);
+    std::shared_ptr<Processor> db_writer(
+        new DbWriter(cameras[i], db_write_to_file, athena_address));
+    db_writer->SetSource("input", tracker->GetSink("output"));
+    db_writers.push_back(db_writer);
   }
 
   for (auto camera : cameras) {
@@ -164,22 +148,16 @@ void Run(const std::vector<string>& camera_names,
     transformer->Start();
   }
 
-  for (auto motion_detector : motion_detectors) {
-    motion_detector->Start();
+  for (auto detector : detectors) {
+    detector->Start();
   }
-
-  for (auto mtcnn : mtcnns) {
-    mtcnn->Start();
-  }
-
-  facenet->Start();
 
   for (auto tracker : trackers) {
     tracker->Start();
   }
 
-  for (auto encoder : encoders) {
-    encoder->Start();
+  for (auto db_writer : db_writers) {
+    db_writer->Start();
   }
 
   //////// Processor started, display the results
@@ -191,6 +169,13 @@ void Run(const std::vector<string>& camera_names,
   }
 
   //  double fps_to_show = 0.0;
+  const std::vector<cv::Scalar> colors = GetColors(32);
+  int color_count = 0;
+  std::map<std::string, int> tags_colors;
+  int fontface = cv::FONT_HERSHEY_SIMPLEX;
+  double d_scale = 1;
+  int thickness = 2;
+  int baseline = 0;
   while (true) {
     for (size_t i = 0; i < camera_names.size(); i++) {
       auto reader = tracker_output_readers[i];
@@ -198,31 +183,61 @@ void Run(const std::vector<string>& camera_names,
       if (display) {
         auto image = frame->GetValue<cv::Mat>("original_image");
         auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
-        for (const auto& m : bboxes) {
-          cv::rectangle(image, cv::Rect(m.px, m.py, m.width, m.height),
-                        cv::Scalar(255, 0, 0), 5);
-        }
-        auto face_landmarks =
-            frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
-        for (const auto& m : face_landmarks) {
-          for (int j = 0; j < 5; j++)
-            cv::circle(image, cv::Point(m.x[j], m.y[j]), 1,
-                       cv::Scalar(255, 255, 0), 5);
+        // for(const auto& m: bboxes) {
+        //  cv::rectangle(image, cv::Rect(m.px,m.py,m.width,m.height),
+        //  cv::Scalar(255,0,0), 5);
+        //}
+        if (frame->Count("face_landmarks") > 0) {
+          auto face_landmarks =
+              frame->GetValue<std::vector<FaceLandmark>>("face_landmarks");
+          for (const auto& m : face_landmarks) {
+            for (int j = 0; j < 5; j++)
+              cv::circle(image, cv::Point(m.x[j], m.y[j]), 1,
+                         cv::Scalar(255, 255, 0), 5);
+          }
         }
         auto tags = frame->GetValue<std::vector<std::string>>("tags");
+        // auto confidences = md_frame->GetConfidences();
         for (size_t j = 0; j < tags.size(); ++j) {
-          std::ostringstream text;
-          if (frame->Count("confidences") != 0) {
-            auto confidences =
-                frame->GetValue<std::vector<float>>("confidences");
-            text << tags[j] << "  :  " << confidences[j];
-          } else
-            text << tags[j];
-          cv::putText(image, text.str(),
-                      cv::Point(bboxes[j].px, bboxes[j].py + 30), 0, 1.0,
-                      cv::Scalar(0, 255, 0), 3);
-        }
+          // Get the color
+          int color_index;
+          auto it = tags_colors.find(tags[j]);
+          if (it == tags_colors.end()) {
+            tags_colors.insert(std::make_pair(tags[j], color_count++));
+            color_index = tags_colors.find(tags[j])->second;
+          } else {
+            color_index = it->second;
+          }
+          const cv::Scalar& color = colors[color_index];
 
+          // Draw bboxes
+          cv::Point top_left_pt(bboxes[j].px, bboxes[j].py);
+          cv::Point bottom_right_pt(bboxes[j].px + bboxes[j].width,
+                                    bboxes[j].py + bboxes[j].height);
+          cv::rectangle(image, top_left_pt, bottom_right_pt, color, 4);
+          cv::Point bottom_left_pt(bboxes[j].px,
+                                   bboxes[j].py + bboxes[j].height);
+          std::ostringstream text;
+          text << tags[j];
+          // if (tags.size() == confidences.size())
+          //  text << "  :  " << confidences[j];
+          if (frame->Count("uuids") > 0) {
+            auto uuids = frame->GetValue<std::vector<std::string>>("uuids");
+            std::size_t pos = uuids[j].size();
+            auto sheared_uuid = uuids[j].substr(pos - 5);
+            text << ": " << sheared_uuid;
+          }
+          cv::Size text_size = cv::getTextSize(text.str().c_str(), fontface,
+                                               d_scale, thickness, &baseline);
+          cv::rectangle(
+              image, bottom_left_pt + cv::Point(0, 0),
+              bottom_left_pt +
+                  cv::Point(text_size.width, -text_size.height - baseline),
+              color, CV_FILLED);
+          cv::putText(image, text.str(),
+                      bottom_left_pt - cv::Point(0, baseline), fontface,
+                      d_scale, CV_RGB(0, 0, 0), thickness, 8);
+        }
         cv::imshow(camera_names[i], image);
       }
     }
@@ -251,13 +266,14 @@ int main(int argc, char* argv[]) {
 
   po::options_description desc("Multi-camera end to end video ingestion demo");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("mtcnn_model,m",
-                     po::value<string>()->value_name("MTCNN_MODEL")->required(),
-                     "The name of the mtcnn model to run");
   desc.add_options()(
-      "facenet_model",
-      po::value<string>()->value_name("FACENET_MODEL")->required(),
-      "The name of the facenet model to run");
+      "detector_type",
+      po::value<string>()->value_name("DETECTOR_TYPE")->required(),
+      "The name of the detector type to run");
+  desc.add_options()(
+      "detector_model,m",
+      po::value<string>()->value_name("DETECTOR_MODEL")->required(),
+      "The name of the detector model to run");
   desc.add_options()("camera,c",
                      po::value<string>()->value_name("CAMERAS")->required(),
                      "The name of the camera to use, if there are multiple "
@@ -270,11 +286,25 @@ int main(int argc, char* argv[]) {
                      "The directory to find streamer's configurations");
   desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
                      "scale factor before mtcnn");
-  desc.add_options()("motion_threshold", po::value<float>()->default_value(0.5),
-                     "motion threshold");
-  desc.add_options()("motion_max_duration",
+  desc.add_options()("detector_confidence_threshold",
+                     po::value<float>()->default_value(0.5),
+                     "detector confidence threshold");
+  desc.add_options()("detector_idle_duration",
                      po::value<float>()->default_value(1.0),
-                     "motion max duration");
+                     "detector idle duration");
+  desc.add_options()("detector_targets", po::value<string>()->default_value(""),
+                     "The name of the target to detect, separate with ,");
+  desc.add_options()("tracker_type",
+                     po::value<string>()->default_value("struck"),
+                     "The name of the tracker type to run");
+  desc.add_options()("tracker_calibration_duration",
+                     po::value<float>()->default_value(2.0),
+                     "tracker calibration duration");
+  desc.add_options()("db_write_to_file",
+                     po::value<bool>()->default_value(false),
+                     "Enable db write to file or not");
+  desc.add_options()("athena_address", po::value<string>()->default_value(""),
+                     "The address of the athena server");
 
   po::variables_map vm;
   try {
@@ -301,14 +331,23 @@ int main(int argc, char* argv[]) {
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
-  auto mtcnn_model = vm["mtcnn_model"].as<string>();
-  auto facenet_model = vm["facenet_model"].as<string>();
+  auto detector_type = vm["detector_type"].as<string>();
+  auto detector_model = vm["detector_model"].as<string>();
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
-  float motion_threshold = vm["motion_threshold"].as<float>();
-  float motion_max_duration = vm["motion_max_duration"].as<float>();
-  Run(camera_names, mtcnn_model, facenet_model, display, scale,
-      motion_threshold, motion_max_duration);
+  float detector_confidence_threshold =
+      vm["detector_confidence_threshold"].as<float>();
+  float detector_idle_duration = vm["detector_idle_duration"].as<float>();
+  auto detector_targets = vm["detector_targets"].as<string>();
+  auto tracker_type = vm["tracker_type"].as<string>();
+  float tracker_calibration_duration =
+      vm["tracker_calibration_duration"].as<float>();
+  bool db_write_to_file = vm["db_write_to_file"].as<bool>();
+  auto athena_address = vm["athena_address"].as<string>();
+  Run(camera_names, detector_type, detector_model, display, scale,
+      detector_confidence_threshold, detector_idle_duration, detector_targets,
+      tracker_type, tracker_calibration_duration, db_write_to_file,
+      athena_address);
 
   return 0;
 }

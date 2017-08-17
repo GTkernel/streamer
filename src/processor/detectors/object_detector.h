@@ -11,7 +11,7 @@
 #include <set>
 #include "common/common.h"
 #include "model/model.h"
-#include "processor.h"
+#include "processor/processor.h"
 
 struct ObjectInfo {
   ObjectInfo() { face_landmark_flag = false; }

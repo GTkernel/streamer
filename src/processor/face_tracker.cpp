@@ -5,27 +5,27 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "object_tracker.h"
+#include "face_tracker.h"
 #include "common/context.h"
 
-ObjectTracker::ObjectTracker(size_t rem_size)
-    : Processor(PROCESSOR_TYPE_OBJECT_TRACKER, {"input"}, {"output"}),
+FaceTracker::FaceTracker(size_t rem_size)
+    : Processor(PROCESSOR_TYPE_FACE_TRACKER, {"input"}, {"output"}),
       rem_size_(rem_size),
       first_frame_(true) {}
 
-std::shared_ptr<ObjectTracker> ObjectTracker::Create(const FactoryParamsType&) {
+std::shared_ptr<FaceTracker> FaceTracker::Create(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
 
-bool ObjectTracker::Init() {
-  LOG(INFO) << "ObjectTracker initialized";
+bool FaceTracker::Init() {
+  LOG(INFO) << "FaceTracker initialized";
   return true;
 }
 
-bool ObjectTracker::OnStop() { return true; }
+bool FaceTracker::OnStop() { return true; }
 
-void ObjectTracker::Process() {
+void FaceTracker::Process() {
   auto frame = GetFrame("input");
   auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
   auto face_features =
@@ -68,7 +68,7 @@ void ObjectTracker::Process() {
   PushFrame("output", std::move(frame));
 }
 
-void ObjectTracker::AttachNearest(std::vector<PointFeature>& point_features,
+void FaceTracker::AttachNearest(std::vector<PointFeature>& point_features,
                                   float threshold) {
   for (auto& m : path_list_) {
     boost::optional<PointFeature> lp = m.back();
@@ -99,7 +99,7 @@ void ObjectTracker::AttachNearest(std::vector<PointFeature>& point_features,
   }
 }
 
-float ObjectTracker::GetDistance(const std::vector<float>& a,
+float FaceTracker::GetDistance(const std::vector<float>& a,
                                  const std::vector<float>& b) {
   float distance = 0;
   for (size_t i = 0; i < a.size(); ++i) {

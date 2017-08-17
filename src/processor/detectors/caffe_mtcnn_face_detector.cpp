@@ -5,7 +5,7 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "caffe_mtcnn.h"
+#include "caffe_mtcnn_face_detector.h"
 #include "common/context.h"
 #include "cv.h"
 

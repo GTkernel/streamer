@@ -5,8 +5,6 @@
 #include "processor/binary_file_writer.h"
 #ifdef USE_CAFFE
 #include "processor/caffe_facenet.h"
-#include "processor/caffe_mtcnn.h"
-#include "processor/caffe_yolo_detector.h"
 #endif  // USE_CAFFE
 #include "processor/compressor.h"
 #include "processor/db_writer.h"
@@ -21,20 +19,17 @@
 #include "processor/ncs_yolo_detector.h"
 #endif  // USE_NCS
 #include "processor/neural_net_evaluator.h"
-#include "processor/obj_tracker.h"
-#include "processor/object_detector.h"
-#include "processor/object_tracker.h"
+#include "processor/face_tracker.h"
+#include "processor/detectors/object_detector.h"
+#include "processor/trackers/object_tracker.h"
 #include "processor/opencv_motion_detector.h"
-#include "processor/opencv_people_detector.h"
+#include "processor/detectors/opencv_people_detector.h"
 #include "processor/pubsub/frame_publisher.h"
 #include "processor/pubsub/frame_subscriber.h"
 #ifdef USE_RPC
 #include "processor/rpc/frame_receiver.h"
 #include "processor/rpc/frame_sender.h"
 #endif  // USE_RPC
-#ifdef USE_SSD
-#include "processor/ssd_detector.h"
-#endif  // USE_SSD
 #include "processor/strider.h"
 #include "processor/throttler.h"
 #include "video/gst_video_encoder.h"
@@ -85,12 +80,12 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return JpegWriter::Create(params);
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return NeuralNetEvaluator::Create(params);
-    case PROCESSOR_TYPE_OBJ_TRACKER:
-      return ObjTracker::Create(params);
-    case PROCESSOR_TYPE_OBJECT_DETECTOR:
-      return ObjectDetector::Create(params);
     case PROCESSOR_TYPE_OBJECT_TRACKER:
       return ObjectTracker::Create(params);
+    case PROCESSOR_TYPE_OBJECT_DETECTOR:
+      return ObjectDetector::Create(params);
+    case PROCESSOR_TYPE_FACE_TRACKER:
+      return FaceTracker::Create(params);
     case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
       return OpenCVMotionDetector::Create(params);
     case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:

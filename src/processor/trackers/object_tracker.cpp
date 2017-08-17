@@ -10,102 +10,35 @@
 #include <boost/uuid/uuid_generators.hpp>  // generators
 #include <boost/uuid/uuid_io.hpp>          // streaming operators etc.
 #include "common/context.h"
+#include "object_tracker.h"
 #ifdef USE_STRUCK
-#include "struck/src/Config.h"
-#include "struck/src/Tracker.h"
-#endif  // USE_STRUCK
+#include "struck_tracker.h"
+#endif
 #ifdef USE_DLIB
-#include <dlib/dlib/image_processing.h>
-#include <dlib/dlib/opencv.h>
-#endif  // USE_DLIB
-#include "obj_tracker.h"
+#include "dlib_tracker.h"
+#endif
 
-#ifdef USE_STRUCK
-static const string STRUCK_CONF_FILENAME = "struck_config.txt";
-
-class StruckTracker : public BaseTracker {
- public:
-  StruckTracker(const std::string& uuid, const std::string& tag)
-      : BaseTracker(uuid, tag),
-        conf_(Context::GetContext().GetConfigFile(STRUCK_CONF_FILENAME)) {
-    impl_.reset(new struck::Tracker(conf_));
-  }
-  virtual ~StruckTracker() {}
-  virtual void Initialise(const cv::Mat& gray_image, cv::Rect bb) {
-    struck::FloatRect initBB = struck::IntRect(bb.x, bb.y, bb.width, bb.height);
-    impl_->Initialise(gray_image, initBB);
-  }
-  virtual bool IsInitialised() { return impl_->IsInitialised(); }
-  virtual void Track(const cv::Mat& gray_image) { impl_->Track(gray_image); }
-  virtual cv::Rect GetBB() {
-    struck::IntRect r(impl_->GetBB());
-    return cv::Rect(r.XMin(), r.YMin(), r.Width(), r.Height());
-  }
-  virtual std::vector<double> GetBBFeature() { return impl_->GetBBFeature(); }
-
- private:
-  std::unique_ptr<struck::Tracker> impl_;
-  struck::Config conf_;
-};
-#endif  // USE_STRUCK
-
-#ifdef USE_DLIB
-class DlibTracker : public BaseTracker {
- public:
-  DlibTracker(const std::string& uuid, const std::string& tag)
-      : BaseTracker(uuid, tag) {
-    impl_.reset(new dlib::correlation_tracker());
-  }
-  virtual ~DlibTracker() {}
-  virtual void Initialise(const cv::Mat& gray_image, cv::Rect bb) {
-    dlib::array2d<unsigned char> dlibImageGray;
-    dlib::assign_image(dlibImageGray,
-                       dlib::cv_image<unsigned char>(gray_image));
-    dlib::rectangle initBB(bb.x, bb.y, bb.x + bb.width, bb.y + bb.height);
-    impl_->start_track(dlibImageGray, initBB);
-  }
-  virtual bool IsInitialised() { return true; }
-  virtual void Track(const cv::Mat& gray_image) {
-    dlib::array2d<unsigned char> dlibImageGray;
-    dlib::assign_image(dlibImageGray,
-                       dlib::cv_image<unsigned char>(gray_image));
-    impl_->update(dlibImageGray);
-  }
-  virtual cv::Rect GetBB() {
-    auto r = impl_->get_position();
-    return cv::Rect(r.left(), r.top(), r.right() - r.left(),
-                    r.bottom() - r.top());
-  }
-  virtual std::vector<double> GetBBFeature() {
-    return std::vector<double>(128, 0.f);
-  }
-
- private:
-  std::unique_ptr<dlib::correlation_tracker> impl_;
-};
-#endif  // USE_DLIB
-
-ObjTracker::ObjTracker(const std::string& type, float calibration_duration)
-    : Processor(PROCESSOR_TYPE_OBJ_TRACKER, {"input"}, {"output"}),
+ObjectTracker::ObjectTracker(const std::string& type, float calibration_duration)
+    : Processor(PROCESSOR_TYPE_OBJECT_TRACKER, {"input"}, {"output"}),
       type_(type),
       calibration_duration_(calibration_duration) {}
 
-std::shared_ptr<ObjTracker> ObjTracker::Create(const FactoryParamsType&) {
+std::shared_ptr<ObjectTracker> ObjectTracker::Create(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
 
-bool ObjTracker::Init() {
-  LOG(INFO) << "ObjTracker initialized";
+bool ObjectTracker::Init() {
+  LOG(INFO) << "ObjectTracker initialized";
   return true;
 }
 
-bool ObjTracker::OnStop() {
+bool ObjectTracker::OnStop() {
   tracker_list_.clear();
   return true;
 }
 
-void ObjTracker::Process() {
+void ObjectTracker::Process() {
   Timer timer;
   timer.Start();
 
@@ -226,5 +159,5 @@ void ObjTracker::Process() {
   frame->SetValue("uuids", tracked_uuids);
   frame->SetValue("struck_features", struck_features);
   PushFrame("output", std::move(frame));
-  LOG(INFO) << "ObjTracker took " << timer.ElapsedMSec() << " ms";
+  LOG(INFO) << "ObjectTracker took " << timer.ElapsedMSec() << " ms";
 }

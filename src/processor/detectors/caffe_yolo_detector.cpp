@@ -5,7 +5,7 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#include "processor/caffe_yolo_detector.h"
+#include "caffe_yolo_detector.h"
 
 #include "common/context.h"
 #include "model/model_manager.h"

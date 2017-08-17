@@ -5,18 +5,18 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
-#ifndef STREAMER_PROCESSOR_OBJECT_TRACKER_H_
-#define STREAMER_PROCESSOR_OBJECT_TRACKER_H_
+#ifndef STREAMER_PROCESSOR_FACE_TRACKER_H_
+#define STREAMER_PROCESSOR_FACE_TRACKER_H_
 
 #include <boost/optional.hpp>
 #include "common/common.h"
 #include "cv.h"
 #include "processor.h"
 
-class ObjectTracker : public Processor {
+class FaceTracker : public Processor {
  public:
-  ObjectTracker(size_t rem_size = 5);
-  static std::shared_ptr<ObjectTracker> Create(const FactoryParamsType& params);
+  FaceTracker(size_t rem_size = 5);
+  static std::shared_ptr<FaceTracker> Create(const FactoryParamsType& params);
 
  protected:
   virtual bool Init() override;
@@ -34,4 +34,4 @@ class ObjectTracker : public Processor {
   bool first_frame_;
 };
 
-#endif  // STREAMER_PROCESSOR_OBJECT_TRACKER_H_
+#endif  // STREAMER_PROCESSOR_FACE_TRACKER_H_
