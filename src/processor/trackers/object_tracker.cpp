@@ -1,5 +1,5 @@
 /**
- * Multi-target tracking using Struck etc.
+ * Multi-target tracking processors
  *
  * @author Tony Chen <xiaolongx.chen@intel.com>
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
