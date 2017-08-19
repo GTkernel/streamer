@@ -89,12 +89,6 @@ if (USE_FRCNN)
   message("Build with Caffe Faster Rcnn")
 endif ()
 
-option(USE_STRUCK "Build with Struck" OFF)
-if (USE_STRUCK)
-  add_definitions("-D USE_STRUCK")
-  message("Build with Struck")
-endif ()
-
 option(USE_DLIB "Build with Dlib" OFF)
 if (USE_DLIB)
   add_definitions("-D USE_DLIB")

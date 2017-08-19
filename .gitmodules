@@ -19,6 +19,3 @@
 [submodule "3rdparty/dlib"]
 	path = 3rdparty/dlib
 	url = https://github.com/davisking/dlib.git
-[submodule "3rdparty/struck"]
-	path = 3rdparty/struck
-	url = https://github.com/syang100/struck.git

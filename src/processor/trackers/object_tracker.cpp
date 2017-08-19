@@ -16,9 +16,6 @@
 #ifdef USE_DLIB
 #include "processor/trackers/dlib_tracker.h"
 #endif  // USE_DLIB
-#ifdef USE_STRUCK
-#include "processor/trackers/struck_tracker.h"
-#endif  // USE_STRUCK
 
 ObjectTracker::ObjectTracker(const std::string& type,
                              float calibration_duration)
@@ -105,14 +102,7 @@ void ObjectTracker::Process() {
       boost::uuids::uuid uuid = boost::uuids::random_generator()();
       std::string uuid_str = boost::lexical_cast<std::string>(uuid);
       std::shared_ptr<BaseTracker> new_tracker;
-      if (type_ == "struck") {
-#ifdef USE_STRUCK
-        new_tracker.reset(new StruckTracker(uuid_str, untracked_tags[i]));
-#else
-        LOG(FATAL) << "Tracker type " << type_
-                   << " not supported, please compile with -DUSE_STRUCK=ON";
-#endif  // USE_STRUCK
-      } else if (type_ == "dlib") {
+      if (type_ == "dlib") {
 #ifdef USE_DLIB
         new_tracker.reset(new DlibTracker(uuid_str, untracked_tags[i]));
 #else
