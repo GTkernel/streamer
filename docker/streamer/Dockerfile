@@ -1,6 +1,9 @@
 # Dockerfile for building Streamer
 #   
-#   Usage: sudo docker build -f Dockerfile . -t streamer
+#   Usage: sudo docker build -f Dockerfile . -t streamer \
+#                            --build-arg USE_CAFFE=ON \
+#                            --build-arg USE_SSD=ON \
+#                            --build-arg USE_DLIB=ON
 #   
 #   To run, use `docker run -it streamer`
 #
@@ -8,6 +11,11 @@
 #           Shao-Wen Yang <shao-wen.yang@intel.com>
 
 from ubuntu:16.04
+
+ARG DEFAULT_WORKDIR=/vcs
+ARG USE_CAFFE=OFF
+ARG USE_SSD=OFF
+ARG USE_DLIB=OFF
 
 # Prepare toolchain
 
@@ -64,7 +72,6 @@ RUN pip install pyyaml
 
 # Prepare the environment
 
-ARG DEFAULT_WORKDIR=/vcs
 RUN mkdir -p $DEFAULT_WORKDIR
 ENV PATH ${PATH}:/usr/local/bin
 ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/local/lib
@@ -122,10 +129,10 @@ ENV OMP_NUM_THREADS=`nproc`
 
 WORKDIR $DEFAULT_WORKDIR
 RUN cd streamer && \
-    git reset --hard 861bab6e5d2d84f5e5a23f9fe66ce376676d89b5 && \
+    git reset --hard 5c33d0176613ca6509650fba65e08cb4ba3f9afc && \
     mkdir build && \
     cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DUSE_CAFFE=ON -DBACKEND=cpu .. && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DUSE_CAFFE=$USE_CAFFE -DBACKEND=cpu -DUSE_SSD=$USE_SSD -DUSE_DLIB=$USE_DLIB .. && \
     make -j`nproc` && make apps -j`nproc`
 
 # Set up Streamer
