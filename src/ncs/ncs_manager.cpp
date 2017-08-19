@@ -81,7 +81,7 @@ int NCSManager::Open() {
   _devices.reserve(_names.size());
   _graphs.reserve(_names.size());
 
-  for (decltype(_name.size()) i = 0; i < _names.size(); i++) {
+  for (decltype(_names.size()) i = 0; i < _names.size(); i++) {
     _devices.push_back(OpenDevice(_names[i]));
     _graphs.push_back(AllocateGraph(_devices[i], _model_path.c_str()));
   }
