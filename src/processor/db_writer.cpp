@@ -72,15 +72,15 @@ void DbWriter::Process() {
   auto uuids = frame->GetValue<std::vector<std::string>>("uuids");
   auto timestamp = GetTimeSinceEpochMillis();
   auto tags = frame->GetValue<std::vector<std::string>>("tags");
-  auto struck_features =
-      frame->GetValue<std::vector<std::vector<double>>>("struck_features");
+  auto features =
+      frame->GetValue<std::vector<std::vector<double>>>("features");
   CHECK(uuids.size() == tags.size());
   if (write_to_file_) {
-    WriteFile(camera_id, uuids, timestamp, tags, struck_features);
+    WriteFile(camera_id, uuids, timestamp, tags, features);
   } else {
 #ifdef USE_ATHENA
     if (!athena_address_.empty() && aclient_)
-      WriteAthena(camera_id, uuids, timestamp, tags, struck_features);
+      WriteAthena(camera_id, uuids, timestamp, tags, features);
 #endif  // USE_ATHENA
   }
 }
@@ -88,13 +88,13 @@ void DbWriter::Process() {
 void DbWriter::WriteFile(
     const std::string& camera_id, const std::vector<std::string>& uuids,
     unsigned long timestamp, const std::vector<string>& tags,
-    const std::vector<std::vector<double>>& struck_features) {
+    const std::vector<std::vector<double>>& features) {
   for (size_t i = 0; i < uuids.size(); ++i) {
-    if (uuids.size() == struck_features.size()) {
+    if (uuids.size() == features.size()) {
       ofs_ << camera_id << "," << uuids[i] << "," << timestamp << ","
            << tags[i];
       bool flag = true;
-      for (const auto& m : struck_features[i]) {
+      for (const auto& m : features[i]) {
         if (flag) {
           ofs_ << "," << m;
           flag = false;
@@ -115,12 +115,12 @@ void DbWriter::WriteFile(
 void DbWriter::WriteAthena(
     const std::string& camera_id, const std::vector<std::string>& uuids,
     unsigned long timestamp, const std::vector<string>& tags,
-    const std::vector<std::vector<double>>& struck_features) {
+    const std::vector<std::vector<double>>& features) {
   for (size_t i = 0; i < uuids.size(); ++i) {
-    if (uuids.size() == struck_features.size()) {
+    if (uuids.size() == features.size()) {
       const std::string& streamId = camera_id;
       const std::string& objectId = uuids[i];
-      const std::vector<double>& fv = struck_features[i];
+      const std::vector<double>& fv = features[i];
       // Turn the metadata into a JSON object
 
       using boost::property_tree::ptree;

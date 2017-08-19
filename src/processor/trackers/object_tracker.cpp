@@ -56,7 +56,7 @@ void ObjectTracker::Process() {
   std::vector<Rect> tracked_bboxes;
   std::vector<string> tracked_tags;
   std::vector<string> tracked_uuids;
-  std::vector<std::vector<double>> struck_features;
+  std::vector<std::vector<double>> features;
   if (frame->Count("bounding_boxes") > 0) {
     auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");
     LOG(INFO) << "Got new MetadataFrame, bboxes size is " << bboxes.size()
@@ -84,7 +84,7 @@ void ObjectTracker::Process() {
         tracked_bboxes.push_back(Rect(rt.x, rt.y, rt.width, rt.height));
         tracked_tags.push_back((*it)->GetTag());
         tracked_uuids.push_back((*it)->GetUuid());
-        struck_features.push_back((*it)->GetBBFeature());
+        features.push_back((*it)->GetBBFeature());
         it++;
       } else {
         LOG(INFO) << "Remove tracker, best_percent is " << best_percent;
@@ -129,7 +129,7 @@ void ObjectTracker::Process() {
       tracked_bboxes.push_back(Rect(rt.x, rt.y, rt.width, rt.height));
       tracked_tags.push_back(untracked_tags[i]);
       tracked_uuids.push_back(uuid_str);
-      struck_features.push_back(new_tracker->GetBBFeature());
+      features.push_back(new_tracker->GetBBFeature());
       tracker_list_.push_back(new_tracker);
     }
     last_calibration_time_ = std::chrono::system_clock::now();
@@ -143,7 +143,7 @@ void ObjectTracker::Process() {
         tracked_bboxes.push_back(Rect(rt.x, rt.y, rt.width, rt.height));
         tracked_tags.push_back((*it)->GetTag());
         tracked_uuids.push_back((*it)->GetUuid());
-        struck_features.push_back((*it)->GetBBFeature());
+        features.push_back((*it)->GetBBFeature());
       }
     } else {
       LOG(INFO) << "Time " << calibration_duration_
@@ -155,7 +155,7 @@ void ObjectTracker::Process() {
   frame->SetValue("bounding_boxes", tracked_bboxes);
   frame->SetValue("tags", tracked_tags);
   frame->SetValue("uuids", tracked_uuids);
-  frame->SetValue("struck_features", struck_features);
+  frame->SetValue("features", features);
   PushFrame("output", std::move(frame));
   LOG(INFO) << "ObjectTracker took " << timer.ElapsedMSec() << " ms";
 }

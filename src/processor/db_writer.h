@@ -30,11 +30,11 @@ class DbWriter : public Processor {
   void WriteFile(const std::string& camera_id,
                  const std::vector<std::string>& uuids, unsigned long timestamp,
                  const std::vector<string>& tags,
-                 const std::vector<std::vector<double>>& struck_features);
+                 const std::vector<std::vector<double>>& features);
   void WriteAthena(const std::string& camera_id,
                    const std::vector<std::string>& uuids,
                    unsigned long timestamp, const std::vector<string>& tags,
-                   const std::vector<std::vector<double>>& struck_features);
+                   const std::vector<std::vector<double>>& features);
 
  private:
   std::shared_ptr<Camera> camera_;
