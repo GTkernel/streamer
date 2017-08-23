@@ -284,8 +284,7 @@ int main(int argc, char* argv[]) {
                      "detector idle duration");
   desc.add_options()("detector_targets", po::value<string>()->default_value(""),
                      "The name of the target to detect, separate with ,");
-  desc.add_options()("tracker_type",
-                     po::value<string>()->default_value("dlib"),
+  desc.add_options()("tracker_type", po::value<string>()->default_value("dlib"),
                      "The name of the tracker type to run");
   desc.add_options()("tracker_calibration_duration",
                      po::value<float>()->default_value(2.0),
