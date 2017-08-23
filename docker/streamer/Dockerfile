@@ -140,8 +140,7 @@ RUN cd streamer && \
 WORKDIR $DEFAULT_WORKDIR/streamer/config
 RUN cp config.toml.example config.toml && \
     cp cameras.toml.example cameras.toml && \
-    cp models.toml.example models.toml && \
-    cp struck_config.txt.example struck_config.txt
+    cp models.toml.example models.toml
 
 # Resolve ProtoBuf version conflict
 
