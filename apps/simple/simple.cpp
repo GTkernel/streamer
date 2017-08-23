@@ -28,19 +28,20 @@ void Run(const string& camera_name, float zoom, unsigned int angle,
 
   while (true) {
     auto frame = reader->PopFrame();
-    if (frame != nullptr) {
-      if (display) {
-        const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
-        cv::Mat m;
-        cv::resize(img, m, cv::Size(), zoom, zoom);
-        RotateImage(m, angle);
-        cv::imshow(camera_name, m);
-
-        unsigned char q = cv::waitKey(10);
-        if (q == 'q') break;
-      }
-      std::cout << frame->ToString() << std::endl;
+    if (frame->IsStopFrame()) {
+      break;
     }
+    if (display && frame->Count("original_image")) {
+      const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
+      cv::Mat m;
+      cv::resize(img, m, cv::Size(), zoom, zoom);
+      RotateImage(m, angle);
+      cv::imshow(camera_name, m);
+
+      unsigned char q = cv::waitKey(10);
+      if (q == 'q') break;
+    }
+    std::cout << frame->ToString() << std::endl;
   }
 
   camera->Stop();

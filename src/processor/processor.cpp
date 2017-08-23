@@ -17,6 +17,9 @@ Processor::Processor(ProcessorType type,
       queue_latency_sum_ms_(0),
       type_(type),
       block_on_push_(false) {
+  found_last_frame_ = false;
+  stopped_ = true;
+
   for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
     source_frame_cache_[source_name] = nullptr;
@@ -25,8 +28,6 @@ Processor::Processor(ProcessorType type,
   for (const auto& sink_name : sink_names) {
     sinks_.insert({sink_name, StreamPtr(new Stream)});
   }
-
-  Init_();
 
   control_socket_ =
       new zmq::socket_t(*Context::GetContext().GetControlContext(), ZMQ_PUSH);
@@ -55,8 +56,6 @@ void Processor::SetSource(const string& name, StreamPtr stream) {
   sources_[name] = stream;
 }
 
-void Processor::Init_() { stopped_ = true; }
-
 bool Processor::Start() {
   LOG(INFO) << "Start called";
   CHECK(stopped_) << "Processor has already started";
@@ -79,7 +78,10 @@ bool Processor::Start() {
 
 bool Processor::Stop() {
   LOG(INFO) << "Stop called";
-  CHECK(!stopped_) << "Processor not started yet";
+  if (stopped_) {
+    LOG(WARNING) << "Stop() called on a Processor that was already stopped!";
+    return true;
+  }
 
   // This signals that the process thread should stop processing new frames.
   stopped_ = true;
@@ -90,16 +92,17 @@ bool Processor::Stop() {
     p.second->Stop();
   }
 
+  // Unsubscribe from the source streams, which wakes up any blocking calls to
+  // StreamReader::PopFrame() in the process thread.
+  for (const auto& reader : readers_) {
+    reader.second->UnSubscribe();
+  }
+
   // Join the process thread, completing the main processing loop.
   process_thread_.join();
 
   // Do any processor-specific cleanup.
   bool result = OnStop();
-
-  // Unsubscribe from the source streams.
-  for (const auto& reader : readers_) {
-    reader.second->UnSubscribe();
-  }
 
   // Deallocate the source StreamReaders.
   readers_.clear();
@@ -110,30 +113,35 @@ bool Processor::Stop() {
 void Processor::ProcessorLoop() {
   CHECK(Init()) << "Processor is not able to be initialized";
   Timer local_timer;
-  while (!stopped_) {
+  while (!stopped_ && !found_last_frame_) {
     // Cache source frames
     source_frame_cache_.clear();
     for (auto& reader : readers_) {
       auto source_name = reader.first;
       auto source_stream = reader.second;
 
-      while (true) {
-        auto frame = source_stream->PopFrame(100);
-        if (frame == nullptr) {
-          if (stopped_) {
-            // We can't get frame, we should have stopped
-            return;
-          } else {
-            continue;
-          }
+      auto frame = source_stream->PopFrame();
+      if (frame == nullptr) {
+        if (stopped_) {
+          // We can't get frame, we should have stopped
+          return;
         } else {
-          // Calculate queue latency
-          double start_ms = frame->GetValue<double>("start_time_ms");
-          double end_ms = Context::GetContext().GetTimer().ElapsedMSec();
-          queue_latency_sum_ms_ += end_ms - start_ms;
-          source_frame_cache_[source_name] = std::move(frame);
-          break;
+          LOG(ERROR) << "Frame was null!";
         }
+      } else if (frame->IsStopFrame()) {
+        // This frame is signaling the pipeline to stop. We need to forward
+        // it to our sinks, then not process it or any future frames.
+        for (const auto& p : sinks_) {
+          PushFrame(p.first, std::make_unique<Frame>(frame));
+        }
+        return;
+      } else {
+        // Calculate queue latency
+        double start_ms = frame->GetValue<double>("start_time_ms");
+        double end_ms = Context::GetContext().GetTimer().ElapsedMSec();
+        queue_latency_sum_ms_ += end_ms - start_ms;
+        source_frame_cache_[source_name] = std::move(frame);
+        break;
       }
     }
 
@@ -188,6 +196,9 @@ void Processor::SetBlockOnPush(bool block) { block_on_push_ = block; }
 void Processor::PushFrame(const string& sink_name,
                           std::unique_ptr<Frame> frame) {
   CHECK(sinks_.count(sink_name) != 0);
+  if (frame->IsStopFrame()) {
+    found_last_frame_ = true;
+  }
   sinks_[sink_name]->PushFrame(std::move(frame), block_on_push_);
 }
 
