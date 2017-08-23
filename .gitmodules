@@ -16,3 +16,6 @@
 [submodule "3rdparty/simple-web-server"]
 	path = 3rdparty/simple-web-server
 	url = https://github.com/eidheim/Simple-Web-Server.git
+[submodule "3rdparty/dlib"]
+	path = 3rdparty/dlib
+	url = https://github.com/davisking/dlib.git

@@ -47,6 +47,10 @@ class ModelDesc {
     label_file_path_ = file_path;
   }
   const string& GetLabelFilePath() const { return label_file_path_; }
+  void SetVocConfigPath(const string& file_path) {
+    voc_config_path_ = file_path;
+  }
+  const string& GetVocConfigPath() const { return voc_config_path_; }
   void SetInputScale(const double& input_scale) { input_scale_ = input_scale; }
   const double& GetInputScale() const { return input_scale_; }
 
@@ -61,6 +65,7 @@ class ModelDesc {
   std::string default_output_layer_;
   // Optional attributes
   string label_file_path_;
+  string voc_config_path_;
   double input_scale_;
 };
 

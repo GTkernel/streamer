@@ -96,6 +96,8 @@ class Context {
       return "omxh264enc";
     } else if (IsGstElementExists("avenc_h264_omx")) {
       return "avenc_h264_omx";
+    } else if (IsGstElementExists("x264enc")) {
+      return "x264enc";
     }
 
     LOG(WARNING) << "No known gst encoder element exists on the system";

@@ -6,5 +6,9 @@ if (TEST_ON)
   add_subdirectory(googletest)
 endif ()
 
+if (USE_DLIB)
+  add_subdirectory(dlib)
+endif()
+
 # litesql database library
 add_subdirectory(litesql)

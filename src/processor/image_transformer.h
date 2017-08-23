@@ -11,7 +11,7 @@
 
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(const Shape& target_shape);
+  ImageTransformer(const Shape& target_shape, bool crop, bool convert);
 
   static std::shared_ptr<ImageTransformer> Create(
       const FactoryParamsType& params);
@@ -23,6 +23,8 @@ class ImageTransformer : public Processor {
 
  private:
   Shape target_shape_;
+  bool crop_;
+  bool convert_;
 };
 
 #endif  // STREAMER_PROCESSOR_IMAGE_TRANSFORMER_H_

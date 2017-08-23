@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(streamer)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(cmake/summary.cmake)
 include(cmake/clangformat.cmake)
 include(cmake/build.cmake)
@@ -79,6 +81,41 @@ if (USE_TENSORFLOW)
     ${PROTOBUF_INCLUDE_DIRS}
   )
   add_definitions("-D USE_TENSORFLOW")
+endif()
+
+option(USE_FRCNN "Build with Caffe Faster Rcnn" OFF)
+if (USE_FRCNN)
+  add_definitions("-D USE_FRCNN")
+  message("Build with Caffe Faster Rcnn")
+endif ()
+
+option(USE_DLIB "Build with Dlib" OFF)
+if (USE_DLIB)
+  add_definitions("-D USE_DLIB")
+  message("Build with Dlib")
+endif ()
+
+option(USE_NCS "Build with NCS" OFF)
+if (USE_NCS)
+  find_package(NCS REQUIRED)
+  include_directories(${NCS_INCLUDE_DIRS})
+  add_definitions("-D USE_NCS")
+  message("Build with NCS")
+endif ()
+
+option(USE_ATHENA "Build with Athena" OFF)
+if (USE_ATHENA)
+  find_package(Athena REQUIRED)
+  include_directories(${Athena_INCLUDE_DIRS})
+  include_directories(${Athena_utils_INCLUDE_DIRS})
+  add_definitions("-D USE_ATHENA")
+  message("Build with Athena")
+endif ()
+
+option(USE_SSD "Build with Caffe SSD" OFF)
+if (USE_SSD)
+  add_definitions("-D USE_SSD")
+  message("Build with Caffe SSD")
 endif ()
 
 option(USE_PTGRAY "Build with PtGray GigE SDK or not." OFF)

@@ -55,9 +55,9 @@ TEST(TestTypes, TestJsonToRect) {
 }
 
 TEST(TestTypes, TestProcessorTypesStringConversion) {
-  EXPECT_EQ(PROCESSOR_TYPE_CAMERA,
+  EXPECT_EQ(PROCESSOR_TYPE_BINARY_FILE_WRITER,
             GetProcessorTypeByString(
-                GetStringForProcessorType(PROCESSOR_TYPE_CAMERA)));
+                GetStringForProcessorType(PROCESSOR_TYPE_BINARY_FILE_WRITER)));
   EXPECT_EQ(PROCESSOR_TYPE_CAMERA,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CAMERA)));
@@ -67,9 +67,27 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_CUSTOM,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CUSTOM)));
+  EXPECT_EQ(PROCESSOR_TYPE_DB_WRITER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_DB_WRITER)));
   EXPECT_EQ(PROCESSOR_TYPE_ENCODER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_ENCODER)));
+  EXPECT_EQ(PROCESSOR_TYPE_FACE_TRACKER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FACE_TRACKER)));
+#ifdef USE_CAFFE
+  EXPECT_EQ(PROCESSOR_TYPE_FACENET,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FACENET)));
+#endif  // USE_CAFFE
+  EXPECT_EQ(PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
+            GetProcessorTypeByString(GetStringForProcessorType(
+                PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE)));
+  EXPECT_EQ(PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FLOW_CONTROL_EXIT)));
+
 #ifdef USE_RPC
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_RECEIVER,
             GetProcessorTypeByString(
@@ -102,12 +120,24 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_NEURAL_NET_EVALUATOR)));
-  EXPECT_EQ(PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
+  EXPECT_EQ(PROCESSOR_TYPE_OBJECT_DETECTOR,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_OBJECT_DETECTOR)));
+  EXPECT_EQ(PROCESSOR_TYPE_OBJECT_TRACKER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_OBJECT_TRACKER)));
+  EXPECT_EQ(PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
             GetProcessorTypeByString(GetStringForProcessorType(
-                PROCESSOR_TYPE_OPENCV_FACE_DETECTOR)));
+                PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR)));
+  EXPECT_EQ(PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
+            GetProcessorTypeByString(GetStringForProcessorType(
+                PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR)));
   EXPECT_EQ(PROCESSOR_TYPE_STRIDER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_STRIDER)));
+  EXPECT_EQ(PROCESSOR_TYPE_THROTTLER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_THROTTLER)));
   EXPECT_EQ(PROCESSOR_TYPE_INVALID,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_INVALID)));

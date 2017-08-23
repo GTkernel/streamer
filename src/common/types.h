@@ -82,6 +82,54 @@ struct Rect {
 };
 
 /**
+ * @brief Face landmark
+ */
+struct FaceLandmark {
+  FaceLandmark() {
+    x.resize(5);
+    y.resize(5);
+  }
+
+  FaceLandmark(nlohmann::json j) {
+    try {
+      nlohmann::json face_j = j.at("FaceLandmark");
+      x = face_j.at("px").get<std::vector<float>>();
+      y = face_j.at("py").get<std::vector<float>>();
+    } catch (std::out_of_range& e) {
+      LOG(FATAL) << "Malformed FaceLandark JSON: " << j.dump() << "\n"
+                 << e.what();
+    }
+  }
+
+  nlohmann::json ToJson() const {
+    nlohmann::json face_j;
+    face_j["x"] = x;
+    face_j["y"] = y;
+    nlohmann::json j;
+    j["FaceLandmark"] = face_j;
+    return j;
+  }
+
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {}
+
+  std::vector<float> x;
+  std::vector<float> y;
+};
+
+/**
+ * @brief Point feature
+ */
+struct PointFeature {
+  PointFeature(const cv::Point& p, const std::vector<float>& f)
+      : point(p), face_feature(f) {}
+  template <class Archive>
+  void serialize(Archive&, const unsigned int) {}
+  cv::Point point;
+  std::vector<float> face_feature;
+};
+
+/**
  * @brief Prediction result, a string label and a confidence score
  */
 typedef std::pair<std::string, float> Prediction;
@@ -103,7 +151,9 @@ typedef std::unordered_map<std::string, std::string> FactoryParamsType;
 enum ModelType {
   MODEL_TYPE_INVALID = 0,
   MODEL_TYPE_CAFFE,
-  MODEL_TYPE_TENSORFLOW
+  MODEL_TYPE_TENSORFLOW,
+  MODEL_TYPE_OPENCV,
+  MODEL_TYPE_NCS
 };
 
 //// Camera types
@@ -153,7 +203,12 @@ enum ProcessorType {
   PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_COMPRESSOR,
   PROCESSOR_TYPE_CUSTOM,
+  PROCESSOR_TYPE_DB_WRITER,
   PROCESSOR_TYPE_ENCODER,
+  PROCESSOR_TYPE_FACE_TRACKER,
+#ifdef USE_CAFFE
+  PROCESSOR_TYPE_FACENET,
+#endif  // USE_CAFFE
   PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
   PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
 #ifdef USE_RPC
@@ -168,7 +223,10 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_JPEG_WRITER,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
-  PROCESSOR_TYPE_OPENCV_FACE_DETECTOR,
+  PROCESSOR_TYPE_OBJECT_DETECTOR,
+  PROCESSOR_TYPE_OBJECT_TRACKER,
+  PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
+  PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
   PROCESSOR_TYPE_STRIDER,
   PROCESSOR_TYPE_THROTTLER,
   PROCESSOR_TYPE_INVALID
@@ -183,8 +241,16 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_COMPRESSOR;
   } else if (type == "Custom") {
     return PROCESSOR_TYPE_CUSTOM;
+  } else if (type == "DbWriter") {
+    return PROCESSOR_TYPE_DB_WRITER;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
+  } else if (type == "FaceTracker") {
+    return PROCESSOR_TYPE_FACE_TRACKER;
+#ifdef USE_CAFFE
+  } else if (type == "Facenet") {
+    return PROCESSOR_TYPE_FACENET;
+#endif  // USE_CAFFE
   } else if (type == "FlowControlEntrance") {
     return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
   } else if (type == "FlowControlExit") {
@@ -211,8 +277,14 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_JPEG_WRITER;
   } else if (type == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
-  } else if (type == "OpenCVFaceDetector") {
-    return PROCESSOR_TYPE_OPENCV_FACE_DETECTOR;
+  } else if (type == "ObjectDetector") {
+    return PROCESSOR_TYPE_OBJECT_DETECTOR;
+  } else if (type == "ObjectTracker") {
+    return PROCESSOR_TYPE_OBJECT_TRACKER;
+  } else if (type == "OpenCVMotionDetector") {
+    return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
+  } else if (type == "OpenCVPeopleDetector") {
+    return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
   } else if (type == "Strider") {
     return PROCESSOR_TYPE_STRIDER;
   } else if (type == "Throttler") {
@@ -233,8 +305,16 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "Compressor";
     case PROCESSOR_TYPE_CUSTOM:
       return "Custom";
+    case PROCESSOR_TYPE_DB_WRITER:
+      return "DbWriter";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
+    case PROCESSOR_TYPE_FACE_TRACKER:
+      return "FaceTracker";
+#ifdef USE_CAFFE
+    case PROCESSOR_TYPE_FACENET:
+      return "Facenet";
+#endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return "FlowControlEntrance";
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
@@ -261,8 +341,14 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "JpegWriter";
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return "NeuralNetEvaluator";
-    case PROCESSOR_TYPE_OPENCV_FACE_DETECTOR:
-      return "OpenCVFaceDetector";
+    case PROCESSOR_TYPE_OBJECT_DETECTOR:
+      return "ObjectDetector";
+    case PROCESSOR_TYPE_OBJECT_TRACKER:
+      return "ObjectTracker";
+    case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
+      return "OpenCVMotionDetector";
+    case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
+      return "OpenCVPeopleDetector";
     case PROCESSOR_TYPE_STRIDER:
       return "Strider";
     case PROCESSOR_TYPE_THROTTLER:

@@ -24,7 +24,7 @@ void CaffeModel<DType>::Load() {
     std::vector<int> gpus;
     GetCUDAGpus(gpus);
 
-    if (desired_device_number < gpus.size()) {
+    if (desired_device_number < (int)gpus.size()) {
       // Device exists
       LOG(INFO) << "Use GPU with device ID " << desired_device_number;
       caffe::Caffe::SetDevice(desired_device_number);

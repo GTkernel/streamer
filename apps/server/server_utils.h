@@ -2,8 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/31/16.
 //
 
-#ifndef STREAMER_SERVER_UTILS_H
-#define STREAMER_SERVER_UTILS_H
+#ifndef STREAMER_SERVER_SERVER_UTILS_H_
+#define STREAMER_SERVER_SERVER_UTILS_H_
 
 #include "streamer.h"
 
@@ -168,4 +168,4 @@ void SendFile(HttpServer& server, HttpServerResponse res,
   LOG(INFO) << "Sent file: " << filepath;
 }
 
-#endif  // STREAMER_SERVER_UTILS_H
+#endif  // STREAMER_SERVER_SERVER_UTILS_H_

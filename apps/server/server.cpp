@@ -19,14 +19,14 @@ std::unordered_map<string, PipelinePtr> pipelines;
 void StartUp() {
 #ifdef USE_VIMBA
   CHECK_VIMBA(AVT::VmbAPI::VimbaSystem::GetInstance().Startup());
-#endif
+#endif  // USE_VIMBA
 }
 
 void CleanUp() {
 #ifdef USE_VIMBA
   auto res = AVT::VmbAPI::VimbaSystem::GetInstance().Shutdown();
   CHECK(res == VmbErrorSuccess) << "Can't shut down Vimba system";
-#endif
+#endif  // USE_VIMBA
 }
 
 static void SetUpEndpoints(HttpServer& server) {

@@ -3,13 +3,51 @@ set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 
 #Pick source files
 set(SRC_ROOT ${PROJECT_SOURCE_DIR}/src)
-file(GLOB_RECURSE STREAMER_SOURCE_FILES ${SRC_ROOT}/*.cpp ${SRC_ROOT}/*.h)
-file(GLOB_RECURSE RPC_SOURCE_FILES ${SRC_ROOT}/processor/rpc/*.cpp ${SRC_ROOT}/processor/rpc/*.h)
-file(GLOB_RECURSE CAFFE_SOURCE_FILES ${SRC_ROOT}/caffe_*.cpp ${SRC_ROOT}/caffe_*.h)
-file(GLOB_RECURSE TENSORFLOW_SOURCE_FILES ${SRC_ROOT}/tf_*.cpp ${SRC_ROOT}/tf_*.h)
-file(GLOB_RECURSE CAFFE_OPENCL_SOURCE_FILES ${SRC_ROOT}/caffe_opencl*.cpp ${SRC_ROOT}/caffe_opencl*.h)
-file(GLOB_RECURSE PTGRAY_SOURCE_FILES ${SRC_ROOT}/camera/pgr_*.cpp ${SRC_ROOT}/camera/pgr_*.h)
-file(GLOB_RECURSE VIMBA_SOURCE_FILES ${SRC_ROOT}/camera/vimba_*.cpp ${SRC_ROOT}/camera/vimba_*.h)
+file(GLOB_RECURSE STREAMER_SOURCE_FILES
+  ${SRC_ROOT}/*.cpp
+  ${SRC_ROOT}/*.h
+)
+file(GLOB_RECURSE RPC_SOURCE_FILES
+  ${SRC_ROOT}/processor/rpc/*.cpp
+  ${SRC_ROOT}/processor/rpc/*.h
+)
+file(GLOB_RECURSE CAFFE_SOURCE_FILES
+  ${SRC_ROOT}/caffe_*.cpp
+  ${SRC_ROOT}/caffe_*.h
+)
+file(GLOB_RECURSE TENSORFLOW_SOURCE_FILES
+  ${SRC_ROOT}/tf_*.cpp
+  ${SRC_ROOT}/tf_*.h
+)
+file(GLOB_RECURSE CAFFE_OPENCL_SOURCE_FILES
+  ${SRC_ROOT}/caffe_opencl*.cpp
+  ${SRC_ROOT}/caffe_opencl*.h
+)
+file(GLOB_RECURSE PTGRAY_SOURCE_FILES
+  ${SRC_ROOT}/camera/pgr_*.cpp
+  ${SRC_ROOT}/camera/pgr_*.h
+)
+file(GLOB_RECURSE VIMBA_SOURCE_FILES
+  ${SRC_ROOT}/camera/vimba_*.cpp
+  ${SRC_ROOT}/camera/vimba_*.h
+)
+file(GLOB_RECURSE FRCNN_SOURCE_FILES
+  ${SRC_ROOT}/frcnn_*.cpp
+  ${SRC_ROOT}/frcnn_*.h
+)
+file(GLOB_RECURSE NCS_SOURCE_FILES
+  ${SRC_ROOT}/ncs.h
+  ${SRC_ROOT}/ncs_*.cpp
+  ${SRC_ROOT}/ncs_*.h
+)
+file(GLOB_RECURSE SSD_SOURCE_FILES
+  ${SRC_ROOT}/ssd_*.cpp
+  ${SRC_ROOT}/ssd_*.h
+)
+file(GLOB_RECURSE DLIB_SOURCE_FILES
+  ${SRC_ROOT}/dlib_*.cpp
+  ${SRC_ROOT}/dlib_*.h
+)
 list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${RPC_SOURCE_FILES}
   ${CAFFE_SOURCE_FILES}
@@ -17,6 +55,10 @@ list(REMOVE_ITEM STREAMER_SOURCE_FILES
   ${CAFFE_OPENCL_SOURCE_FILES}
   ${PTGRAY_SOURCE_FILES}
   ${VIMBA_SOURCE_FILES}
+  ${FRCNN_SOURCE_FILES}
+  ${NCS_SOURCE_FILES}
+  ${SSD_SOURCE_FILES}
+  ${DLIB_SOURCE_FILES}
 )
 
 # Pick libraries
@@ -102,6 +144,35 @@ if (USE_RPC)
   list(APPEND STREAMER_LIBRARIES ${PROTOBUF_LIBRARIES})
   list(APPEND STREAMER_LIBRARIES ${GRPC_LIBRARIES})
 endif ()
+
+# Build with FRCNN libraries
+if (USE_FRCNN)
+  list(APPEND STREAMER_SOURCE_FILES ${FRCNN_SOURCE_FILES})
+endif ()
+
+# Build with DLIB libraries
+if (USE_DLIB)
+  list(APPEND STREAMER_SOURCE_FILES ${DLIB_SOURCE_FILES})
+  list(APPEND STREAMER_LIBRARIES dlib)
+endif ()
+
+# Build with NCS libraries
+if (USE_NCS)
+  list(APPEND STREAMER_SOURCE_FILES ${NCS_SOURCE_FILES})
+  list(APPEND STREAMER_LIBRARIES ${NCS_LIBRARIES})
+endif ()
+
+# Build with ATHENA libraries
+if (USE_ATHENA)
+  list(APPEND STREAMER_LIBRARIES ${Athena_LIBRARIES} ${Athena_utils_LIBRARIES})
+endif ()
+
+# Build with SSD libraries
+if (USE_SSD)
+  list(APPEND STREAMER_SOURCE_FILES ${SSD_SOURCE_FILES})
+endif ()
+
+message(${STREAMER_LIBRARIES})
 
 add_library(streamer SHARED ${STREAMER_SOURCE_FILES})
 target_link_libraries(streamer ${STREAMER_LIBRARIES})

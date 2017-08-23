@@ -3,8 +3,9 @@
 [decoder]
 h264_decoder_gst_element = 'default'
 # h264_decoder_gst_element = 'avdec_h264'   # Mac
-# h264_decoder_gst_element = 'avdec_h264'   # Linux
 # h264_decoder_gst_element = 'omxh264dec'   # Tegra
+# h264_decoder_gst_element = 'avdec_h264'   # Linux (software)
+# h264_decoder_gst_element = 'vaapidecode'  # Linux (hardware)
 
 [encoder]
 h264_encoder_gst_element = 'default'

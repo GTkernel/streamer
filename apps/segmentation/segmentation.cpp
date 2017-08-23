@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
-  if (argc != 5) {
+  if (argc != 4) {
     std::cout << argv[0] << " - Image segmentation example\n";
     std::cout << "Usage:\n"
               << " CAMERA\n"
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
   auto camera_stream = camera->GetStream();
 
   Shape input_shape(3, 250, 250);
-  ImageTransformer transform_processor(input_shape);
+  ImageTransformer transform_processor(input_shape, true, true);
   transform_processor.SetSource("input", camera_stream);
 
   auto model_desc = model_manager.GetModelDesc(model_name);
@@ -73,8 +73,8 @@ int main(int argc, char* argv[]) {
     auto seg_stream = segmentation_processor.GetSink("output");
     auto reader = seg_stream->Subscribe();
 
-    cv::namedWindow("camera");
-    cv::namedWindow("Result");
+    cv::namedWindow("Camera", cv::WINDOW_NORMAL);
+    cv::namedWindow("Result", cv::WINDOW_NORMAL);
 
     while (true) {
       auto frame = reader->PopFrame();

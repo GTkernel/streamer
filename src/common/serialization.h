@@ -1,6 +1,6 @@
 
-#ifndef STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
-#define STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
+#ifndef STREAMER_COMMON_SERIALIZATION_H_
+#define STREAMER_COMMON_SERIALIZATION_H_
 
 #include <boost/date_time/posix_time/time_serialize.hpp>
 #include <boost/serialization/array.hpp>
@@ -40,4 +40,4 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
 }  // namespace serialization
 }  // namespace boost
 
-#endif  // STREAMER_PROCESSOR_RPC_SERIALIZATION_H_
+#endif  // STREAMER_COMMON_SERIALIZATION_H_

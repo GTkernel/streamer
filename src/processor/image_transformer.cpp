@@ -6,9 +6,12 @@
 
 #include "model/model_manager.h"
 
-ImageTransformer::ImageTransformer(const Shape& target_shape)
+ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
+                                   bool convert)
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {"input"}, {"output"}),
-      target_shape_(target_shape) {}
+      target_shape_(target_shape),
+      crop_(crop),
+      convert_(convert) {}
 
 std::shared_ptr<ImageTransformer> ImageTransformer::Create(
     const FactoryParamsType& params) {
@@ -25,7 +28,8 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
       << "), and number of channels (" << num_channels
       << ") must not be negative.";
 
-  return std::make_shared<ImageTransformer>(Shape(num_channels, width, height));
+  return std::make_shared<ImageTransformer>(Shape(num_channels, width, height),
+                                            true, true);
 }
 
 void ImageTransformer::Process() {
@@ -52,19 +56,24 @@ void ImageTransformer::Process() {
   else
     sample_image = img;
 
+  cv::Mat sample_cropped;
   // Crop according to scale
-  int desired_width = (int)((float)width / height * img.size[1]);
-  int desired_height = (int)((float)height / width * img.size[0]);
-  int new_width = img.size[0];
-  int new_height = img.size[1];
-  if (desired_width < img.size[0]) {
-    new_width = desired_width;
+  if (crop_) {
+    int desired_width = (int)((float)width / height * img.size[1]);
+    int desired_height = (int)((float)height / width * img.size[0]);
+    int new_width = img.size[0];
+    int new_height = img.size[1];
+    if (desired_width < img.size[0]) {
+      new_width = desired_width;
+    } else {
+      new_height = desired_height;
+    }
+    cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2,
+                 new_width, new_height);
+    sample_cropped = sample_image(roi);
   } else {
-    new_height = desired_height;
+    sample_cropped = sample_image;
   }
-  cv::Rect roi((img.size[1] - new_height) / 2, (img.size[0] - new_width) / 2,
-               new_width, new_height);
-  cv::Mat sample_cropped = sample_image(roi);
 
   // Resize
   cv::Mat sample_resized;
@@ -76,10 +85,14 @@ void ImageTransformer::Process() {
 
   // Convert to float
   cv::Mat sample_float;
-  if (num_channel == 3)
-    sample_resized.convertTo(sample_float, CV_32FC3);
-  else
-    sample_resized.convertTo(sample_float, CV_32FC1);
+  if (convert_) {
+    if (num_channel == 3)
+      sample_resized.convertTo(sample_float, CV_32FC3);
+    else
+      sample_resized.convertTo(sample_float, CV_32FC1);
+  } else {
+    sample_float = sample_resized;
+  }
 
   frame->SetValue("image", sample_float);
   PushFrame("output", std::move(frame));

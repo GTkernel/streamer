@@ -5,7 +5,6 @@
 #include "frame.h"
 
 #include <algorithm>
-#include <experimental/unordered_map>
 
 #include <opencv2/core/core.hpp>
 
@@ -98,6 +97,60 @@ class FramePrinter : public boost::static_visitor<std::string> {
            << ") = " << mout.str().substr(0, 20) << "...]";
     return output.str();
   }
+
+  std::string operator()(const std::vector<FaceLandmark>& v) const {
+    std::ostringstream output;
+    output << "std::vector<FaceLandmark> = [" << std::endl;
+    for (auto& m : v) {
+      output << "FaceLandmark("
+             << "(" << m.x[0] << "," << m.y[0] << ")"
+             << "(" << m.x[1] << "," << m.y[1] << ")"
+             << "(" << m.x[2] << "," << m.y[2] << ")"
+             << "(" << m.x[3] << "," << m.y[3] << ")"
+             << "(" << m.x[4] << "," << m.y[4] << ")"
+             << ")" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<std::vector<float>>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::vector<float>> = [" << std::endl;
+    for (auto& v1 : v) {
+      output << "std::vector<float> = [" << std::endl;
+      for (auto& f : v1) {
+        output << f << std::endl;
+      }
+      output << "]" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<float>& v) const {
+    std::ostringstream output;
+    output << "std::vector<float> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
+
+  std::string operator()(const std::vector<std::vector<double>>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::vector<double>> = [" << std::endl;
+    for (auto& v1 : v) {
+      output << "std::vector<double> = [" << std::endl;
+      for (auto& d : v1) {
+        output << d << std::endl;
+      }
+      output << "]" << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
 };
 
 class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
@@ -139,6 +192,24 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     fs << "cvMat" << v;
     return fs.releaseAndGetString();
   }
+
+  nlohmann::json operator()(const std::vector<float>& v) const { return v; }
+
+  nlohmann::json operator()(const std::vector<FaceLandmark>& v) const {
+    nlohmann::json j;
+    for (const auto& f : v) {
+      j.push_back(f.ToJson());
+    }
+    return j;
+  }
+
+  nlohmann::json operator()(const std::vector<std::vector<double>>& v) const {
+    return v;
+  }
+
+  nlohmann::json operator()(const std::vector<std::vector<float>>& v) const {
+    return v;
+  }
 };
 
 Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
@@ -153,9 +224,13 @@ Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
 
   bool inherit_all_fields = fields.empty();
   if (!inherit_all_fields) {
-    std::experimental::erase_if(frame_data_, [&fields](auto& e) {
-      return fields.find(e.first) == fields.end();
-    });
+    for (auto it = frame_data_.begin(); it != frame_data_.end();) {
+      if (fields.find(it->first) == fields.end()) {
+        it = frame_data_.erase(it);
+      } else {
+        ++it;
+      }
+    }
   }
 
   // If either we are inheriting all fields or we are explicitly inheriting
@@ -225,6 +300,12 @@ template void Frame::SetValue(std::string, const std::vector<double>&);
 template void Frame::SetValue(std::string, const std::vector<Rect>&);
 template void Frame::SetValue(std::string, const std::vector<char>&);
 template void Frame::SetValue(std::string, const cv::Mat&);
+template void Frame::SetValue(std::string, const std::vector<FaceLandmark>&);
+template void Frame::SetValue(std::string,
+                              const std::vector<std::vector<float>>&);
+template void Frame::SetValue(std::string, const std::vector<float>&);
+template void Frame::SetValue(std::string,
+                              const std::vector<std::vector<double>>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
@@ -237,3 +318,7 @@ template std::vector<double> Frame::GetValue(std::string) const;
 template std::vector<Rect> Frame::GetValue(std::string) const;
 template cv::Mat Frame::GetValue(std::string) const;
 template std::vector<char> Frame::GetValue(std::string) const;
+template std::vector<FaceLandmark> Frame::GetValue(std::string) const;
+template std::vector<std::vector<float>> Frame::GetValue(std::string) const;
+template std::vector<float> Frame::GetValue(std::string) const;
+template std::vector<std::vector<double>> Frame::GetValue(std::string) const;
