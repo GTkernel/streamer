@@ -21,12 +21,12 @@
 #include "model/model.h"
 #include "processor/detectors/object_detector.h"
 
-using caffe::Datum;
 using caffe::Blob;
-using caffe::Net;
 using caffe::Caffe;
-using caffe::TEST;
+using caffe::Datum;
 using caffe::MemoryDataLayer;
+using caffe::Net;
+using caffe::TEST;
 
 struct FaceRect {
   float x1;
