@@ -15,7 +15,8 @@ Processor::Processor(ProcessorType type,
       processing_latencies_sum_ms_(0),
       trailing_avg_processing_latency_ms_(0),
       queue_latency_sum_ms_(0),
-      type_(type) {
+      type_(type),
+      block_on_push_(false) {
   for (const auto& source_name : source_names) {
     sources_.insert({source_name, nullptr});
     source_frame_cache_[source_name] = nullptr;
@@ -77,16 +78,30 @@ bool Processor::Start() {
 }
 
 bool Processor::Stop() {
-  CHECK(!stopped_) << "Processor not started yet";
-  stopped_ = true;
   LOG(INFO) << "Stop called";
+  CHECK(!stopped_) << "Processor not started yet";
+
+  // This signals that the process thread should stop processing new frames.
+  stopped_ = true;
+
+  // Stop all sink streams, which wakes up any blocking calls to
+  // Stream::PushFrame() in the process thread.
+  for (const auto& p : sinks_) {
+    p.second->Stop();
+  }
+
+  // Join the process thread, completing the main processing loop.
   process_thread_.join();
+
+  // Do any processor-specific cleanup.
   bool result = OnStop();
 
-  for (auto& reader : readers_) {
+  // Unsubscribe from the source streams.
+  for (const auto& reader : readers_) {
     reader.second->UnSubscribe();
   }
 
+  // Deallocate the source StreamReaders.
   readers_.clear();
 
   return result;
@@ -168,10 +183,12 @@ ProcessorType Processor::GetType() const { return type_; }
 
 zmq::socket_t* Processor::GetControlSocket() { return control_socket_; };
 
+void Processor::SetBlockOnPush(bool block) { block_on_push_ = block; }
+
 void Processor::PushFrame(const string& sink_name,
                           std::unique_ptr<Frame> frame) {
   CHECK(sinks_.count(sink_name) != 0);
-  sinks_[sink_name]->PushFrame(std::move(frame));
+  sinks_[sink_name]->PushFrame(std::move(frame), block_on_push_);
 }
 
 std::unique_ptr<Frame> Processor::GetFrame(const string& source_name) {

@@ -77,8 +77,6 @@ void GstVideoCapture::CheckBuffer() {
   // Push the frame
   {
     std::lock_guard<std::mutex> guard(capture_lock_);
-
-    frames_.clear();
     frames_.push_back(frame);
   }
   capture_cv_.notify_all();
