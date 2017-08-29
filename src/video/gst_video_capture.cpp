@@ -13,9 +13,26 @@
 #include "common/context.h"
 #include "utils/utils.h"
 
+std::unordered_map<GstAppSink*, GstVideoCapture*>
+    GstVideoCapture::appsink_to_capture_;
+std::mutex GstVideoCapture::mtx_;
+
 /************************
  * GStreamer callbacks ***
  ************************/
+void GstVideoCapture::Eos(GstAppSink* appsink, gpointer) {
+  GstVideoCapture* cap;
+  {
+    std::lock_guard<std::mutex> lock(mtx_);
+    cap = appsink_to_capture_.at(appsink);
+  }
+  cap->found_last_frame_ = true;
+  // The id of the last frame to be received from the camera is equal to the id
+  // of the most recent frame to be given to the user plus the length of the
+  // frame buffer.
+  cap->last_frame_id_ = cap->current_frame_id_ + cap->frames_.size();
+}
+
 /**
  * @brief Callback when there is new sample on the pipleline. First check the
  * buffer for new samples, then check the
@@ -105,7 +122,12 @@ void GstVideoCapture::CheckBus() {
  * @brief Initialize the capture with a uri. Only supports rtsp protocol now.
  */
 GstVideoCapture::GstVideoCapture()
-    : appsink_(nullptr), pipeline_(nullptr), connected_(false) {
+    : appsink_(nullptr),
+      pipeline_(nullptr),
+      connected_(false),
+      current_frame_id_(0),
+      last_frame_id_(0),
+      found_last_frame_(false) {
   // Get decoder element
   decoder_element_ = Context::GetContext().GetString(H264_DECODER_GST_ELEMENT);
 }
@@ -145,7 +167,9 @@ void GstVideoCapture::DestroyPipeline() {
  * @brief Get next frame from the pipeline, busy wait (which should be improved)
  * until frame available.
  */
-cv::Mat GstVideoCapture::GetPixels() {
+cv::Mat GstVideoCapture::GetPixels(unsigned long frame_id) {
+  current_frame_id_ = frame_id;
+
   Timer timer;
   timer.Start();
   if (!connected_) return cv::Mat();
@@ -228,6 +252,10 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   // Get sink
   GstAppSink* sink =
       GST_APP_SINK(gst_bin_get_by_name(GST_BIN(pipeline), "sink"));
+  {
+    std::lock_guard<std::mutex> lock(mtx_);
+    appsink_to_capture_[sink] = this;
+  }
   gst_app_sink_set_emit_signals(sink, true);
   gst_app_sink_set_drop(sink, true);
   gst_app_sink_set_max_buffers(sink, 1);
@@ -289,7 +317,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
   }
 
   GstAppSinkCallbacks callbacks;
-  callbacks.eos = NULL;
+  callbacks.eos = GstVideoCapture::Eos;
   callbacks.new_preroll = NULL;
   callbacks.new_sample = GstVideoCapture::NewSampleCB;
   gst_app_sink_set_callbacks(sink, &callbacks, (void*)this, NULL);
@@ -311,4 +339,8 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
 
 void GstVideoCapture::SetDecoderElement(const string& decoder) {
   decoder_element_ = decoder;
+}
+
+bool GstVideoCapture::NextFrameIsLast() const {
+  return found_last_frame_ && (current_frame_id_ == last_frame_id_);
 }

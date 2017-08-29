@@ -29,7 +29,10 @@ void Run(const string& camera_name, float zoom, unsigned int angle,
   while (true) {
     auto frame = reader->PopFrame();
     if (frame != nullptr) {
-      if (display) {
+      if (frame->IsStopFrame()) {
+        break;
+      }
+      if (display && frame->Count("original_image")) {
         const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
         cv::Mat m;
         cv::resize(img, m, cv::Size(), zoom, zoom);

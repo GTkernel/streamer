@@ -34,20 +34,27 @@ bool GSTCamera::OnStop() {
   return true;
 }
 void GSTCamera::Process() {
-  const cv::Mat& pixels = capture_.GetPixels();
-  if (pixels.empty()) {
-    // Did not get a new frame.
-    return;
-  }
-
   auto frame = std::make_unique<Frame>();
   MetadataToFrame(frame);
-  frame->SetValue("original_bytes",
-                  std::vector<char>(
-                      (char*)pixels.data,
-                      (char*)pixels.data + pixels.total() * pixels.elemSize()));
-  frame->SetValue("original_image", pixels);
-  PushFrame("output", std::move(frame));
+
+  if (capture_.NextFrameIsLast()) {
+    frame->SetStopFrame(true);
+    PushFrame("output", std::move(frame));
+  } else {
+    const cv::Mat& pixels =
+        capture_.GetPixels(frame->GetValue<unsigned long>("frame_id"));
+    if (pixels.empty()) {
+      // Did not get a new frame.
+      return;
+    }
+
+    frame->SetValue("original_bytes",
+                    std::vector<char>((char*)pixels.data,
+                                      (char*)pixels.data +
+                                          pixels.total() * pixels.elemSize()));
+    frame->SetValue("original_image", pixels);
+    PushFrame("output", std::move(frame));
+  }
 }
 
 CameraType GSTCamera::GetCameraType() const { return CAMERA_TYPE_GST; }

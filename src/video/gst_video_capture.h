@@ -5,12 +5,14 @@
 #ifndef STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_
 #define STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_
 
+#include <condition_variable>
+#include <mutex>
+
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 #include <gst/gstmemory.h>
-#include <condition_variable>
-#include <mutex>
 #include <opencv2/opencv.hpp>
+
 #include "common/common.h"
 
 /**
@@ -24,7 +26,7 @@ class GstVideoCapture {
  public:
   GstVideoCapture();
   ~GstVideoCapture();
-  cv::Mat GetPixels();
+  cv::Mat GetPixels(unsigned long frame_id);
   cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri);
   void DestroyPipeline();
@@ -37,15 +39,26 @@ class GstVideoCapture {
    * @param decoder The name of the deocder gstreamer element.
    */
   void SetDecoderElement(const string& decoder);
+  bool NextFrameIsLast() const;
 
  private:
+  // Callback triggered when end of stream detected. This callback computes the
+  // id of the last frame in the stream.
+  static void Eos(GstAppSink* appsink, gpointer user_data);
   static GstFlowReturn NewSampleCB(GstAppSink* appsink, gpointer data);
 
  private:
   void CheckBuffer();
   void CheckBus();
 
- private:
+  // This is a mapping from a GstAppSink to the GstVideoCapture object
+  // associated with that GstAppSink. This map is used in the static "Eos()"
+  // callback function in order to determine which GstVideoCapture object is
+  // associated with the GstAppSink that triggered the callback.
+  static std::unordered_map<GstAppSink*, GstVideoCapture*> appsink_to_capture_;
+  // Protect access to appsink_to_capture_.
+  static std::mutex mtx_;
+
   cv::Size original_size_;
   std::string caps_string_;
   GstAppSink* appsink_;
@@ -55,8 +68,16 @@ class GstVideoCapture {
   std::condition_variable capture_cv_;
   std::deque<cv::Mat> frames_;
   bool connected_;
-
   string decoder_element_;
+  // The monotonically-increasing id of the most recent frame to be returned by
+  // "GetPixels()". This is used by the "Eos()" callback to calculate the id of
+  // the last frame.
+  unsigned long current_frame_id_;
+  // The id of the last frame in the stream. Set by the "Eos()" callback.
+  unsigned long last_frame_id_;
+  // True if the end of the stream has been detected. Set by the "Eos()"
+  // callback.
+  bool found_last_frame_;
 };
 
 #endif  // STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_

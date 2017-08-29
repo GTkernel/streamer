@@ -10,6 +10,8 @@
 
 #include "common/types.h"
 
+constexpr auto STOP_FRAME_KEY = "stop_frame";
+
 class FramePrinter : public boost::static_visitor<std::string> {
  public:
   std::string operator()(const double& v) const {
@@ -31,6 +33,12 @@ class FramePrinter : public boost::static_visitor<std::string> {
   }
 
   std::string operator()(const unsigned long& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
+  std::string operator()(const bool& v) const {
     std::ostringstream output;
     output << v;
     return output.str();
@@ -163,6 +171,8 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
 
   nlohmann::json operator()(const unsigned long& v) const { return v; }
 
+  nlohmann::json operator()(const bool& v) const { return v; }
+
   nlohmann::json operator()(const boost::posix_time::ptime& v) const {
     return boost::posix_time::to_simple_string(v);
   }
@@ -288,11 +298,20 @@ nlohmann::json Frame::ToJson() const {
   return j;
 }
 
+void Frame::SetStopFrame(bool stop_frame) {
+  SetValue<bool>(STOP_FRAME_KEY, stop_frame);
+}
+
+bool Frame::IsStopFrame() const {
+  return Count(STOP_FRAME_KEY) && GetValue<bool>(STOP_FRAME_KEY);
+}
+
 // Types declared in Field
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
 template void Frame::SetValue(std::string, const int&);
 template void Frame::SetValue(std::string, const unsigned long&);
+template void Frame::SetValue(std::string, const bool&);
 template void Frame::SetValue(std::string, const boost::posix_time::ptime&);
 template void Frame::SetValue(std::string, const std::string&);
 template void Frame::SetValue(std::string, const std::vector<std::string>&);
@@ -311,6 +330,7 @@ template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
 template int Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
+template bool Frame::GetValue(std::string) const;
 template boost::posix_time::ptime Frame::GetValue(std::string) const;
 template std::string Frame::GetValue(std::string) const;
 template std::vector<std::string> Frame::GetValue(std::string) const;

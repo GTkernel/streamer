@@ -117,8 +117,6 @@ class Processor {
 
   std::unique_ptr<Frame> GetFrame(const string& source_name);
   void PushFrame(const string& sink_name, std::unique_ptr<Frame> frame);
-  void Init_();
-
   void ProcessorLoop();
 
   std::unordered_map<string, std::unique_ptr<Frame>> source_frame_cache_;
@@ -128,6 +126,7 @@ class Processor {
 
   std::thread process_thread_;
   std::atomic<bool> stopped_;
+  std::atomic<bool> found_last_frame_;
 
   unsigned int num_frames_processed_;
   double avg_processing_latency_ms_;
