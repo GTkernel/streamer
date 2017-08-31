@@ -122,12 +122,11 @@ void Processor::ProcessorLoop() {
 
       auto frame = source_stream->PopFrame();
       if (frame == nullptr) {
-        if (stopped_) {
-          // We can't get frame, we should have stopped
-          return;
-        } else {
-          LOG(ERROR) << "Frame was null!";
-        }
+        // The only way for PopFrame() to return a nullptr when called without a
+        // a timeout is if Stop() was called on the StreamReader. That should
+        // only happen if this processor is being stopped. Therefore, we should
+        // just return.
+        return;
       } else if (frame->IsStopFrame()) {
         // This frame is signaling the pipeline to stop. We need to forward
         // it to our sinks, then not process it or any future frames.
