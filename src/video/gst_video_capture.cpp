@@ -187,7 +187,7 @@ cv::Mat GstVideoCapture::GetPixels(unsigned long frame_id) {
   if (!connected_) return cv::Mat();
 
   cv::Mat pixels = frames_.front();
-  frames_.pop_back();
+  frames_.pop_front();
 
   return pixels;
 }

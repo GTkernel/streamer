@@ -26,6 +26,15 @@ void NeuralNetConsumer::SetSource(const string& name, StreamPtr stream) {
   }
 }
 
+void NeuralNetConsumer::SetBlockOnPush(bool block) {
+  if (NneIsPrivate()) {
+    // If we are managing the NeuralNetEvaluator, then call SetBlockOnPush() for
+    // it as well.
+    nne_->SetBlockOnPush(block);
+  }
+  Processor::SetBlockOnPush(block);
+}
+
 double NeuralNetConsumer::GetTrailingAvgProcessingLatencyMs() const {
   double our_latency = Processor::GetTrailingAvgProcessingLatencyMs();
   if (NneIsPrivate()) {
