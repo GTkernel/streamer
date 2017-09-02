@@ -159,6 +159,16 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << "]";
     return output.str();
   }
+
+  std::string operator()(const std::vector<Frame>& v) const {
+    std::ostringstream output;
+    output << " Number of sub frames: " << v.size() << std::endl;
+    for (const auto& vi : v) {
+      auto res = vi.ToString();
+      output << res << std::endl; 
+    }
+    return output.str();
+  }
 };
 
 class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
@@ -219,6 +229,14 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
 
   nlohmann::json operator()(const std::vector<std::vector<float>>& v) const {
     return v;
+  }
+
+  nlohmann::json operator()(const std::vector<Frame>& v) const {
+    nlohmann::json j;
+    for (const auto& vi : v) {
+      j.push_back(vi.ToJson());
+    }
+    return j;
   }
 };
 
