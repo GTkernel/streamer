@@ -28,6 +28,7 @@ class NeuralNetConsumer : public Processor {
                     const std::vector<std::string>& sink_names = {});
 
   virtual void SetSource(const std::string& name, StreamPtr stream) override;
+  virtual void SetBlockOnPush(bool block) override;
   virtual double GetTrailingAvgProcessingLatencyMs() const override;
   virtual double GetAvgProcessingLatencyMs() const override;
 

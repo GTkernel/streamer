@@ -94,7 +94,7 @@ class Processor {
 
   // Configure whether this processor should block when pushing frames to its
   // outputs streams if any of its output streams is full.
-  void SetBlockOnPush(bool block);
+  virtual void SetBlockOnPush(bool block);
 
  protected:
   /**
