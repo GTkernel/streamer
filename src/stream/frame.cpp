@@ -162,11 +162,11 @@ class FramePrinter : public boost::static_visitor<std::string> {
 
   std::string operator()(const std::vector<Frame>& v) const {
     std::ostringstream output;
-    output << " Number of sub frames: " << v.size() << std::endl;
+    output << "std::vector<Frame> (" << v.size() << ") = [" << std::endl;
     for (const auto& vi : v) {
-      auto res = vi.ToString();
-      output << res << std::endl; 
+      output << vi.ToString() << std::endl;
     }
+    output << "]";
     return output.str();
   }
 };
@@ -343,6 +343,7 @@ template void Frame::SetValue(std::string,
 template void Frame::SetValue(std::string, const std::vector<float>&);
 template void Frame::SetValue(std::string,
                               const std::vector<std::vector<double>>&);
+template void Frame::SetValue(std::string, const std::vector<Frame>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
@@ -360,3 +361,4 @@ template std::vector<FaceLandmark> Frame::GetValue(std::string) const;
 template std::vector<std::vector<float>> Frame::GetValue(std::string) const;
 template std::vector<float> Frame::GetValue(std::string) const;
 template std::vector<std::vector<double>> Frame::GetValue(std::string) const;
+template std::vector<Frame> Frame::GetValue(std::string) const;
