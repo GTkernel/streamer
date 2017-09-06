@@ -222,6 +222,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_JPEG_WRITER,
+  PROCESSOR_TYPE_KEYFRAME_DETECTOR,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
   PROCESSOR_TYPE_OBJECT_DETECTOR,
   PROCESSOR_TYPE_OBJECT_TRACKER,
@@ -275,6 +276,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
   } else if (type == "JpegWriter") {
     return PROCESSOR_TYPE_JPEG_WRITER;
+  } else if (type == "KeyframeDetector") {
+    return PROCESSOR_TYPE_KEYFRAME_DETECTOR;
   } else if (type == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
   } else if (type == "ObjectDetector") {
@@ -339,6 +342,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "ImageTransformer";
     case PROCESSOR_TYPE_JPEG_WRITER:
       return "JpegWriter";
+    case PROCESSOR_TYPE_KEYFRAME_DETECTOR:
+      return "KeyframeDetector";
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return "NeuralNetEvaluator";
     case PROCESSOR_TYPE_OBJECT_DETECTOR:
