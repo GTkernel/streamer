@@ -48,11 +48,12 @@ class Frame {
   nlohmann::json ToJson() const;
   using field_types =
       boost::variant<int, std::string, float, double, unsigned long, bool,
-                     boost::posix_time::ptime, cv::Mat, std::vector<char>,
-                     std::vector<std::string>, std::vector<double>,
-                     std::vector<Rect>, std::vector<FaceLandmark>,
-                     std::vector<std::vector<float>>, std::vector<float>,
-                     std::vector<std::vector<double>>, std::vector<Frame>>;
+                     boost::posix_time::ptime, boost::posix_time::time_duration,
+                     cv::Mat, std::vector<char>, std::vector<std::string>,
+                     std::vector<double>, std::vector<Rect>,
+                     std::vector<FaceLandmark>, std::vector<std::vector<float>>,
+                     std::vector<float>, std::vector<std::vector<double>>,
+                     std::vector<Frame>>;
   using map_size_type = std::unordered_map<std::string, field_types>::size_type;
   map_size_type Count(std::string key) const { return frame_data_.count(key); }
   void SetStopFrame(bool stop_frame);

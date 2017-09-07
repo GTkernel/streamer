@@ -15,7 +15,7 @@ NeuralNetConsumer::NeuralNetConsumer(
 NeuralNetConsumer::NeuralNetConsumer(
     ProcessorType type, const std::vector<std::string>& source_names,
     const std::vector<std::string>& sink_names)
-    : Processor(type, source_names, sink_names) {}
+    : Processor(type, source_names, sink_names), nne_(NULL) {}
 
 void NeuralNetConsumer::SetSource(const string& name, StreamPtr stream) {
   if (NneIsPrivate()) {
