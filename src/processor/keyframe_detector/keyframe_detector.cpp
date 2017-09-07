@@ -62,14 +62,29 @@ void KeyframeDetector::Process() {
 
     // For every new frame that should be added to this level...
     for (auto& frame : frames) {
+      auto start_time_micros = boost::posix_time::microsec_clock::local_time();
+      auto new_keyframes = bufs_.at(i)->Push(std::move(frame));
+      auto kd_micros =
+          boost::posix_time::microsec_clock::local_time() - start_time_micros;
+
+      bool recorded_time = false;
       // Accumulate the keyframes created by adding this frame to the level.
-      for (auto& keyframe : bufs_.at(i)->Push(std::move(frame))) {
+      for (auto& keyframe : new_keyframes) {
+        if (!recorded_time) {
+          std::ostringstream time_key;
+          time_key << "kd_level_" << i << "_micros";
+          keyframe->SetValue<boost::posix_time::time_duration>(time_key.str(),
+                                                               kd_micros);
+          recorded_time = true;
+        }
+
         keyframes.push_back(std::move(keyframe));
       }
     }
 
     std::ostringstream msg;
-    msg << "Keyframe detector level " << i << " found keyframes: { ";
+    msg << "Keyframe detector level " << i << " found " << keyframes.size()
+        << " keyframes: { ";
     // Push all of the new keyframes from this level to the appropriate sink.
     for (auto& keyframe : keyframes) {
       msg << keyframe->GetValue<unsigned long>("frame_id") << " ";
