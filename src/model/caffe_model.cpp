@@ -161,20 +161,14 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src) {
   CHECK(batch_size == 1) << "Batch size must be 1, but it is " << batch_size;
 
   std::vector<int> mat_size;
+  decltype(src->shape(0)) total_size = 1;
   for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
     mat_size.push_back(src->shape(i));
+    total_size *= src->shape(i);
   }
   cv::Mat ret_mat(mat_size, CV_32F);
-  // idxs contains the current 2-dimensional coordinate within the matrix.
-  std::vector<int> idxs(2);
-  // Batching has been disabled, so the batch index is always 0.
-  idxs[0] = 0;
-
-  auto x_size = mat_size.at(1);
-  for (decltype(x_size) i = 0; i < x_size; ++i) {
-    idxs[1] = i;
-    ret_mat.at<DType>(0, i) = src->data_at(idxs);
-  }
+  float* data = src->mutable_cpu_data();
+  memcpy(ret_mat.data, data, total_size * sizeof(float));
   return ret_mat;
 }
 
@@ -186,31 +180,14 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src) {
   // mat_size holds the axes dimensions of the blob
   // mat_size is used to construct the cv::Mat
   std::vector<int> mat_size;
+  decltype(src->shape(0)) total_size = 1;
   for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
     mat_size.push_back(src->shape(i));
+    total_size *= src->shape(i);
   }
   cv::Mat ret_mat(mat_size, CV_32F);
-
-  // idxs holds the current 4-dimensional coordinate within the matrix.
-  std::vector<int> idxs(4);
-  // Batching has been disabled, so the batch index is always 0.
-  idxs[0] = 0;
-
-  auto x_size = mat_size.at(1);
-  for (decltype(x_size) i = 0; i < x_size; ++i) {
-    idxs[1] = i;
-
-    auto y_size = mat_size.at(2);
-    for (decltype(y_size) j = 0; j < y_size; ++j) {
-      idxs[2] = j;
-
-      auto z_size = mat_size.at(3);
-      for (decltype(z_size) k = 0; k < z_size; ++k) {
-        idxs[3] = k;
-        ret_mat.at<DType>(idxs.data()) = src->data_at(idxs);
-      }
-    }
-  }
+  float* data = src->mutable_cpu_data();
+  memcpy(ret_mat.data, data, total_size * sizeof(float));
   return ret_mat;
 }
 
