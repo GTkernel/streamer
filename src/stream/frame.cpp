@@ -48,6 +48,10 @@ class FramePrinter : public boost::static_visitor<std::string> {
     return boost::posix_time::to_simple_string(v);
   }
 
+  std::string operator()(const boost::posix_time::time_duration& v) const {
+    return boost::posix_time::to_simple_string(v);
+  }
+
   std::string operator()(const std::string& v) const { return v; }
 
   std::string operator()(const std::vector<std::string>& v) const {
@@ -184,6 +188,10 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
   nlohmann::json operator()(const bool& v) const { return v; }
 
   nlohmann::json operator()(const boost::posix_time::ptime& v) const {
+    return boost::posix_time::to_simple_string(v);
+  }
+
+  nlohmann::json operator()(const boost::posix_time::time_duration& v) const {
     return boost::posix_time::to_simple_string(v);
   }
 
@@ -331,6 +339,8 @@ template void Frame::SetValue(std::string, const int&);
 template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const bool&);
 template void Frame::SetValue(std::string, const boost::posix_time::ptime&);
+template void Frame::SetValue(std::string,
+                              const boost::posix_time::time_duration&);
 template void Frame::SetValue(std::string, const std::string&);
 template void Frame::SetValue(std::string, const std::vector<std::string>&);
 template void Frame::SetValue(std::string, const std::vector<double>&);
@@ -351,6 +361,7 @@ template int Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
 template bool Frame::GetValue(std::string) const;
 template boost::posix_time::ptime Frame::GetValue(std::string) const;
+template boost::posix_time::time_duration Frame::GetValue(std::string) const;
 template std::string Frame::GetValue(std::string) const;
 template std::vector<std::string> Frame::GetValue(std::string) const;
 template std::vector<double> Frame::GetValue(std::string) const;
