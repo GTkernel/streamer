@@ -1,5 +1,5 @@
 MACRO(ADD_BUILD_REQS target)
-  target_compile_options(${target} PRIVATE -Wall -Wextra)
+  target_compile_options(${target} PRIVATE -Wall -Wextra -fopenmp)
   set_target_properties(${target} PROPERTIES
     CXX_STANDARD 14
     CXX_STANDARD_REQUIRED ON
