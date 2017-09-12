@@ -9,6 +9,15 @@ import subprocess
 import numpy
 
 
+def validate_file(pred, filepath, param_name):
+    """Throws an error if filepath is None or does not exist """
+    if pred:
+        if filepath is None:
+            raise Exception("\"" + param_name + "\" is required!")
+        if not path.isfile(filepath):
+            raise Exception("\"" + filepath + "\" does not exist!")
+
+
 def __validate_sel(sel):
     if sel <= 0 or sel > 1:
         raise Exception("--sel must be in the range (0, 1], but is: {}".format(sel))
@@ -31,10 +40,12 @@ def __parse_config_file(filepath, dest_type):
         return None
 
 
-def __parse_args():
-    parser = argparse.ArgumentParser(
-        description=("Generates a graph of the duration of the keyframe detection algorithm when "
-                     "varying a particular parameter."))
+def parse_args(parser, validate_func):
+    """Returns an object containing the arguments to this program """
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description=("Generates a graph of the duration of the keyframe detection algorithm "
+                         "when varying a particular parameter."))
     parser.add_argument(
         "-s",
         "--sel",
@@ -122,18 +133,25 @@ def __parse_args():
 
     # Parse selectivities
     __validate_sel(args.sel)
+    validate_file(args.vary_sel, args.sels_file, "--sels-file")
     args.sels = __parse_config_file(args.sels_file, float)
 
     # Parse buffer lengths
     __validate_buf_len(args.buf_len)
+    validate_file(args.vary_buf_len, args.buf_lens_file, "--buf-lens-file")
     args.buf_lens = __parse_config_file(args.buf_lens_file, int)
 
     # Parse levels
     __validate_levels(args.levels)
+    validate_file(args.vary_levels, args.levels_file, "--levels-file")
     args.nums_levels = __parse_config_file(args.levels_file, int)
 
     if not (args.vary_sel or args.vary_buf_len or args.vary_levels):
-        raise Exception("Must specify either --vary-sel, --vary-buf-len, or --vary-levels!")
+        raise Exception("Must specify either \"--vary-sel\", \"--vary-buf-len\", or "
+                        "\"--vary-levels\"!")
+
+    if validate_func is not None:
+        validate_func(args)
 
     return args
 
@@ -183,28 +201,21 @@ def __vary(streamer_root, config_dir, block, fake_vishash_length, num_trials, va
     else:
         raise Exception("Must vary something!")
 
-    num_keyframes_per_buffer = buf_len * sel
-    on_first_value = True
-
     output_dirs = []
     for value in values:
         output_dir = path.join(master_output_dir, dir_prefix + "_" + str(value))
         output_dirs.append((value, output_dir))
-        os.mkdir(output_dir)
+        if not path.isdir(output_dir):
+            os.mkdir(output_dir)
 
         if vary_sel:
             num_frames = num_trials * __num_frames_to_trigger_detection(value, buf_len, levels)
             __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, value,
                      buf_len, levels, output_dir)
         elif vary_buf_len:
-            if on_first_value:
-                num_keyframes_per_buffer = sel * value
-                on_first_value = False
-            actual_sel = num_keyframes_per_buffer / value
-
             num_frames = num_trials * __num_frames_to_trigger_detection(sel, value, levels)
-            __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, actual_sel,
-                     value, levels, output_dir)
+            __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, sel, value,
+                     levels, output_dir)
         elif vary_levels:
             num_frames = num_trials * __num_frames_to_trigger_detection(sel, buf_len, value)
             __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, sel,
@@ -215,7 +226,8 @@ def __vary(streamer_root, config_dir, block, fake_vishash_length, num_trials, va
     return output_dirs
 
 
-def __get_key(vary_sel, vary_buf_len, vary_levels):
+def get_key(vary_sel, vary_buf_len, vary_levels):
+    """Returns the string name of the parameter that is being varied """
     if vary_sel:
         return "sel"
     elif vary_buf_len:
@@ -225,11 +237,8 @@ def __get_key(vary_sel, vary_buf_len, vary_levels):
     else:
         raise Exception("Must vary something!")
 
-
-def main():
-    """This program's entrypoint """
-    args = __parse_args()
-
+def run(args, filename_suffix):
+    """Runs the keyframe detector, varying a parameter according to args """
     vary_sel = args.vary_sel
     vary_buf_len = args.vary_buf_len
     vary_levels = args.vary_levels
@@ -238,13 +247,15 @@ def main():
     # Run the experiments.
     num_warmup_trials = args.warmup
     num_trials = num_warmup_trials + args.trials
+    print("num_trials: {}".format(num_trials))
     output_dirs = __vary(args.streamer_root, args.config_dir, args.block, args.vishash_length,
                          num_trials, vary_sel, vary_buf_len, vary_levels, args.sel, args.sels,
                          args.buf_len, args.buf_lens, args.levels, args.nums_levels, output_dir)
 
     # Build output CSV file for graphing script.
-    key = __get_key(vary_sel, vary_buf_len, vary_levels)
-    output_filepath = path.join(output_dir, "kd_latency_vary_" + key + ".csv")
+    key = get_key(vary_sel, vary_buf_len, vary_levels)
+    suffix_to_use = "" if filename_suffix is None else filename_suffix
+    output_filepath = path.join(output_dir, "kd_latency_vary_" + key + "_" + suffix_to_use + ".csv")
     with open(output_filepath, "w") as output_file:
         output_file.write(key + ",min,max,median,average,standard_deviation\n")
         for value, output_dir in output_dirs:
@@ -260,5 +271,10 @@ def main():
             ]) + "\n")
 
 
+def __main():
+    """This program's entrypoint """
+    run(parse_args(parser=None, validate_func=None), filename_suffix=None)
+
+
 if __name__ == "__main__":
-    main()
+    __main()
