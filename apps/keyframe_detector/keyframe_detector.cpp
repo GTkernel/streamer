@@ -116,13 +116,11 @@ void Run(const std::string& camera_name, const std::string& model,
     nne->SetBlockOnPush(block);
     procs.push_back(nne);
     vishash_stream = nne->GetSink(layer);
-    LOG(INFO) << "created full pipeline";
   }
 
   // Create KeyframeDetector.
   std::vector<std::pair<float, size_t>> buf_params(levels, {sel, buf_len});
   auto kd = std::make_shared<KeyframeDetector>(buf_params);
-  LOG(INFO) << "vishash_stream: " << vishash_stream;
   kd->SetSource(vishash_stream);
   kd->SetBlockOnPush(block);
   procs.push_back(kd);
