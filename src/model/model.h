@@ -80,11 +80,11 @@ class Model {
   virtual void Load() = 0;
   // Convenience function to automatically use the default input and output
   // layers.
-  std::unordered_map<std::string, cv::Mat> Evaluate(cv::Mat input);
+  std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(cv::Mat input);
   // Feed the input to the network, run forward, then copy the output from the
   // network
-  virtual std::unordered_map<std::string, cv::Mat> Evaluate(
-      const std::unordered_map<std::string, cv::Mat>& input_map,
+  virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
+      const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
       const std::vector<std::string>& output_layer_names) = 0;
 
  protected:

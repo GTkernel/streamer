@@ -173,6 +173,16 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << "]";
     return output.str();
   }
+
+  std::string operator()(const std::vector<std::pair<int, float>>& v) const {
+    std::ostringstream output;
+    output << "std::vector<std::pair<int, float>> = [" << std::endl;
+    for (auto& s : v) {
+      output << s.first << ": " << s.second << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
 };
 
 class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
@@ -243,6 +253,15 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     nlohmann::json j;
     for (const auto& vi : v) {
       j.push_back(vi.ToJson());
+    }
+    return j;
+  }
+
+  nlohmann::json operator()(const std::vector<std::pair<int, float>>& v) const {
+    nlohmann::json j;
+    for (const auto& vi : v) {
+      j.push_back(vi.first);
+      j.push_back(vi.second);
     }
     return j;
   }
@@ -354,6 +373,7 @@ template void Frame::SetValue(std::string, const std::vector<float>&);
 template void Frame::SetValue(std::string,
                               const std::vector<std::vector<double>>&);
 template void Frame::SetValue(std::string, const std::vector<Frame>&);
+template void Frame::SetValue(std::string, const std::vector<std::pair<int, float>>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
@@ -373,3 +393,4 @@ template std::vector<std::vector<float>> Frame::GetValue(std::string) const;
 template std::vector<float> Frame::GetValue(std::string) const;
 template std::vector<std::vector<double>> Frame::GetValue(std::string) const;
 template std::vector<Frame> Frame::GetValue(std::string) const;
+template std::vector<std::pair<int, float>> Frame::GetValue(std::string) const;

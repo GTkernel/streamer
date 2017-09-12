@@ -42,12 +42,7 @@ Processor::~Processor() {
   delete control_socket_;
 }
 
-StreamPtr Processor::GetSink(const string& name) {
-  if (sinks_.find(name) == sinks_.end()) {
-    throw std::out_of_range(name);
-  }
-  return sinks_.at(name);
-}
+StreamPtr Processor::GetSink(const string& name) { return sinks_[name]; }
 
 void Processor::SetSource(const string& name, StreamPtr stream) {
   if (sources_.find(name) == sources_.end()) {

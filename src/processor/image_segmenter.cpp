@@ -54,7 +54,7 @@ void ImageSegmenter::Process() {
 
   // Expect only 1 output, being the last layer of a non-batched neural net
   CHECK(layer_outputs.size() == 1);
-  cv::Mat output = layer_outputs.begin()->second;
+  cv::Mat output = layer_outputs.begin()->second.at(0);
   CHECK(output.dims == 3);
   std::vector<cv::Mat> output_split;
   // TODO: double check this code, not sure how channels work in this case

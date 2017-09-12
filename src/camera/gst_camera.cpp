@@ -35,8 +35,8 @@ bool GSTCamera::OnStop() {
 }
 void GSTCamera::Process() {
   auto frame = std::make_unique<Frame>();
+  boost::posix_time::ptime cur_time = boost::posix_time::microsec_clock::local_time();
   MetadataToFrame(frame);
-
   if (capture_.NextFrameIsLast()) {
     frame->SetStopFrame(true);
     PushFrame("output", std::move(frame));
@@ -53,6 +53,7 @@ void GSTCamera::Process() {
                                       (char*)pixels.data +
                                           pixels.total() * pixels.elemSize()));
     frame->SetValue("original_image", pixels);
+    frame->SetValue("Camera.Benchmark.StartTime", cur_time);
     PushFrame("output", std::move(frame));
   }
 }

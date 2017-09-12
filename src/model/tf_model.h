@@ -1,4 +1,3 @@
-
 #ifndef STREAMER_MODEL_TF_MODEL_H_
 #define STREAMER_MODEL_TF_MODEL_H_
 
@@ -18,8 +17,8 @@ class TFModel : public Model {
   TFModel(const ModelDesc& model_desc, Shape input_shape);
   virtual ~TFModel() override;
   virtual void Load() override;
-  virtual std::unordered_map<std::string, cv::Mat> Evaluate(
-      const std::unordered_map<std::string, cv::Mat>& input_map,
+  virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
+      const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
       const std::vector<std::string>& output_layer_names) override;
 
  private:

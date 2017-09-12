@@ -21,8 +21,8 @@ class CaffeModel : public Model {
  public:
   CaffeModel(const ModelDesc& model_desc, Shape input_shape);
   virtual void Load() override;
-  virtual std::unordered_map<std::string, cv::Mat> Evaluate(
-      const std::unordered_map<std::string, cv::Mat>& input_map,
+  virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
+      const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
       const std::vector<std::string>& output_layer_names) override;
   virtual void Forward();
 
