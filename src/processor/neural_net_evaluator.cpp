@@ -111,7 +111,7 @@ void NeuralNetEvaluator::Process() {
     input_mat = input_frame->GetValue<cv::Mat>("image");
   }
   cur_batch_.push_back(input_mat);
-  if(cur_batch_.size() < batch_size_) {
+  if (cur_batch_.size() < batch_size_) {
     return;
   }
 
@@ -129,12 +129,13 @@ void NeuralNetEvaluator::Process() {
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
     auto activation_vector = layer_pair.second;
-    for(const auto& activations : activation_vector) {
+    for (const auto& activations : activation_vector) {
       auto layer_name = layer_pair.first;
       auto output_frame = std::make_unique<Frame>(input_frame);
       output_frame->SetValue("activations", activations);
       output_frame->SetValue("activations_layer_name", layer_name);
-      output_frame->SetValue("NeuralNetEvaluator.Benchmark.Inference", time_elapsed);
+      output_frame->SetValue("NeuralNetEvaluator.Benchmark.Inference",
+                             time_elapsed);
       PushFrame(layer_name, std::move(output_frame));
     }
   }

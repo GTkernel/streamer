@@ -373,7 +373,8 @@ template void Frame::SetValue(std::string, const std::vector<float>&);
 template void Frame::SetValue(std::string,
                               const std::vector<std::vector<double>>&);
 template void Frame::SetValue(std::string, const std::vector<Frame>&);
-template void Frame::SetValue(std::string, const std::vector<std::pair<int, float>>&);
+template void Frame::SetValue(std::string,
+                              const std::vector<std::pair<int, float>>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;

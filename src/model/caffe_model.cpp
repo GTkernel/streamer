@@ -76,7 +76,8 @@ void CaffeModel<DType>::Load() {
 }
 
 template <typename DType>
-std::unordered_map<std::string, std::vector<cv::Mat>> CaffeModel<DType>::Evaluate(
+std::unordered_map<std::string, std::vector<cv::Mat>>
+CaffeModel<DType>::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
   CHECK_EQ(input_map.size(), 1)
