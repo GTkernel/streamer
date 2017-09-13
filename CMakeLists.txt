@@ -79,6 +79,7 @@ if (USE_TENSORFLOW)
   include_directories(SYSTEM
     ${TensorFlow_INCLUDE_DIRS}
     ${PROTOBUF_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/3rdparty/nsync/public/
   )
   add_definitions("-D USE_TENSORFLOW")
 endif()
