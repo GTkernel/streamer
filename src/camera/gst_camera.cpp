@@ -36,6 +36,7 @@ bool GSTCamera::OnStop() {
 void GSTCamera::Process() {
   auto frame = std::make_unique<Frame>();
   MetadataToFrame(frame);
+
   if (capture_.NextFrameIsLast()) {
     frame->SetStopFrame(true);
     PushFrame("output", std::move(frame));

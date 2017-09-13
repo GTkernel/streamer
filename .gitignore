@@ -155,4 +155,4 @@ sftp-config.json
 *~
 
 # vi swap files
-*.swp
+*.sw*

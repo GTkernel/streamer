@@ -47,7 +47,7 @@ class Frame {
   std::string ToString() const;
   nlohmann::json ToJson() const;
   using field_types =
-      boost::variant<int, std::string, float, double, unsigned long, bool,
+      boost::variant<int, std::string, float, double, long, unsigned long, bool,
                      boost::posix_time::ptime, boost::posix_time::time_duration,
                      cv::Mat, std::vector<char>, std::vector<std::string>,
                      std::vector<double>, std::vector<Rect>,

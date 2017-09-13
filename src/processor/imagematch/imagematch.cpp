@@ -1,24 +1,38 @@
-#include "imagematch.h"
-#include "model/model_manager.h"
-#include "utils/utils.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "processor/imagematch/imagematch.h"
 
-#include <tensorflow/core/framework/op.h>
-#include <tensorflow/core/framework/op_def.pb.h>
-
-#include "processor/flow_control/flow_control_entrance.h"
-#include "tensorflow/core/public/session.h"
-
-#include <zmq.hpp>
-
+#include <string>
 #include <thread>
 
+#include <tensorflow/core/framework/op.h>
+#include <tensorflow/core/public/session.h>
+#include <tensorflow/core/framework/op_def.pb.h>
+#include <zmq.hpp>
+
+#include "common/common.h"
+#include "model/model_manager.h"
+#include "processor/flow_control/flow_control_entrance.h"
+#include "utils/utils.h"
+
+constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
+
+ImageMatch::ImageMatch(const std::string& linear_model_path, bool do_linmod,
+                       unsigned int batch_size)
+    : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}),
+      batch_size_(batch_size),
+      queries_(NULL),
+      linear_model_path_(linear_model_path),
+      linear_model_weights_(NULL),
+      vishash_batch_(NULL),
+      do_linmod_(do_linmod),
+      linmod_ready_(false) {}
+
+std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
+  STREAMER_NOT_IMPLEMENTED;
+  return nullptr;
+}
 void ImageMatch::UpdateLinmodMatrix(int query_id) {
-  LOG(INFO) << "QUERY " << query_id << " LINMOD READY";
   std::vector<tensorflow::Tensor> linmod_weights;
   TF_CHECK_OK(query_data_[query_id].session_->Run({}, {"var:0", "skew:0"}, {},
                                                   &linmod_weights));
@@ -39,20 +53,9 @@ void ImageMatch::UpdateLinmodMatrix(int query_id) {
   linear_model_weights_->row(query_id) = weights_map;
 }
 
-ImageMatch::ImageMatch(std::string linear_model_path, bool do_linmod,
-                       unsigned int batch_size)
-    : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {"output"}),
-      batch_size_(batch_size),
-      queries_(NULL),
-      linear_model_path_(linear_model_path),
-      linear_model_weights_(NULL),
-      vishash_batch_(NULL),
-      do_linmod_(do_linmod),
-      linmod_ready_(false) {}
-
-bool ImageMatch::AddQuery(std::string path, std::vector<float> vishash,
+bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
                           int query_id, bool is_positive) {
-  std::lock_guard<std::mutex> guard(query_guard);
+  std::lock_guard<std::mutex> guard(query_guard_);
   query_t* current_query = &query_data_[query_id];
   current_query->scores = new Eigen::VectorXf(batch_size_);
   LOG(INFO) << "Received image " << path
@@ -73,20 +76,20 @@ bool ImageMatch::AddQuery(std::string path, std::vector<float> vishash,
   current_query->paths.push_back(path);
   current_query->linmod_ready = false;
   current_query->query_id = query_id;
-  create_session(query_id);
+  CreateSession(query_id);
   return true;
 }
 
 // Fast random query matrix
 bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
                                 int vishash_size) {
-  std::lock_guard<std::mutex> guard(query_guard);
+  std::lock_guard<std::mutex> guard(query_guard_);
   queries_ = new Eigen::MatrixXf(num_queries * img_per_query, vishash_size);
   queries_->setRandom();
   for (int i = 0; i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
     current_query->scores = new Eigen::VectorXf(batch_size_);
-    create_session(i);
+    CreateSession(i);
     current_query->linmod_ready = false;
     current_query->query_id = i;
     for (int j = 0; j < img_per_query; ++j) {
@@ -97,19 +100,25 @@ bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
   return true;
 }
 
+void ImageMatch::SetSource(StreamPtr stream) {
+  Processor::SetSource(SOURCE_NAME, stream);
+}
+
+StreamPtr ImageMatch::GetSink() {
+  return Processor::GetSink(SINK_NAME);
+}
+
 bool ImageMatch::Init() { return true; }
 
 bool ImageMatch::OnStop() { return true; }
 
 void ImageMatch::Process() {
   size_t vishash_size;
-  Timer endtoend_timer;
-  double endtoend_time;
-  endtoend_timer.Start();
+  auto start_time = boost::posix_time::microsec_clock::local_time();
 
   auto frame = GetFrame("input");
   if (query_data_.empty()) {
-    std::lock_guard<std::mutex> guard(query_guard);
+    std::lock_guard<std::mutex> guard(query_guard_);
     auto flow_control_entrance = frame->GetFlowControlEntrance();
     if (flow_control_entrance) {
       flow_control_entrance->ReturnToken();
@@ -149,11 +158,8 @@ void ImageMatch::Process() {
   cur_batch_ = 0;
 
   // Calculate similarity using full formula
-  std::lock_guard<std::mutex> guard(query_guard);
-
-  Timer matrix_timer;
-  double matrix_time;
-  matrix_timer.Start();
+  std::lock_guard<std::mutex> guard(query_guard_);
+  auto overhead_end_time = boost::posix_time::microsec_clock::local_time(); 
 
   Eigen::MatrixXf productmat;
   if (linmod_ready_) {
@@ -162,14 +168,9 @@ void ImageMatch::Process() {
     productmat = (*queries_) * (*vishash_batch_);
   }
 
-  matrix_time = matrix_timer.ElapsedMicroSec();
-
-  Timer add_timer;
-  double add_time;
-  add_timer.Start();
+  auto matrix_end_time = boost::posix_time::microsec_clock::local_time(); 
 
   for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
-    CHECK(it->second.scores != nullptr);
     it->second.scores->setZero();
     if (linmod_ready_) {
       *(it->second.scores) =
@@ -186,11 +187,8 @@ void ImageMatch::Process() {
         (it->second.scores->array() / query_data_.size()).matrix();
   }
 
-  add_time = add_timer.ElapsedMicroSec();
+  auto add_end_time = boost::posix_time::microsec_clock::local_time(); 
 
-  Timer linmod_timer;
-  double linmod_time;
-  linmod_timer.Start();
   bool all_ready = true;
   for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
     if (do_linmod_) {
@@ -214,12 +212,6 @@ void ImageMatch::Process() {
 
       TF_CHECK_OK(it->second.session_->Run(inputs, {"actual:0", "loss:0"}, {},
                                            &outputs));
-      // LOG(INFO) << "expected: " << inputs.at(1).second.flat<float>()(0) << "
-      // actual: " << outputs.at(0).flat<float>() << std::endl;  LOG(INFO) <<
-      // "iteration: " << counter++ << " loss: " <<
-      // outputs.at(1).flat<float>()(0) << " accuracy: " << (1 -
-      // outputs.at(1).flat<float>()(0) / outputs.at(0).flat<float>()(0)) * 100
-      // << " %" << std::endl;
       float loss = outputs.at(1).flat<float>()(0);
       float actual_score = outputs.at(0).flat<float>()(0);
       float expected_score = inputs.at(1).second.flat<float>()(0);
@@ -232,7 +224,7 @@ void ImageMatch::Process() {
     }
     linmod_ready_ = all_ready;
   }
-  linmod_time = linmod_timer.ElapsedMicroSec();
+  auto linmod_end_time = boost::posix_time::microsec_clock::local_time(); 
 
   std::ostringstream similarity_summary;
   similarity_summary.precision(3);
@@ -248,12 +240,12 @@ void ImageMatch::Process() {
       image_match_scores.push_back(score_pair);
     }
     batch_idx += 1;
-    frame->SetValue("ImageMatchScores", image_match_scores);
-    endtoend_time = endtoend_timer.ElapsedMicroSec();
-    frame->SetValue("ImageMatch.Benchmark.EndToEnd", endtoend_time);
-    frame->SetValue("ImageMatch.Benchmark.MatrixMultiply", matrix_time);
-    frame->SetValue("ImageMatch.Benchmark.GatherAndAdd", add_time);
-    frame->SetValue("ImageMatch.Benchmark.LinearModelTrain", linmod_time);
+    frame->SetValue("imagematch.scores", image_match_scores);
+    auto end_time = boost::posix_time::microsec_clock::local_time(); 
+    frame->SetValue("imagematch.end_to_end_time_micros", (end_time - start_time).total_microseconds());
+    frame->SetValue("imagematch.matrix_multiply_time_micros", (matrix_end_time - overhead_end_time).total_microseconds());
+    frame->SetValue("imagematch.add_time_micros", (add_end_time - matrix_end_time).total_microseconds());
+    frame->SetValue("imagematch.lin_mod_training_time_micros", (linmod_end_time - add_end_time).total_microseconds());
     PushFrame("output", std::move(frame));
   }
   cur_batch_frames_.clear();
@@ -261,7 +253,7 @@ void ImageMatch::Process() {
 }
 
 // Create linear classifier for query with id = query_id
-void ImageMatch::create_session(int query_id) {
+void ImageMatch::CreateSession(int query_id) {
   LOG(INFO) << "Creating session";
   query_t* current_query = &query_data_[query_id];
   tensorflow::GraphDef graph_def;

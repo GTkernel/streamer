@@ -53,8 +53,7 @@ class KeyframeBuffer {
   std::vector<idx_t> GetKeyframeIdxs() const;
 
   float sel_;
-  // The index of the next empty slot in the frame buffer.
-  idx_t buf_idx_;
+  size_t target_buf_len_;
   // True if the current frame buffer is the first frame buffer (i.e. keyframe
   // detection has never been run). This is a special case, since the target
   // buffer length will be one less than normal. This is because in steady-state

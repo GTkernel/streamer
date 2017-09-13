@@ -16,10 +16,6 @@
 #endif  // USE_TENSORFLOW
 #include "utils/utils.h"
 
-#ifdef USE_TENSORFLOW
-#include "tf_model.h"
-#endif  // USE_TENSORFLOW
-
 static const string MODEL_TOML_FILENAME = "models.toml";
 
 ModelManager& ModelManager::GetInstance() {

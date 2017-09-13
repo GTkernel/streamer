@@ -116,7 +116,6 @@ CaffeModel<DType>::Evaluate(
   cv::split(input_normalized, output_channels);
 
   // Evaluate model on input
-  Timer timer;
   net_->Forward();
 
   // Grab all the output layers

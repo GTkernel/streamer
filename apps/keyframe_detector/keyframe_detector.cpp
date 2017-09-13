@@ -1,7 +1,10 @@
 
+#include <atomic>
+#include <condition_variable>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -25,6 +28,10 @@
 
 namespace po = boost::program_options;
 
+// Set to true when the pipeline has been started. Used to signal the feeder
+// thread to start, if it exists.
+std::atomic<bool> started(false);
+
 void ErrorRequired(std::string param) {
   std::cerr << "\"--" << param << "\" required!" << std::endl;
 }
@@ -32,6 +39,34 @@ void ErrorRequired(std::string param) {
 void WarnUnused(std::string param) {
   LOG(WARNING) << "\"--" << param
                << "\" ignored when using \"--fake-vishashes\"!";
+}
+
+// This function feeds fake vishashes to the specified stream.
+void Feeder(size_t fake_vishash_length, unsigned long num_frames,
+            StreamPtr vishash_stream) {
+  while (!started) {
+    LOG(INFO) << "Waiting to start...";
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+
+  unsigned long frame_id = 0;
+  for (; frame_id < num_frames; ++frame_id) {
+    auto frame = std::make_unique<Frame>();
+    frame->SetValue("frame_id", frame_id);
+
+    cv::Mat vishash(fake_vishash_length, 1, CV_32FC1);
+    vishash.at<float>(0, 0) = (float)frame_id;
+    frame->SetValue("activations", vishash);
+
+    vishash_stream->PushFrame(std::move(frame), true);
+  }
+
+  // We need to push a stop frame in order to signal the pipeline (and
+  // the rest of the application logic) to stop.
+  auto stop_frame = std::make_unique<Frame>();
+  stop_frame->SetValue("frame_id", frame_id);
+  stop_frame->SetStopFrame(true);
+  vishash_stream->PushFrame(std::move(stop_frame), true);
 }
 
 void Run(const std::string& camera_name, const std::string& model,
@@ -55,26 +90,7 @@ void Run(const std::string& camera_name, const std::string& model,
     // DNN.
     vishash_stream = StreamPtr(new Stream());
     feeder = std::thread([fake_vishash_length, num_frames, vishash_stream] {
-      std::vector<float> vishash(fake_vishash_length, 0);
-
-      unsigned long frame_id = 0;
-      for (; frame_id < num_frames; ++frame_id) {
-        auto frame = std::make_unique<Frame>();
-        frame->SetValue("frame_id", frame_id);
-
-        vishash[0] = frame_id;
-        cv::Mat vishash_mat(vishash, true);
-        frame->SetValue("activations", vishash_mat);
-
-        vishash_stream->PushFrame(std::move(frame), true);
-      }
-
-      // We need to push a stop frame in order to signal the pipeline (and the
-      // rest of the application logic) to stop.
-      auto stop_frame = std::make_unique<Frame>();
-      stop_frame->SetValue("frame_id", frame_id);
-      stop_frame->SetStopFrame(true);
-      vishash_stream->PushFrame(std::move(stop_frame), true);
+      Feeder(fake_vishash_length, num_frames, vishash_stream);
     });
   } else {
     // Create Camera.
@@ -94,19 +110,17 @@ void Run(const std::string& camera_name, const std::string& model,
 
     // Create NeuralNetEvaluator.
     std::vector<std::string> output_layer_names = {layer};
-    auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+    auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                     output_layer_names);
     nne->SetSource(transformer->GetSink("output"));
     nne->SetBlockOnPush(block);
     procs.push_back(nne);
     vishash_stream = nne->GetSink(layer);
-    LOG(INFO) << "created full pipeline";
   }
 
   // Create KeyframeDetector.
   std::vector<std::pair<float, size_t>> buf_params(levels, {sel, buf_len});
   auto kd = std::make_shared<KeyframeDetector>(buf_params);
-  LOG(INFO) << "vishash_stream: " << vishash_stream;
   kd->SetSource(vishash_stream);
   kd->SetBlockOnPush(block);
   procs.push_back(kd);
@@ -119,14 +133,19 @@ void Run(const std::string& camera_name, const std::string& model,
     procs.push_back(writer);
   }
 
+  // Subscribe before starting the processors so that we definitely do not miss
+  // any frames.
+  auto reader = kd_stream->Subscribe();
+
   // Start the Processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
-    LOG(INFO) << "Starting: "
-              << GetStringForProcessorType((*procs_it)->GetType());
     (*procs_it)->Start();
   }
 
-  auto reader = kd_stream->Subscribe();
+  // Signal the feeder thread to start. If there is no feeder thread, then this
+  // does nothing.
+  started = true;
+
   std::ofstream micros_log(output_dir + "/kd_micros.txt");
   while (true) {
     auto frame = reader->PopFrame();

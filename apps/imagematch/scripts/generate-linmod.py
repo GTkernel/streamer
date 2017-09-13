@@ -21,8 +21,8 @@ def main():
   var = tf.Variable(init_var, name='var', dtype=tf.float32);
   skew = tf.Variable(0, name='skew', dtype=tf.float32);
   actual = tf.add(tf.reduce_sum(tf.multiply(var, x)), skew, name='actual');
-  # 1/n * sum(difference squared)
-  loss = tf.abs(tf.square(tf.subtract(expected, actual)), name='loss');
+  # difference squared
+  loss = tf.square(tf.subtract(expected, actual), name='loss');
   optimizer = tf.train.AdamOptimizer(1e-3);
   train = optimizer.minimize(loss, name='train');
   init = tf.global_variables_initializer();

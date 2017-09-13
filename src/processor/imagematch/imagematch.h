@@ -1,15 +1,15 @@
-#ifndef STREAMER_IMAGEMATCH_H
-#define STREAMER_IMAGEMATCH_H
+
+#ifndef STREAMER_PROCESSOR_IMAGEMATCH_IMAGEMATCH_H_
+#define STREAMER_PROCESSOR_IMAGEMATCH_IMAGEMATCH_H_
 
 #include <mutex>
 
-#include "common/common.h"
+#include <Eigen/Dense>
+#include <tensorflow/core/public/session.h>
+
+#include "common/types.h"
 #include "model/model.h"
 #include "processor/processor.h"
-
-#include <Eigen/Dense>
-
-#include "tensorflow/core/public/session.h"
 
 typedef struct query_t {
   int query_id;
@@ -28,24 +28,28 @@ typedef struct query_t {
 
 class ImageMatch : public Processor {
  public:
-  ImageMatch(std::string linear_model_path, bool do_linmod = true,
+  ImageMatch(const std::string& linear_model_path, bool do_linmod = true,
              unsigned int batch_size = 1);
 
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
   void UpdateLinmodMatrix(int query_id);
-  bool AddQuery(std::string path, std::vector<float> vishash, int query_id,
+  bool AddQuery(const std::string& path, std::vector<float> vishash, int query_id,
                 bool is_positive);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
+  void SetSource(StreamPtr stream);
+  using Processor::SetSource;
+  StreamPtr GetSink();
+  using Processor::GetSink;
 
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
   virtual void Process() override;
-  void create_session(int query_number);
 
  private:
   unsigned int batch_size_;
+  void CreateSession(int query_number);
   Eigen::MatrixXf* queries_;
   std::string linear_model_path_;
   Eigen::MatrixXf* linear_model_weights_;
@@ -59,7 +63,7 @@ class ImageMatch : public Processor {
   bool linmod_ready_;
 
   std::unordered_map<int, query_t> query_data_;
-  std::mutex query_guard;
+  std::mutex query_guard_;
 };
 
-#endif  // STREAMER_IMAGEMATCH_H
+#endif  // STREAMER_PROCESSOR_IMAGEMATCH_IMAGEMATCH_H_

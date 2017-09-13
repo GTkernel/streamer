@@ -1,3 +1,4 @@
+
 #include "model/tf_model.h"
 
 #include <fstream>
@@ -80,7 +81,7 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
         tensorflow::TensorShape({static_cast<long long>(input_vec.size()),
                                  height, width, channel}));
     // TODO: Add handling for non-continuous cv mat
-    // CHECK(input.isContinuous()) << "cv::Mat must be continuous.";
+    CHECK(input.isContinuous()) << "cv::Mat must be continuous.";
     // This works because the cv::Mat is stored in HWC format. If we want to
     // support CHW format, then we will need to transpose the tensor. It is not
     // clear whether C++ API exports tf.transpose(). Perhaps this will need to
@@ -112,7 +113,7 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
   std::vector<cv::Mat> return_vector;
   for (const auto& output_tensor : outputs) {
     tensorflow::TensorShape tensor_shape = output_tensor.shape();
-    size_t batch_size = (*tensor_shape.begin()).size;
+    auto batch_size = (*tensor_shape.begin()).size;
     std::vector<int> mat_size;
     size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {

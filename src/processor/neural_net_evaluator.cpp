@@ -6,8 +6,6 @@
 
 constexpr auto SOURCE_NAME = "input";
 
-static cv::Mat first_activation;
-
 NeuralNetEvaluator::NeuralNetEvaluator(
     const ModelDesc& model_desc, const Shape& input_shape, size_t batch_size,
     const std::vector<std::string>& output_layer_names)
@@ -120,11 +118,10 @@ void NeuralNetEvaluator::Process() {
     output_layer_names.push_back(sink_pair.first);
   }
 
-  Timer timer;
-  timer.Start();
+  auto start_time = boost::posix_time::microsec_clock::local_time();
   auto layer_outputs =
       model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names);
-  auto time_elapsed = timer.ElapsedMicroSec();
+  auto time_elapsed = (boost::posix_time::microsec_clock::local_time() - start_time).total_microseconds();
 
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
@@ -134,7 +131,7 @@ void NeuralNetEvaluator::Process() {
       auto output_frame = std::make_unique<Frame>(input_frame);
       output_frame->SetValue("activations", activations);
       output_frame->SetValue("activations_layer_name", layer_name);
-      output_frame->SetValue("NeuralNetEvaluator.Benchmark.Inference",
+      output_frame->SetValue("neural_net_evaluator.inference_time_micros",
                              time_elapsed);
       PushFrame(layer_name, std::move(output_frame));
     }

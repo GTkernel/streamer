@@ -32,6 +32,12 @@ class FramePrinter : public boost::static_visitor<std::string> {
     return output.str();
   }
 
+  std::string operator()(const long& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
   std::string operator()(const unsigned long& v) const {
     std::ostringstream output;
     output << v;
@@ -101,12 +107,20 @@ class FramePrinter : public boost::static_visitor<std::string> {
   }
 
   std::string operator()(const cv::Mat& v) const {
-    std::ostringstream output, mout;
-    cv::Mat tmp;
-    v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
-    mout << tmp;
-    output << "cv::Mat(size = " << v.cols << "x" << v.rows
-           << ") = " << mout.str().substr(0, 20) << "...]";
+    std::ostringstream output;
+    output << "cv::Mat";
+    int dims = v.dims;
+    if (dims <= 2) {
+      cv::Mat tmp;
+      v.copyTo(tmp);
+
+      std::ostringstream mout;
+      mout << tmp;
+      output << "(size = " << v.cols << "x" << v.rows
+             << ") = " << mout.str().substr(0, 20) << "...]";
+    } else {
+      output << " = Unable to print because dims (" << dims << ") > 2";
+    }
     return output.str();
   }
 
@@ -178,7 +192,7 @@ class FramePrinter : public boost::static_visitor<std::string> {
     std::ostringstream output;
     output << "std::vector<std::pair<int, float>> = [" << std::endl;
     for (auto& s : v) {
-      output << s.first << ": " << s.second << std::endl;
+      output << "(" << s.first << ", " << s.second << ")" << std::endl;
     }
     output << "]";
     return output.str();
@@ -192,6 +206,8 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
   nlohmann::json operator()(const float& v) const { return v; }
 
   nlohmann::json operator()(const int& v) const { return v; }
+
+  nlohmann::json operator()(const long& v) const { return v; }
 
   nlohmann::json operator()(const unsigned long& v) const { return v; }
 
@@ -355,6 +371,7 @@ bool Frame::IsStopFrame() const {
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
 template void Frame::SetValue(std::string, const int&);
+template void Frame::SetValue(std::string, const long&);
 template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const bool&);
 template void Frame::SetValue(std::string, const boost::posix_time::ptime&);
@@ -379,6 +396,7 @@ template void Frame::SetValue(std::string,
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
 template int Frame::GetValue(std::string) const;
+template long Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
 template bool Frame::GetValue(std::string) const;
 template boost::posix_time::ptime Frame::GetValue(std::string) const;

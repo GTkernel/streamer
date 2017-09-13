@@ -25,7 +25,7 @@ void FramePush(cv::Mat m) {
     frame->SetValue("activations", m);
     frame->SetValue("frame_id", (unsigned long)fid++);
     frame->SetValue("capture_time_micros", boost::posix_time::microsec_clock::local_time());
-    frame->SetValue("NeuralNetEvaluator.Benchmark.Inference", (double)0);
+    frame->SetValue("neural_net_evaluator.inference_time_micros", (double)0);
     fake_nne->PushFrame(std::move(frame));
   }
 }
@@ -157,19 +157,19 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     benchmark_summary << image_per_query << ",";
     benchmark_summary << batch_size << ",";
     benchmark_summary << frame->GetValue<double>(
-                             "NeuralNetEvaluator.Benchmark.Inference")
+                             "neural_net_evaluator.inference_time_micros")
                       << ",";
     benchmark_summary << frame->GetValue<double>(
-                             "ImageMatch.Benchmark.EndToEnd")
+                             "imagematch.end_to_end_time_micros")
                       << ",";
     benchmark_summary << frame->GetValue<double>(
-                             "ImageMatch.Benchmark.MatrixMultiply")
+                             "imagematch.matrix_multiply_time_micros")
                       << ",";
     benchmark_summary << frame->GetValue<double>(
-                             "ImageMatch.Benchmark.GatherAndAdd")
+                             "imagematch.add_time_micros")
                       << ",";
     benchmark_summary << frame->GetValue<double>(
-                             "ImageMatch.Benchmark.LinearModelTrain")
+                             "imagematch.lin_mod_training_time_micros")
                       << ",";
     benchmark_summary << fps << ",";
     benchmark_summary << diff.total_microseconds() << ",";

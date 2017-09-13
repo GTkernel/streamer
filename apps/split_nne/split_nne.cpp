@@ -41,14 +41,14 @@ void Run(const std::string& camera_name, const std::string& net,
 
   // NNE1
   std::vector<std::string> split_layers = {split_layer};
-  auto nne1 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+  auto nne1 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                    split_layers);
   nne1->SetSource(transformer->GetSink("output"), input_layer);
   procs.push_back(nne1);
 
   // NNE2
   std::vector<std::string> output_layers = {output_layer};
-  auto nne2 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+  auto nne2 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                    output_layers);
   nne2->SetSource(nne1->GetSink(split_layer), split_layer);
   procs.push_back(nne2);
