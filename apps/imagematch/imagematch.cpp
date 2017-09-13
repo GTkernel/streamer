@@ -24,7 +24,8 @@ void FramePush(cv::Mat m) {
     cv::randu(m, 0, 1);
     frame->SetValue("activations", m);
     frame->SetValue("frame_id", (unsigned long)fid++);
-    frame->SetValue("capture_time_micros", boost::posix_time::microsec_clock::local_time());
+    frame->SetValue("capture_time_micros",
+                    boost::posix_time::microsec_clock::local_time());
     frame->SetValue("neural_net_evaluator.inference_time_micros", (double)0);
     fake_nne->PushFrame(std::move(frame));
   }
@@ -151,7 +152,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     auto frame = reader->PopFrame();
     auto fps = reader->GetHistoricalFps();
     auto end_timestamp = boost::posix_time::microsec_clock::local_time();
-    auto diff = end_timestamp - frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+    auto diff = end_timestamp - frame->GetValue<boost::posix_time::ptime>(
+                                    "capture_time_micros");
     std::stringstream benchmark_summary;
     benchmark_summary << num_query << ",";
     benchmark_summary << image_per_query << ",";
@@ -165,8 +167,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     benchmark_summary << frame->GetValue<double>(
                              "imagematch.matrix_multiply_time_micros")
                       << ",";
-    benchmark_summary << frame->GetValue<double>(
-                             "imagematch.add_time_micros")
+    benchmark_summary << frame->GetValue<double>("imagematch.add_time_micros")
                       << ",";
     benchmark_summary << frame->GetValue<double>(
                              "imagematch.lin_mod_training_time_micros")

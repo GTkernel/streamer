@@ -4,8 +4,8 @@
 
 #include <mutex>
 
-#include <Eigen/Dense>
 #include <tensorflow/core/public/session.h>
+#include <Eigen/Dense>
 
 #include "common/types.h"
 #include "model/model.h"
@@ -34,8 +34,8 @@ class ImageMatch : public Processor {
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
   void UpdateLinmodMatrix(int query_id);
-  bool AddQuery(const std::string& path, std::vector<float> vishash, int query_id,
-                bool is_positive);
+  bool AddQuery(const std::string& path, std::vector<float> vishash,
+                int query_id, bool is_positive);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
   void SetSource(StreamPtr stream);
   using Processor::SetSource;

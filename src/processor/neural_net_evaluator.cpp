@@ -121,7 +121,9 @@ void NeuralNetEvaluator::Process() {
   auto start_time = boost::posix_time::microsec_clock::local_time();
   auto layer_outputs =
       model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names);
-  auto time_elapsed = (boost::posix_time::microsec_clock::local_time() - start_time).total_microseconds();
+  auto time_elapsed =
+      (boost::posix_time::microsec_clock::local_time() - start_time)
+          .total_microseconds();
 
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {

@@ -5,8 +5,8 @@
 #include <thread>
 
 #include <tensorflow/core/framework/op.h>
-#include <tensorflow/core/public/session.h>
 #include <tensorflow/core/framework/op_def.pb.h>
+#include <tensorflow/core/public/session.h>
 #include <zmq.hpp>
 
 #include "common/common.h"
@@ -104,9 +104,7 @@ void ImageMatch::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }
 
-StreamPtr ImageMatch::GetSink() {
-  return Processor::GetSink(SINK_NAME);
-}
+StreamPtr ImageMatch::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 bool ImageMatch::Init() { return true; }
 
@@ -159,7 +157,7 @@ void ImageMatch::Process() {
 
   // Calculate similarity using full formula
   std::lock_guard<std::mutex> guard(query_guard_);
-  auto overhead_end_time = boost::posix_time::microsec_clock::local_time(); 
+  auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
 
   Eigen::MatrixXf productmat;
   if (linmod_ready_) {
@@ -168,7 +166,7 @@ void ImageMatch::Process() {
     productmat = (*queries_) * (*vishash_batch_);
   }
 
-  auto matrix_end_time = boost::posix_time::microsec_clock::local_time(); 
+  auto matrix_end_time = boost::posix_time::microsec_clock::local_time();
 
   for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
     it->second.scores->setZero();
@@ -187,7 +185,7 @@ void ImageMatch::Process() {
         (it->second.scores->array() / query_data_.size()).matrix();
   }
 
-  auto add_end_time = boost::posix_time::microsec_clock::local_time(); 
+  auto add_end_time = boost::posix_time::microsec_clock::local_time();
 
   bool all_ready = true;
   for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
@@ -224,7 +222,7 @@ void ImageMatch::Process() {
     }
     linmod_ready_ = all_ready;
   }
-  auto linmod_end_time = boost::posix_time::microsec_clock::local_time(); 
+  auto linmod_end_time = boost::posix_time::microsec_clock::local_time();
 
   std::ostringstream similarity_summary;
   similarity_summary.precision(3);
@@ -241,11 +239,15 @@ void ImageMatch::Process() {
     }
     batch_idx += 1;
     frame->SetValue("imagematch.scores", image_match_scores);
-    auto end_time = boost::posix_time::microsec_clock::local_time(); 
-    frame->SetValue("imagematch.end_to_end_time_micros", (end_time - start_time).total_microseconds());
-    frame->SetValue("imagematch.matrix_multiply_time_micros", (matrix_end_time - overhead_end_time).total_microseconds());
-    frame->SetValue("imagematch.add_time_micros", (add_end_time - matrix_end_time).total_microseconds());
-    frame->SetValue("imagematch.lin_mod_training_time_micros", (linmod_end_time - add_end_time).total_microseconds());
+    auto end_time = boost::posix_time::microsec_clock::local_time();
+    frame->SetValue("imagematch.end_to_end_time_micros",
+                    (end_time - start_time).total_microseconds());
+    frame->SetValue("imagematch.matrix_multiply_time_micros",
+                    (matrix_end_time - overhead_end_time).total_microseconds());
+    frame->SetValue("imagematch.add_time_micros",
+                    (add_end_time - matrix_end_time).total_microseconds());
+    frame->SetValue("imagematch.lin_mod_training_time_micros",
+                    (linmod_end_time - add_end_time).total_microseconds());
     PushFrame("output", std::move(frame));
   }
   cur_batch_frames_.clear();
