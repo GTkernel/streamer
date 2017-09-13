@@ -81,7 +81,8 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
 bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
                                 int vishash_size) {
   std::lock_guard<std::mutex> guard(query_guard_);
-  queries_ = std::make_unique<Eigen::MatrixXf>(num_queries * img_per_query, vishash_size);
+  queries_ = std::make_unique<Eigen::MatrixXf>(num_queries * img_per_query,
+                                               vishash_size);
   queries_->setRandom();
   for (int i = 0; i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
@@ -131,7 +132,8 @@ void ImageMatch::Process() {
     // The reason we do it here is because the vishash size is not known
     // beforehand
     if (vishash_batch_ == NULL) {
-      vishash_batch_ = std::make_unique<Eigen::MatrixXf>(vishash_size, batch_size_);
+      vishash_batch_ =
+          std::make_unique<Eigen::MatrixXf>(vishash_size, batch_size_);
     }
     // Add new vishash to batch matrix
     vishash_batch_->col(cur_batch_) = vishash_map;

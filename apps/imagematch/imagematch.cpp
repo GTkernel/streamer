@@ -100,8 +100,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     std::unique_ptr<Frame> input = std::make_unique<Frame>();
     input->SetValue("original_image", img);
     auto it = std::make_unique<ImageTransformer>(input_shape, true, true);
-    auto nne =
-        std::make_unique<NeuralNetEvaluator>(model_desc, input_shape, 1, vishash_layer);
+    auto nne = std::make_unique<NeuralNetEvaluator>(model_desc, input_shape, 1,
+                                                    vishash_layer);
     StreamPtr fake_input_stream = std::make_shared<Stream>();
     it->SetSource("input", fake_input_stream);
     nne->SetSource("input", it->GetSink("output"), "");
@@ -114,11 +114,11 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     std::vector<float> vishash(vishash_mat.begin<float>(),
                                vishash_mat.end<float>());
     vishash_size = vishash.size();
-    if(query_path == "fake") {
+    if (query_path == "fake") {
       imagematch->SetQueryMatrix(num_query, image_per_query, vishash_size);
     } else {
-      for(int i = 0; i < num_query; ++i) {
-        for(int j = 0; j < image_per_query; ++j) {
+      for (int i = 0; i < num_query; ++i) {
+        for (int j = 0; j < image_per_query; ++j) {
           imagematch->AddQuery(query_path, vishash, i, true);
         }
       }
