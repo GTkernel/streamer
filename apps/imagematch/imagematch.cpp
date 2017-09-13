@@ -122,12 +122,15 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     std::vector<float> vishash(vishash_mat.begin<float>(),
                                vishash_mat.end<float>());
     vishash_size = vishash.size();
-    imagematch->SetQueryMatrix(num_query, image_per_query, vishash_size);
-    /*for(int i = 0; i < num_query; ++i) {
-      for(int j = 0; j < image_per_query; ++j) {
-        imagematch->AddQuery(query_path, vishash, i, true);
+    if(query_path == "fake") {
+      imagematch->SetQueryMatrix(num_query, image_per_query, vishash_size);
+    } else {
+      for(int i = 0; i < num_query; ++i) {
+        for(int j = 0; j < image_per_query; ++j) {
+          imagematch->AddQuery(query_path, vishash, i, true);
+        }
       }
-    }*/
+    }
   }
   if (use_fake_nne) {
     std::thread fake_nne_thread(FramePush, vishash_mat);

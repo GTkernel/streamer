@@ -40,7 +40,8 @@ def main():
           '-m', 'mobilenet',
           '-C', '/home/tskim/streamer/config/',
           '-v', 'prob',
-          '-q', '/home/tskim/models/input.jpg']
+          #'-q', '/home/tskim/models/input.jpg']
+          '-q', 'fake']
   cmd.append('--use_fake_nne');
   experiment_file = open(args.experiment_filename, "r");
   DEVNULL = open(os.devnull, 'w');
