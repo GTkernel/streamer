@@ -18,7 +18,7 @@ def main():
   with tf.gfile.GFile(model_path, "rb") as f:
     graph_def = tf.GraphDef();
     graph_def.ParseFromString(f.read());
-    tf.import_graph_def(graph_def, name="", input_map=None, producer_op_list=None, op_dict=None, return_elements=None)
+    tf.import_graph_def(graph_def, name="", input_map=None, producer_op_list=None, op_dict=None, return_elements=None);
 
   with tf.Session() as sess:
     for op in sess.graph.get_operations():
@@ -26,4 +26,5 @@ def main():
       print("NAME = \"" + tensor.name + "\"  SHAPE = " + str(tensor.get_shape()));
     return;
 
-main();
+if(__name__ == "__main__)"):
+  main();

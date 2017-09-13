@@ -1,11 +1,12 @@
+
 import sys
 import tensorflow as tf
 
 def main():
   if(len(sys.argv) < 3 or "-h" in sys.argv[1]):
-    print("Generates a linear model for imagematch for a particular vishash")
+    print("Generates a linear model for imagematch for a particular vishash");
     print("Usage: show-layers.py vishash_size /path/to/output/model.pb");
-    print("vishash_size: size of vishash (product of dimensions of tensor (excluding batch))")
+    print("vishash_size: size of vishash (product of dimensions of tensor (excluding batch))");
     return;
   size_vishash = int(sys.argv[1]);
   output_path = sys.argv[2];
@@ -31,4 +32,5 @@ def main():
   with tf.Session() as session:
     tf.train.write_graph(session.graph_def, output_folder, output_filename, as_text=False);
         
-main()
+if(__name__ == "__main__"):
+  main();

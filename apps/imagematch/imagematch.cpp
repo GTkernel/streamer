@@ -60,14 +60,6 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
-  // Check options
-  CHECK(model_manager.HasModel(model_name))
-      << "Model " << model_name << " does not exist";
-  for (const auto& camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name))
-        << "Camera " << camera_name << " does not exist";
-  }
-
   auto camera = camera_manager.GetCamera(camera_names.at(0));
   auto model_desc = model_manager.GetModelDesc(model_name);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
