@@ -35,7 +35,8 @@ bool GSTCamera::OnStop() {
 }
 void GSTCamera::Process() {
   auto frame = std::make_unique<Frame>();
-  boost::posix_time::ptime cur_time = boost::posix_time::microsec_clock::local_time();
+  boost::posix_time::ptime cur_time =
+      boost::posix_time::microsec_clock::local_time();
   MetadataToFrame(frame);
   if (capture_.NextFrameIsLast()) {
     frame->SetStopFrame(true);

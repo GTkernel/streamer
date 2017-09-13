@@ -57,7 +57,7 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
 
     // This is a patch to make tensorflow classification work properly with the
     // current model.
-    for(decltype(input_vec.size()) i = 0; i < input_vec.size(); ++i) {
+    for (decltype(input_vec.size()) i = 0; i < input_vec.size(); ++i) {
       cv::Mat input = input_vec.at(i);
       cv::Mat input_normalized;
       cv::normalize(input, input_normalized, -0.5, 0.5, cv::NORM_MINMAX);
@@ -77,17 +77,18 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     // float. Float16 is not supported yet. Batch size is always 1
     tensorflow::Tensor input_tensor(
         tensorflow::DT_FLOAT,
-        tensorflow::TensorShape(
-            {static_cast<long long>(input_vec.size()), height, width, channel}));
+        tensorflow::TensorShape({static_cast<long long>(input_vec.size()),
+                                 height, width, channel}));
     // TODO: Add handling for non-continuous cv mat
-    //CHECK(input.isContinuous()) << "cv::Mat must be continuous.";
+    // CHECK(input.isContinuous()) << "cv::Mat must be continuous.";
     // This works because the cv::Mat is stored in HWC format. If we want to
     // support CHW format, then we will need to transpose the tensor. It is not
     // clear whether C++ API exports tf.transpose(). Perhaps this will need to
     // be done using Eigen.
-    for(decltype(input_vec.size()) i = 0; i < input_vec.size(); i++) {
-      std::copy_n((float*)input_vec[i].data, channel * height * width,
-                  input_tensor.flat<float>().data() + i * channel * height * width);
+    for (decltype(input_vec.size()) i = 0; i < input_vec.size(); i++) {
+      std::copy_n(
+          (float*)input_vec[i].data, channel * height * width,
+          input_tensor.flat<float>().data() + i * channel * height * width);
     }
     // If the input layer is not specified, use the default
     if (input_layer_name == "") {
@@ -117,12 +118,11 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
       // Each output mat will be only 1 element of the batch, so ignore the
       // first dimension (which is batch size)
-      if(it == tensor_shape.begin())
-        continue;
+      if (it == tensor_shape.begin()) continue;
       mat_size.push_back((*it).size);
       vishash_size *= (*it).size;
     }
-    for(decltype(batch_size) i = 0; i < batch_size; ++i) {
+    for (decltype(batch_size) i = 0; i < batch_size; ++i) {
       cv::Mat temp(mat_size, CV_32F);
       std::copy_n(output_tensor.flat<float>().data() + (i * vishash_size),
                   vishash_size, (float*)temp.data);

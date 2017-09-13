@@ -13,10 +13,10 @@
 
 typedef struct query_t {
   int query_id;
-  // indices holds a mask of which images this query uses in the queries_ matrix.
-  // This could be made more efficient by using an Eigen::VectorXd to hold a
-  // binary coefficient matrix used to take a linear combination of rows in
-  // queries_.
+  // indices holds a mask of which images this query uses in the queries_
+  // matrix. This could be made more efficient by using an Eigen::VectorXd to
+  // hold a binary coefficient matrix used to take a linear combination of rows
+  // in queries_.
   std::vector<int> indices;
   std::vector<bool> is_positive;
   std::vector<std::string> paths;
@@ -26,15 +26,16 @@ typedef struct query_t {
   bool linmod_ready;
 } query_t;
 
-class ImageMatch: public Processor {
+class ImageMatch : public Processor {
  public:
-  ImageMatch(std::string linear_model_path, bool do_linmod = true, unsigned int batch_size = 1);
+  ImageMatch(std::string linear_model_path, bool do_linmod = true,
+             unsigned int batch_size = 1);
 
-  static std::shared_ptr<ImageMatch> Create(
-      const FactoryParamsType& params);
-  
+  static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
+
   void UpdateLinmodMatrix(int query_id);
-  bool AddQuery(std::string path, std::vector<float> vishash, int query_id, bool is_positive);
+  bool AddQuery(std::string path, std::vector<float> vishash, int query_id,
+                bool is_positive);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
 
  protected:
@@ -59,7 +60,6 @@ class ImageMatch: public Processor {
 
   std::unordered_map<int, query_t> query_data_;
   std::mutex query_guard;
-
 };
 
 #endif  // STREAMER_IMAGEMATCH_H
