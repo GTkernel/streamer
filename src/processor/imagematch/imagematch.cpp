@@ -21,10 +21,10 @@ ImageMatch::ImageMatch(const std::string& linear_model_path, bool do_linmod,
                        unsigned int batch_size)
     : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}),
       batch_size_(batch_size),
-      queries_(NULL),
+      queries_(nullptr),
       linear_model_path_(linear_model_path),
-      linear_model_weights_(NULL),
-      vishash_batch_(NULL),
+      linear_model_weights_(nullptr),
+      vishash_batch_(nullptr),
       do_linmod_(do_linmod),
       linmod_ready_(false) {}
 
@@ -44,10 +44,7 @@ void ImageMatch::UpdateLinmodMatrix(int query_id) {
   if (linear_model_weights_ == NULL ||
       query_data_.size() >
           (decltype(query_data_.size()))linear_model_weights_->rows()) {
-    if (linear_model_weights_) {
-      delete linear_model_weights_;
-    }
-    linear_model_weights_ = new Eigen::MatrixXf(
+    linear_model_weights_ = std::make_unique<Eigen::MatrixXf>(
         query_data_.size(), linmod_weights.at(0).dim_size(0));
   }
   linear_model_weights_->row(query_id) = weights_map;
@@ -57,12 +54,12 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
                           int query_id, bool is_positive) {
   std::lock_guard<std::mutex> guard(query_guard_);
   query_t* current_query = &query_data_[query_id];
-  current_query->scores = new Eigen::VectorXf(batch_size_);
+  current_query->scores = std::make_unique<Eigen::VectorXf>(batch_size_);
   LOG(INFO) << "Received image " << path
             << " to be added to query (ID = " << query_id << ")";
   Eigen::Map<Eigen::VectorXf> vishash_map(vishash.data(), vishash.size());
   if (queries_ == NULL) {
-    queries_ = new Eigen::MatrixXf(1, vishash.size());
+    queries_ = std::make_unique<Eigen::MatrixXf>(1, vishash.size());
     queries_->row(0) = vishash_map;
     queries_->row(0).stableNormalize();
     queries_->row(0) *= is_positive ? 1 : -1;
@@ -84,11 +81,11 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
 bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
                                 int vishash_size) {
   std::lock_guard<std::mutex> guard(query_guard_);
-  queries_ = new Eigen::MatrixXf(num_queries * img_per_query, vishash_size);
+  queries_ = std::make_unique<Eigen::MatrixXf>(num_queries * img_per_query, vishash_size);
   queries_->setRandom();
   for (int i = 0; i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
-    current_query->scores = new Eigen::VectorXf(batch_size_);
+    current_query->scores = std::make_unique<Eigen::VectorXf>(batch_size_);
     CreateSession(i);
     current_query->linmod_ready = false;
     current_query->query_id = i;
@@ -134,7 +131,7 @@ void ImageMatch::Process() {
     // The reason we do it here is because the vishash size is not known
     // beforehand
     if (vishash_batch_ == NULL) {
-      vishash_batch_ = new Eigen::MatrixXf(vishash_size, batch_size_);
+      vishash_batch_ = std::make_unique<Eigen::MatrixXf>(vishash_size, batch_size_);
     }
     // Add new vishash to batch matrix
     vishash_batch_->col(cur_batch_) = vishash_map;

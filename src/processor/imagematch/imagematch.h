@@ -20,7 +20,7 @@ typedef struct query_t {
   std::vector<int> indices;
   std::vector<bool> is_positive;
   std::vector<std::string> paths;
-  Eigen::VectorXf* scores;
+  std::unique_ptr<Eigen::VectorXf> scores;
   float skew;
   std::unique_ptr<tensorflow::Session> session_;
   bool linmod_ready;
@@ -50,11 +50,11 @@ class ImageMatch : public Processor {
  private:
   unsigned int batch_size_;
   void CreateSession(int query_number);
-  Eigen::MatrixXf* queries_;
+  std::unique_ptr<Eigen::MatrixXf> queries_;
   std::string linear_model_path_;
-  Eigen::MatrixXf* linear_model_weights_;
+  std::unique_ptr<Eigen::MatrixXf> linear_model_weights_;
   // vishash_batch_ stores the vishashes for the current batch of inputs
-  Eigen::MatrixXf* vishash_batch_;
+  std::unique_ptr<Eigen::MatrixXf> vishash_batch_;
   bool do_linmod_;
   // cur_batch holds the current size of the batch
   unsigned int cur_batch_ = 0;
