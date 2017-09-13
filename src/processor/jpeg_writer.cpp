@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 #include <boost/filesystem.hpp>
 #include <boost/variant/get.hpp>
@@ -12,15 +13,18 @@
 
 constexpr auto SOURCE_NAME = "input";
 
-JpegWriter::JpegWriter(std::string key, std::string filepath)
+JpegWriter::JpegWriter(std::string key, std::string filepath,
+                       unsigned long num_frames_per_dir)
     : Processor(PROCESSOR_TYPE_JPEG_WRITER, {SOURCE_NAME}, {}),
       key_(key),
-      output_dir_(filepath) {}
+      output_dir_(filepath),
+      num_frames_per_dir_(num_frames_per_dir) {}
 
 std::shared_ptr<JpegWriter> JpegWriter::Create(
     const FactoryParamsType& params) {
-  return std::make_shared<JpegWriter>(params.at("key"),
-                                      params.at("output_dir"));
+  return std::make_shared<JpegWriter>(
+      params.at("key"), params.at("output_dir"),
+      std::stoul(params.at("num_frames_per_dir")));
 }
 
 void JpegWriter::SetSource(StreamPtr stream) {
@@ -37,10 +41,17 @@ void JpegWriter::Process() {
   }
 
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
+  auto id = frame->GetValue<unsigned long>("frame_id");
+
+  std::ostringstream dirpath;
+  auto dir_num = id / num_frames_per_dir_;
+  dirpath << output_dir_ << "/" << dir_num;
+  auto dirpath_str = dirpath.str();
+  boost::filesystem::path dir(dirpath_str);
+  boost::filesystem::create_directory(dir);
 
   std::stringstream filepath;
-  auto id = frame->GetValue<unsigned long>("frame_id");
-  filepath << output_dir_ << "/" << id << ".jpg";
+  filepath << dirpath_str << "/" << id << ".jpg";
   std::string filepath_s = filepath.str();
 
   cv::Mat img;

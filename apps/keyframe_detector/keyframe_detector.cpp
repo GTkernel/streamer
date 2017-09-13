@@ -143,6 +143,7 @@ void Run(const std::string& camera_name, const std::string& model,
   auto kd = std::make_shared<KeyframeDetector>(buf_params);
   kd->SetSource(vishash_stream);
   kd->SetBlockOnPush(block);
+  kd->EnableLog(output_dir);
   procs.push_back(kd);
 
   auto kd_stream = kd->GetSink("output_0");
@@ -174,7 +175,7 @@ void Run(const std::string& camera_name, const std::string& model,
     }
 
     std::ostringstream time_key;
-    time_key << "kd_level_" << levels - 1 << "_micros";
+    time_key << "kd_level_0_micros";
     auto time_key_str = time_key.str();
     if (frame->Count(time_key_str)) {
       micros_log << frame->GetValue<long>(time_key_str) << "\n";

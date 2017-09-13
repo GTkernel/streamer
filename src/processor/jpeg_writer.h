@@ -16,9 +16,11 @@
 // TODO: Add support for custom filenames.
 class JpegWriter : public Processor {
  public:
-  // "key" denotes which field to encode, and "output_dir" denotes the directory
-  // in which the resulting files will be written.
-  JpegWriter(std::string key = "original_image", std::string output_dir = ".");
+  // "key" denotes which field to encode, "output_dir" denotes the directory
+  // in which the resulting files will be written, and "num_frames_per_dir" is
+  // number of frames to put in each subdir in "output_dir".
+  JpegWriter(std::string key = "original_image", std::string output_dir = ".",
+             unsigned long num_frames_per_dir = 1000);
 
   // "params" should contain two keys, "key" and "output_dir"
   static std::shared_ptr<JpegWriter> Create(const FactoryParamsType& params);
@@ -36,6 +38,8 @@ class JpegWriter : public Processor {
   std::string key_;
   // The destination directory for output files.
   std::string output_dir_;
+  // The number of frames to save in each output subdir.
+  unsigned long num_frames_per_dir_;
 };
 
 #endif  // STREAMER_PROCESSOR_JPEG_WRITER_H_
