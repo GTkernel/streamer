@@ -19,3 +19,6 @@
 [submodule "3rdparty/dlib"]
 	path = 3rdparty/dlib
 	url = https://github.com/davisking/dlib.git
+[submodule "3rdparty/nsync"]
+	path = 3rdparty/nsync
+	url = https://github.com/google/nsync.git
