@@ -7,10 +7,10 @@
 #include <opencv2/opencv.hpp>
 
 KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len)
-    : buf_idx_(0), on_first_buf_(true) {
+    : target_buf_len_(buf_len), on_first_buf_(true) {
   SetSelectivity(sel);
   // Allocate extra space for the last keyframe from the previous buffer.
-  buf_.resize(buf_len + 1);
+  buf_.reserve(buf_len + 1);
 }
 
 void KeyframeBuffer::Stop() {
@@ -38,18 +38,17 @@ void KeyframeBuffer::EnableLog(std::string output_dir,
 
 std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     std::unique_ptr<Frame> frame) {
-  buf_[buf_idx_] = std::move(frame);
-  ++buf_idx_;
+  buf_.push_back(std::move(frame));
 
-  idx_t target_buf_len = buf_.size();
-  // If we're on the first buffer, then we're targeting a buffer length of one
-  // less than the total size of the buffer.
-  if (on_first_buf_) {
-    --target_buf_len;
+  idx_t target_buf_len_actual = target_buf_len_;
+  // If we're on the first buffer, then we're targeting a buffer length of
+  // one less than the total size of the buffer.
+  if (!on_first_buf_) {
+    ++target_buf_len_actual;
   }
 
   std::vector<std::unique_ptr<Frame>> keyframes;
-  if (buf_idx_ == target_buf_len) {
+  if (buf_.size() == target_buf_len_actual) {
     // The frame buffer is full, meaning that it's time to find the keyframes.
     std::vector<idx_t> keyframe_idxs = GetKeyframeIdxs();
     auto idxs_it = keyframe_idxs.begin();
@@ -65,20 +64,16 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
 
     for (; idxs_it != keyframe_idxs.end(); ++idxs_it) {
       std::unique_ptr<Frame> keyframe = std::move(buf_.at(*idxs_it));
-
       if (log_.is_open()) {
         log_ << keyframe->GetValue<unsigned long>("frame_id") << "\n";
       }
-
       keyframes.push_back(std::move(keyframe));
     }
 
-    // Reset the frame buffer by setting buf_idx_ to 1. Push the last keyframe
-    // onto the frame buffer (it will be element 0, which is why buf_idx_ starts
-    // at 1). It will be the first frame in the next buffer's run of the
-    // algorithm.
-    buf_[0] = std::make_unique<Frame>(keyframes.back());
-    buf_idx_ = 1;
+    // Reset the frame buffer. Push the last keyframe onto the frame buffer. It
+    // will be the first frame in the next buffer's run of the algorithm.
+    buf_.clear();
+    buf_.push_back(std::make_unique<Frame>(keyframes.back()));
   }
   return keyframes;
 }
@@ -99,7 +94,7 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
     // We are trying to find as many keyframes as there are frames in our
     // frame buffer, so we'll return all of the frames' indices.
     std::vector<idx_t> keyframe_idxs;
-    for (idx_t i = 0; i < buf_idx_; ++i) {
+    for (idx_t i = 0; i < buf_.size(); ++i) {
       keyframe_idxs.push_back(i);
     }
     return keyframe_idxs;
@@ -109,7 +104,7 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
   // path in a DAG (that contains more than (k + 1) frames), so we cannot use a
   // traditional longest (or shorted) paths algorithm.
 
-  idx_t num_frames = buf_idx_;
+  idx_t num_frames = buf_.size();
   idx_t num_frames_in_path = (idx_t)ceil(sel_ * num_frames);
   // The number of graph edges that must be traversed by our path is one less
   // than the number of nodes in the path.

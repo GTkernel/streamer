@@ -34,7 +34,11 @@ void Stream::PushFrame(std::unique_ptr<Frame> frame, bool block) {
     readers = readers_;
   }
 
-  if (readers.size() == 1) {
+  decltype(readers.size()) num_readers = readers.size();
+  if (num_readers == 0) {
+    LOG(WARNING) << "No readers. Dropping frame: "
+                 << frame->GetValue<unsigned long>("frame_id");
+  } else if (num_readers == 1) {
     readers.at(0)->PushFrame(std::move(frame), block);
   } else {
     // If there is more than one reader, then we need to copy the frame.
