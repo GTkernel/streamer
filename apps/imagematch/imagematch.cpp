@@ -107,9 +107,9 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     cv::Mat img = cv::imread(query_path, 1);
     std::unique_ptr<Frame> input = std::make_unique<Frame>();
     input->SetValue("original_image", img);
-    ImageTransformer* it = new ImageTransformer(input_shape, true, true);
-    NeuralNetEvaluator* nne =
-        new NeuralNetEvaluator(model_desc, input_shape, 1, vishash_layer);
+    auto it = std::make_unique<ImageTransformer>(input_shape, true, true);
+    auto nne =
+        std::make_unique<NeuralNetEvaluator>(model_desc, input_shape, 1, vishash_layer);
     StreamPtr fake_input_stream = std::make_shared<Stream>();
     it->SetSource("input", fake_input_stream);
     nne->SetSource("input", it->GetSink("output"), "");
