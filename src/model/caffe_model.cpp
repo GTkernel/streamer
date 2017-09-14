@@ -55,8 +55,7 @@ void CaffeModel<DType>::Load() {
   net_.reset(new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST,
                                    caffe::Caffe::GetDefaultDevice()));
 #else
-  net_.reset(
-      new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST));
+  net_ = std::make_unique<caffe::Net<DType>>(model_desc_.GetModelDescPath(), caffe::TEST);
 #endif  // USE_OPENCL
   net_->CopyTrainedLayersFrom(model_desc_.GetModelParamsPath());
 

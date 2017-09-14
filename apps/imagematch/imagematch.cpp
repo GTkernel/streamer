@@ -26,7 +26,7 @@ void FramePush(cv::Mat m) {
     frame->SetValue("frame_id", (unsigned long)fid++);
     frame->SetValue("capture_time_micros",
                     boost::posix_time::microsec_clock::local_time());
-    frame->SetValue("neural_net_evaluator.inference_time_micros", (double)0);
+    frame->SetValue("neural_net_evaluator.inference_time_micros", (long)0);
     fake_nne->PushFrame(std::move(frame));
   }
 }
@@ -67,7 +67,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       new ImageTransformer(input_shape, true, true));
   auto entrance = std::make_shared<FlowControlEntrance>(10);
   std::vector<std::string> vishash_layer = {vishash_layer_name};
-  auto neural_net_eval = std::make_shared<NeuralNetEvaluator>(
+  NeuralNetEvaluator* neural_net_eval = new NeuralNetEvaluator(
       model_desc, input_shape, batch_size, vishash_layer);
   auto imagematch =
       std::make_shared<ImageMatch>(linmod_path, do_linmod, batch_size);
@@ -99,8 +99,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     cv::Mat img = cv::imread(query_path, 1);
     std::unique_ptr<Frame> input = std::make_unique<Frame>();
     input->SetValue("original_image", img);
-    auto it = std::make_unique<ImageTransformer>(input_shape, true, true);
-    auto nne = std::make_unique<NeuralNetEvaluator>(model_desc, input_shape, 1,
+    ImageTransformer* it = new ImageTransformer(input_shape, true, true);
+    NeuralNetEvaluator* nne = new NeuralNetEvaluator(model_desc, input_shape, 1,
                                                     vishash_layer);
     StreamPtr fake_input_stream = std::make_shared<Stream>();
     it->SetSource("input", fake_input_stream);
@@ -153,18 +153,18 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     benchmark_summary << num_query << ",";
     benchmark_summary << image_per_query << ",";
     benchmark_summary << batch_size << ",";
-    benchmark_summary << frame->GetValue<double>(
+    benchmark_summary << frame->GetValue<long>(
                              "neural_net_evaluator.inference_time_micros")
                       << ",";
-    benchmark_summary << frame->GetValue<double>(
+    benchmark_summary << frame->GetValue<long>(
                              "imagematch.end_to_end_time_micros")
                       << ",";
-    benchmark_summary << frame->GetValue<double>(
+    benchmark_summary << frame->GetValue<long>(
                              "imagematch.matrix_multiply_time_micros")
                       << ",";
-    benchmark_summary << frame->GetValue<double>("imagematch.add_time_micros")
+    benchmark_summary << frame->GetValue<long>("imagematch.add_time_micros")
                       << ",";
-    benchmark_summary << frame->GetValue<double>(
+    benchmark_summary << frame->GetValue<long>(
                              "imagematch.lin_mod_training_time_micros")
                       << ",";
     benchmark_summary << fps << ",";
