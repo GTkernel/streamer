@@ -114,7 +114,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     std::vector<float> vishash(vishash_mat.begin<float>(),
                                vishash_mat.end<float>());
     vishash_size = vishash.size();
-    if (query_path == "fake") {
+    if(use_fake_nne) {
       imagematch->SetQueryMatrix(num_query, image_per_query, vishash_size);
     } else {
       for (int i = 0; i < num_query; ++i) {

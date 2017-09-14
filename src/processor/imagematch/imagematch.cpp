@@ -187,37 +187,37 @@ void ImageMatch::Process() {
   auto add_end_time = boost::posix_time::microsec_clock::local_time();
 
   bool all_ready = true;
-  for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
-    if (do_linmod_) {
-      tensorflow::Tensor x(
-          tensorflow::DT_FLOAT,
-          tensorflow::TensorShape({static_cast<long long int>(vishash_size)}));
-      std::copy_n((float*)activations.data, vishash_size,
-                  x.flat<float>().data());
+  if (do_linmod_) {
+    for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
+        tensorflow::Tensor x(
+            tensorflow::DT_FLOAT,
+            tensorflow::TensorShape({static_cast<long long int>(vishash_size)}));
+        std::copy_n((float*)activations.data, vishash_size,
+                    x.flat<float>().data());
 
-      tensorflow::Tensor expected(tensorflow::DT_FLOAT,
-                                  tensorflow::TensorShape({1}));
-      auto expected_flat = expected.flat<float>();
-      expected_flat.data()[0] = (*(it->second.scores))(0);
+        tensorflow::Tensor expected(tensorflow::DT_FLOAT,
+                                    tensorflow::TensorShape({1}));
+        auto expected_flat = expected.flat<float>();
+        expected_flat.data()[0] = (*(it->second.scores))(0);
 
-      std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
-      inputs.push_back(std::make_pair("x", x));
-      inputs.push_back(std::make_pair("expected:0", expected));
-      std::vector<tensorflow::Tensor> outputs;
+        std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
+        inputs.push_back(std::make_pair("x", x));
+        inputs.push_back(std::make_pair("expected:0", expected));
+        std::vector<tensorflow::Tensor> outputs;
 
-      TF_CHECK_OK(it->second.session_->Run(inputs, {}, {"train:0"}, &outputs));
+        TF_CHECK_OK(it->second.session_->Run(inputs, {}, {"train:0"}, &outputs));
 
-      TF_CHECK_OK(it->second.session_->Run(inputs, {"actual:0", "loss:0"}, {},
-                                           &outputs));
-      float loss = outputs.at(1).flat<float>()(0);
-      float actual_score = outputs.at(0).flat<float>()(0);
-      float expected_score = inputs.at(1).second.flat<float>()(0);
-      float difference = expected_score - actual_score;
-      if (difference < 0) difference *= -1;
-      if (loss < 0.001 && !it->second.linmod_ready) {
-        UpdateLinmodMatrix(it->second.query_id);
-      }
-      all_ready &= it->second.linmod_ready;
+        TF_CHECK_OK(it->second.session_->Run(inputs, {"actual:0", "loss:0"}, {},
+                                             &outputs));
+        float loss = outputs.at(1).flat<float>()(0);
+        float actual_score = outputs.at(0).flat<float>()(0);
+        float expected_score = inputs.at(1).second.flat<float>()(0);
+        float difference = expected_score - actual_score;
+        if (difference < 0) difference *= -1;
+        if (loss < 0.001 && !it->second.linmod_ready) {
+          UpdateLinmodMatrix(it->second.query_id);
+        }
+        all_ready &= it->second.linmod_ready;
     }
     linmod_ready_ = all_ready;
   }
@@ -255,20 +255,21 @@ void ImageMatch::Process() {
 
 // Create linear classifier for query with id = query_id
 void ImageMatch::CreateSession(int query_id) {
-  LOG(INFO) << "Creating session";
-  query_t* current_query = &query_data_[query_id];
-  tensorflow::GraphDef graph_def;
-  tensorflow::Status status = ReadBinaryProto(tensorflow::Env::Default(),
-                                              linear_model_path_, &graph_def);
-  if (!status.ok()) {
-    LOG(FATAL) << "Failed to load tf graph at model desc path: "
-               << status.error_message().c_str();
+  if(do_linmod_) {
+    query_t* current_query = &query_data_[query_id];
+    tensorflow::GraphDef graph_def;
+    tensorflow::Status status = ReadBinaryProto(tensorflow::Env::Default(),
+                                                linear_model_path_, &graph_def);
+    if (!status.ok()) {
+      LOG(FATAL) << "Failed to load tf graph at model desc path: "
+                 << status.error_message().c_str();
+    }
+    current_query->session_.reset(
+        tensorflow::NewSession(tensorflow::SessionOptions()));
+    status = current_query->session_->Create(graph_def);
+    if (!status.ok()) {
+      LOG(FATAL) << "Failed to create tf graph session";
+    }
+    TF_CHECK_OK(current_query->session_->Run({}, {}, {"init"}, nullptr));
   }
-  current_query->session_.reset(
-      tensorflow::NewSession(tensorflow::SessionOptions()));
-  status = current_query->session_->Create(graph_def);
-  if (!status.ok()) {
-    LOG(FATAL) << "Failed to create tf graph session";
-  }
-  TF_CHECK_OK(current_query->session_->Run({}, {}, {"init"}, nullptr));
 }
