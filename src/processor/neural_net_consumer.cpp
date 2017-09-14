@@ -9,7 +9,7 @@ NeuralNetConsumer::NeuralNetConsumer(
     const std::vector<std::string>& sink_names)
     : Processor(type, source_names, sink_names),
       output_layer_names_(output_layer_names),
-      nne_(new NeuralNetEvaluator(model_desc, input_shape,
+      nne_(new NeuralNetEvaluator(model_desc, input_shape, 1,
                                   output_layer_names)) {}
 
 NeuralNetConsumer::NeuralNetConsumer(

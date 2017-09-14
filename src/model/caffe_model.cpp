@@ -55,8 +55,8 @@ void CaffeModel<DType>::Load() {
   net_.reset(new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST,
                                    caffe::Caffe::GetDefaultDevice()));
 #else
-  net_.reset(
-      new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST));
+  net_ = std::make_unique<caffe::Net<DType>>(model_desc_.GetModelDescPath(),
+                                             caffe::TEST);
 #endif  // USE_OPENCL
   net_->CopyTrainedLayersFrom(model_desc_.GetModelParamsPath());
 
@@ -76,14 +76,15 @@ void CaffeModel<DType>::Load() {
 }
 
 template <typename DType>
-std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
-    const std::unordered_map<std::string, cv::Mat>& input_map,
+std::unordered_map<std::string, std::vector<cv::Mat>>
+CaffeModel<DType>::Evaluate(
+    const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
   CHECK_EQ(input_map.size(), 1)
       << "For Caffe models, exactly one input must be provided.";
   // There is only one value in the input map, and the second entry in the pair
   // is the input data.
-  auto input = input_map.begin()->second;
+  auto input = input_map.begin()->second.at(0);
 
   // Subtract the mean image
   int format;
@@ -118,9 +119,9 @@ std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
   net_->Forward();
 
   // Grab all the output layers
-  std::unordered_map<std::string, cv::Mat> output_layers;
+  std::unordered_map<std::string, std::vector<cv::Mat>> output_layers;
   for (const auto& layer : output_layer_names) {
-    output_layers[layer] = GetLayerOutput(layer);
+    output_layers[layer] = {GetLayerOutput(layer)};
   }
   return output_layers;
 }
@@ -153,6 +154,7 @@ cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string& layer_name) const {
     LOG(FATAL)
         << "Error, only 2D and 4D feature vectors are supported at this time";
   }
+  return cv::Mat();
 }
 
 template <typename DType>
@@ -166,8 +168,8 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src) {
     mat_size.push_back(src->shape(i));
     total_size *= src->shape(i);
   }
-  cv::Mat ret_mat(mat_size, CV_32F);
   float* data = src->mutable_cpu_data();
+  cv::Mat ret_mat(mat_size, CV_32F);
   memcpy(ret_mat.data, data, total_size * sizeof(float));
   return ret_mat;
 }
@@ -185,8 +187,8 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src) {
     mat_size.push_back(src->shape(i));
     total_size *= src->shape(i);
   }
-  cv::Mat ret_mat(mat_size, CV_32F);
   float* data = src->mutable_cpu_data();
+  cv::Mat ret_mat(mat_size, CV_32F);
   memcpy(ret_mat.data, data, total_size * sizeof(float));
   return ret_mat;
 }

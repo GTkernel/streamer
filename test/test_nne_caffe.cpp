@@ -267,7 +267,7 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   Shape input_shape(CHANNELS, WIDTH, HEIGHT);
   ModelDesc desc("TestExtractIntermediateActivationsCaffe", MODEL_TYPE_CAFFE,
                  NETWORK_FILEPATH, WEIGHTS_FILEPATH, WIDTH, HEIGHT, "", "prob");
-  NeuralNetEvaluator nne(desc, input_shape, OUTPUTS);
+  NeuralNetEvaluator nne(desc, input_shape, 1, OUTPUTS);
   ASSERT_EQ(nne.GetSinkNames().size(), OUTPUTS.size());
 
   // Configure the mean image

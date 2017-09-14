@@ -7,10 +7,11 @@
 constexpr auto SOURCE_NAME = "input";
 
 NeuralNetEvaluator::NeuralNetEvaluator(
-    const ModelDesc& model_desc, const Shape& input_shape,
+    const ModelDesc& model_desc, const Shape& input_shape, size_t batch_size,
     const std::vector<std::string>& output_layer_names)
     : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME}, {}),
-      input_shape_(input_shape) {
+      input_shape_(input_shape),
+      batch_size_(batch_size) {
   // Load model.
   auto& manager = ModelManager::GetInstance();
   model_ = manager.CreateModel(model_desc, input_shape_, 1);
@@ -74,7 +75,7 @@ std::shared_ptr<NeuralNetEvaluator> NeuralNetEvaluator::Create(
 
   std::vector<std::string> output_layer_names = {
       params.at("output_layer_names")};
-  return std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+  return std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                               output_layer_names);
 }
 
@@ -107,21 +108,35 @@ void NeuralNetEvaluator::Process() {
   } else {
     input_mat = input_frame->GetValue<cv::Mat>("image");
   }
+  cur_batch_.push_back(input_mat);
+  if (cur_batch_.size() < batch_size_) {
+    return;
+  }
 
   std::vector<std::string> output_layer_names;
   for (const auto& sink_pair : sinks_) {
     output_layer_names.push_back(sink_pair.first);
   }
 
+  auto start_time = boost::posix_time::microsec_clock::local_time();
   auto layer_outputs =
-      model_->Evaluate({{input_layer_name_, input_mat}}, output_layer_names);
+      model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names);
+  auto time_elapsed =
+      (boost::posix_time::microsec_clock::local_time() - start_time)
+          .total_microseconds();
 
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
-    auto layer_name = layer_pair.first;
-    auto output_frame = std::make_unique<Frame>(input_frame);
-    output_frame->SetValue("activations", layer_pair.second);
-    output_frame->SetValue("activations_layer_name", layer_name);
-    PushFrame(layer_name, std::move(output_frame));
+    auto activation_vector = layer_pair.second;
+    for (const auto& activations : activation_vector) {
+      auto layer_name = layer_pair.first;
+      auto output_frame = std::make_unique<Frame>(input_frame);
+      output_frame->SetValue("activations", activations);
+      output_frame->SetValue("activations_layer_name", layer_name);
+      output_frame->SetValue("neural_net_evaluator.inference_time_micros",
+                             time_elapsed);
+      PushFrame(layer_name, std::move(output_frame));
+    }
   }
+  cur_batch_.clear();
 }

@@ -221,6 +221,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
+  PROCESSOR_TYPE_IMAGEMATCH,
   PROCESSOR_TYPE_JPEG_WRITER,
   PROCESSOR_TYPE_KEYFRAME_DETECTOR,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
@@ -270,6 +271,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_FRAME_WRITER;
   } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
+  } else if (type == "ImageMatch") {
+    return PROCESSOR_TYPE_IMAGEMATCH;
   } else if (type == "ImageSegmenter") {
     return PROCESSOR_TYPE_IMAGE_SEGMENTER;
   } else if (type == "ImageTransformer") {
@@ -340,6 +343,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "ImageSegmenter";
     case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
       return "ImageTransformer";
+    case PROCESSOR_TYPE_IMAGEMATCH:
+      return "ImageMatch";
     case PROCESSOR_TYPE_JPEG_WRITER:
       return "JpegWriter";
     case PROCESSOR_TYPE_KEYFRAME_DETECTOR:

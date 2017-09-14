@@ -114,6 +114,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_IMAGE_TRANSFORMER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGE_TRANSFORMER)));
+  EXPECT_EQ(PROCESSOR_TYPE_IMAGEMATCH,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_IMAGEMATCH)));
   EXPECT_EQ(PROCESSOR_TYPE_JPEG_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_JPEG_WRITER)));

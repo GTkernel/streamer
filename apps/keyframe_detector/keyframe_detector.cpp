@@ -110,7 +110,7 @@ void Run(const std::string& camera_name, const std::string& model,
 
     // Create NeuralNetEvaluator.
     std::vector<std::string> output_layer_names = {layer};
-    auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+    auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                     output_layer_names);
     nne->SetSource(transformer->GetSink("output"));
     nne->SetBlockOnPush(block);

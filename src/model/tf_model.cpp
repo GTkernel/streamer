@@ -43,49 +43,58 @@ void TFModel::Load() {
   }
 }
 
-std::unordered_map<std::string, cv::Mat> TFModel::Evaluate(
-    const std::unordered_map<std::string, cv::Mat>& input_map,
+std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
+    const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
   CHECK_EQ(input_map.size(), 1)
       << "Specifying multiple input layers is not supported.";
 
   std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
+  std::unordered_map<std::string, std::vector<cv::Mat>> ret;
+
   for (const auto& input_pair : input_map) {
     std::string input_layer_name = input_pair.first;
-    cv::Mat input = input_pair.second;
+    std::vector<cv::Mat> input_vec = input_pair.second;
 
     // This is a patch to make tensorflow classification work properly with the
     // current model.
-    cv::Mat input_normalized;
-    cv::normalize(input, input_normalized, -0.5, 0.5, cv::NORM_MINMAX);
+    for (decltype(input_vec.size()) i = 0; i < input_vec.size(); ++i) {
+      cv::Mat input = input_vec.at(i);
+      cv::Mat input_normalized;
+      cv::normalize(input, input_normalized, -0.5, 0.5, cv::NORM_MINMAX);
+      input_vec.at(i) = input_normalized;
+    }
 
-    int channel = input_normalized.channels();
-    int height = input_normalized.size[0];
-    int width = input_normalized.size[1];
-    if (input_normalized.dims == 4) {
-      channel = input_normalized.size[3];
-      height = input_normalized.size[1];
-      width = input_normalized.size[2];
+    cv::Mat input = input_vec.at(0);
+    int channel = input.channels();
+    int height = input.size[0];
+    int width = input.size[1];
+    if (input.dims == 4) {
+      channel = input.size[3];
+      height = input.size[1];
+      width = input.size[2];
     }
     // copy data from split (BGR) channels to (RGB) tensor. Datatype must be
     // float. Float16 is not supported yet. Batch size is always 1
     tensorflow::Tensor input_tensor(
         tensorflow::DT_FLOAT,
-        tensorflow::TensorShape(
-            {static_cast<long long>(1), height, width, channel}));
-    auto flat = input_tensor.flat<float>();
-    CHECK_EQ(flat.size(), channel * height * width);
-
-    // TODO: add handling for this
-    CHECK(input_normalized.isContinuous()) << "cv::Mat must be continuous.";
-
+        tensorflow::TensorShape({static_cast<long long>(input_vec.size()),
+                                 height, width, channel}));
+    // TODO: Add handling for non-continuous cv mat
+    CHECK(input.isContinuous()) << "cv::Mat must be continuous.";
     // This works because the cv::Mat is stored in HWC format. If we want to
     // support CHW format, then we will need to transpose the tensor. It is not
     // clear whether C++ API exports tf.transpose(). Perhaps this will need to
     // be done using Eigen.
-    std::copy_n((float*)input_normalized.data,
-                input_tensor.flat<float>().size(),
-                input_tensor.flat<float>().data());
+    for (decltype(input_vec.size()) i = 0; i < input_vec.size(); i++) {
+      std::copy_n(
+          (float*)input_vec[i].data, channel * height * width,
+          input_tensor.flat<float>().data() + i * channel * height * width);
+    }
+    // If the input layer is not specified, use the default
+    if (input_layer_name == "") {
+      input_layer_name = model_desc_.GetDefaultInputLayer();
+    }
     inputs.push_back(std::pair<std::string, tensorflow::Tensor>(
         input_layer_name, input_tensor));
   }
@@ -100,19 +109,28 @@ std::unordered_map<std::string, cv::Mat> TFModel::Evaluate(
                << status.error_message();
   }
 
-  std::unordered_map<std::string, cv::Mat> results;
   int count = 0;
+  std::vector<cv::Mat> return_vector;
   for (const auto& output_tensor : outputs) {
     tensorflow::TensorShape tensor_shape = output_tensor.shape();
+    auto batch_size = (*tensor_shape.begin()).size;
     std::vector<int> mat_size;
+    size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
+      // Each output mat will be only 1 element of the batch, so ignore the
+      // first dimension (which is batch size)
+      if (it == tensor_shape.begin()) continue;
       mat_size.push_back((*it).size);
+      vishash_size *= (*it).size;
     }
-    cv::Mat result(mat_size, CV_32F);
-    std::copy_n(output_tensor.flat<float>().data(),
-                output_tensor.flat<float>().size(), (float*)result.data);
+    for (decltype(batch_size) i = 0; i < batch_size; ++i) {
+      cv::Mat temp(mat_size, CV_32F);
+      std::copy_n(output_tensor.flat<float>().data() + (i * vishash_size),
+                  vishash_size, (float*)temp.data);
+      return_vector.push_back(temp);
+    }
 
-    results[output_layer_names[count++]] = result;
+    ret[output_layer_names[count++]] = return_vector;
   }
-  return results;
+  return ret;
 }
