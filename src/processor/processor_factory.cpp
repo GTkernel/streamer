@@ -33,6 +33,7 @@
 #include "processor/rpc/frame_sender.h"
 #endif  // USE_RPC
 #include "processor/strider.h"
+#include "processor/temporal_region_selector.h"
 #include "processor/throttler.h"
 #include "video/gst_video_encoder.h"
 
@@ -98,6 +99,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return OpenCVPeopleDetector::Create(params);
     case PROCESSOR_TYPE_STRIDER:
       return Strider::Create(params);
+    case PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR:
+      return TemporalRegionSelector::Create(params);
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
     case PROCESSOR_TYPE_INVALID:

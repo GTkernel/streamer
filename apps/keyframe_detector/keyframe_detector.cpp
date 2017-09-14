@@ -1,5 +1,6 @@
 
 #include <atomic>
+#include <climits>
 #include <condition_variable>
 #include <fstream>
 #include <iostream>
@@ -23,10 +24,14 @@
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
+#include "processor/temporal_region_selector.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
 
 namespace po = boost::program_options;
+
+constexpr unsigned long MIN_START_ID = 0;
+constexpr unsigned long MAX_END_ID = ULONG_MAX;
 
 // Set to true when the pipeline has been started. Used to signal the feeder
 // thread to start, if it exists.
@@ -73,7 +78,8 @@ void Run(const std::string& camera_name, const std::string& model,
          const std::string& layer, float sel, size_t buf_len, size_t levels,
          const std::string& output_dir, bool save_jpegs, bool block,
          bool generate_fake_vishashes, size_t fake_vishash_length,
-         unsigned long num_frames) {
+         unsigned long num_frames, unsigned long start_id,
+         unsigned long end_id) {
   std::vector<std::shared_ptr<Processor>> procs;
   // This stream will contain layer activations to feed into the keyframe
   // detector.
@@ -98,13 +104,27 @@ void Run(const std::string& camera_name, const std::string& model,
     camera->SetBlockOnPush(block);
     procs.push_back(camera);
 
+    StreamPtr stream_to_transform;
+    if (start_id != MIN_START_ID || end_id != MAX_END_ID) {
+      // If we're supposed to select a temporal subset of the frames, then
+      // we need to create a TemporalRegionSelector.
+      auto selector =
+          std::make_shared<TemporalRegionSelector>(start_id, end_id);
+      selector->SetSource("input", camera->GetStream());
+      selector->SetBlockOnPush(block);
+      procs.push_back(selector);
+      stream_to_transform = selector->GetSink("output");
+    } else {
+      stream_to_transform = camera->GetStream();
+    }
+
     // Create ImageTransformer.
     auto model_desc = ModelManager::GetInstance().GetModelDesc(model);
     Shape input_shape(3, model_desc.GetInputWidth(),
                       model_desc.GetInputHeight());
     auto transformer =
         std::make_shared<ImageTransformer>(input_shape, true, true);
-    transformer->SetSource("input", camera->GetStream());
+    transformer->SetSource("input", stream_to_transform);
     transformer->SetBlockOnPush(block);
     procs.push_back(transformer);
 
@@ -157,11 +177,7 @@ void Run(const std::string& camera_name, const std::string& model,
     time_key << "kd_level_" << levels - 1 << "_micros";
     auto time_key_str = time_key.str();
     if (frame->Count(time_key_str)) {
-      micros_log << frame
-                        ->GetValue<boost::posix_time::time_duration>(
-                            time_key_str)
-                        .total_microseconds()
-                 << "\n";
+      micros_log << frame->GetValue<long>(time_key_str) << "\n";
     }
   }
   micros_log.close();
@@ -216,6 +232,14 @@ int main(int argc, char* argv[]) {
                      "The number of frames to create when generating fake "
                      "vishashes. Must be used in conjunction with "
                      "\"--fake-vishashes\" and \"--fake-vishash-length\".");
+  desc.add_options()("start-frame",
+                     po::value<unsigned long>()->default_value(MIN_START_ID),
+                     "The frame id (starting from 0) of the first frame to "
+                     "process.");
+  desc.add_options()("end-frame",
+                     po::value<unsigned long>()->default_value(MAX_END_ID),
+                     "The frame id (starting from 0) of the last frame to "
+                     "process.");
 
   // Parse command line arguments.
   po::variables_map args;
@@ -266,6 +290,9 @@ int main(int argc, char* argv[]) {
   bool generate_fake_vishashes = args.count("fake-vishashes");
   size_t fake_vishash_length = args["fake-vishash-length"].as<size_t>();
   unsigned long num_frames = args["num-frames"].as<unsigned long>();
+  unsigned long start_id = args["start-frame"].as<unsigned long>();
+  unsigned long end_id = args["end-frame"].as<unsigned long>();
+
   if (generate_fake_vishashes) {
     if (save_jpegs) {
       std::cerr << "\"--save-jpegs\" is incompatible with \"--fake-vishashes\"!"
@@ -297,6 +324,7 @@ int main(int argc, char* argv[]) {
   }
 
   Run(camera, model, layer, sel, buf_len, levels, output_dir, save_jpegs, block,
-      generate_fake_vishashes, fake_vishash_length, num_frames);
+      generate_fake_vishashes, fake_vishash_length, num_frames, start_id,
+      end_id);
   return 0;
 }

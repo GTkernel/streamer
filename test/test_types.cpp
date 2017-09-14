@@ -141,6 +141,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_STRIDER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_STRIDER)));
+  EXPECT_EQ(PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR,
+            GetProcessorTypeByString(GetStringForProcessorType(
+                PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR)));
   EXPECT_EQ(PROCESSOR_TYPE_THROTTLER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_THROTTLER)));

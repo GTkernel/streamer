@@ -230,6 +230,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
   PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
   PROCESSOR_TYPE_STRIDER,
+  PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR,
   PROCESSOR_TYPE_THROTTLER,
   PROCESSOR_TYPE_INVALID
 };
@@ -293,6 +294,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
   } else if (type == "Strider") {
     return PROCESSOR_TYPE_STRIDER;
+  } else if (type == "TemporalRegionSelector") {
+    return PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR;
   } else if (type == "Throttler") {
     return PROCESSOR_TYPE_THROTTLER;
   } else {
@@ -361,6 +364,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "OpenCVPeopleDetector";
     case PROCESSOR_TYPE_STRIDER:
       return "Strider";
+    case PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR:
+      return "TemporalRegionSelector";
     case PROCESSOR_TYPE_THROTTLER:
       return "Throttler";
     case PROCESSOR_TYPE_INVALID:
