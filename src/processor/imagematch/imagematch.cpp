@@ -19,7 +19,7 @@ constexpr auto SINK_NAME = "output";
 
 ImageMatch::ImageMatch(const std::string& linear_model_path, bool do_linmod,
                        unsigned int batch_size)
-    : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}),
+    : Processor(PROCESSOR_TYPE_IMAGEMATCH, {SOURCE_NAME}, {SINK_NAME}),
       batch_size_(batch_size),
       queries_(nullptr),
       linear_model_path_(linear_model_path),

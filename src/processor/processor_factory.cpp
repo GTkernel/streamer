@@ -22,6 +22,7 @@
 #include "processor/detectors/opencv_people_detector.h"
 #include "processor/face_tracker.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
+#include "processor/imagematch/imagematch.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_motion_detector.h"
 #include "processor/pubsub/frame_publisher.h"
@@ -81,6 +82,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return JpegWriter::Create(params);
     case PROCESSOR_TYPE_KEYFRAME_DETECTOR:
       return KeyframeDetector::Create(params);
+    case PROCESSOR_TYPE_IMAGEMATCH:
+      return ImageMatch::Create(params);
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return NeuralNetEvaluator::Create(params);
     case PROCESSOR_TYPE_OBJECT_TRACKER:
