@@ -171,7 +171,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     benchmark_summary << diff.total_microseconds() << ",";
     std::cout << benchmark_summary.str() << std::endl;
     if (display) {
-      cv::Mat img = frame->GetValue<cv::Mat>("image");
+      cv::Mat img = frame->GetValue<cv::Mat>("original_image");
 
       // Overlay FPS label and classification label
       double font_size = 0.8 * img.size[0] / 320.0;

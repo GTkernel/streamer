@@ -4,9 +4,12 @@
 #include <string>
 #include <thread>
 
+#ifdef USE_TENSORFLOW
 #include <tensorflow/core/framework/op.h>
 #include <tensorflow/core/framework/op_def.pb.h>
 #include <tensorflow/core/public/session.h>
+#endif // USE_TENSORFLOW
+
 #include <zmq.hpp>
 
 #include "common/common.h"
@@ -20,18 +23,24 @@ constexpr auto SINK_NAME = "output";
 ImageMatch::ImageMatch(const std::string& linear_model_path, bool do_linmod,
                        unsigned int batch_size)
     : Processor(PROCESSOR_TYPE_IMAGEMATCH, {SOURCE_NAME}, {SINK_NAME}),
-      batch_size_(batch_size),
-      queries_(nullptr),
+      #ifdef USE_TENSORFLOW
       linear_model_path_(linear_model_path),
       linear_model_weights_(nullptr),
-      vishash_batch_(nullptr),
       do_linmod_(do_linmod),
-      linmod_ready_(false) {}
+      linmod_ready_(false),
+      #endif
+      batch_size_(batch_size),
+      queries_(nullptr),
+      vishash_batch_(nullptr) {
+        (void) linear_model_path;
+        (void) do_linmod;
+      }
 
 std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
+#ifdef USE_TENSORFLOW
 void ImageMatch::UpdateLinmodMatrix(int query_id) {
   std::vector<tensorflow::Tensor> linmod_weights;
   TF_CHECK_OK(query_data_[query_id].session_->Run({}, {"var:0", "skew:0"}, {},
@@ -49,6 +58,7 @@ void ImageMatch::UpdateLinmodMatrix(int query_id) {
   }
   linear_model_weights_->row(query_id) = weights_map;
 }
+#endif // USE_TENSORFLOW
 
 bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
                           int query_id, bool is_positive) {
@@ -71,9 +81,11 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
   }
   current_query->indices.push_back(queries_->rows() - 1);
   current_query->paths.push_back(path);
-  current_query->linmod_ready = false;
   current_query->query_id = query_id;
+#ifdef USE_TENSORFLOW
+  current_query->linmod_ready = false;
   CreateSession(query_id);
+#endif // USE_TENSORFLOW
   return true;
 }
 
@@ -87,8 +99,10 @@ bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
   for (int i = 0; i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
     current_query->scores = std::make_unique<Eigen::VectorXf>(batch_size_);
+#ifdef USE_TENSORFLOW
     CreateSession(i);
     current_query->linmod_ready = false;
+#endif // USE_TENSORFLOW
     current_query->query_id = i;
     for (int j = 0; j < img_per_query; ++j) {
       current_query->indices.push_back(i * img_per_query + j);
@@ -159,26 +173,34 @@ void ImageMatch::Process() {
   auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
 
   Eigen::MatrixXf productmat;
+#ifdef USE_TENSORFLOW
   if (linmod_ready_) {
     productmat = (*linear_model_weights_) * (*vishash_batch_);
   } else {
+#endif // USE_TENSORFLOW
     productmat = (*queries_) * (*vishash_batch_);
+#ifdef USE_TENSORFLOW
   }
+#endif // USE_TENSORFLOW
 
   auto matrix_end_time = boost::posix_time::microsec_clock::local_time();
 
   for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
     it->second.scores->setZero();
+#ifdef USE_TENSORFLOW
     if (linmod_ready_) {
       *(it->second.scores) =
           (productmat.row(it->second.query_id).array() + it->second.skew)
               .matrix();
     } else {
+#endif // USE_TENSORFLOW
       for (auto idx = it->second.indices.begin();
            idx != it->second.indices.end(); ++idx) {
         *(it->second.scores) += productmat.row(*idx);
       }
+#ifdef USE_TENSORFLOW
     }
+#endif // USE_TENSORFLOW
     // Normalize
     *(it->second.scores) =
         (it->second.scores->array() / query_data_.size()).matrix();
@@ -186,6 +208,7 @@ void ImageMatch::Process() {
 
   auto add_end_time = boost::posix_time::microsec_clock::local_time();
 
+#ifdef USE_TENSORFLOW
   bool all_ready = true;
   if (do_linmod_) {
     for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
@@ -221,6 +244,7 @@ void ImageMatch::Process() {
     }
     linmod_ready_ = all_ready;
   }
+#endif // USE_TENSORFLOW
   auto linmod_end_time = boost::posix_time::microsec_clock::local_time();
 
   std::ostringstream similarity_summary;
@@ -252,7 +276,7 @@ void ImageMatch::Process() {
   cur_batch_frames_.clear();
   return;
 }
-
+#ifdef USE_TENSORFLOW
 // Create linear classifier for query with id = query_id
 void ImageMatch::CreateSession(int query_id) {
   if(do_linmod_) {
@@ -273,3 +297,4 @@ void ImageMatch::CreateSession(int query_id) {
     TF_CHECK_OK(current_query->session_->Run({}, {}, {"init"}, nullptr));
   }
 }
+#endif // USE_TENSORFLOW

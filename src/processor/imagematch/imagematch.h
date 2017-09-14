@@ -4,7 +4,9 @@
 
 #include <mutex>
 
+#ifdef USE_TENSORFLOW
 #include <tensorflow/core/public/session.h>
+#endif // USE_TENSORFLOW
 #include <Eigen/Dense>
 
 #include "common/types.h"
@@ -21,9 +23,11 @@ typedef struct query_t {
   std::vector<bool> is_positive;
   std::vector<std::string> paths;
   std::unique_ptr<Eigen::VectorXf> scores;
-  float skew;
+#ifdef USE_TENSORFLOW
   std::unique_ptr<tensorflow::Session> session_;
   bool linmod_ready;
+  float skew;
+#endif // USE_TENSORFLOW
 } query_t;
 
 class ImageMatch : public Processor {
@@ -33,7 +37,9 @@ class ImageMatch : public Processor {
 
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
+#ifdef USE_TENSORFLOW
   void UpdateLinmodMatrix(int query_id);
+#endif // USE_TENSORFLOW
   bool AddQuery(const std::string& path, std::vector<float> vishash,
                 int query_id, bool is_positive);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
@@ -48,20 +54,23 @@ class ImageMatch : public Processor {
   virtual void Process() override;
 
  private:
-  unsigned int batch_size_;
+
+  // Linear classifier related members
+#ifdef USE_TENSORFLOW
   void CreateSession(int query_number);
-  std::unique_ptr<Eigen::MatrixXf> queries_;
   std::string linear_model_path_;
   std::unique_ptr<Eigen::MatrixXf> linear_model_weights_;
+  bool do_linmod_;
+  bool linmod_ready_;
+#endif // USE_TENSORFLOW
+  unsigned int batch_size_;
+  std::unique_ptr<Eigen::MatrixXf> queries_;
   // vishash_batch_ stores the vishashes for the current batch of inputs
   std::unique_ptr<Eigen::MatrixXf> vishash_batch_;
-  bool do_linmod_;
   // cur_batch holds the current size of the batch
   unsigned int cur_batch_ = 0;
   // cur_batch_frames holds the actual frames in the batch
   std::vector<std::unique_ptr<Frame>> cur_batch_frames_;
-  bool linmod_ready_;
-
   std::unordered_map<int, query_t> query_data_;
   std::mutex query_guard_;
 };
