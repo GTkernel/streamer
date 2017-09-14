@@ -100,8 +100,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     std::unique_ptr<Frame> input = std::make_unique<Frame>();
     input->SetValue("original_image", img);
     ImageTransformer* it = new ImageTransformer(input_shape, true, true);
-    NeuralNetEvaluator* nne = new NeuralNetEvaluator(model_desc, input_shape, 1,
-                                                    vishash_layer);
+    NeuralNetEvaluator* nne =
+        new NeuralNetEvaluator(model_desc, input_shape, 1, vishash_layer);
     StreamPtr fake_input_stream = std::make_shared<Stream>();
     it->SetSource("input", fake_input_stream);
     nne->SetSource("input", it->GetSink("output"), "");
@@ -114,7 +114,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     std::vector<float> vishash(vishash_mat.begin<float>(),
                                vishash_mat.end<float>());
     vishash_size = vishash.size();
-    if(use_fake_nne) {
+    if (use_fake_nne) {
       imagematch->SetQueryMatrix(num_query, image_per_query, vishash_size);
     } else {
       for (int i = 0; i < num_query; ++i) {
@@ -179,10 +179,13 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       cv::Scalar outline_color(0, 0, 0);
       cv::Scalar label_color(200, 200, 250);
 
-      float score = frame->GetValue<std::vector<std::pair<int, float>>>("imagematch.scores").at(0).second;
-      cv::putText(img, std::to_string(score),
-                  label_point, CV_FONT_HERSHEY_DUPLEX, font_size, label_color,
-                  2, CV_AA);
+      float score = frame
+                        ->GetValue<std::vector<std::pair<int, float>>>(
+                            "imagematch.scores")
+                        .at(0)
+                        .second;
+      cv::putText(img, std::to_string(score), label_point,
+                  CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
 
       cv::Point fps_point(img.rows / 3, img.cols / 6);
 

@@ -32,9 +32,9 @@ ImageMatch::ImageMatch(const std::string& linear_model_path, bool do_linmod,
       batch_size_(batch_size),
       queries_(nullptr),
       vishash_batch_(nullptr) {
-        (void) linear_model_path;
-        (void) do_linmod;
-      }
+  (void)linear_model_path;
+  (void)do_linmod;
+}
 
 std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
@@ -213,35 +213,35 @@ void ImageMatch::Process() {
   bool all_ready = true;
   if (do_linmod_) {
     for (auto it = query_data_.begin(); it != query_data_.end(); ++it) {
-        tensorflow::Tensor x(
-            tensorflow::DT_FLOAT,
-            tensorflow::TensorShape({static_cast<long long int>(vishash_size)}));
-        std::copy_n((float*)activations.data, vishash_size,
-                    x.flat<float>().data());
+      tensorflow::Tensor x(
+          tensorflow::DT_FLOAT,
+          tensorflow::TensorShape({static_cast<long long int>(vishash_size)}));
+      std::copy_n((float*)activations.data, vishash_size,
+                  x.flat<float>().data());
 
-        tensorflow::Tensor expected(tensorflow::DT_FLOAT,
-                                    tensorflow::TensorShape({1}));
-        auto expected_flat = expected.flat<float>();
-        expected_flat.data()[0] = (*(it->second.scores))(0);
+      tensorflow::Tensor expected(tensorflow::DT_FLOAT,
+                                  tensorflow::TensorShape({1}));
+      auto expected_flat = expected.flat<float>();
+      expected_flat.data()[0] = (*(it->second.scores))(0);
 
-        std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
-        inputs.push_back(std::make_pair("x", x));
-        inputs.push_back(std::make_pair("expected:0", expected));
-        std::vector<tensorflow::Tensor> outputs;
+      std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
+      inputs.push_back(std::make_pair("x", x));
+      inputs.push_back(std::make_pair("expected:0", expected));
+      std::vector<tensorflow::Tensor> outputs;
 
-        TF_CHECK_OK(it->second.session_->Run(inputs, {}, {"train:0"}, &outputs));
+      TF_CHECK_OK(it->second.session_->Run(inputs, {}, {"train:0"}, &outputs));
 
-        TF_CHECK_OK(it->second.session_->Run(inputs, {"actual:0", "loss:0"}, {},
-                                             &outputs));
-        float loss = outputs.at(1).flat<float>()(0);
-        float actual_score = outputs.at(0).flat<float>()(0);
-        float expected_score = inputs.at(1).second.flat<float>()(0);
-        float difference = expected_score - actual_score;
-        if (difference < 0) difference *= -1;
-        if (loss < 0.001 && !it->second.linmod_ready) {
-          UpdateLinmodMatrix(it->second.query_id);
-        }
-        all_ready &= it->second.linmod_ready;
+      TF_CHECK_OK(it->second.session_->Run(inputs, {"actual:0", "loss:0"}, {},
+                                           &outputs));
+      float loss = outputs.at(1).flat<float>()(0);
+      float actual_score = outputs.at(0).flat<float>()(0);
+      float expected_score = inputs.at(1).second.flat<float>()(0);
+      float difference = expected_score - actual_score;
+      if (difference < 0) difference *= -1;
+      if (loss < 0.001 && !it->second.linmod_ready) {
+        UpdateLinmodMatrix(it->second.query_id);
+      }
+      all_ready &= it->second.linmod_ready;
     }
     linmod_ready_ = all_ready;
   }
@@ -280,7 +280,7 @@ void ImageMatch::Process() {
 #ifdef USE_TENSORFLOW
 // Create linear classifier for query with id = query_id
 void ImageMatch::CreateSession(int query_id) {
-  if(do_linmod_) {
+  if (do_linmod_) {
     query_t* current_query = &query_data_[query_id];
     tensorflow::GraphDef graph_def;
     tensorflow::Status status = ReadBinaryProto(tensorflow::Env::Default(),

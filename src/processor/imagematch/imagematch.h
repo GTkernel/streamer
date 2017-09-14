@@ -54,7 +54,6 @@ class ImageMatch : public Processor {
   virtual void Process() override;
 
  private:
-
   // Linear classifier related members
 #ifdef USE_TENSORFLOW
   void CreateSession(int query_number);
