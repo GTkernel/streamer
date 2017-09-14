@@ -179,7 +179,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       cv::Scalar outline_color(0, 0, 0);
       cv::Scalar label_color(200, 200, 250);
 
-      cv::putText(img, frame->GetValue<std::string>("ImageMatchSummary"),
+      float score = frame->GetValue<std::vector<std::pair<int, float>>>("imagematch.scores").at(0).second;
+      cv::putText(img, std::to_string(score),
                   label_point, CV_FONT_HERSHEY_DUPLEX, font_size, label_color,
                   2, CV_AA);
 
