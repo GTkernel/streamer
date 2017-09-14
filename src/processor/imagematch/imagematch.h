@@ -6,7 +6,7 @@
 
 #ifdef USE_TENSORFLOW
 #include <tensorflow/core/public/session.h>
-#endif // USE_TENSORFLOW
+#endif  // USE_TENSORFLOW
 #include <Eigen/Dense>
 
 #include "common/types.h"
@@ -27,7 +27,7 @@ typedef struct query_t {
   std::unique_ptr<tensorflow::Session> session_;
   bool linmod_ready;
   float skew;
-#endif // USE_TENSORFLOW
+#endif  // USE_TENSORFLOW
 } query_t;
 
 class ImageMatch : public Processor {
@@ -39,7 +39,7 @@ class ImageMatch : public Processor {
 
 #ifdef USE_TENSORFLOW
   void UpdateLinmodMatrix(int query_id);
-#endif // USE_TENSORFLOW
+#endif  // USE_TENSORFLOW
   bool AddQuery(const std::string& path, std::vector<float> vishash,
                 int query_id, bool is_positive);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
@@ -62,7 +62,7 @@ class ImageMatch : public Processor {
   std::unique_ptr<Eigen::MatrixXf> linear_model_weights_;
   bool do_linmod_;
   bool linmod_ready_;
-#endif // USE_TENSORFLOW
+#endif  // USE_TENSORFLOW
   unsigned int batch_size_;
   std::unique_ptr<Eigen::MatrixXf> queries_;
   // vishash_batch_ stores the vishashes for the current batch of inputs
