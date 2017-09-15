@@ -126,7 +126,8 @@ void Processor::ProcessorLoop() {
       auto source_stream = reader.second;
 
       auto frame = source_stream->PopFrame();
-      LOG(INFO) << GetStringForProcessorType(GetType()) << " received frame " << frame->GetValue<unsigned long>("frame_id");
+      LOG(INFO) << GetStringForProcessorType(GetType()) << " received frame "
+                << frame->GetValue<unsigned long>("frame_id");
       if (frame == nullptr) {
         // The only way for PopFrame() to return a nullptr when called without a
         // a timeout is if Stop() was called on the StreamReader. That should

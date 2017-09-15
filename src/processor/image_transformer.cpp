@@ -39,10 +39,7 @@ void ImageTransformer::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }
 
-StreamPtr ImageTransformer::GetSink() {
-    return Processor::GetSink(SINK_NAME);
-}
-
+StreamPtr ImageTransformer::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 void ImageTransformer::Process() {
   Timer timer;

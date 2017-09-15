@@ -18,7 +18,7 @@ class ImageTransformer : public Processor {
 
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
-  
+
   StreamPtr GetSink();
   using Processor::GetSink;
 

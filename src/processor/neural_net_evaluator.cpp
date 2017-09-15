@@ -108,7 +108,7 @@ void NeuralNetEvaluator::Process() {
     return;
   }
   std::vector<cv::Mat> cur_batch_;
-  for(auto& frame : cur_batch_frames_) {
+  for (auto& frame : cur_batch_frames_) {
     if (frame->Count("activations") > 0) {
       cur_batch_.push_back(frame->GetValue<cv::Mat>("activations"));
     } else {
@@ -135,9 +135,10 @@ void NeuralNetEvaluator::Process() {
     for (const auto& activations : activation_vector) {
       auto layer_name = layer_pair.first;
       cur_batch_frames_[batch_idx]->SetValue("activations", activations);
-      cur_batch_frames_[batch_idx]->SetValue("activations_layer_name", layer_name);
-      cur_batch_frames_[batch_idx]->SetValue("neural_net_evaluator.inference_time_micros",
-                             time_elapsed);
+      cur_batch_frames_[batch_idx]->SetValue("activations_layer_name",
+                                             layer_name);
+      cur_batch_frames_[batch_idx]->SetValue(
+          "neural_net_evaluator.inference_time_micros", time_elapsed);
       PushFrame(layer_name, std::move(cur_batch_frames_[batch_idx++]));
     }
   }

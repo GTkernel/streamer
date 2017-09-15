@@ -19,7 +19,8 @@
 template <typename DType>
 class CaffeModel : public Model {
  public:
-  CaffeModel(const ModelDesc& model_desc, Shape input_shape, size_t batch_size = 1);
+  CaffeModel(const ModelDesc& model_desc, Shape input_shape,
+             size_t batch_size = 1);
   virtual void Load() override;
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
       const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,

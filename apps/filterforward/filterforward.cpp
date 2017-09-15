@@ -5,34 +5,30 @@
 #include <unordered_set>
 #include <vector>
 
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
 #include <glog/logging.h>
 #include <gst/gst.h>
+#include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 #include "camera/camera_manager.h"
 #include "common/context.h"
 #include "model/model_manager.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
-#include "processor/processor.h"
-#include "processor/throttler.h"
-#include "processor/keyframe_detector/keyframe_detector.h"
-#include "processor/imagematch/imagematch.h"
-#include "processor/neural_net_evaluator.h"
 #include "processor/frame_writer.h"
 #include "processor/image_transformer.h"
+#include "processor/imagematch/imagematch.h"
+#include "processor/keyframe_detector/keyframe_detector.h"
+#include "processor/neural_net_evaluator.h"
+#include "processor/processor.h"
+#include "processor/throttler.h"
 
 namespace po = boost::program_options;
 
-void Run(const std::string& ff_conf, 
-         bool block, size_t queue_size,
-         const std::string& camera_name,
-         int input_fps, unsigned int tokens,
-         const std::string& model,
-         const std::string& layer,
-         size_t nne_batch_size,
-         const std::string& output_dir) {
+void Run(const std::string& ff_conf, bool block, size_t queue_size,
+         const std::string& camera_name, int input_fps, unsigned int tokens,
+         const std::string& model, const std::string& layer,
+         size_t nne_batch_size, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -41,11 +37,12 @@ void Run(const std::string& ff_conf,
   procs.push_back(camera);
 
   // Create frames directory and FrameWriter.
-  std::string frames_dir= output_dir + "frames/";
+  std::string frames_dir = output_dir + "frames/";
   boost::filesystem::path frames_dir_path(frames_dir);
   boost::filesystem::create_directory(frames_dir_path);
   std::unordered_set<std::string> fields;
-  auto writer = std::make_shared<FrameWriter>(fields, frames_dir, FrameWriter::FileFormat::BINARY);
+  auto writer = std::make_shared<FrameWriter>(fields, frames_dir,
+                                              FrameWriter::FileFormat::BINARY);
   writer->SetSource(camera->GetStream());
   writer->SetBlockOnPush(block);
   procs.push_back(writer);
@@ -64,8 +61,7 @@ void Run(const std::string& ff_conf,
 
   // Create ImageTransformer.
   auto model_desc = ModelManager::GetInstance().GetModelDesc(model);
-  Shape input_shape(3, model_desc.GetInputWidth(),
-                    model_desc.GetInputHeight());
+  Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   auto transformer =
       std::make_shared<ImageTransformer>(input_shape, true, true);
   transformer->SetSource(fc_entrance->GetSink());
@@ -74,14 +70,15 @@ void Run(const std::string& ff_conf,
 
   // Create NeuralNetEvaluator.
   std::vector<std::string> output_layer_names = {layer};
-  auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, nne_batch_size,
-                                                  output_layer_names);
+  auto nne = std::make_shared<NeuralNetEvaluator>(
+      model_desc, input_shape, nne_batch_size, output_layer_names);
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
   auto nne_stream = nne->GetSink(layer);
 
-  // Create ImageMatch level 0. Use the same batch size as the NeuralNetEvaluator.
+  // Create ImageMatch level 0. Use the same batch size as the
+  // NeuralNetEvaluator.
   auto im_0 = std::make_shared<ImageMatch>("", false, nne_batch_size);
   im_0->SetSource(nne_stream);
   im_0->SetBlockOnPush(block);
@@ -100,11 +97,12 @@ void Run(const std::string& ff_conf,
   }
 
   auto reader = fc_exit->GetSink()->Subscribe();
-  while(true) {
+  while (true) {
     auto frame = reader->PopFrame();
-    LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id") << " exiting pipeline";
+    LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id")
+              << " exiting pipeline";
     std::cout << "FPS: " << reader->GetHistoricalFps() << std::endl;
-    if(frame->IsStopFrame()) {
+    if (frame->IsStopFrame()) {
       break;
     }
   }
@@ -118,12 +116,13 @@ void Run(const std::string& ff_conf,
 int main(int argc, char* argv[]) {
   po::options_description desc("FilterForward");
   desc.add_options()("help,h", "Print the help message.");
-  desc.add_options()("config-dir,C", po::value<std::string>(),
-                     "The directory containing streamer's configuration files.");
-  desc.add_options()("ff-conf,f", po::value<std::string>(),
-                     "The file containing the keyframe detector's configuration.");
-  desc.add_options()("block,b",
-                     "Processors should block when pushing frames.");
+  desc.add_options()(
+      "config-dir,C", po::value<std::string>(),
+      "The directory containing streamer's configuration files.");
+  desc.add_options()(
+      "ff-conf,f", po::value<std::string>(),
+      "The file containing the keyframe detector's configuration.");
+  desc.add_options()("block,b", "Processors should block when pushing frames.");
   desc.add_options()("queue-size,q", po::value<size_t>()->default_value(16),
                      "queue size");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
@@ -171,7 +170,7 @@ int main(int argc, char* argv[]) {
   }
   std::string ff_conf = args["ff-conf"].as<std::string>();
   bool block = args.count("block");
-  size_t queue_size= args["queue-size"].as<size_t>();
+  size_t queue_size = args["queue-size"].as<size_t>();
   std::string camera = args["camera"].as<std::string>();
   int input_fps = args["input-fps"].as<int>();
   unsigned int tokens = args["tokens"].as<unsigned int>();
@@ -179,6 +178,7 @@ int main(int argc, char* argv[]) {
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  Run(ff_conf, block, queue_size, camera, input_fps, tokens, model, layer, nne_batch_size, output_dir);
+  Run(ff_conf, block, queue_size, camera, input_fps, tokens, model, layer,
+      nne_batch_size, output_dir);
   return 0;
 }
