@@ -61,7 +61,7 @@ void Processor::SetSource(const string& name, StreamPtr stream) {
   sources_[name] = stream;
 }
 
-bool Processor::Start() {
+bool Processor::Start(size_t buf_size) {
   LOG(INFO) << "Start called";
   CHECK(stopped_) << "Processor has already started";
 
@@ -73,7 +73,7 @@ bool Processor::Start() {
 
   // Subscribe sources
   for (auto& source : sources_) {
-    readers_.emplace(source.first, source.second->Subscribe());
+    readers_.emplace(source.first, source.second->Subscribe(buf_size));
   }
 
   stopped_ = false;
@@ -126,6 +126,7 @@ void Processor::ProcessorLoop() {
       auto source_stream = reader.second;
 
       auto frame = source_stream->PopFrame();
+      LOG(INFO) << GetStringForProcessorType(GetType()) << " received frame " << frame->GetValue<unsigned long>("frame_id");
       if (frame == nullptr) {
         // The only way for PopFrame() to return a nullptr when called without a
         // a timeout is if Stop() was called on the StreamReader. That should

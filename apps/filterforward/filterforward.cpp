@@ -26,7 +26,8 @@
 namespace po = boost::program_options;
 
 void Run(const std::string& ff_conf, 
-         bool block, const std::string& camera_name,
+         bool block, size_t queue_size,
+         const std::string& camera_name,
          int input_fps, unsigned int tokens,
          const std::string& model,
          const std::string& layer,
@@ -36,6 +37,7 @@ void Run(const std::string& ff_conf,
 
   // Create Camera.
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  camera->SetBlockOnPush(block);
   procs.push_back(camera);
 
   // Create frames directory and FrameWriter.
@@ -51,11 +53,13 @@ void Run(const std::string& ff_conf,
   // Create Throttler.
   auto throttler = std::make_shared<Throttler>(input_fps);
   throttler->SetSource(camera->GetStream());
+  throttler->SetBlockOnPush(block);
   procs.push_back(throttler);
 
   // Create FlowControlEntrance.
   auto fc_entrance = std::make_shared<FlowControlEntrance>(tokens);
   fc_entrance->SetSource(throttler->GetSink());
+  fc_entrance->SetBlockOnPush(block);
   procs.push_back(fc_entrance);
 
   // Create ImageTransformer.
@@ -87,17 +91,19 @@ void Run(const std::string& ff_conf,
   // FlowControlExit
   auto fc_exit = std::make_shared<FlowControlExit>();
   fc_exit->SetSource(im_0->GetSink());
+  fc_exit->SetBlockOnPush(block);
   procs.push_back(fc_exit);
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
-    (*procs_it)->Start();
+    (*procs_it)->Start(queue_size);
   }
 
   auto reader = fc_exit->GetSink()->Subscribe();
   while(true) {
     auto frame = reader->PopFrame();
     LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id") << " exiting pipeline";
+    std::cout << "FPS: " << reader->GetHistoricalFps() << std::endl;
     if(frame->IsStopFrame()) {
       break;
     }
@@ -118,6 +124,8 @@ int main(int argc, char* argv[]) {
                      "The file containing the keyframe detector's configuration.");
   desc.add_options()("block,b",
                      "Processors should block when pushing frames.");
+  desc.add_options()("queue-size,q", po::value<size_t>()->default_value(16),
+                     "queue size");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
   desc.add_options()("input-fps,i", po::value<int>()->default_value(30),
@@ -163,6 +171,7 @@ int main(int argc, char* argv[]) {
   }
   std::string ff_conf = args["ff-conf"].as<std::string>();
   bool block = args.count("block");
+  size_t queue_size= args["queue-size"].as<size_t>();
   std::string camera = args["camera"].as<std::string>();
   int input_fps = args["input-fps"].as<int>();
   unsigned int tokens = args["tokens"].as<unsigned int>();
@@ -170,6 +179,6 @@ int main(int argc, char* argv[]) {
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  Run(ff_conf, block, camera, input_fps, tokens, model, layer, nne_batch_size, output_dir);
+  Run(ff_conf, block, queue_size, camera, input_fps, tokens, model, layer, nne_batch_size, output_dir);
   return 0;
 }

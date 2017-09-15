@@ -23,7 +23,7 @@ class StreamReader {
   friend class Stream;
 
  public:
-  StreamReader(Stream* stream, size_t max_buffer_size = 5);
+  StreamReader(Stream* stream, size_t max_buffer_size = 16);
 
   /**
    * @brief Pop a frame, and timeout if no frame available for a given time
@@ -107,7 +107,7 @@ class Stream {
    * @brief Get a reader from the stream.
    * @param max_buffer_size The buffer size limit of the reader.
    */
-  StreamReader* Subscribe(size_t max_buffer_size = 5);
+  StreamReader* Subscribe(size_t max_buffer_size = 16);
 
   /**
    * @brief Unsubscribe from the stream

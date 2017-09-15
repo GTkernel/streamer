@@ -153,11 +153,6 @@ void ImageMatch::Process() {
     // Add new vishash to batch matrix
     vishash_batch_->col(cur_batch_) = vishash_map;
     vishash_batch_->col(cur_batch_).stableNormalize();
-    // release token if necessary
-    if (frame->GetFlowControlEntrance()) {
-      frame->GetFlowControlEntrance()->ReturnToken();
-      frame->SetFlowControlEntrance(nullptr);
-    }
     cur_batch_frames_.push_back(std::move(frame));
 
     // Increment batch counter

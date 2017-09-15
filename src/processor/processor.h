@@ -40,7 +40,7 @@ class Processor {
    * sinks.
    * @return True if start successfully, false otherwise.
    */
-  bool Start();
+  bool Start(size_t buf_size = 16);
   /**
    * @brief Stop processing
    * @return True if stop sucsessfully, false otherwise.
