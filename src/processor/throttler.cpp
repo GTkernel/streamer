@@ -5,12 +5,23 @@
 #include "processor/flow_control/flow_control_entrance.h"
 #include "streamer.h"
 
+constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
+
 Throttler::Throttler(int fps)
-    : Processor(PROCESSOR_TYPE_THROTTLER, {"input"}, {"output"}), fps_(fps) {}
+    : Processor(PROCESSOR_TYPE_THROTTLER, {SOURCE_NAME}, {SINK_NAME}), fps_(fps) {}
 
 std::shared_ptr<Throttler> Throttler::Create(const FactoryParamsType& params) {
   int fps = std::stoi(params.at("fps"));
   return std::make_shared<Throttler>(fps);
+}
+
+void Throttler::SetSource(StreamPtr stream) {
+  Processor::SetSource(SOURCE_NAME, stream);
+}
+
+StreamPtr Throttler::GetSink() {
+    return Processor::GetSink(SINK_NAME);
 }
 
 bool Throttler::Init() {
@@ -22,7 +33,7 @@ bool Throttler::Init() {
 bool Throttler::OnStop() { return true; }
 
 void Throttler::Process() {
-  auto frame = GetFrame("input");
+  auto frame = GetFrame(SOURCE_NAME);
   double elapsed_ms = timer_.ElapsedMSec();
   if (elapsed_ms < delay_ms_) {
     LOG(WARNING) << "Frame rate too high. Dropping frame: "
@@ -42,7 +53,7 @@ void Throttler::Process() {
 
   // Restart timer
   timer_.Start();
-  PushFrame("output", std::move(frame));
+  PushFrame(SINK_NAME, std::move(frame));
 }
 
 void Throttler::SetFps(int fps) {
