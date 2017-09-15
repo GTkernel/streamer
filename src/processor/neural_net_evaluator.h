@@ -53,7 +53,7 @@ class NeuralNetEvaluator : public Processor {
   Shape input_shape_;
   std::string input_layer_name_;
   std::unique_ptr<Model> model_;
-  std::vector<cv::Mat> cur_batch_;
+  std::vector<std::unique_ptr<Frame>> cur_batch_frames_;
   size_t batch_size_;
 };
 
