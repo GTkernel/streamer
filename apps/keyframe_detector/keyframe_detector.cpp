@@ -74,12 +74,24 @@ void Feeder(size_t fake_vishash_length, unsigned long num_frames,
   vishash_stream->PushFrame(std::move(stop_frame), true);
 }
 
+int NumFramesPerTopLevelRun(std::vector<std::pair<float, size_t>> buf_params,
+                            int end_idx) {
+  if (end_idx == 0) {
+    return buf_params.at(0).second;
+  }
+  size_t buf_len = buf_params.at(end_idx).second;
+  size_t buf_len_prev = buf_params.at(end_idx - 1).second;
+  float sel_prev = buf_params.at(end_idx - 1).first;
+  return buf_len / (buf_len_prev * sel_prev) *
+         NumFramesPerTopLevelRun(buf_params, end_idx - 1);
+}
+
 void Run(const std::string& camera_name, const std::string& model,
-         const std::string& layer, float sel, size_t buf_len, size_t levels,
-         const std::string& output_dir, bool save_jpegs, bool block,
-         bool generate_fake_vishashes, size_t fake_vishash_length,
-         unsigned long num_frames, unsigned long start_id,
-         unsigned long end_id) {
+         const std::string& layer, const std::string& output_dir,
+         bool save_jpegs, bool block, bool generate_fake_vishashes,
+         size_t fake_vishash_length, unsigned long num_frames,
+         unsigned long start_id, unsigned long end_id,
+         const std::string& kd_params_file) {
   std::vector<std::shared_ptr<Processor>> procs;
   // This stream will contain layer activations to feed into the keyframe
   // detector.
@@ -139,7 +151,8 @@ void Run(const std::string& camera_name, const std::string& model,
   }
 
   // Create KeyframeDetector.
-  std::vector<std::pair<float, size_t>> buf_params(levels, {sel, buf_len});
+  std::vector<std::pair<float, size_t>> buf_params = {
+      {0.17, 5}, {0.17, 5}, {0.17, 5}, {0.17, 5}};
   auto kd = std::make_shared<KeyframeDetector>(buf_params);
   kd->SetSource(vishash_stream);
   kd->SetBlockOnPush(block);
@@ -166,6 +179,9 @@ void Run(const std::string& camera_name, const std::string& model,
   // Signal the feeder thread to start. If there is no feeder thread, then this
   // does nothing.
   started = true;
+
+  LOG(INFO) << "Num frames per top level run: "
+            << NumFramesPerTopLevelRun(buf_params, buf_params.size() - 1);
 
   std::ofstream micros_log(output_dir + "/kd_micros.txt");
   while (true) {
@@ -207,13 +223,6 @@ int main(int argc, char* argv[]) {
   desc.add_options()("layer,l", po::value<std::string>(),
                      "The layer to extract and use as the basis for keyframe "
                      "detection");
-  desc.add_options()("sel,s", po::value<float>()->default_value(0.1),
-                     "The selectivity to use, in the range (0, 1]");
-  desc.add_options()("buf-len,b", po::value<size_t>()->default_value(1000),
-                     "The number of frames to buffer before detecting "
-                     "keyframes.");
-  desc.add_options()("levels,v", po::value<size_t>()->default_value(1),
-                     "The number of hierarchy levels to create.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the keyframe JPEGs.");
   desc.add_options()("save-jpegs,j",
@@ -241,6 +250,9 @@ int main(int argc, char* argv[]) {
                      po::value<unsigned long>()->default_value(MAX_END_ID),
                      "The frame id (starting from 0) of the last frame to "
                      "process.");
+  desc.add_options()("kd-params-file", po::value<std::string>()->required(),
+                     "The file in which keyframe detector configuration params "
+                     "are stored.");
 
   // Parse command line arguments.
   po::variables_map args;
@@ -282,9 +294,6 @@ int main(int argc, char* argv[]) {
   if (args.count("layer")) {
     layer = args["layer"].as<std::string>();
   }
-  float sel = args["sel"].as<float>();
-  size_t buf_len = args["buf-len"].as<size_t>();
-  size_t levels = args["levels"].as<size_t>();
   std::string output_dir = args["output-dir"].as<std::string>();
   bool save_jpegs = args.count("save-jpegs");
   bool block = args.count("block-on-push");
@@ -293,6 +302,7 @@ int main(int argc, char* argv[]) {
   unsigned long num_frames = args["num-frames"].as<unsigned long>();
   unsigned long start_id = args["start-frame"].as<unsigned long>();
   unsigned long end_id = args["end-frame"].as<unsigned long>();
+  std::string kd_params_file = args["kd-params-file"].as<std::string>();
 
   if (generate_fake_vishashes) {
     if (save_jpegs) {
@@ -324,8 +334,8 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  Run(camera, model, layer, sel, buf_len, levels, output_dir, save_jpegs, block,
+  Run(camera, model, layer, output_dir, save_jpegs, block,
       generate_fake_vishashes, fake_vishash_length, num_frames, start_id,
-      end_id);
+      end_id, kd_params_file);
   return 0;
 }
