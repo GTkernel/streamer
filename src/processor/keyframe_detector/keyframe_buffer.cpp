@@ -28,11 +28,8 @@ void KeyframeBuffer::SetSelectivity(float new_sel) {
 void KeyframeBuffer::EnableLog(std::string output_dir,
                                std::string output_prefix) {
   std::ostringstream filepath;
-  // The buffer is one larger than the target buffer length to allow room for
-  // the last keyframe from the previous buffer.
-  idx_t buf_len = buf_.size() - 1;
   filepath << output_dir << "/" << output_prefix << "_" << sel_ << "_"
-           << buf_len << ".log";
+           << target_buf_len_ << ".log";
   log_.open(filepath.str());
 }
 
