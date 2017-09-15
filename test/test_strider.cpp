@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "processor/strider.h"
+#include "stream/frame.h"
 #include "stream/stream.h"
 
 TEST(StriderTest, TestBasic) {
