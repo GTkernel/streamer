@@ -280,6 +280,7 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
   // Construct frame with input image in it
   auto input_frame = std::make_unique<Frame>();
+  input_frame->SetValue("frame_id", (unsigned long)0);
   input_frame->SetValue("original_image", original_image);
   input_frame->SetValue("image", preprocessed_image);
 

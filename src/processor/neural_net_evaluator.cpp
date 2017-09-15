@@ -124,22 +124,23 @@ void NeuralNetEvaluator::Process() {
   auto start_time = boost::posix_time::microsec_clock::local_time();
   auto layer_outputs =
       model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names);
-  auto time_elapsed =
+  long time_elapsed =
       (boost::posix_time::microsec_clock::local_time() - start_time)
           .total_microseconds();
 
-  int batch_idx = 0;
   // Push the activations for each published layer to their respective sink.
   for (const auto& layer_pair : layer_outputs) {
+    int batch_idx = 0;
     auto activation_vector = layer_pair.second;
     for (const auto& activations : activation_vector) {
       auto layer_name = layer_pair.first;
-      cur_batch_frames_[batch_idx]->SetValue("activations", activations);
-      cur_batch_frames_[batch_idx]->SetValue("activations_layer_name",
+      std::unique_ptr<Frame> frame_copy = std::make_unique<Frame>(cur_batch_frames_.at(batch_idx++));
+      frame_copy->SetValue("activations", activations);
+      frame_copy->SetValue("activations_layer_name",
                                              layer_name);
-      cur_batch_frames_[batch_idx]->SetValue(
+      frame_copy->SetValue(
           "neural_net_evaluator.inference_time_micros", time_elapsed);
-      PushFrame(layer_name, std::move(cur_batch_frames_[batch_idx++]));
+      PushFrame(layer_name, std::move(frame_copy));
     }
   }
   cur_batch_frames_.clear();
