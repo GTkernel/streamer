@@ -74,7 +74,7 @@ class ModelDesc {
  */
 class Model {
  public:
-  Model(const ModelDesc& model_desc, Shape input_shape);
+  Model(const ModelDesc& model_desc, Shape input_shape, size_t batch_size = 1);
   virtual ~Model();
   ModelDesc GetModelDesc() const;
   virtual void Load() = 0;
@@ -90,6 +90,7 @@ class Model {
  protected:
   ModelDesc model_desc_;
   Shape input_shape_;
+  size_t batch_size_;
 };
 
 #endif  // STREAMER_MODEL_MODEL_H_

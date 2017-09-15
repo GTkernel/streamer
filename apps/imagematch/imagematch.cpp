@@ -65,7 +65,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   std::shared_ptr<Processor> transformer(
       new ImageTransformer(input_shape, true, true));
-  auto entrance = std::make_shared<FlowControlEntrance>(10);
+  auto entrance = std::make_shared<FlowControlEntrance>(batch_size);
   std::vector<std::string> vishash_layer = {vishash_layer_name};
   NeuralNetEvaluator* neural_net_eval = new NeuralNetEvaluator(
       model_desc, input_shape, batch_size, vishash_layer);

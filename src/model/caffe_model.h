@@ -19,19 +19,18 @@
 template <typename DType>
 class CaffeModel : public Model {
  public:
-  CaffeModel(const ModelDesc& model_desc, Shape input_shape);
+  CaffeModel(const ModelDesc& model_desc, Shape input_shape, size_t batch_size = 1);
   virtual void Load() override;
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
       const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
       const std::vector<std::string>& output_layer_names) override;
-  virtual void Forward();
 
  private:
   std::unique_ptr<caffe::Net<DType>> net_;
 
-  static cv::Mat BlobToMat2d(caffe::Blob<DType>* src);
-  static cv::Mat BlobToMat4d(caffe::Blob<DType>* src);
-  cv::Mat GetLayerOutput(const std::string& layer_name) const;
+  cv::Mat BlobToMat2d(caffe::Blob<DType>* src, int batch_idx) const;
+  cv::Mat BlobToMat4d(caffe::Blob<DType>* src, int batch_idx) const;
+  cv::Mat GetLayerOutput(const std::string& layer_name, int batch_idx) const;
 };
 
 #endif  // STREAMER_MODEL_CAFFE_MODEL_H_

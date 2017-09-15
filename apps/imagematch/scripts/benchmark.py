@@ -35,14 +35,13 @@ def main():
   args = parser.parse_args();
   trials = args.trials;
   warmup_iters = args.warmup_iters;
-  cmd =  ['/home/tskim/streamer/build/apps/imagematch',
-          '-c', 'GST_TEST',
+  cmd =  ['/home/tskim/imagematch-pr/build/apps/imagematch',
+          '-c', 'GST_TEST_FAST',
           '-m', 'mobilenet',
-          '-C', '/home/tskim/streamer/config/',
-          '-v', 'prob',
-          #'-q', '/home/tskim/models/input.jpg']
-          '-q', 'fake']
-  cmd.append('--use_fake_nne');
+          '-C', '/home/tskim/imagematch-pr/config/',
+          '-v', 'pool6',
+          '-q', '/home/tskim/models/input.jpg']
+  #cmd.append('--use_fake_nne');
   experiment_file = open(args.experiment_filename, "r");
   DEVNULL = open(os.devnull, 'w');
 
