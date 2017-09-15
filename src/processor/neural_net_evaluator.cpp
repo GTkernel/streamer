@@ -134,12 +134,12 @@ void NeuralNetEvaluator::Process() {
     auto activation_vector = layer_pair.second;
     for (const auto& activations : activation_vector) {
       auto layer_name = layer_pair.first;
-      std::unique_ptr<Frame> frame_copy = std::make_unique<Frame>(cur_batch_frames_.at(batch_idx++));
+      std::unique_ptr<Frame> frame_copy =
+          std::make_unique<Frame>(cur_batch_frames_.at(batch_idx++));
       frame_copy->SetValue("activations", activations);
-      frame_copy->SetValue("activations_layer_name",
-                                             layer_name);
-      frame_copy->SetValue(
-          "neural_net_evaluator.inference_time_micros", time_elapsed);
+      frame_copy->SetValue("activations_layer_name", layer_name);
+      frame_copy->SetValue("neural_net_evaluator.inference_time_micros",
+                           time_elapsed);
       PushFrame(layer_name, std::move(frame_copy));
     }
   }
