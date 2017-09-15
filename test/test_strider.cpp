@@ -8,7 +8,7 @@
 #include "stream/frame.h"
 #include "stream/stream.h"
 
-TEST(StriderTest, TestBasic) {
+TEST(TestStrider, TestBasic) {
   unsigned long num_output_frames = 5;
   unsigned long stride = 10;
 
