@@ -101,8 +101,8 @@ CaffeModel<DType>::Evaluate(
   for (const auto& input : input_map.begin()->second) {
     // Subtract the mean image
     cv::Mat input_normalized;
-    cv::subtract(input, mean_image, input);
-    input *= model_desc_.GetInputScale();
+    cv::subtract(input, mean_image, input_normalized);
+    input_normalized *= model_desc_.GetInputScale();
 
     // Format the input data in the way that Caffe expects
     // This loop creates a cv::Mat for each channel that is configured to point
