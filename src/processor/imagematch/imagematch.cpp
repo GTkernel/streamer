@@ -113,6 +113,10 @@ bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
   return true;
 }
 
+void ImageMatch::SetSink(StreamPtr stream) {
+  Processor::SetSink(SINK_NAME, stream);
+}
+
 void ImageMatch::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }

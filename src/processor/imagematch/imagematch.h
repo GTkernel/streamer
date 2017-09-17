@@ -43,6 +43,8 @@ class ImageMatch : public Processor {
   bool AddQuery(const std::string& path, std::vector<float> vishash,
                 int query_id, bool is_positive);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
+  void SetSink(StreamPtr stream);
+  using Processor::SetSink;
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
   StreamPtr GetSink();

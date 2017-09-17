@@ -15,6 +15,10 @@ std::shared_ptr<FlowControlExit> FlowControlExit::Create(
   return std::make_shared<FlowControlExit>();
 }
 
+void FlowControlExit::SetSink(StreamPtr stream) {
+  Processor::SetSink(SINK_NAME, stream);
+}
+
 void FlowControlExit::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }

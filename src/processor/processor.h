@@ -47,6 +47,8 @@ class Processor {
    */
   bool Stop();
 
+  void SetSink(const std::string& name, StreamPtr new_sink);
+
   /**
    * @brief Get sink stream of the processor by name.
    * @param name Name of the sink.

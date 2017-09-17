@@ -130,7 +130,7 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   // FlowControlExit
   auto fc_exit = std::make_shared<FlowControlExit>();
   fc_exit->SetSource(im_0->GetSink());
-  // fc_exit->SetSink(network_stream);
+  fc_exit->SetSink(network_stream);
   fc_exit->SetBlockOnPush(block);
   procs.push_back(fc_exit);
 
@@ -146,8 +146,8 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
     unsigned int kd_batch_size =
         ceil(kd_buf_params.first * kd_buf_params.second);
     auto additional_im = std::make_shared<ImageMatch>("", false, kd_batch_size);
-    additional_im->SetSource(kd->GetSink(kd->GetSinkName((size_t)i)));
-    // additional_im->SetSink(network_stream);
+    additional_im->SetSource(kd->GetSink("output_" + std::to_string(i)));
+    additional_im->SetSink(network_stream);
     additional_im->SetBlockOnPush(block);
     additional_im->SetQueryMatrix(nums_queries.at(i), 1, 1024);
     procs.push_back(additional_im);
