@@ -41,6 +41,10 @@ void KeyframeDetector::SetSelectivity(size_t buf_idx, float new_sel) {
   bufs_.at(buf_idx)->SetSelectivity(new_sel);
 }
 
+std::string KeyframeDetector::GetSinkName(size_t buf_idx) {
+  return SINK_NAME_PREFIX + std::to_string(buf_idx);
+}
+
 void KeyframeDetector::SetSource(StreamPtr stream) {
   NeuralNetConsumer::SetSource(SOURCE_NAME, stream);
 }
@@ -114,8 +118,4 @@ void KeyframeDetector::Setup(std::vector<std::pair<float, size_t>> buf_params) {
     bufs_.push_back(std::make_unique<KeyframeBuffer>(sel, buf_len));
     sinks_.insert({GetSinkName(i), StreamPtr(new Stream())});
   }
-}
-
-std::string KeyframeDetector::GetSinkName(size_t buf_idx) {
-  return SINK_NAME_PREFIX + std::to_string(buf_idx);
 }

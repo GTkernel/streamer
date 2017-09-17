@@ -37,6 +37,7 @@ class KeyframeDetector : public NeuralNetConsumer {
   void EnableLog(std::string output_dir);
   // "new_sel" must be in the range (0, 1].
   void SetSelectivity(size_t buf_idx, float new_selelectivity);
+  std::string GetSinkName(size_t buf_idx);
 
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
@@ -47,7 +48,6 @@ class KeyframeDetector : public NeuralNetConsumer {
 
  private:
   void Setup(std::vector<std::pair<float, size_t>> buf_params);
-  std::string GetSinkName(size_t buf_idx);
 
   // The entries detect keyframes at progressively coarser granularities.
   std::vector<std::unique_ptr<KeyframeBuffer>> bufs_;

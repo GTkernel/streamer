@@ -146,7 +146,7 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
     unsigned int kd_batch_size =
         ceil(kd_buf_params.first * kd_buf_params.second);
     auto additional_im = std::make_shared<ImageMatch>("", false, kd_batch_size);
-    additional_im->SetSource(kd->GetSink("output_" + std::to_string(i)));
+    additional_im->SetSource(kd->GetSink(kd->GetSinkName((size_t)i)));
     // additional_im->SetSink(network_stream);
     additional_im->SetBlockOnPush(block);
     additional_im->SetQueryMatrix(nums_queries.at(i), 1, 1024);
