@@ -47,7 +47,12 @@ class Processor {
    */
   bool Stop();
 
-  void SetSink(const std::string& name, StreamPtr new_sink);
+  /**
+   * @brief Override a sink stream.
+   * @param name Name of the sink.
+   * @param stream Stream to be set.
+   */
+  void SetSink(const std::string& name, StreamPtr stream);
 
   /**
    * @brief Get sink stream of the processor by name.

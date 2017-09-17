@@ -1,9 +1,14 @@
 
+#include <atomic>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
+#include <thread>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <glog/logging.h>
@@ -11,8 +16,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
+#include "camera/camera.h"
 #include "camera/camera_manager.h"
 #include "common/context.h"
+#include "common/types.h"
 #include "model/model_manager.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
@@ -23,9 +30,27 @@
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
 #include "processor/throttler.h"
+#include "stream/frame.h"
+#include "stream/stream.h"
 #include "utils/string_utils.h"
 
 namespace po = boost::program_options;
+
+// Used to signal all threads that the pipeline should stop.
+std::atomic<bool> stopped(false);
+
+// Designed to be run in its own thread. Detects when a stop frame is sent to
+// the provided stream and sets "stopped" to true.
+void Stopper(StreamPtr highest_stream) {
+  auto reader = highest_stream->Subscribe();
+  while (true) {
+    if (reader->PopFrame()->IsStopFrame()) {
+      stopped = true;
+      break;
+    }
+  }
+  reader->UnSubscribe();
+}
 
 void Run(const std::string& ff_conf, bool block, size_t queue_size,
          const std::string& camera_name, int input_fps, unsigned int tokens,
@@ -140,6 +165,9 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   kd->SetBlockOnPush(block);
   procs.push_back(kd);
 
+  // This is the sink stream of the ImageMatch processor at the highest level of
+  // the hierarchy.
+  StreamPtr highest_stream;
   // Create additional ImageMatch levels.
   for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
     std::pair<float, size_t> kd_buf_params = buf_params.at(i);
@@ -151,28 +179,41 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
     additional_im->SetBlockOnPush(block);
     additional_im->SetQueryMatrix(nums_queries.at(i), 1, 1024);
     procs.push_back(additional_im);
+
+    if (i == nums_queries.size() - 1) {
+      highest_stream = additional_im->GetSink();
+    }
   }
 
-  auto reader = network_stream->Subscribe();
+  // Launch stopped thread.
+  std::thread stopper_thread([highest_stream] { Stopper(highest_stream); });
+  // This reader will contain all frame that should be sent to the datacenter.
+  auto network_reader = network_stream->Subscribe();
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start(queue_size);
   }
 
-  while (true) {
-    auto frame = reader->PopFrame();
-    LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id")
-              << " sent to datacenter";
-    if (frame->IsStopFrame()) {
-      break;
+  // Loop until the stopper thread signals that we need to stop.
+  while (!stopped) {
+    auto frame = network_reader->PopFrame();
+    if (!frame->IsStopFrame()) {
+      // TODO: Serialize frame, measure its size in bytes, and use that to
+      //       compute FilterForward's network bandwidth usage.
+      LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id")
+                << " sent to datacenter.";
+      LOG(INFO) << "Total network FPS: " << network_reader->GetPushFps();
     }
   }
+  network_reader->UnSubscribe();
 
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
     proc->Stop();
   }
+
+  stopper_thread.join();
 }
 
 int main(int argc, char* argv[]) {

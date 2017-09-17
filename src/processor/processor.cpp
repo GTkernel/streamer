@@ -42,8 +42,8 @@ Processor::~Processor() {
   delete control_socket_;
 }
 
-void Processor::SetSink(const std::string& name, StreamPtr new_sink) {
-  sinks_[name] = new_sink;
+void Processor::SetSink(const std::string& name, StreamPtr stream) {
+  sinks_[name] = stream;
 }
 
 StreamPtr Processor::GetSink(const string& name) {
