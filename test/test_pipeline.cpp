@@ -1,13 +1,17 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 11/6/16.
-//
+#include <string>
 
-#include <streamer.h>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+#include <opencv2/opencv.hpp>
+
+#include "camera/camera.h"
+#include "camera/camera_manager.h"
 #include "pipeline/pipeline.h"
+#include "pipeline/spl_parser.h"
+#include "processor/processor.h"
+#include "stream/frame.h"
 
-TEST(PIPELINE_TEST, TEST_CONSTRUCT_PIPELINE) {
-  string pipeline_desc = R"pipeline(
+TEST(TestPipeline, TestConstructPipeline) {
+  std::string pipeline_desc = R"pipeline(
 # classifier = processor(ImageClassifier, model=AlexNet)
 ip_cam = camera(GST_TEST)
 transformer = processor(ImageTransformer, height=227, width=227)
@@ -18,44 +22,35 @@ transformer[input] = ip_cam[output]
 
   SPLParser parser;
   std::vector<SPLStatement> stmts;
-  bool success = parser.Parse(pipeline_desc, stmts);
-  EXPECT_TRUE(success);
+  ASSERT_TRUE(parser.Parse(pipeline_desc, stmts));
 
   auto pipeline = Pipeline::ConstructPipeline(stmts);
-
-  EXPECT_TRUE(pipeline != nullptr);
-
+  ASSERT_TRUE(pipeline != nullptr);
   auto ip_cam = pipeline->GetProcessor("ip_cam");
+  ASSERT_TRUE(ip_cam != nullptr);
   auto transformer = pipeline->GetProcessor("transformer");
-
-  EXPECT_TRUE(ip_cam != nullptr);
-  EXPECT_TRUE(transformer != nullptr);
+  ASSERT_TRUE(transformer != nullptr);
 
   // Start the pipeline
-  success = pipeline->Start();
-  EXPECT_TRUE(success);
+  ASSERT_TRUE(pipeline->Start());
+  ASSERT_TRUE(ip_cam->IsStarted());
+  ASSERT_TRUE(transformer->IsStarted());
 
-  EXPECT_TRUE(ip_cam->IsStarted());
-  EXPECT_TRUE(transformer->IsStarted());
+  auto reader = transformer->GetSink("output")->Subscribe();
+  auto frame = reader->PopFrame();
+  const auto& transformed_image = frame->GetValue<cv::Mat>("image");
+  const auto& original_image = frame->GetValue<cv::Mat>("original_image");
 
-  if (ip_cam->IsStarted() && transformer->IsStarted()) {
-    auto output = transformer->GetSink("output");
-    auto reader = output->Subscribe();
-    auto frame = reader->PopFrame();
-    const auto& transformed_image = frame->GetValue<cv::Mat>("image");
-    const auto& original_image = frame->GetValue<cv::Mat>("original_image");
-    reader->UnSubscribe();
+  ASSERT_EQ(227, transformed_image.rows);
+  ASSERT_EQ(227, transformed_image.cols);
 
-    EXPECT_EQ(227, transformed_image.rows);
-    EXPECT_EQ(227, transformed_image.cols);
-
-    auto camera = CameraManager::GetInstance().GetCamera("GST_TEST");
-    EXPECT_EQ(original_image.cols, camera->GetWidth());
-    EXPECT_EQ(original_image.rows, camera->GetHeight());
-  }
+  auto camera = CameraManager::GetInstance().GetCamera("GST_TEST");
+  ASSERT_EQ(original_image.cols, camera->GetWidth());
+  ASSERT_EQ(original_image.rows, camera->GetHeight());
 
   // Stop the pipeline
+  reader->UnSubscribe();
   pipeline->Stop();
-  EXPECT_TRUE(!ip_cam->IsStarted());
-  EXPECT_TRUE(!transformer->IsStarted());
+  ASSERT_TRUE(!ip_cam->IsStarted());
+  ASSERT_TRUE(!transformer->IsStarted());
 }
