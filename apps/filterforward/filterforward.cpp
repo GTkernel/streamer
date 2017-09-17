@@ -58,7 +58,7 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
          size_t nne_batch_size, const std::string& output_dir) {
   // Parse the ff_conf file.
   bool on_first_line = true;
-  int first_im_num_queries;
+  int first_im_num_queries = 0;
   std::vector<std::pair<float, size_t>> buf_params;
   std::vector<int> nums_queries;
   std::ifstream ff_conf_file(ff_conf);
