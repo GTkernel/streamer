@@ -1,4 +1,5 @@
 
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -22,6 +23,7 @@
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
 #include "processor/throttler.h"
+#include "utils/string_utils.h"
 
 namespace po = boost::program_options;
 
@@ -29,6 +31,43 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
          const std::string& camera_name, int input_fps, unsigned int tokens,
          const std::string& model, const std::string& layer,
          size_t nne_batch_size, const std::string& output_dir) {
+  // Parse the ff_conf file.
+  bool on_first_line = true;
+  int first_im_num_queries;
+  std::vector<std::pair<float, size_t>> buf_params;
+  std::vector<int> nums_queries;
+  std::ifstream ff_conf_file(ff_conf);
+  std::string line;
+  unsigned int level_counter = 0;
+  while (std::getline(ff_conf_file, line)) {
+    std::vector<std::string> args = SplitString(line, ",");
+    if (StartsWith(line, "#")) {
+      // Ignore comment lines.
+      continue;
+    }
+    CHECK(args.size() == 3)
+        << "Each line of the ff_conf file must contain three items: "
+        << "Selectivity,BufferLength,NumQueries";
+
+    float sel = std::stof(args.at(0));
+    unsigned long buf_len = std::stoul(args.at(1));
+    int num_queries = std::stoi(args.at(2));
+
+    std::ostringstream msg;
+    msg << "Level " << level_counter << " - ";
+    if (on_first_line) {
+      first_im_num_queries = num_queries;
+      on_first_line = false;
+    } else {
+      buf_params.push_back({sel, (size_t)buf_len});
+      nums_queries.push_back(num_queries);
+      msg << "selectivity: " << sel << ", buffer length: " << buf_len << ", ";
+    }
+    msg << "number of queries: " << num_queries;
+    LOG(INFO) << msg.str();
+    ++level_counter;
+  }
+
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -82,26 +121,49 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   auto im_0 = std::make_shared<ImageMatch>("", false, nne_batch_size);
   im_0->SetSource(nne_stream);
   im_0->SetBlockOnPush(block);
-  im_0->SetQueryMatrix(1, 1, 1024);
+  im_0->SetQueryMatrix(first_im_num_queries, 1, 1024);
   procs.push_back(im_0);
+
+  // Create single stream to receive all frames.
+  StreamPtr network_stream = std::make_shared<Stream>();
 
   // FlowControlExit
   auto fc_exit = std::make_shared<FlowControlExit>();
   fc_exit->SetSource(im_0->GetSink());
+  // fc_exit->SetSink(network_stream);
   fc_exit->SetBlockOnPush(block);
   procs.push_back(fc_exit);
+
+  // Create hierarchical keyframe detector.
+  auto kd = std::make_shared<KeyframeDetector>(buf_params);
+  kd->SetSource(nne_stream);
+  kd->SetBlockOnPush(block);
+  procs.push_back(kd);
+
+  // Create additional ImageMatch levels.
+  for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
+    std::pair<float, size_t> kd_buf_params = buf_params.at(i);
+    unsigned int kd_batch_size =
+        ceil(kd_buf_params.first * kd_buf_params.second);
+    auto additional_im = std::make_shared<ImageMatch>("", false, kd_batch_size);
+    additional_im->SetSource(kd->GetSink("output_" + std::to_string(i)));
+    // additional_im->SetSink(network_stream);
+    additional_im->SetBlockOnPush(block);
+    additional_im->SetQueryMatrix(nums_queries.at(i), 1, 1024);
+    procs.push_back(additional_im);
+  }
+
+  auto reader = network_stream->Subscribe();
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start(queue_size);
   }
 
-  auto reader = fc_exit->GetSink()->Subscribe();
   while (true) {
     auto frame = reader->PopFrame();
     LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id")
-              << " exiting pipeline";
-    std::cout << "FPS: " << reader->GetHistoricalFps() << std::endl;
+              << " sent to datacenter";
     if (frame->IsStopFrame()) {
       break;
     }
