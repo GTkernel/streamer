@@ -23,11 +23,11 @@ typedef struct query_t {
   std::vector<bool> is_positive;
   std::vector<std::string> paths;
   std::unique_ptr<Eigen::VectorXf> scores;
+  float threshold;
 #ifdef USE_TENSORFLOW
   std::unique_ptr<tensorflow::Session> session_;
   bool linmod_ready;
   float skew;
-  float threshold;
 #endif  // USE_TENSORFLOW
 } query_t;
 
