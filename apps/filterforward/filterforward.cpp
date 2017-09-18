@@ -53,7 +53,8 @@ void Stopper(StreamPtr highest_stream) {
   reader->UnSubscribe();
 }
 
-void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time, const std::string& output_dir) {
+void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
+            const std::string& output_dir) {
   // Loop until the stopper thread signals that we need to stop.
   std::ostringstream log_msg;
   bool is_first_sample = true;
@@ -65,36 +66,49 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time, con
   while (!stopped) {
     auto frame = reader->PopFrame();
     if (!frame->IsStopFrame()) {
-      if(is_first_sample) {
+      if (is_first_sample) {
         is_first_sample = false;
         start_time = boost::posix_time::microsec_clock::local_time();
         previous_time = start_time;
       } else {
         // imagematch scores
-        total_bytes += frame->GetValue<std::vector<std::pair<int, float>>>("imagematch.scores").size() * sizeof(std::pair<int, float>);
+        total_bytes += frame
+                           ->GetValue<std::vector<std::pair<int, float>>>(
+                               "imagematch.scores")
+                           .size() *
+                       sizeof(std::pair<int, float>);
         // vishash
         cv::Mat activations = frame->GetValue<cv::Mat>("activations");
-        //total_bytes += activations.total() * sizeof(float);
+        // total_bytes += activations.total() * sizeof(float);
         // frame id
         total_bytes += sizeof(unsigned long);
-        boost::posix_time::ptime current_time = boost::posix_time::microsec_clock::local_time();
-        double net_bw_bps = total_bytes * 8 / (current_time - start_time).total_seconds();
+        boost::posix_time::ptime current_time =
+            boost::posix_time::microsec_clock::local_time();
+        double net_bw_bps =
+            total_bytes * 8 / (current_time - start_time).total_seconds();
         auto fps = reader->GetHistoricalFps();
-        if((current_time - previous_time).total_seconds() >= 2) {
+        if ((current_time - previous_time).total_seconds() >= 2) {
           previous_time = current_time;
-          std::cout << "Level " << idx << " - Network bandwidth: " << net_bw_bps << " bps , " << fps << " fps" << std::endl;
+          std::cout << "Level " << idx << " - Network bandwidth: " << net_bw_bps
+                    << " bps , " << fps << " fps" << std::endl;
         }
-        long latency_micros = (current_time - frame->GetValue<boost::posix_time::ptime>("capture_time_micros")).total_microseconds();
-        log_msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
+        long latency_micros =
+            (current_time -
+             frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
+                .total_microseconds();
+        log_msg << net_bw_bps << "," << fps << "," << latency_micros
+                << std::endl;
       }
     }
   }
   reader->UnSubscribe();
 
   std::ostringstream log_filepath;
-  log_filepath << output_dir << "/ff_" << idx << "_" << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
+  log_filepath << output_dir << "/ff_" << idx << "_"
+               << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
   std::ofstream log_file(log_filepath.str());
-  log_file << "#network bandwidth (bps), fps, e2e latency (us)" << std::endl << log_msg.str();
+  log_file << "#network bandwidth (bps), fps, e2e latency (us)" << std::endl
+           << log_msg.str();
   log_file.close();
 }
 
@@ -102,7 +116,8 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
          const std::string& camera_name, int input_fps, unsigned int tokens,
          const std::string& model, const std::string& layer,
          size_t nne_batch_size, const std::string& output_dir) {
-  boost::posix_time::ptime log_time = boost::posix_time::microsec_clock::local_time();
+  boost::posix_time::ptime log_time =
+      boost::posix_time::microsec_clock::local_time();
   // Parse the ff_conf file.
   bool on_first_line = true;
   int first_im_num_queries = 0;
@@ -197,11 +212,9 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   im_0->SetQueryMatrix(first_im_num_queries, 1, 1024);
   procs.push_back(im_0);
   StreamPtr im_0_sink = im_0->GetSink();
-  logger_threads.push_back(
-    std::thread([im_0_sink, log_time, output_dir] {
-      Logger(0, im_0_sink, log_time, output_dir);
-    })
-  );
+  logger_threads.push_back(std::thread([im_0_sink, log_time, output_dir] {
+    Logger(0, im_0_sink, log_time, output_dir);
+  }));
 
   // FlowControlExit
   auto fc_exit = std::make_shared<FlowControlExit>();
@@ -234,10 +247,9 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
 
     StreamPtr additional_im_sink = additional_im->GetSink();
     logger_threads.push_back(
-      std::thread([i, additional_im_sink, log_time, output_dir] {
-        Logger(i + 1, additional_im_sink, log_time, output_dir);
-      })
-    );
+        std::thread([i, additional_im_sink, log_time, output_dir] {
+          Logger(i + 1, additional_im_sink, log_time, output_dir);
+        }));
     if (i == nums_queries.size() - 1) {
       highest_stream = additional_im->GetSink();
     }
@@ -251,17 +263,17 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
     (*procs_it)->Start(queue_size);
   }
 
-  while(!stopped) {
+  while (!stopped) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-  
+
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
     proc->Stop();
   }
 
   stopper_thread.join();
-  for(auto& t : logger_threads) {
+  for (auto& t : logger_threads) {
     t.join();
   }
 }

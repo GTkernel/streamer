@@ -258,7 +258,7 @@ void ImageMatch::Process() {
   for (auto& frame : cur_batch_frames_) {
     std::vector<std::pair<int, float>> image_match_scores;
     for (auto& query : query_data_) {
-      if((*(query.second.scores))(batch_idx) > query.second.threshold) {
+      if ((*(query.second.scores))(batch_idx) > query.second.threshold) {
         std::pair<int, float> score_pair(query.first,
                                          (*(query.second.scores))(batch_idx));
         image_match_scores.push_back(score_pair);
