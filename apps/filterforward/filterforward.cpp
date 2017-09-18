@@ -13,6 +13,7 @@
 
 #include <glog/logging.h>
 #include <gst/gst.h>
+#include <boost/date_time.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
@@ -52,10 +53,56 @@ void Stopper(StreamPtr highest_stream) {
   reader->UnSubscribe();
 }
 
+void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time, const std::string& output_dir) {
+  // Loop until the stopper thread signals that we need to stop.
+  std::ostringstream log_msg;
+  bool is_first_sample = true;
+  double total_bytes = 0;
+  boost::posix_time::ptime start_time;
+  boost::posix_time::ptime previous_time;
+  auto reader = stream->Subscribe();
+
+  while (!stopped) {
+    auto frame = reader->PopFrame();
+    if (!frame->IsStopFrame()) {
+      if(is_first_sample) {
+        is_first_sample = false;
+        start_time = boost::posix_time::microsec_clock::local_time();
+        previous_time = start_time;
+      } else {
+        // imagematch scores
+        total_bytes += frame->GetValue<std::vector<std::pair<int, float>>>("imagematch.scores").size() * sizeof(std::pair<int, float>);
+        // vishash
+        cv::Mat activations = frame->GetValue<cv::Mat>("activations");
+        //total_bytes += activations.total() * sizeof(float);
+        // frame id
+        total_bytes += sizeof(unsigned long);
+        boost::posix_time::ptime current_time = boost::posix_time::microsec_clock::local_time();
+        double net_bw_bps = total_bytes * 8 / (current_time - start_time).total_seconds();
+        auto fps = reader->GetHistoricalFps();
+        if((current_time - previous_time).total_seconds() >= 2) {
+          previous_time = current_time;
+          std::cout << "Level " << idx << " - Network bandwidth: " << net_bw_bps << " bps , " << fps << " fps" << std::endl;
+        }
+        long latency_micros = (current_time - frame->GetValue<boost::posix_time::ptime>("capture_time_micros")).total_microseconds();
+        log_msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
+      }
+    }
+  }
+  reader->UnSubscribe();
+
+  std::ostringstream log_filepath;
+  log_filepath << output_dir << "/ff_" << idx << "_" << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
+  std::ofstream log_file(log_filepath.str());
+  log_file << "#network bandwidth (bps), fps, e2e latency (us)" << std::endl << log_msg.str();
+  log_file.close();
+}
+
 void Run(const std::string& ff_conf, bool block, size_t queue_size,
          const std::string& camera_name, int input_fps, unsigned int tokens,
          const std::string& model, const std::string& layer,
          size_t nne_batch_size, const std::string& output_dir) {
+  boost::posix_time::ptime log_time = boost::posix_time::microsec_clock::local_time();
   // Parse the ff_conf file.
   bool on_first_line = true;
   int first_im_num_queries = 0;
@@ -94,6 +141,7 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   }
 
   std::vector<std::shared_ptr<Processor>> procs;
+  std::vector<std::thread> logger_threads;
 
   // Create Camera.
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
@@ -148,38 +196,48 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   im_0->SetBlockOnPush(block);
   im_0->SetQueryMatrix(first_im_num_queries, 1, 1024);
   procs.push_back(im_0);
-
-  // Create single stream to receive all frames.
-  StreamPtr network_stream = std::make_shared<Stream>();
+  StreamPtr im_0_sink = im_0->GetSink();
+  logger_threads.push_back(
+    std::thread([im_0_sink, log_time, output_dir] {
+      Logger(0, im_0_sink, log_time, output_dir);
+    })
+  );
 
   // FlowControlExit
   auto fc_exit = std::make_shared<FlowControlExit>();
   fc_exit->SetSource(im_0->GetSink());
-  fc_exit->SetSink(network_stream);
   fc_exit->SetBlockOnPush(block);
   procs.push_back(fc_exit);
 
-  // Create hierarchical keyframe detector.
-  auto kd = std::make_shared<KeyframeDetector>(buf_params);
-  kd->SetSource(nne_stream);
-  kd->SetBlockOnPush(block);
-  procs.push_back(kd);
-
-  // This is the sink stream of the ImageMatch processor at the highest level of
+  // Create additional keyframe detector + ImageMatch levels in the hierarchy.
   // the hierarchy.
   StreamPtr highest_stream;
-  // Create additional ImageMatch levels.
+  StreamPtr kd_input_stream = nne_stream;
   for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
+    // Create keyframe detector.
     std::pair<float, size_t> kd_buf_params = buf_params.at(i);
+    std::vector<std::pair<float, size_t>> kd_buf_params_vec = {kd_buf_params};
+    auto kd = std::make_shared<KeyframeDetector>(kd_buf_params_vec);
+    kd->SetSource(kd_input_stream);
+    kd->SetBlockOnPush(block);
+    procs.push_back(kd);
+    kd_input_stream = kd->GetSink(kd->GetSinkName(0));
+
+    // Create ImageMatch.
     unsigned int kd_batch_size =
         ceil(kd_buf_params.first * kd_buf_params.second);
     auto additional_im = std::make_shared<ImageMatch>("", false, kd_batch_size);
-    additional_im->SetSource(kd->GetSink("output_" + std::to_string(i)));
-    additional_im->SetSink(network_stream);
+    additional_im->SetSource(kd->GetSink(kd->GetSinkName(0)));
     additional_im->SetBlockOnPush(block);
     additional_im->SetQueryMatrix(nums_queries.at(i), 1, 1024);
     procs.push_back(additional_im);
 
+    StreamPtr additional_im_sink = additional_im->GetSink();
+    logger_threads.push_back(
+      std::thread([i, additional_im_sink, log_time, output_dir] {
+        Logger(i + 1, additional_im_sink, log_time, output_dir);
+      })
+    );
     if (i == nums_queries.size() - 1) {
       highest_stream = additional_im->GetSink();
     }
@@ -187,33 +245,25 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
 
   // Launch stopped thread.
   std::thread stopper_thread([highest_stream] { Stopper(highest_stream); });
-  // This reader will contain all frame that should be sent to the datacenter.
-  auto network_reader = network_stream->Subscribe();
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start(queue_size);
   }
 
-  // Loop until the stopper thread signals that we need to stop.
-  while (!stopped) {
-    auto frame = network_reader->PopFrame();
-    if (!frame->IsStopFrame()) {
-      // TODO: Serialize frame, measure its size in bytes, and use that to
-      //       compute FilterForward's network bandwidth usage.
-      LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id")
-                << " sent to datacenter.";
-      LOG(INFO) << "Total network FPS: " << network_reader->GetPushFps();
-    }
+  while(!stopped) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-  network_reader->UnSubscribe();
-
+  
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
     proc->Stop();
   }
 
   stopper_thread.join();
+  for(auto& t : logger_threads) {
+    t.join();
+  }
 }
 
 int main(int argc, char* argv[]) {

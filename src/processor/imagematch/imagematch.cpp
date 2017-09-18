@@ -93,7 +93,7 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
 
 // Fast random query matrix
 bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
-                                int vishash_size) {
+                                int vishash_size, float threshold) {
   std::lock_guard<std::mutex> guard(query_guard_);
   queries_ = std::make_unique<Eigen::MatrixXf>(num_queries * img_per_query,
                                                vishash_size);
@@ -106,7 +106,7 @@ bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
     current_query->linmod_ready = false;
 #endif  // USE_TENSORFLOW
     current_query->query_id = i;
-    current_query->threshold = 0.5;
+    current_query->threshold = threshold;
     for (int j = 0; j < img_per_query; ++j) {
       current_query->indices.push_back(i * img_per_query + j);
       current_query->paths.push_back("test");

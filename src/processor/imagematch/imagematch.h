@@ -43,7 +43,7 @@ class ImageMatch : public Processor {
 #endif  // USE_TENSORFLOW
   bool AddQuery(const std::string& path, std::vector<float> vishash,
                 int query_id, bool is_positive, float threshold=1.0);
-  bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
+  bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size, float threshold=0.0);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;
   void SetSource(StreamPtr stream);
