@@ -135,7 +135,7 @@ void NeuralNetEvaluator::Process() {
     for (const auto& activations : activation_vector) {
       auto layer_name = layer_pair.first;
       std::unique_ptr<Frame> frame_copy;
-      if(layer_outputs.size() == 1) {
+      if (layer_outputs.size() == 1) {
         frame_copy = std::move(cur_batch_frames_.at(batch_idx++));
       } else {
         frame_copy = std::make_unique<Frame>(cur_batch_frames_.at(batch_idx++));

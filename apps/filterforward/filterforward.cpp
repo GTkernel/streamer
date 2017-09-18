@@ -94,7 +94,8 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         if ((current_time - previous_time).total_seconds() >= 2) {
           previous_time = current_time;
           std::cout << "Level " << idx << " - Network bandwidth: " << net_bw_bps
-                    << " bps , " << fps << " fps , Latency: " << latency_micros << " us "<< std::endl;
+                    << " bps , " << fps << " fps , Latency: " << latency_micros
+                    << " us " << std::endl;
         }
         log_msg << net_bw_bps << "," << fps << "," << latency_micros
                 << std::endl;
@@ -217,7 +218,7 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   fc_exit->SetSource(im_0->GetSink());
   fc_exit->SetBlockOnPush(block);
   procs.push_back(fc_exit);
-  
+
   // Create Logger thread for first level.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
   logger_threads.push_back(std::thread([fc_exit_sink, log_time, output_dir] {
