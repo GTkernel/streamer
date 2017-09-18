@@ -87,15 +87,15 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         double net_bw_bps =
             total_bytes * 8 / (current_time - start_time).total_seconds();
         auto fps = reader->GetHistoricalFps();
-        if ((current_time - previous_time).total_seconds() >= 2) {
-          previous_time = current_time;
-          std::cout << "Level " << idx << " - Network bandwidth: " << net_bw_bps
-                    << " bps , " << fps << " fps" << std::endl;
-        }
         long latency_micros =
             (current_time -
              frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
                 .total_microseconds();
+        if ((current_time - previous_time).total_seconds() >= 2) {
+          previous_time = current_time;
+          std::cout << "Level " << idx << " - Network bandwidth: " << net_bw_bps
+                    << " bps , " << fps << " fps , Latency: " << latency_micros << " us "<< std::endl;
+        }
         log_msg << net_bw_bps << "," << fps << "," << latency_micros
                 << std::endl;
       }
@@ -160,7 +160,7 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
 
   // Create Camera.
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
-  camera->SetBlockOnPush(block);
+  camera->SetBlockOnPush(false);
   procs.push_back(camera);
 
   // Create frames directory and FrameWriter.
@@ -211,16 +211,18 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   im_0->SetBlockOnPush(block);
   im_0->SetQueryMatrix(first_im_num_queries, 1, 1024);
   procs.push_back(im_0);
-  StreamPtr im_0_sink = im_0->GetSink();
-  logger_threads.push_back(std::thread([im_0_sink, log_time, output_dir] {
-    Logger(0, im_0_sink, log_time, output_dir);
-  }));
 
   // FlowControlExit
   auto fc_exit = std::make_shared<FlowControlExit>();
   fc_exit->SetSource(im_0->GetSink());
   fc_exit->SetBlockOnPush(block);
   procs.push_back(fc_exit);
+  
+  // Create Logger thread for first level.
+  StreamPtr fc_exit_sink = fc_exit->GetSink();
+  logger_threads.push_back(std::thread([fc_exit_sink, log_time, output_dir] {
+    Logger(0, fc_exit_sink, log_time, output_dir);
+  }));
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
   // the hierarchy.

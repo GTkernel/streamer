@@ -95,6 +95,10 @@ void GstVideoCapture::CheckBuffer() {
   {
     std::lock_guard<std::mutex> guard(capture_lock_);
     frames_.push_back(frame);
+    if(frames_.size() > 1) {
+      LOG(ERROR) << "Pipeline failed to consume frame in time, "
+                 << " gst_video_capture internal frames queue size: " << frames_.size();
+    }
   }
   capture_cv_.notify_all();
 
