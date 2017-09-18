@@ -27,6 +27,7 @@ typedef struct query_t {
   std::unique_ptr<tensorflow::Session> session_;
   bool linmod_ready;
   float skew;
+  float threshold;
 #endif  // USE_TENSORFLOW
 } query_t;
 
@@ -41,7 +42,7 @@ class ImageMatch : public Processor {
   void UpdateLinmodMatrix(int query_id);
 #endif  // USE_TENSORFLOW
   bool AddQuery(const std::string& path, std::vector<float> vishash,
-                int query_id, bool is_positive);
+                int query_id, bool is_positive, float threshold=1.0);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;

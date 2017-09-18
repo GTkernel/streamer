@@ -62,7 +62,7 @@ void ImageMatch::UpdateLinmodMatrix(int query_id) {
 #endif  // USE_TENSORFLOW
 
 bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
-                          int query_id, bool is_positive) {
+                          int query_id, bool is_positive, float threshold) {
   std::lock_guard<std::mutex> guard(query_guard_);
   query_t* current_query = &query_data_[query_id];
   current_query->scores = std::make_unique<Eigen::VectorXf>(batch_size_);
@@ -83,6 +83,7 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
   current_query->indices.push_back(queries_->rows() - 1);
   current_query->paths.push_back(path);
   current_query->query_id = query_id;
+  current_query->threshold = threshold;
 #ifdef USE_TENSORFLOW
   current_query->linmod_ready = false;
   CreateSession(query_id);
@@ -105,6 +106,7 @@ bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
     current_query->linmod_ready = false;
 #endif  // USE_TENSORFLOW
     current_query->query_id = i;
+    current_query->threshold = 0.5;
     for (int j = 0; j < img_per_query; ++j) {
       current_query->indices.push_back(i * img_per_query + j);
       current_query->paths.push_back("test");
@@ -256,9 +258,11 @@ void ImageMatch::Process() {
   for (auto& frame : cur_batch_frames_) {
     std::vector<std::pair<int, float>> image_match_scores;
     for (auto& query : query_data_) {
-      std::pair<int, float> score_pair(query.first,
-                                       (*(query.second.scores))(batch_idx));
-      image_match_scores.push_back(score_pair);
+      if((*(query.second.scores))(batch_idx) > query.second.threshold) {
+        std::pair<int, float> score_pair(query.first,
+                                         (*(query.second.scores))(batch_idx));
+        image_match_scores.push_back(score_pair);
+      }
     }
     batch_idx += 1;
     frame->SetValue("imagematch.scores", image_match_scores);
