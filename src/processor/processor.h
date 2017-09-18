@@ -125,6 +125,7 @@ class Processor {
   std::unique_ptr<Frame> GetFrame(const string& source_name);
   void PushFrame(const string& sink_name, std::unique_ptr<Frame> frame);
   void ProcessorLoop();
+  void ProcessorLoop2();
 
   std::unordered_map<string, std::unique_ptr<Frame>> source_frame_cache_;
   std::unordered_map<string, StreamPtr> sources_;

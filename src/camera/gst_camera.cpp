@@ -39,7 +39,6 @@ void GSTCamera::Process() {
 
   if (capture_.NextFrameIsLast()) {
     frame->SetStopFrame(true);
-    PushFrame("output", std::move(frame));
   } else {
     const cv::Mat& pixels =
         capture_.GetPixels(frame->GetValue<unsigned long>("frame_id"));
@@ -53,8 +52,8 @@ void GSTCamera::Process() {
                                       (char*)pixels.data +
                                           pixels.total() * pixels.elemSize()));
     frame->SetValue("original_image", pixels);
-    PushFrame("output", std::move(frame));
   }
+  PushFrame("output", std::move(frame));
 }
 
 CameraType GSTCamera::GetCameraType() const { return CAMERA_TYPE_GST; }

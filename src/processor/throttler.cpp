@@ -36,8 +36,7 @@ void Throttler::Process() {
   double elapsed_ms = timer_.ElapsedMSec();
   if (elapsed_ms < delay_ms_) {
     LOG(INFO) << "Frame rate too high. Dropping frame: "
-              << frame->GetValue<unsigned long>("frame_id") << " "
-              << elapsed_ms;
+              << frame->GetValue<unsigned long>("frame_id");
     // Drop frame
     auto flow_control_entrance = frame->GetFlowControlEntrance();
     if (flow_control_entrance) {

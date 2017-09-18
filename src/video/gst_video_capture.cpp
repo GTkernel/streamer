@@ -154,7 +154,7 @@ bool GstVideoCapture::IsConnected() const { return connected_; }
  * @brief Destroy the pipeline, free any resources allocated.
  */
 void GstVideoCapture::DestroyPipeline() {
-  std::lock_guard<std::mutex> guard(this->capture_lock_);
+  std::lock_guard<std::mutex> guard(capture_lock_);
   if (!connected_) return;
 
   appsink_ = NULL;
@@ -226,8 +226,11 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
     LOG(INFO) << video_pipeline;
   } else if (video_protocol == "file") {
     LOG(WARNING) << "Reading H.264-encoded data from file using GStreamer";
+    std::string file_framerate = "30";
     video_pipeline = "filesrc location=\"" + video_path + "\"" +
-                     " ! qtdemux ! h264parse ! " + decoder_element_;
+                     " ! qtdemux ! h264parse ! " + decoder_element_ +
+                     " ! videorate ! video/x-raw,framerate= " + file_framerate +
+                     "/1";
     LOG(INFO) << video_pipeline;
   } else {
     LOG(FATAL) << "Video uri: " << video_uri << " is not valid";

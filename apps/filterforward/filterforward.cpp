@@ -169,11 +169,13 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   boost::filesystem::path frames_dir_path(frames_dir);
   boost::filesystem::create_directory(frames_dir_path);
   std::unordered_set<std::string> fields;
+  /*
   auto writer = std::make_shared<FrameWriter>(fields, frames_dir,
                                               FrameWriter::FileFormat::BINARY);
   writer->SetSource(camera->GetStream());
   writer->SetBlockOnPush(block);
   procs.push_back(writer);
+  */
 
   // Create Throttler.
   auto throttler = std::make_shared<Throttler>(input_fps);
