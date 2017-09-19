@@ -210,7 +210,9 @@ cv::Size GstVideoCapture::GetOriginalFrameSize() const {
  * If it is facetime, will try to use macbook's facetime camera.
  * @return True if the pipeline is sucessfully built.
  */
-bool GstVideoCapture::CreatePipeline(std::string video_uri) {
+bool GstVideoCapture::CreatePipeline(std::string video_uri,
+                                     const std::string& output_filepath,
+                                     unsigned int file_framerate) {
   // The pipeline that emits video frames
   string video_pipeline = "";
 
@@ -219,30 +221,37 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
 
   if (video_protocol == "rtsp") {
     video_pipeline = "rtspsrc latency=0 location=\"" + video_uri + "\"" +
-                     " ! rtph264depay ! h264parse ! " + decoder_element_;
+                     " ! rtph264depay ! h264parse ! tee name=t ! queue ! " +
+                     decoder_element_;
   } else if (video_protocol == "gst") {
     LOG(WARNING) << "Directly use gst pipeline as video pipeline";
     video_pipeline = video_path;
     LOG(INFO) << video_pipeline;
   } else if (video_protocol == "file") {
     LOG(WARNING) << "Reading H.264-encoded data from file using GStreamer";
-    std::string file_framerate = "30";
     video_pipeline = "filesrc location=\"" + video_path + "\"" +
-                     " ! qtdemux ! h264parse ! tee name=t ! " + decoder_element_ +
-                     " ! videorate ! video/x-raw,framerate= " + file_framerate +
-                     "/1";
+                     " ! qtdemux ! h264parse ! tee name=t ! queue ! " +
+                     decoder_element_ +
+                     " ! videorate ! video/x-raw,framerate= " +
+                     std::to_string(file_framerate) + "/1";
     LOG(INFO) << video_pipeline;
   } else {
     LOG(FATAL) << "Video uri: " << video_uri << " is not valid";
   }
 
-  gchar* descr =
-      g_strdup_printf("%s", (video_pipeline +
-                             " ! videoconvert "
-                             "! capsfilter caps=video/x-raw,format=(string)BGR "
-                             "! appsink name=sink sync=true t. "
-                             "! mp4mux ! filesink=file.mp4")
-                                .c_str());
+  std::string full_pipeline =
+      video_pipeline +
+      " ! videoconvert "
+      "! capsfilter caps=video/x-raw,format=(string)BGR "
+      "! appsink name=sink sync=true";
+  if (output_filepath != "" &&
+      (video_protocol == "rtsp" || video_protocol == "file")) {
+    full_pipeline +=
+        " t. ! queue ! mp4mux ! filesink location=" + output_filepath;
+  }
+
+  LOG(INFO) << "full pipeline: " << full_pipeline;
+  gchar* descr = g_strdup_printf("%s", full_pipeline.c_str());
   LOG(INFO) << "Capture video pipeline: " << descr;
 
   GError* error = NULL;

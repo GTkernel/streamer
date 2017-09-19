@@ -24,7 +24,6 @@
 #include "model/model_manager.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
-#include "processor/frame_writer.h"
 #include "processor/image_transformer.h"
 #include "processor/imagematch/imagematch.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
@@ -132,10 +131,10 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 }
 
 void Run(const std::string& ff_conf, bool block, size_t queue_size,
-         const std::string& camera_name, int throttled_fps, unsigned int tokens,
-         const std::string& model, const std::string& layer,
-         size_t nne_batch_size, const std::string& output_dir,
-         unsigned int frames_per_dir) {
+         const std::string& camera_name, unsigned int file_fps,
+         int throttled_fps, unsigned int tokens, const std::string& model,
+         const std::string& layer, size_t nne_batch_size,
+         const std::string& output_dir) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
   // Parse the ff_conf file.
@@ -179,23 +178,18 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   std::vector<std::thread> logger_threads;
 
   // Create a Camera.
-  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
-  camera->SetBlockOnPush(false);
-  procs.push_back(camera);
-  StreamPtr camera_stream = camera->GetStream();
 
-  // Create a frames directory and a FrameWriter.
-  std::string frames_dir = output_dir + "frames/";
-  boost::filesystem::path frames_dir_path(frames_dir);
-  boost::filesystem::create_directory(frames_dir_path);
-  std::unordered_set<std::string> fields_to_write = {"original_bytes",
-                                                     "activations"};
-  auto writer =
-      std::make_shared<FrameWriter>(fields_to_write, frames_dir, frames_per_dir,
-                                    FrameWriter::FileFormat::BINARY);
-  writer->SetSource(camera_stream);
-  writer->SetBlockOnPush(block);
-  procs.push_back(writer);
+  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  if (camera->GetCameraType() != CameraType::CAMERA_TYPE_GST) {
+    throw(std::invalid_argument("Must use GST camera"));
+  }
+  std::shared_ptr<GSTCamera> gst_camera =
+      std::dynamic_pointer_cast<GSTCamera>(camera);
+  gst_camera->SetBlockOnPush(false);
+  gst_camera->SetOutputFilepath(output_dir + "/" + camera_name + ".mp4");
+  gst_camera->SetFileFramerate(file_fps);
+  procs.push_back(gst_camera);
+  StreamPtr camera_stream = gst_camera->GetStream();
 
   StreamPtr correct_fps_stream = camera_stream;
   if (throttled_fps > 0) {
@@ -327,6 +321,9 @@ int main(int argc, char* argv[]) {
                      "The size of the queues between processors.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
+  desc.add_options()(
+      "file-fps", po::value<unsigned int>()->default_value(30),
+      "Rate at which to read a file source (no effect if not file source).");
   desc.add_options()("throttled-fps,i", po::value<int>()->default_value(0),
                      "The FPS at which to throttle (in software) the camera "
                      "stream. 0 means no throttling.");
@@ -341,10 +338,6 @@ int main(int argc, char* argv[]) {
                      "nne batch size");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
-  desc.add_options()("frames-per-dir,p",
-                     po::value<unsigned int>()->default_value(1000),
-                     "When storing the original frames, the number of frames "
-                     "to create in each output subdirectory.");
   // Parse the command line arguments.
   po::variables_map args;
   try {
@@ -377,14 +370,14 @@ int main(int argc, char* argv[]) {
   bool block = args.count("block");
   size_t queue_size = args["queue-size"].as<size_t>();
   std::string camera = args["camera"].as<std::string>();
+  unsigned int file_fps = args["file-fps"].as<unsigned int>();
   int throttled_fps = args["throttled-fps"].as<int>();
   unsigned int tokens = args["tokens"].as<unsigned int>();
   std::string layer = args["layer"].as<std::string>();
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  unsigned int frames_per_dir = args["frames-per-dir"].as<unsigned int>();
-  Run(ff_conf, block, queue_size, camera, throttled_fps, tokens, model, layer,
-      nne_batch_size, output_dir, frames_per_dir);
+  Run(ff_conf, block, queue_size, camera, file_fps, throttled_fps, tokens,
+      model, layer, nne_batch_size, output_dir);
   return 0;
 }

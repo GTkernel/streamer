@@ -7,10 +7,13 @@
 
 GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
                      int height)
-    : Camera(name, video_uri, width, height) {}
+    : Camera(name, video_uri, width, height),
+      output_filepath_(""),
+      file_framerate_(30) {}
 
 bool GSTCamera::Init() {
-  bool opened = capture_.CreatePipeline(video_uri_);
+  bool opened =
+      capture_.CreatePipeline(video_uri_, output_filepath_, file_framerate_);
 
   // Determine if we should block when pushing frames.
   std::string video_protocol;
@@ -29,6 +32,14 @@ bool GSTCamera::Init() {
 
   return true;
 }
+
+void GSTCamera::SetOutputFilepath(const std::string& output_filepath) {
+  output_filepath_ = output_filepath;
+}
+void GSTCamera::SetFileFramerate(unsigned int file_framerate) {
+  file_framerate_ = file_framerate;
+}
+
 bool GSTCamera::OnStop() {
   capture_.DestroyPipeline();
   return true;

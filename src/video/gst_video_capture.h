@@ -28,7 +28,9 @@ class GstVideoCapture {
   ~GstVideoCapture();
   cv::Mat GetPixels(unsigned long frame_id);
   cv::Size GetOriginalFrameSize() const;
-  bool CreatePipeline(std::string video_uri);
+  bool CreatePipeline(std::string video_uri,
+                      const std::string& output_filepath = "",
+                      unsigned int file_framerate = 30);
   void DestroyPipeline();
   bool IsConnected() const;
 
