@@ -228,7 +228,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
     LOG(WARNING) << "Reading H.264-encoded data from file using GStreamer";
     std::string file_framerate = "30";
     video_pipeline = "filesrc location=\"" + video_path + "\"" +
-                     " ! qtdemux ! h264parse ! " + decoder_element_ +
+                     " ! qtdemux ! h264parse ! tee name=t ! " + decoder_element_ +
                      " ! videorate ! video/x-raw,framerate= " + file_framerate +
                      "/1";
     LOG(INFO) << video_pipeline;
@@ -240,7 +240,8 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri) {
       g_strdup_printf("%s", (video_pipeline +
                              " ! videoconvert "
                              "! capsfilter caps=video/x-raw,format=(string)BGR "
-                             "! appsink name=sink sync=true")
+                             "! appsink name=sink sync=true t. "
+                             "! mp4mux ! filesink=file.mp4")
                                 .c_str());
   LOG(INFO) << "Capture video pipeline: " << descr;
 
