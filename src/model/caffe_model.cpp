@@ -53,7 +53,7 @@ void CaffeModel<DType>::Load() {
 
 // Load the network.
 #ifdef USE_OPENCL
-  net_.reset(new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST,
+  net_ = std::make_unique<caffe::Net<DType>>(model_desc_.GetModelDescPath(), caffe::TEST,
                                    caffe::Caffe::GetDefaultDevice()));
 #else
   net_ = std::make_unique<caffe::Net<DType>>(model_desc_.GetModelDescPath(),
