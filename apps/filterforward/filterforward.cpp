@@ -116,7 +116,8 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 void Run(const std::string& ff_conf, bool block, size_t queue_size,
          const std::string& camera_name, int input_fps, unsigned int tokens,
          const std::string& model, const std::string& layer,
-         size_t nne_batch_size, const std::string& output_dir) {
+         size_t nne_batch_size, const std::string& output_dir,
+         unsigned int frames_per_dir) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
   // Parse the ff_conf file.
@@ -170,8 +171,9 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   boost::filesystem::create_directory(frames_dir_path);
   std::unordered_set<std::string> fields_to_write = {"original_bytes",
                                                      "activations"};
-  auto writer = std::make_shared<FrameWriter>(fields_to_write, frames_dir,
-                                              FrameWriter::FileFormat::BINARY);
+  auto writer =
+      std::make_shared<FrameWriter>(fields_to_write, frames_dir, frames_per_dir,
+                                    FrameWriter::FileFormat::BINARY);
   writer->SetSource(camera->GetStream());
   writer->SetBlockOnPush(block);
   procs.push_back(writer);
@@ -309,6 +311,10 @@ int main(int argc, char* argv[]) {
                      "nne batch size");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory where we'll write files.");
+  desc.add_options()("frames-per-dir,p",
+                     po::value<unsigned int>()->default_value(1000),
+                     "The number of frames to create in each output "
+                     "subdirectory.");
   // Parse the command line arguments.
   po::variables_map args;
   try {
@@ -347,7 +353,8 @@ int main(int argc, char* argv[]) {
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
   std::string output_dir = args["output-dir"].as<std::string>();
+  unsigned int frames_per_dir = args["frames-per-dir"].as<unsigned int>();
   Run(ff_conf, block, queue_size, camera, input_fps, tokens, model, layer,
-      nne_batch_size, output_dir);
+      nne_batch_size, output_dir, frames_per_dir);
   return 0;
 }

@@ -2,7 +2,6 @@
 #ifndef STREAMER_PROCESSOR_FRAME_WRITER_H_
 #define STREAMER_PROCESSOR_FRAME_WRITER_H_
 
-#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -20,6 +19,7 @@ class FrameWriter : public Processor {
   // then all fields will be saved.
   FrameWriter(const std::unordered_set<std::string> fields = {},
               const std::string& output_dir = ".",
+              unsigned int frames_per_dir = 1000,
               const FileFormat format = TEXT);
 
   // "params" should contain three keys, "fields" (which should be a set of
@@ -37,9 +37,22 @@ class FrameWriter : public Processor {
 
  private:
   std::string GetExtension();
+  void SetSubdir(unsigned int subdir);
 
+  // The frame fields to save.
   std::unordered_set<std::string> fields_;
+  // The root output directory filepath.
   std::string output_dir_;
+  // The filepath of the current output subdirectory.
+  std::string output_subdir_;
+  // The maximum number of frames to store in each output subdirectory.
+  unsigned int frames_per_dir_;
+  // The number of frames that have already been stored in the current output
+  // subdirectory.
+  unsigned int frames_in_current_dir_;
+  // The numeric name of the current output subdirectory.
+  unsigned int current_dir_;
+  // The file format in which to save frames.
   FileFormat format_;
 };
 
