@@ -28,6 +28,7 @@ class StreamReader {
   /**
    * @brief Pop a frame, and timeout if no frame available for a given time
    * @param timeout_ms Time out threshold, 0 for forever
+   * WARNING: caller is expected to check for nullptr
    */
   std::unique_ptr<Frame> PopFrame(unsigned int timeout_ms = 0);
 
