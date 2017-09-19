@@ -1,9 +1,6 @@
 
 #include "processor/frame_writer.h"
 
-#include <fcntl.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <sstream>
 
 #include <boost/archive/archive_exception.hpp>
@@ -63,23 +60,26 @@ void FrameWriter::Process() {
   std::stringstream filepath;
   auto id = frame->GetValue<unsigned long>("frame_id");
   filepath << output_dir_ << "/" << id << GetExtension();
-  int fd = open(filepath.str().c_str(), O_WRONLY | O_CREAT);
+  std::string filepath_s = filepath.str();
+  std::ofstream file(filepath_s, std::ios::binary | std::ios::out);
+  if (!file.is_open()) {
+    LOG(FATAL) << "Unable to open file \"" << filepath_s << "\".";
+  }
 
   auto frame_to_write = std::make_unique<Frame>(frame, fields_);
-  std::ostringstream frame_str;
   try {
     switch (format_) {
       case BINARY: {
-        boost::archive::binary_oarchive ar(frame_str);
+        boost::archive::binary_oarchive ar(file);
         ar << frame_to_write;
         break;
       }
       case JSON: {
-        frame_str << frame_to_write->ToJson().dump(4);
+        file << frame_to_write->ToJson().dump(4);
         break;
       }
       case TEXT: {
-        boost::archive::text_oarchive ar(frame_str);
+        boost::archive::text_oarchive ar(file);
         ar << frame_to_write;
         break;
       }
@@ -87,11 +87,12 @@ void FrameWriter::Process() {
   } catch (const boost::archive::archive_exception& e) {
     LOG(FATAL) << "Boost serialization error: " << e.what();
   }
-  write(fd, frame_str.str().c_str(), frame_str.str().length());
 
-  // Flush the file to disk to make performance predictable!
-  fsync(fd);
-  close(fd);
+  file.close();
+  if (!file) {
+    LOG(FATAL) << "Unknown error while writing binary file \"" << filepath_s
+               << "\".";
+  }
 }
 
 std::string FrameWriter::GetExtension() {
