@@ -55,7 +55,7 @@ class Frame {
                      std::vector<float>, std::vector<std::vector<double>>,
                      std::vector<Frame>, std::vector<std::pair<int, float>>>;
   using map_size_type = std::unordered_map<std::string, field_types>::size_type;
-  map_size_type Count(std::string key) const { return frame_data_.count(key); }
+  map_size_type Count(std::string key) const { return this == nullptr ? 0 : frame_data_.count(key); }
   void SetStopFrame(bool stop_frame);
   bool IsStopFrame() const;
 
