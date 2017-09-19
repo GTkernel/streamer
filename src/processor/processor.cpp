@@ -83,7 +83,7 @@ bool Processor::Start(size_t buf_size) {
   }
 
   stopped_ = false;
-  process_thread_ = std::thread(&Processor::ProcessorLoop2, this);
+  process_thread_ = std::thread(&Processor::ProcessorLoop, this);
   return true;
 }
 
@@ -121,7 +121,7 @@ bool Processor::Stop() {
   return result;
 }
 
-void Processor::ProcessorLoop2() {
+void Processor::ProcessorLoopDirect() {
   CHECK(Init()) << "Processor is not able to be initialized";
   while (!stopped_ && !found_last_frame_) {
     Process();
@@ -222,6 +222,11 @@ void Processor::PushFrame(const string& sink_name,
 }
 
 std::unique_ptr<Frame> Processor::GetFrame(const string& source_name) {
+  CHECK(source_frame_cache_.count(source_name) != 0);
+  return std::move(source_frame_cache_[source_name]);
+}
+
+std::unique_ptr<Frame> Processor::GetFrameDirect(const string& source_name) {
   if (readers_.find(source_name) == readers_.end()) {
     throw std::out_of_range(source_name);
   }
