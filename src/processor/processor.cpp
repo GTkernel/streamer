@@ -140,8 +140,6 @@ void Processor::ProcessorLoop() {
       auto source_stream = reader.second;
 
       auto frame = source_stream->PopFrame();
-      LOG(INFO) << GetStringForProcessorType(GetType()) << " received frame "
-                << frame->GetValue<unsigned long>("frame_id");
       if (frame == nullptr) {
         // The only way for PopFrame() to return a nullptr when called without a
         // a timeout is if Stop() was called on the StreamReader. That should
@@ -156,6 +154,8 @@ void Processor::ProcessorLoop() {
         }
         return;
       } else {
+        LOG(INFO) << GetStringForProcessorType(GetType()) << " received frame "
+                  << frame->GetValue<unsigned long>("frame_id");
         // Calculate queue latency
         double start_ms = frame->GetValue<double>("start_time_ms");
         double end_ms = Context::GetContext().GetTimer().ElapsedMSec();
