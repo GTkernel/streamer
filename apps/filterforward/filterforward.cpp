@@ -39,16 +39,15 @@ namespace po = boost::program_options;
 // Used to signal all threads that the pipeline should stop.
 std::atomic<bool> stopped(false);
 
-// Designed to be run in its own thread. Detects when a stop frame is sent to
-// the provided stream and sets "stopped" to true.
-void Stopper(StreamPtr highest_stream) {
-  auto reader = highest_stream->Subscribe();
-  while (true) {
-    if (reader->PopFrame()->IsStopFrame()) {
-      stopped = true;
-      break;
-    }
-  }
+// Designed to be run in its own thread. Sets "stopped" to true after num_frames
+// have been processed or after a stop frame has been detected.
+void Stopper(StreamPtr stream, unsigned int num_frames) {
+  unsigned int count = 0;
+  auto reader = stream->Subscribe();
+  while ((num_frames == 0 || ++count < num_frames + 1) &&
+         !reader->PopFrame()->IsStopFrame())
+    continue;
+  stopped = true;
   reader->UnSubscribe();
 }
 
@@ -130,11 +129,11 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_file.close();
 }
 
-void Run(const std::string& ff_conf, bool block, size_t queue_size,
-         const std::string& camera_name, unsigned int file_fps,
-         int throttled_fps, unsigned int tokens, const std::string& model,
-         const std::string& layer, size_t nne_batch_size,
-         const std::string& output_dir) {
+void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
+         size_t queue_size, const std::string& camera_name,
+         unsigned int file_fps, int throttled_fps, unsigned int tokens,
+         const std::string& model, const std::string& layer,
+         size_t nne_batch_size, const std::string& output_dir) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
   // Parse the ff_conf file.
@@ -248,7 +247,6 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
   }));
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
-  StreamPtr highest_stream;
   StreamPtr kd_input_stream = nne_stream;
   for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
     // Create a keyframe detector.
@@ -276,14 +274,11 @@ void Run(const std::string& ff_conf, bool block, size_t queue_size,
         std::thread([i, additional_im_sink, log_time, output_dir] {
           Logger(i + 1, additional_im_sink, log_time, output_dir);
         }));
-
-    if (i == nums_queries.size() - 1) {
-      highest_stream = additional_im->GetSink();
-    }
   }
 
   // Launch stopper thread.
-  std::thread stopper_thread([highest_stream] { Stopper(highest_stream); });
+  std::thread stopper_thread(
+      [fc_exit_sink, num_frames] { Stopper(fc_exit_sink, num_frames); });
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
@@ -315,6 +310,9 @@ int main(int argc, char* argv[]) {
   desc.add_options()(
       "ff-conf,f", po::value<std::string>(),
       "The file containing the keyframe detector's configuration.");
+  desc.add_options()(
+      "num-frames", po::value<unsigned int>()->default_value(0),
+      "The number of frames to run before automatically stopping.");
   desc.add_options()("block,b",
                      "Whether processors should block when pushing frames.");
   desc.add_options()("queue-size,q", po::value<size_t>()->default_value(16),
@@ -367,6 +365,7 @@ int main(int argc, char* argv[]) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
   std::string ff_conf = args["ff-conf"].as<std::string>();
+  unsigned int num_frames = args["num-frames"].as<unsigned int>();
   bool block = args.count("block");
   size_t queue_size = args["queue-size"].as<size_t>();
   std::string camera = args["camera"].as<std::string>();
@@ -377,7 +376,7 @@ int main(int argc, char* argv[]) {
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  Run(ff_conf, block, queue_size, camera, file_fps, throttled_fps, tokens,
-      model, layer, nne_batch_size, output_dir);
+  Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
+      tokens, model, layer, nne_batch_size, output_dir);
   return 0;
 }
