@@ -359,6 +359,8 @@ nlohmann::json Frame::ToJson() const {
   return j;
 }
 
+size_t Frame::Count(std::string key) const { return frame_data_.count(key); }
+
 void Frame::SetStopFrame(bool stop_frame) {
   SetValue<bool>(STOP_FRAME_KEY, stop_frame);
 }

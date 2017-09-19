@@ -169,15 +169,17 @@ void Run(const std::string& camera_name, const std::string& model,
   std::ofstream micros_log(output_dir + "/kd_micros.txt");
   while (true) {
     auto frame = reader->PopFrame();
-    if (frame->IsStopFrame()) {
-      break;
-    }
+    if (frame != nullptr) {
+      if (frame->IsStopFrame()) {
+        break;
+      }
 
-    std::ostringstream time_key;
-    time_key << "kd_level_" << levels - 1 << "_micros";
-    auto time_key_str = time_key.str();
-    if (frame->Count(time_key_str)) {
-      micros_log << frame->GetValue<long>(time_key_str) << "\n";
+      std::ostringstream time_key;
+      time_key << "kd_level_" << levels - 1 << "_micros";
+      auto time_key_str = time_key.str();
+      if (frame->Count(time_key_str)) {
+        micros_log << frame->GetValue<long>(time_key_str) << "\n";
+      }
     }
   }
   micros_log.close();

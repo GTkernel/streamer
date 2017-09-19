@@ -44,9 +44,12 @@ std::atomic<bool> stopped(false);
 void Stopper(StreamPtr stream, unsigned int num_frames) {
   unsigned int count = 0;
   auto reader = stream->Subscribe();
-  while ((num_frames == 0 || ++count < num_frames + 1) &&
-         !reader->PopFrame()->IsStopFrame())
-    continue;
+  while ((num_frames == 0 || ++count < num_frames + 1)) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame == nullptr || frame->IsStopFrame()) {
+      break;
+    }
+  }
   stopped = true;
   reader->UnSubscribe();
 }
@@ -65,7 +68,9 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   // Loop until the stopper thread signals that we need to stop.
   while (!stopped) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
-    if (frame->IsStopFrame()) {
+    if (frame == nullptr) {
+      continue;
+    } else if (frame->IsStopFrame()) {
       // We still need to check for stop frames, even though the stopper thread
       // is watching for stop frames at the highest level.
       break;
