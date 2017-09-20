@@ -57,7 +57,7 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // Designed to be run in its own thread. Creates a log file containing
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
-            const std::string& output_dir) {
+            std::vector<std::string> fields, const std::string& output_dir) {
   std::ostringstream log_msg;
   bool is_first_frame = true;
   double total_bytes = 0;
@@ -83,24 +83,47 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         previous_time = start_time;
       } else {
         // Calculate the size of the ImageMatch query results.
-        total_bytes += frame
-                           ->GetValue<std::vector<std::pair<int, float>>>(
-                               "imagematch.scores")
-                           .size() *
-                       sizeof(std::pair<int, float>);
+        if (std::find(fields.begin(), fields.end(), "imagematch.scores") !=
+            fields.end()) {
+          total_bytes += frame
+                             ->GetValue<std::vector<std::pair<int, float>>>(
+                                 "imagematch.scores")
+                             .size() *
+                         sizeof(std::pair<int, float>);
+        }
 
         // Calculate the size of the feature vector.
-        cv::Mat activations = frame->GetValue<cv::Mat>("activations");
-        total_bytes += activations.total() * sizeof(float);
+        if (std::find(fields.begin(), fields.end(), "activations") !=
+            fields.end()) {
+          total_bytes +=
+              frame->GetValue<cv::Mat>("activations").total() * sizeof(float);
+        }
 
         // Calculate the size of the frame id.
-        total_bytes += sizeof(unsigned long);
+        if (std::find(fields.begin(), fields.end(), "frame_id") !=
+            fields.end()) {
+          total_bytes += sizeof(unsigned long);
+        }
+
+        // Calculate the size of the raw bytes.
+        if (std::find(fields.begin(), fields.end(), "original_bytes") !=
+            fields.end()) {
+          total_bytes +=
+              frame->GetValue<std::vector<char>>("original_bytes").size();
+        }
+
+        // Calculate the size of the resized image.
+        if (std::find(fields.begin(), fields.end(), "image") != fields.end()) {
+          total_bytes +=
+              frame->GetValue<cv::Mat>("image").total() * sizeof(float);
+        }
 
         // Calculate the network bandwidth.
         boost::posix_time::ptime current_time =
             boost::posix_time::microsec_clock::local_time();
-        double net_bw_bps =
-            total_bytes * 8 / (current_time - start_time).total_seconds();
+        double net_bw_bps = (total_bytes * 8 /
+                             (current_time - start_time).total_microseconds()) *
+                            1000000;
 
         auto fps = reader->GetHistoricalFps();
 
@@ -138,9 +161,14 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          size_t queue_size, const std::string& camera_name,
          unsigned int file_fps, int throttled_fps, unsigned int tokens,
          const std::string& model, const std::string& layer,
-         size_t nne_batch_size, const std::string& output_dir) {
+         size_t nne_batch_size, std::vector<std::string> fields,
+         const std::string& output_dir) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
+
+  boost::filesystem::path output_dir_path(output_dir);
+  boost::filesystem::create_directory(output_dir_path);
+
   // Parse the ff_conf file.
   bool on_first_line = true;
   int first_im_num_queries = 0;
@@ -247,9 +275,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create a logger thread to calculate statistics about the first ImageMatch
   // level's output stream.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
-  logger_threads.push_back(std::thread([fc_exit_sink, log_time, output_dir] {
-    Logger(0, fc_exit_sink, log_time, output_dir);
-  }));
+  logger_threads.push_back(
+      std::thread([fc_exit_sink, log_time, fields, output_dir] {
+        Logger(0, fc_exit_sink, log_time, fields, output_dir);
+      }));
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
   StreamPtr kd_input_stream = nne_stream;
@@ -276,8 +305,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     // stream.
     StreamPtr additional_im_sink = additional_im->GetSink();
     logger_threads.push_back(
-        std::thread([i, additional_im_sink, log_time, output_dir] {
-          Logger(i + 1, additional_im_sink, log_time, output_dir);
+        std::thread([i, additional_im_sink, log_time, fields, output_dir] {
+          Logger(i + 1, additional_im_sink, log_time, fields, output_dir);
         }));
   }
 
@@ -339,6 +368,12 @@ int main(int argc, char* argv[]) {
                      "detection and ImageMatch.");
   desc.add_options()("nne-batch-size,s", po::value<size_t>()->default_value(1),
                      "nne batch size");
+  desc.add_options()("fields",
+                     po::value<std::vector<std::string>>()
+                         ->multitoken()
+                         ->composing()
+                         ->required(),
+                     "The fields to send over the network");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
   // Parse the command line arguments.
@@ -380,8 +415,10 @@ int main(int argc, char* argv[]) {
   std::string layer = args["layer"].as<std::string>();
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
+  std::vector<std::string> fields =
+      args["fields"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
   Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
-      tokens, model, layer, nne_batch_size, output_dir);
+      tokens, model, layer, nne_batch_size, fields, output_dir);
   return 0;
 }
