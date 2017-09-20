@@ -30,7 +30,7 @@ class GstVideoCapture {
   cv::Size GetOriginalFrameSize() const;
   bool CreatePipeline(std::string video_uri,
                       const std::string& output_filepath = "",
-                      unsigned int file_framerate = 30);
+                      unsigned int file_framerate = 0);
   void DestroyPipeline();
   bool IsConnected() const;
 

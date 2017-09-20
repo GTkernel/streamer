@@ -9,7 +9,7 @@ GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
                      int height)
     : Camera(name, video_uri, width, height),
       output_filepath_(""),
-      file_framerate_(30) {}
+      file_framerate_(0) {}
 
 bool GSTCamera::Init() {
   bool opened =
