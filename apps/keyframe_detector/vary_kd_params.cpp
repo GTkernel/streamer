@@ -46,114 +46,42 @@ void WarnUnused(std::string param) {
                << "\" ignored when using \"--fake-vishashes\"!";
 }
 
-// This function feeds fake vishashes to the specified stream.
-void Feeder(size_t fake_vishash_length, unsigned long num_frames,
-            StreamPtr vishash_stream) {
+// This function feeds frames to the specified stream.
+void Feeder(std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
+            StreamPtr stream, bool block) {
   while (!started) {
     LOG(INFO) << "Waiting to start...";
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 
-  unsigned long frame_id = 0;
-  for (; frame_id < num_frames; ++frame_id) {
-    auto frame = std::make_unique<Frame>();
-    frame->SetValue("frame_id", frame_id);
-
-    cv::Mat vishash(fake_vishash_length, 1, CV_32FC1);
-    vishash.at<float>(0, 0) = (float)frame_id;
-    frame->SetValue("activations", vishash);
-
-    vishash_stream->PushFrame(std::move(frame), true);
+  for (auto& frame : *frames) {
+    stream->PushFrame(std::move(frame), block);
   }
-
-  // We need to push a stop frame in order to signal the pipeline (and
-  // the rest of the application logic) to stop.
-  auto stop_frame = std::make_unique<Frame>();
-  stop_frame->SetValue("frame_id", frame_id);
-  stop_frame->SetStopFrame(true);
-  vishash_stream->PushFrame(std::move(stop_frame), true);
 }
 
-int NumFramesPerTopLevelRun(std::vector<std::pair<float, size_t>> buf_params,
-                            int end_idx) {
-  if (end_idx == 0) {
-    return buf_params.at(0).second;
-  }
-  size_t buf_len = buf_params.at(end_idx).second;
-  size_t buf_len_prev = buf_params.at(end_idx - 1).second;
-  float sel_prev = buf_params.at(end_idx - 1).first;
-  return buf_len / (buf_len_prev * sel_prev) *
-         NumFramesPerTopLevelRun(buf_params, end_idx - 1);
-}
-
-void Run(const std::string& kd_conf, size_t queue_size, bool block,
-         unsigned long start_id, unsigned long end_id, unsigned int num_frames,
-         bool generate_fake_vishashes, size_t fake_vishash_length,
-         const std::string& camera_name, const std::string& model,
-         const std::string& layer, size_t nne_batch_size, bool save_jpegs,
-         const std::string& output_dir) {
-  std::vector<std::pair<float, size_t>> buf_params;
-  unsigned int levels = 0;
-  std::ifstream kd_conf_file(kd_conf);
-  std::string line;
-  while (std::getline(kd_conf_file, line)) {
-    std::vector<std::string> args = SplitString(line, ",");
-    if (StartsWith(line, "#")) {
-      // Ignore comment lines.
-      continue;
-    }
-    CHECK(args.size() == 2)
-        << "Each line of the ff_conf file must contain two items: "
-        << "Selectivity,BufferLength";
-
-    float sel = std::stof(args.at(0));
-    unsigned long buf_len = std::stoul(args.at(1));
-    buf_params.push_back({sel, (size_t)buf_len});
-
-    std::ostringstream msg;
-    msg << "Level " << levels << " - "
-        << "selectivity: " << sel << ", buffer length: " << buf_len;
-    LOG(INFO) << msg.str();
-    ++levels;
-  }
-
-  std::vector<std::shared_ptr<Processor>> procs;
-  // This stream will contain layer activations to feed into the keyframe
-  // detector.
-  StreamPtr vishash_stream;
-  // This thread will generate fake layer activations, if the app has been told
-  // to do so.
-  std::thread feeder;
-
+std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
+    bool generate_fake_vishashes, size_t fake_vishash_length,
+    const std::string& camera_name, const std::string& model,
+    const std::string& layer, size_t nne_batch_size, unsigned int num_frames,
+    bool block, size_t queue_size) {
+  auto frames = std::make_shared<std::vector<std::unique_ptr<Frame>>>();
   if (generate_fake_vishashes) {
-    LOG(INFO) << "Generating fake vishashes";
-    // Instead of reading frames from a camera or a file, we will generate fake
-    // layer activations. This enables rapid evaluation of the keyframe
-    // detector's performance because it eliminates the overhead of running a
-    // DNN.
-    vishash_stream = StreamPtr(new Stream());
-    feeder = std::thread([fake_vishash_length, num_frames, vishash_stream] {
-      Feeder(fake_vishash_length, num_frames, vishash_stream);
-    });
+    for (unsigned long frame_id = 0; frame_id < num_frames; ++frame_id) {
+      auto frame = std::make_unique<Frame>();
+      frame->SetValue("frame_id", frame_id);
+
+      cv::Mat vishash(fake_vishash_length, 1, CV_32FC1);
+      vishash.at<float>(0, 0) = (float)frame_id;
+      frame->SetValue("activations", vishash);
+
+      frames->push_back(std::move(frame));
+    }
   } else {
+    std::vector<std::shared_ptr<Processor>> procs;
     // Create Camera.
     auto camera = CameraManager::GetInstance().GetCamera(camera_name);
     camera->SetBlockOnPush(block);
     procs.push_back(camera);
-
-    StreamPtr stream_to_transform;
-    if (start_id != MIN_START_ID || end_id != MAX_END_ID) {
-      // If we're supposed to select a temporal subset of the frames, then
-      // we need to create a TemporalRegionSelector.
-      auto selector =
-          std::make_shared<TemporalRegionSelector>(start_id, end_id);
-      selector->SetSource("input", camera->GetStream());
-      selector->SetBlockOnPush(block);
-      procs.push_back(selector);
-      stream_to_transform = selector->GetSink("output");
-    } else {
-      stream_to_transform = camera->GetStream();
-    }
 
     // Create ImageTransformer.
     ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model);
@@ -161,7 +89,7 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
                       model_desc.GetInputHeight());
     auto transformer =
         std::make_shared<ImageTransformer>(input_shape, true, true);
-    transformer->SetSource("input", stream_to_transform);
+    transformer->SetSource(camera->GetStream());
     transformer->SetBlockOnPush(block);
     procs.push_back(transformer);
 
@@ -169,30 +97,65 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
     std::vector<std::string> output_layer_names = {layer};
     auto nne = std::make_shared<NeuralNetEvaluator>(
         model_desc, input_shape, nne_batch_size, output_layer_names);
-    nne->SetSource(transformer->GetSink("output"));
+    nne->SetSource(transformer->GetSink());
     nne->SetBlockOnPush(block);
     procs.push_back(nne);
-    vishash_stream = nne->GetSink(layer);
+
+    StreamReader* reader = nne->GetSink(layer)->Subscribe();
+
+    // Start the Processors in reverse order.
+    for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
+      (*procs_it)->Start(queue_size);
+    }
+
+    unsigned long count = 0;
+    while (++count < num_frames + 1) {
+      std::unique_ptr<Frame> frame = reader->PopFrame();
+      if (frame != nullptr) {
+        if (frame->IsStopFrame()) {
+          break;
+        } else {
+          frames->push_back(std::move(frame));
+        }
+      }
+    }
+    reader->UnSubscribe();
+
+    // Stop the processors in forward order.
+    for (const auto& proc : procs) {
+      proc->Stop();
+    }
+
+    auto stop_frame = std::make_unique<Frame>();
+    stop_frame->SetStopFrame(true);
+    frames->push_back(std::move(stop_frame));
   }
+  return frames;
+}
+
+void RunKeyframeDetector(
+    size_t queue_size, bool block,
+    std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames, float sel,
+    size_t buf_len, size_t levels, const std::string& output_dir) {
+  std::vector<std::shared_ptr<Processor>> procs;
+  StreamPtr frame_stream = std::make_shared<Stream>();
+
+  // Create Feeder Thread.
+  std::thread feeder(
+      [frames, frame_stream, block] { Feeder(frames, frame_stream, block); });
 
   // Create KeyframeDetector.
+  std::vector<std::pair<float, size_t>> buf_params(
+      levels, std::pair<float, size_t>{sel, buf_len});
   auto kd = std::make_shared<KeyframeDetector>(buf_params);
-  kd->SetSource(vishash_stream);
+  kd->SetSource(frame_stream);
   kd->SetBlockOnPush(block);
   kd->EnableLog(output_dir);
   procs.push_back(kd);
 
-  StreamPtr kd_stream = kd->GetSink("output_0");
-  if (save_jpegs) {
-    // Create JpegWriter.
-    auto writer = std::make_shared<JpegWriter>("original_image", output_dir);
-    writer->SetSource(kd_stream);
-    procs.push_back(writer);
-  }
-
   // Subscribe before starting the processors so that we definitely do not miss
   // any frames.
-  StreamReader* reader = kd_stream->Subscribe();
+  StreamReader* reader = kd->GetSink("output_0")->Subscribe();
 
   // Start the Processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
@@ -203,10 +166,11 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
   // does nothing.
   started = true;
 
-  LOG(INFO) << "Num frames per top level run: "
-            << NumFramesPerTopLevelRun(buf_params, buf_params.size() - 1);
+  std::ostringstream micros_filepath;
+  micros_filepath << output_dir << "/keyframe_detector_" << sel << "_"
+                  << buf_len << "_" << levels << ".txt";
 
-  std::ofstream micros_log(output_dir + "/kd_micros.txt");
+  std::ofstream micros_log(micros_filepath.str());
   while (true) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr) {
@@ -225,7 +189,7 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
   micros_log.close();
 
   if (feeder.joinable()) {
-    vishash_stream->Stop();
+    frame_stream->Stop();
     feeder.join();
   }
 
@@ -235,8 +199,28 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
   }
 }
 
+void Run(size_t queue_size, bool block, unsigned int num_frames,
+         bool generate_fake_vishashes, size_t fake_vishash_length,
+         const std::string& camera_name, const std::string& model,
+         const std::string& layer, size_t nne_batch_size,
+         std::vector<float> sels, std::vector<size_t> buf_lens,
+         std::vector<size_t> nums_levels, const std::string& output_dir) {
+  std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames =
+      GenerateVishashes(generate_fake_vishashes, fake_vishash_length,
+                        camera_name, model, layer, nne_batch_size, num_frames,
+                        block, queue_size);
+  for (auto sel : sels) {
+    for (auto buf_len : buf_lens) {
+      for (auto levels : nums_levels) {
+        RunKeyframeDetector(queue_size, block, frames, sel, buf_len, levels,
+                            output_dir);
+      }
+    }
+  }
+}
+
 int main(int argc, char* argv[]) {
-  po::options_description desc("KeyframeDetector demo");
+  po::options_description desc("Vary KeyframeDetector parameters.");
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("config-dir", po::value<std::string>(),
                      "The directory which contains Streamer's configuration "
@@ -266,6 +250,18 @@ int main(int argc, char* argv[]) {
                      "detection");
   desc.add_options()("nne-batch-size,s", po::value<size_t>()->default_value(1),
                      "Batch size of the NeuralNetEvaluator.");
+  desc.add_options()(
+      "sels",
+      po::value<std::vector<float>>()->multitoken()->composing()->required(),
+      "The selectivities to use.");
+  desc.add_options()(
+      "buf-lens",
+      po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
+      "The buffer lengths to use.");
+  desc.add_options()(
+      "levels",
+      po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
+      "The numbers of levels to use.");
   desc.add_options()("output-dir", po::value<std::string>()->required(),
                      "The directory in which to store the keyframe JPEGs.");
 
@@ -297,12 +293,9 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  std::string kd_conf = args["kd-conf"].as<std::string>();
   size_t queue_size = args["queue-size"].as<size_t>();
   bool block = args.count("block");
   unsigned int num_frames = args["num-frames"].as<unsigned int>();
-  unsigned long start_id = args["start-frame"].as<unsigned long>();
-  unsigned long end_id = args["end-frame"].as<unsigned long>();
   bool generate_fake_vishashes = args.count("fake-vishashes");
   size_t fake_vishash_length = args["fake-vishash-length"].as<size_t>();
   std::string camera = "";
@@ -318,15 +311,12 @@ int main(int argc, char* argv[]) {
     layer = args["layer"].as<std::string>();
   }
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
-  bool save_jpegs = args.count("save-jpegs");
+  std::vector<float> sels = args["sels"].as<std::vector<float>>();
+  std::vector<size_t> buf_lens = args["buf-lens"].as<std::vector<size_t>>();
+  std::vector<size_t> nums_levels = args["levels"].as<std::vector<size_t>>();
   std::string output_dir = args["output-dir"].as<std::string>();
 
   if (generate_fake_vishashes) {
-    if (save_jpegs) {
-      std::cerr << "\"--save-jpegs\" is incompatible with \"--fake-vishashes\"!"
-                << std::endl;
-      return 1;
-    }
     if (camera != "") {
       WarnUnused("camera");
     }
@@ -351,8 +341,8 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  Run(kd_conf, queue_size, block, start_id, end_id, num_frames,
-      generate_fake_vishashes, fake_vishash_length, camera, model, layer,
-      nne_batch_size, save_jpegs, output_dir);
+  Run(queue_size, block, num_frames, generate_fake_vishashes,
+      fake_vishash_length, camera, model, layer, nne_batch_size, sels, buf_lens,
+      nums_levels, output_dir);
   return 0;
 }
