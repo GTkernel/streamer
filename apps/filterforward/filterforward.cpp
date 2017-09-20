@@ -109,17 +109,24 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           // user can verify that the program is making progress.
           previous_time = current_time;
 
+          // State variables for progress bar
+          const int progress_bar_len = 50;
+          int string_pos = 0;
+
           // Calculate current progress
           unsigned int current_frame_id = frame->GetValue<unsigned long>("frame_id");
-          float progress_fraction = current_frame_id / (float)num_frames;
-          std::string progress_percent = std::to_string(progress_fraction * 100);
+          std::string progress_percent;
+          float progress_fraction = 0;
+          if(num_frames != 0) {
+            progress_fraction = current_frame_id / (float)num_frames;
+            progress_percent = std::to_string(progress_fraction * 100);
+          } else {
+            progress_percent = "???????";
+            string_pos = progress_bar_len;
+          }
 
           // Progress bar
-          // [xx.xx%||||||        ]
-          // [xx.xx%||||||||      ]
-          const int progress_bar_len = 50;
           std::stringstream progress_ss;
-          int string_pos = 0;
           // Pad the left with 0s
           // Probably should use C++'s version of snprintf for this
           for(unsigned long i = 0; i < 30 - msg.str().substr(0, msg.str().size() - 1).size(); ++i)
@@ -133,7 +140,12 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           for(; string_pos < progress_bar_len; ++string_pos) {
             progress_ss << " ";
           }
-          progress_ss << "] (" << current_frame_id << " / " << num_frames << ")";
+          progress_ss << "] (" << current_frame_id << " / ";
+          if(num_frames != 0) {
+            progress_ss << num_frames << ")";
+          } else {
+            progress_ss << "Unknown" << ")";
+          }
 
           // Strip newline and print
           std::cout << msg.str().substr(0, msg.str().size() - 1);
