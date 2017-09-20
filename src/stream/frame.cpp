@@ -283,6 +283,95 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
   }
 };
 
+class FrameSize : public boost::static_visitor<unsigned long> {
+ public:
+  unsigned long operator()(const double&) const { return sizeof(double); }
+
+  unsigned long operator()(const float&) const { return sizeof(float); }
+
+  unsigned long operator()(const int&) const { return sizeof(int); }
+
+  unsigned long operator()(const long&) const { return sizeof(long); }
+
+  unsigned long operator()(const unsigned long&) const {
+    return sizeof(unsigned long);
+  }
+
+  unsigned long operator()(const bool&) const { return sizeof(bool); }
+
+  unsigned long operator()(const boost::posix_time::ptime&) const {
+    STREAMER_NOT_IMPLEMENTED;
+    return 0;
+  }
+
+  unsigned long operator()(const boost::posix_time::time_duration&) const {
+    STREAMER_NOT_IMPLEMENTED;
+    return 0;
+  }
+
+  unsigned long operator()(const std::string& v) const { return v.length(); }
+
+  unsigned long operator()(const std::vector<std::string>& v) const {
+    unsigned long size_bytes = 0;
+    for (const auto& s : v) {
+      size_bytes += s.length();
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<double>& v) const {
+    return v.size() * sizeof(double);
+  }
+
+  unsigned long operator()(const std::vector<Rect>& v) const {
+    return v.size() * sizeof(Rect);
+  }
+
+  unsigned long operator()(const std::vector<char>& v) const {
+    return v.size();
+  }
+
+  unsigned long operator()(const cv::Mat& v) const {
+    return v.total() * sizeof(float);
+  }
+
+  unsigned long operator()(const std::vector<float>& v) const {
+    return v.size() * sizeof(float);
+  }
+
+  unsigned long operator()(const std::vector<FaceLandmark>& v) const {
+    return v.size() * sizeof(FaceLandmark);
+  }
+
+  unsigned long operator()(const std::vector<std::vector<double>>& v) const {
+    unsigned long size_bytes;
+    for (const auto& vec : v) {
+      size_bytes += vec.size() * sizeof(double);
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<std::vector<float>>& v) const {
+    unsigned long size_bytes;
+    for (const auto& vec : v) {
+      size_bytes += vec.size() * sizeof(float);
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<Frame>& v) const {
+    unsigned long size_bytes;
+    for (const auto& f : v) {
+      size_bytes += f.GetRawSizeBytes();
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<std::pair<int, float>>& v) const {
+    return v.size() * (sizeof(int) + sizeof(float));
+  }
+};
+
 Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
 
 Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
@@ -367,6 +456,20 @@ void Frame::SetStopFrame(bool stop_frame) {
 
 bool Frame::IsStopFrame() const {
   return Count(STOP_FRAME_KEY) && GetValue<bool>(STOP_FRAME_KEY);
+}
+
+unsigned long Frame::GetRawSizeBytes(
+    std::unordered_set<std::string> fields) const {
+  bool use_all_fields = fields.empty();
+  FrameSize visitor;
+  unsigned long size_bytes = 0;
+  for (auto it = frame_data_.begin(); it != frame_data_.end(); ++it) {
+    std::string field = it->first;
+    if (use_all_fields || fields.find(field) != fields.end()) {
+      size_bytes += boost::apply_visitor(visitor, frame_data_.at(field));
+    }
+  }
+  return size_bytes;
 }
 
 // Types declared in Field

@@ -7,7 +7,6 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -43,10 +42,10 @@ std::atomic<bool> stopped(false);
 // have been processed or after a stop frame has been detected.
 void Stopper(StreamPtr stream, unsigned int num_frames) {
   unsigned int count = 0;
-  auto reader = stream->Subscribe();
-  while ((num_frames == 0 || ++count < num_frames + 1)) {
+  StreamReader* reader = stream->Subscribe();
+  while (num_frames == 0 || ++count < num_frames + 1) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
-    if (frame == nullptr || frame->IsStopFrame()) {
+    if (frame != nullptr && frame->IsStopFrame()) {
       break;
     }
   }
@@ -58,7 +57,7 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             std::vector<std::string> fields, const std::string& output_dir) {
-  std::ostringstream log_msg;
+  std::ostringstream log;
   bool is_first_frame = true;
   double total_bytes = 0;
   boost::posix_time::ptime start_time;
@@ -82,66 +81,37 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         start_time = boost::posix_time::microsec_clock::local_time();
         previous_time = start_time;
       } else {
-        // Calculate the size of the ImageMatch query results.
-        if (std::find(fields.begin(), fields.end(), "imagematch.scores") !=
-            fields.end()) {
-          total_bytes += frame
-                             ->GetValue<std::vector<std::pair<int, float>>>(
-                                 "imagematch.scores")
-                             .size() *
-                         sizeof(std::pair<int, float>);
-        }
-
-        // Calculate the size of the feature vector.
-        if (std::find(fields.begin(), fields.end(), "activations") !=
-            fields.end()) {
-          total_bytes +=
-              frame->GetValue<cv::Mat>("activations").total() * sizeof(float);
-        }
-
-        // Calculate the size of the frame id.
-        if (std::find(fields.begin(), fields.end(), "frame_id") !=
-            fields.end()) {
-          total_bytes += sizeof(unsigned long);
-        }
-
-        // Calculate the size of the raw bytes.
-        if (std::find(fields.begin(), fields.end(), "original_bytes") !=
-            fields.end()) {
-          total_bytes +=
-              frame->GetValue<std::vector<char>>("original_bytes").size();
-        }
-
-        // Calculate the size of the resized image.
-        if (std::find(fields.begin(), fields.end(), "image") != fields.end()) {
-          total_bytes +=
-              frame->GetValue<cv::Mat>("image").total() * sizeof(float);
-        }
+        total_bytes += frame->GetRawSizeBytes(
+            std::unordered_set<std::string>{fields.begin(), fields.end()});
 
         // Calculate the network bandwidth.
         boost::posix_time::ptime current_time =
             boost::posix_time::microsec_clock::local_time();
+        // Use total_microseconds() to avoid dividing by zero if less than a
+        // second has passed.
         double net_bw_bps = (total_bytes * 8 /
                              (current_time - start_time).total_microseconds()) *
                             1000000;
 
-        auto fps = reader->GetHistoricalFps();
+        double fps = reader->GetHistoricalFps();
 
         long latency_micros =
             (current_time -
              frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
                 .total_microseconds();
 
+        // Assemble log message;
+        std::ostringstream msg;
+        msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
+
         if ((current_time - previous_time).total_seconds() >= 2) {
           // Every two seconds, log a frame's metrics to the console so that the
           // user can verify that the program is making orogress.
           previous_time = current_time;
-          std::cout << "Level " << idx << " - Network bandwidth: " << net_bw_bps
-                    << " bps , " << fps << " fps , Latency: " << latency_micros
-                    << " us " << std::endl;
+          std::cout << msg.str();
         }
-        log_msg << net_bw_bps << "," << fps << "," << latency_micros
-                << std::endl;
+
+        log << msg.str();
       }
     }
   }
@@ -153,7 +123,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   std::ofstream log_file(log_filepath.str());
   log_file << "# network bandwidth (bps), fps, e2e latency (micros)"
            << std::endl
-           << log_msg.str();
+           << log.str();
   log_file.close();
 }
 
@@ -241,7 +211,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   procs.push_back(fc_entrance);
 
   // Create an ImageTransformer.
-  auto model_desc = ModelManager::GetInstance().GetModelDesc(model);
+  ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   auto transformer =
       std::make_shared<ImageTransformer>(input_shape, true, true);
@@ -338,24 +308,24 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 int main(int argc, char* argv[]) {
   po::options_description desc("FilterForward");
   desc.add_options()("help,h", "Print the help message.");
-  desc.add_options()(
-      "config-dir,C", po::value<std::string>(),
-      "The directory containing streamer's configuration files.");
-  desc.add_options()(
-      "ff-conf,f", po::value<std::string>(),
-      "The file containing the keyframe detector's configuration.");
-  desc.add_options()(
-      "num-frames", po::value<unsigned int>()->default_value(0),
-      "The number of frames to run before automatically stopping.");
+  desc.add_options()("config-dir,C", po::value<std::string>(),
+                     "The directory containing streamer's configuration "
+                     "files.");
+  desc.add_options()("ff-conf,f", po::value<std::string>(),
+                     "The file containing the keyframe detector's "
+                     "configuration.");
+  desc.add_options()("num-frames", po::value<unsigned int>()->default_value(0),
+                     "The number of frames to run before automatically "
+                     "stopping.");
   desc.add_options()("block,b",
                      "Whether processors should block when pushing frames.");
   desc.add_options()("queue-size,q", po::value<size_t>()->default_value(16),
                      "The size of the queues between processors.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
-  desc.add_options()(
-      "file-fps", po::value<unsigned int>()->default_value(30),
-      "Rate at which to read a file source (no effect if not file source).");
+  desc.add_options()("file-fps", po::value<unsigned int>()->default_value(30),
+                     "Rate at which to read a file source (no effect if not "
+                     "file source).");
   desc.add_options()("throttled-fps,i", po::value<int>()->default_value(0),
                      "The FPS at which to throttle (in software) the camera "
                      "stream. 0 means no throttling.");
@@ -376,6 +346,7 @@ int main(int argc, char* argv[]) {
                      "The fields to send over the network");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
+
   // Parse the command line arguments.
   po::variables_map args;
   try {
