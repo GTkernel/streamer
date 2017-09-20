@@ -154,8 +154,6 @@ void Processor::ProcessorLoop() {
         }
         return;
       } else {
-        LOG(INFO) << GetStringForProcessorType(GetType()) << " received frame "
-                  << frame->GetValue<unsigned long>("frame_id");
         // Calculate queue latency
         double start_ms = frame->GetValue<double>("start_time_ms");
         double end_ms = Context::GetContext().GetTimer().ElapsedMSec();
