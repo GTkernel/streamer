@@ -246,8 +246,7 @@ int main(int argc, char* argv[]) {
                      "are stored.");
   desc.add_options()("queue-size", po::value<size_t>()->default_value(16),
                      "The size of the queues between processors.");
-  desc.add_options()("block-on-push",
-                     "Processors should block when pushing frames.");
+  desc.add_options()("block", "Processors should block when pushing frames.");
   desc.add_options()("start-frame",
                      po::value<unsigned long>()->default_value(MIN_START_ID),
                      "The frame id (starting from 0) of the first frame to "
@@ -313,7 +312,7 @@ int main(int argc, char* argv[]) {
 
   std::string kd_conf = args["kd-conf"].as<std::string>();
   size_t queue_size = args["queue-size"].as<size_t>();
-  bool block = args.count("block-on-push");
+  bool block = args.count("block");
   unsigned int num_frames = args["num-frames"].as<unsigned int>();
   unsigned long start_id = args["start-frame"].as<unsigned long>();
   unsigned long end_id = args["end-frame"].as<unsigned long>();
