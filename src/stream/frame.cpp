@@ -5,6 +5,7 @@
 #include "frame.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 #include <opencv2/core/core.hpp>
 
@@ -460,6 +461,12 @@ bool Frame::IsStopFrame() const {
 
 unsigned long Frame::GetRawSizeBytes(
     std::unordered_set<std::string> fields) const {
+  for (const auto& field : fields) {
+    if (frame_data_.find(field) == frame_data_.end()) {
+      throw std::invalid_argument("Unknown field: " + field);
+    }
+  }
+
   bool use_all_fields = fields.empty();
   FrameSize visitor;
   unsigned long size_bytes = 0;
