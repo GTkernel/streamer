@@ -344,7 +344,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
   }
 
   unsigned long operator()(const std::vector<std::vector<double>>& v) const {
-    unsigned long size_bytes;
+    unsigned long size_bytes = 0;
     for (const auto& vec : v) {
       size_bytes += vec.size() * sizeof(double);
     }
@@ -352,7 +352,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
   }
 
   unsigned long operator()(const std::vector<std::vector<float>>& v) const {
-    unsigned long size_bytes;
+    unsigned long size_bytes = 0;
     for (const auto& vec : v) {
       size_bytes += vec.size() * sizeof(float);
     }
@@ -360,7 +360,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
   }
 
   unsigned long operator()(const std::vector<Frame>& v) const {
-    unsigned long size_bytes;
+    unsigned long size_bytes = 0;
     for (const auto& f : v) {
       size_bytes += f.GetRawSizeBytes();
     }
