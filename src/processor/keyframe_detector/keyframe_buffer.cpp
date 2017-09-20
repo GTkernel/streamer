@@ -47,8 +47,12 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
   std::vector<std::unique_ptr<Frame>> keyframes;
   if (buf_.size() == target_buf_len_actual) {
     // The frame buffer is full, meaning that it's time to find the keyframes.
-    unsigned long start_frame_id =
-        buf_.front()->GetValue<unsigned long>("frame_id");
+    unsigned long start_frame_id;
+    if (on_first_buf_) {
+      start_frame_id = buf_.front()->GetValue<unsigned long>("frame_id");
+    } else {
+      start_frame_id = buf_[1]->GetValue<unsigned long>("frame_id");
+    }
     unsigned long end_frame_id =
         buf_.back()->GetValue<unsigned long>("frame_id");
     LOG(INFO) << "Keyframe detection running over frame range: {"
