@@ -56,7 +56,8 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // Designed to be run in its own thread. Creates a log file containing
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
-            std::vector<std::string> fields, const std::string& output_dir, const unsigned int num_frames) {
+            std::vector<std::string> fields, const std::string& output_dir,
+            const unsigned int num_frames) {
   std::ostringstream log;
   bool is_first_frame = true;
   double total_bytes = 0;
@@ -114,10 +115,11 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           int string_pos = 0;
 
           // Calculate current progress
-          unsigned int current_frame_id = frame->GetValue<unsigned long>("frame_id");
+          unsigned int current_frame_id =
+              frame->GetValue<unsigned long>("frame_id");
           std::string progress_percent;
           float progress_fraction = 0;
-          if(num_frames != 0) {
+          if (num_frames != 0) {
             progress_fraction = current_frame_id / (float)num_frames;
             progress_percent = std::to_string(progress_fraction * 100);
           } else {
@@ -129,28 +131,31 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           std::stringstream progress_ss;
           // Pad the left with 0s
           // Probably should use C++'s version of snprintf for this
-          for(unsigned long i = 0; i < 30 - msg.str().substr(0, msg.str().size() - 1).size(); ++i)
+          for (unsigned long i = 0;
+               i < 30 - msg.str().substr(0, msg.str().size() - 1).size(); ++i)
             progress_ss << " ";
           progress_ss << "Progress: [";
           progress_ss << progress_percent.substr(0, 4) << "%";
           string_pos += 5;
-          for(; string_pos < progress_bar_len * progress_fraction; ++string_pos) {
+          for (; string_pos < progress_bar_len * progress_fraction;
+               ++string_pos) {
             progress_ss << "|";
           }
-          for(; string_pos < progress_bar_len; ++string_pos) {
+          for (; string_pos < progress_bar_len; ++string_pos) {
             progress_ss << " ";
           }
           progress_ss << "] (" << current_frame_id << " / ";
-          if(num_frames != 0) {
+          if (num_frames != 0) {
             progress_ss << num_frames << ")";
           } else {
-            progress_ss << "Unknown" << ")";
+            progress_ss << "Unknown"
+                        << ")";
           }
 
           // Strip newline and print
           std::cout << msg.str().substr(0, msg.str().size() - 1);
 
-          if(idx == 0) {
+          if (idx == 0) {
             std::cout << progress_ss.str();
           }
           std::cout << std::endl;
@@ -319,9 +324,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     // Create a logger thread to calculate statistics about ImageMatch's output
     // stream.
     StreamPtr additional_im_sink = additional_im->GetSink();
-    logger_threads.push_back(
-        std::thread([i, additional_im_sink, log_time, fields, output_dir, num_frames] {
-          Logger(i + 1, additional_im_sink, log_time, fields, output_dir, num_frames);
+    logger_threads.push_back(std::thread(
+        [i, additional_im_sink, log_time, fields, output_dir, num_frames] {
+          Logger(i + 1, additional_im_sink, log_time, fields, output_dir,
+                 num_frames);
         }));
   }
 
