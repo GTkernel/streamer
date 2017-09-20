@@ -119,11 +119,12 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
   // frame to every future frame).
   std::vector<std::vector<double>> direct_lens(num_frames,
                                                std::vector<double>(num_frames));
-  // TODO: This should be optimized.
+
   auto start_id = buf_.front()->GetValue<unsigned long>("frame_id");
   auto end_id = buf_.back()->GetValue<unsigned long>("frame_id");
   auto span = (end_id - start_id) / 4;
 
+  // TODO: This should be optimized.
   for (idx_t i = 0; i < num_frames; ++i) {
     const cv::Mat& src_f = buf_.at(i)->GetValue<cv::Mat>("activations");
     auto i_id = buf_.at(i)->GetValue<unsigned long>("frame_id");
