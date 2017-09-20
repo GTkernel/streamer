@@ -58,8 +58,7 @@ class Frame {
   void SetStopFrame(bool stop_frame);
   bool IsStopFrame() const;
   // Returns the size in bytes of the data contained in the specified fields.
-  // Provide the empty set to specify all fields. Invalid fields will be
-  // ignored.
+  // Provide the empty set to specify all fields.
   unsigned long GetRawSizeBytes(
       std::unordered_set<std::string> fields = {}) const;
 
