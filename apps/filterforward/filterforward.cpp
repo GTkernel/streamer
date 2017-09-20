@@ -56,7 +56,7 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // Designed to be run in its own thread. Creates a log file containing
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
-            std::vector<std::string> fields, const std::string& output_dir) {
+            std::vector<std::string> fields, const std::string& output_dir, const unsigned int num_frames) {
   std::ostringstream log;
   bool is_first_frame = true;
   double total_bytes = 0;
@@ -106,9 +106,42 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
         if ((current_time - previous_time).total_seconds() >= 2) {
           // Every two seconds, log a frame's metrics to the console so that the
-          // user can verify that the program is making orogress.
+          // user can verify that the program is making progress.
           previous_time = current_time;
-          std::cout << msg.str();
+
+          // Calculate current progress
+          unsigned int current_frame_id = frame->GetValue<unsigned long>("frame_id");
+          float progress_fraction = current_frame_id / (float)num_frames;
+          std::string progress_percent = std::to_string(progress_fraction * 100);
+
+          // Progress bar
+          // [xx.xx%||||||        ]
+          // [xx.xx%||||||||      ]
+          const int progress_bar_len = 50;
+          std::stringstream progress_ss;
+          int string_pos = 0;
+          // Pad the left with 0s
+          // Probably should use C++'s version of snprintf for this
+          for(unsigned long i = 0; i < 30 - msg.str().substr(0, msg.str().size() - 1).size(); ++i)
+            progress_ss << " ";
+          progress_ss << "Progress: [";
+          progress_ss << progress_percent.substr(0, 4) << "%";
+          string_pos += 5;
+          for(; string_pos < progress_bar_len * progress_fraction; ++string_pos) {
+            progress_ss << "|";
+          }
+          for(; string_pos < progress_bar_len; ++string_pos) {
+            progress_ss << " ";
+          }
+          progress_ss << "] (" << current_frame_id << " / " << num_frames << ")";
+
+          // Strip newline and print
+          std::cout << msg.str().substr(0, msg.str().size() - 1);
+
+          if(idx == 0) {
+            std::cout << progress_ss.str();
+          }
+          std::cout << std::endl;
         }
 
         log << msg.str();
@@ -246,8 +279,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // level's output stream.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
   logger_threads.push_back(
-      std::thread([fc_exit_sink, log_time, fields, output_dir] {
-        Logger(0, fc_exit_sink, log_time, fields, output_dir);
+      std::thread([fc_exit_sink, log_time, fields, output_dir, num_frames] {
+        Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames);
       }));
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
@@ -275,8 +308,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     // stream.
     StreamPtr additional_im_sink = additional_im->GetSink();
     logger_threads.push_back(
-        std::thread([i, additional_im_sink, log_time, fields, output_dir] {
-          Logger(i + 1, additional_im_sink, log_time, fields, output_dir);
+        std::thread([i, additional_im_sink, log_time, fields, output_dir, num_frames] {
+          Logger(i + 1, additional_im_sink, log_time, fields, output_dir, num_frames);
         }));
   }
 
