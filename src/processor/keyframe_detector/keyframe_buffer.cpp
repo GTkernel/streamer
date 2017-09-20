@@ -28,11 +28,8 @@ void KeyframeBuffer::SetSelectivity(float new_sel) {
 void KeyframeBuffer::EnableLog(std::string output_dir,
                                std::string output_prefix) {
   std::ostringstream filepath;
-  // The buffer is one larger than the target buffer length to allow room for
-  // the last keyframe from the previous buffer.
-  idx_t buf_len = buf_.size() - 1;
   filepath << output_dir << "/" << output_prefix << "_" << sel_ << "_"
-           << buf_len << ".log";
+           << target_buf_len_ << ".log";
   log_.open(filepath.str());
 }
 
@@ -123,11 +120,19 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
   std::vector<std::vector<double>> direct_lens(num_frames,
                                                std::vector<double>(num_frames));
   // TODO: This should be optimized.
+  auto start_id = buf_.front()->GetValue<unsigned long>("frame_id");
+  auto end_id = buf_.back()->GetValue<unsigned long>("frame_id");
+  auto span = (end_id - start_id) / 4;
+
   for (idx_t i = 0; i < num_frames; ++i) {
     const cv::Mat& src_f = buf_.at(i)->GetValue<cv::Mat>("activations");
+    auto i_id = buf_.at(i)->GetValue<unsigned long>("frame_id");
+
     for (idx_t j = i + 1; j < num_frames; ++j) {
       const cv::Mat& dst_f = buf_.at(j)->GetValue<cv::Mat>("activations");
-      direct_lens[i][j] = cv::norm(dst_f - src_f);
+      auto j_id = buf_.at(j)->GetValue<unsigned long>("frame_id");
+
+      direct_lens[i][j] = cv::norm(dst_f - src_f);  // / (span + j_id - i_id);
     }
   }
 
