@@ -114,6 +114,11 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
 
   idx_t num_frames = buf_.size();
   idx_t num_frames_in_path = (idx_t)ceil(sel_ * num_frames);
+  if (!on_first_buf_) {
+    // Add one to account for the fact that the first frame in the buffer is the
+    // last keyframe from the previous buffer.
+    ++num_frames_in_path;
+  }
   // The number of graph edges that must be traversed by our path is one less
   // than the number of nodes in the path.
   idx_t num_steps = num_frames_in_path - 1;
