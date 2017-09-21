@@ -1,11 +1,9 @@
 
 #include <atomic>
 #include <climits>
-#include <condition_variable>
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -20,18 +18,13 @@
 #include "common/types.h"
 #include "model/model_manager.h"
 #include "processor/image_transformer.h"
-#include "processor/jpeg_writer.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
-#include "processor/temporal_region_selector.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
 
 namespace po = boost::program_options;
-
-constexpr unsigned long MIN_START_ID = 0;
-constexpr unsigned long MAX_END_ID = ULONG_MAX;
 
 // Set to true when the pipeline has been started. Used to signal the feeder
 // thread to start, if it exists.
@@ -46,11 +39,34 @@ void WarnUnused(std::string param) {
                << "\" ignored when using \"--fake-vishashes\"!";
 }
 
-// This function feeds frames to the specified stream.
+void UpdateProgressBar(double current_step, double total_steps,
+                       const std::string& msg = "") {
+  std::ostringstream progress_msg;
+  progress_msg << "[";
+  double i = 0;
+  double current_percent = (current_step / total_steps) * 100;
+  for (; i < current_percent / 2; ++i) {
+    progress_msg << "|";
+  }
+  for (; i < 50; ++i) {
+    progress_msg << "-";
+  }
+  progress_msg << "] " << std::setprecision(3) << current_percent << "% - "
+               << msg;
+
+  // Include to spaces at the end to make sure that the previous line is always
+  // overridden.
+  std::cout << "\r" << progress_msg.str() << "  ";
+  // This is required in order to make the console update as soon as the above
+  // log is printed. Without this, the progress log will not update smoothly.
+  std::cout.flush();
+}
+
+// Feeds frames to the specified stream.
 void Feeder(std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
             StreamPtr stream, bool block) {
   while (!started) {
-    LOG(INFO) << "Waiting to start...";
+    LOG(INFO) << "Feeder waiting to start...";
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 
@@ -59,14 +75,19 @@ void Feeder(std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
   }
 }
 
+// Generates vishashes, either randomly or by passing camera frames through a
+// DNN.
 std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
+    size_t queue_size, bool block, unsigned long num_frames,
     bool generate_fake_vishashes, size_t fake_vishash_length,
     const std::string& camera_name, const std::string& model,
-    const std::string& layer, size_t nne_batch_size, unsigned int num_frames,
-    bool block, size_t queue_size) {
+    const std::string& layer, size_t nne_batch_size) {
   auto frames = std::make_shared<std::vector<std::unique_ptr<Frame>>>();
+
   if (generate_fake_vishashes) {
     for (unsigned long frame_id = 0; frame_id < num_frames; ++frame_id) {
+      UpdateProgressBar(frame_id + 1, num_frames, "Generating vishashes...");
+
       auto frame = std::make_unique<Frame>();
       frame->SetValue("frame_id", frame_id);
 
@@ -76,8 +97,10 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 
       frames->push_back(std::move(frame));
     }
+    std::cout << std::endl;
   } else {
     std::vector<std::shared_ptr<Processor>> procs;
+
     // Create Camera.
     auto camera = CameraManager::GetInstance().GetCamera(camera_name);
     camera->SetBlockOnPush(block);
@@ -101,6 +124,8 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
     nne->SetBlockOnPush(block);
     procs.push_back(nne);
 
+    // Subscribe before starting the processors so that we definitely do not
+    // miss any frames.
     StreamReader* reader = nne->GetSink(layer)->Subscribe();
 
     // Start the Processors in reverse order.
@@ -108,17 +133,25 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
       (*procs_it)->Start(queue_size);
     }
 
+    // Loop until either we have received "num_frames" frames or we receive a
+    // stop frame.
     unsigned long count = 0;
-    while (++count < num_frames + 1) {
+    while (count < num_frames) {
+      if (num_frames != ULONG_MAX) {
+        UpdateProgressBar(count + 1, num_frames, "Generating vishashes...");
+      }
+
       std::unique_ptr<Frame> frame = reader->PopFrame();
       if (frame != nullptr) {
         if (frame->IsStopFrame()) {
           break;
         } else {
           frames->push_back(std::move(frame));
+          ++count;
         }
       }
     }
+    std::cout << std::endl;
     reader->UnSubscribe();
 
     // Stop the processors in forward order.
@@ -126,6 +159,8 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
       proc->Stop();
     }
   }
+
+  // Create a stop frame to signal the end of the frame stream.
   auto stop_frame = std::make_unique<Frame>();
   stop_frame->SetStopFrame(true);
   stop_frame->SetValue("frame_id",
@@ -135,8 +170,9 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 }
 
 void RunKeyframeDetector(
-    size_t queue_size, bool block,
-    std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames, float sel,
+    std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
+    size_t queue_size, bool block, float sel,
+
     size_t buf_len, size_t levels, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
   StreamPtr frame_stream = std::make_shared<Stream>();
@@ -145,7 +181,7 @@ void RunKeyframeDetector(
   std::thread feeder(
       [frames, frame_stream, block] { Feeder(frames, frame_stream, block); });
 
-  // Create KeyframeDetector.
+  // Create KeyframeDetector. Each buffer has the same selectivity and length.
   std::vector<std::pair<float, size_t>> buf_params(
       levels, std::pair<float, size_t>{sel, buf_len});
   auto kd = std::make_shared<KeyframeDetector>(buf_params);
@@ -163,15 +199,15 @@ void RunKeyframeDetector(
     (*procs_it)->Start(queue_size);
   }
 
-  // Signal the feeder thread to start. If there is no feeder thread, then this
-  // does nothing.
+  // Signal the feeder thread to start.
   started = true;
 
+  // Create a log file for the running time of the keyframe detection algorithm.
   std::ostringstream micros_filepath;
   micros_filepath << output_dir << "/keyframe_detector_" << sel << "_"
                   << buf_len << "_" << levels << "_micros.txt";
-
   std::ofstream micros_log(micros_filepath.str());
+
   while (true) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr) {
@@ -201,55 +237,44 @@ void RunKeyframeDetector(
   }
 }
 
-std::string GetProgressString(float sel, size_t buf_len, size_t levels,
-                              double total, double counter) {
-  std::ostringstream progress_bar;
-  progress_bar << "[";
-  double i = 0;
-  double current_percent = counter / total * 100;
-  for (; i < current_percent / 2; ++i) {
-    progress_bar << "|";
-  }
-  for (; i < 50; ++i) {
-    progress_bar << "-";
-  }
-  progress_bar << "]";
-  progress_bar << " " << std::setprecision(3) << current_percent << "% - "
-               << "Selectivity: " << sel << " , Buffer Length: " << buf_len
-               << " , Levels: " << levels;
-  return progress_bar.str();
-}
-
-void Run(size_t queue_size, bool block, unsigned int num_frames,
+void Run(size_t queue_size, bool block, unsigned long num_frames,
          bool generate_fake_vishashes, size_t fake_vishash_length,
          const std::string& camera_name, const std::string& model,
          const std::string& layer, size_t nne_batch_size,
          std::vector<float> sels, std::vector<size_t> buf_lens,
          std::vector<size_t> nums_levels, const std::string& output_dir) {
   std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames =
-      GenerateVishashes(generate_fake_vishashes, fake_vishash_length,
-                        camera_name, model, layer, nne_batch_size, num_frames,
-                        block, queue_size);
-  double total = sels.size() * buf_lens.size() * nums_levels.size();
-  double counter = 0;
+      GenerateVishashes(queue_size, block, num_frames, generate_fake_vishashes,
+                        fake_vishash_length, camera_name, model, layer,
+                        nne_batch_size);
+
+  std::cout << "Running keyframe detector experiments..." << std::endl;
+
+  double total_steps = sels.size() * buf_lens.size() * nums_levels.size();
+  double current_step = 0;
   for (auto sel : sels) {
     for (auto buf_len : buf_lens) {
       for (auto levels : nums_levels) {
+        // Log progress.
+        std::ostringstream msg;
+        msg << "Current experiment: Selectivity: " << sel
+            << " , Buffer Length: " << buf_len << " , Levels: " << levels;
+        UpdateProgressBar(++current_step, total_steps, msg.str());
+
+        // Create a subdirectory for this experiment's results.
         std::ostringstream output_subdir;
         output_subdir << output_dir << "/" << sel << "_" << buf_len << "_"
                       << levels;
         std::string output_subdir_str = output_subdir.str();
         boost::filesystem::path output_subdir_path(output_subdir_str);
         boost::filesystem::create_directory(output_subdir_path);
-        std::cout << "\r"
-                  << GetProgressString(sel, buf_len, levels, total, ++counter);
-        std::cout.flush();
-        // std::cout << sel << " , " << buf_len << " , " << levels << std::endl;
-        RunKeyframeDetector(queue_size, block, frames, sel, buf_len, levels,
+
+        RunKeyframeDetector(frames, queue_size, block, sel, buf_len, levels,
                             output_subdir_str);
       }
     }
   }
+
   std::cout << std::endl;
 }
 
@@ -263,41 +288,42 @@ int main(int argc, char* argv[]) {
                      "The size of the queues between processors.");
   desc.add_options()("block", "Processors should block when pushing frames.");
   desc.add_options()("num-frames",
-                     po::value<unsigned int>()->default_value(1000),
+                     po::value<unsigned long>()->default_value(ULONG_MAX),
                      "The number of frames to create when generating fake "
-                     "vishashes. Must be used in conjunction with "
-                     "\"--fake-vishashes\" and \"--fake-vishash-length\".");
+                     "vishashes. If this is used in conjunction with a camera "
+                     "stream and the camera stream contains fewer than "
+                     "\"--num-frames\" frames, then this option is ignored.");
   desc.add_options()("fake-vishashes",
                      "Generate fake vishashes. Must be used in conjunction "
-                     "with \"--fake-vishash-length\" and \"--num-frames\".");
+                     "with \"--fake-vishash-length\".");
   desc.add_options()("fake-vishash-length",
                      po::value<size_t>()->default_value(1024),
                      "The number of values in the fake vishashes that will be "
-                     "generated. Must be used in conjunction with "
-                     "\"--fake-vishashes\" and \"--num-frames\".");
+                     "generated. Should be used in conjunction with "
+                     "\"--fake-vishashes\".");
   desc.add_options()("camera", po::value<std::string>(),
-                     "The name of the camera to use");
+                     "The name of the camera to use.");
   desc.add_options()("model", po::value<std::string>(),
-                     "The name of the model to run");
+                     "The name of the model to use.");
   desc.add_options()("layer", po::value<std::string>(),
                      "The layer to extract and use as the basis for keyframe "
-                     "detection");
+                     "detection.");
   desc.add_options()("nne-batch-size", po::value<size_t>()->default_value(1),
-                     "Batch size of the NeuralNetEvaluator.");
+                     "The batch size to use during DNN evaluation.");
   desc.add_options()(
       "sels",
       po::value<std::vector<float>>()->multitoken()->composing()->required(),
-      "The selectivities to use.");
+      "The selectivities to use. Designed to be specified multiple times.");
   desc.add_options()(
       "buf-lens",
       po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
-      "The buffer lengths to use.");
+      "The buffer lengths to use. Designed to be specified multiple times.");
   desc.add_options()(
       "levels",
       po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
-      "The numbers of levels to use.");
+      "The numbers of levels to use. Designed to be specified multiple times.");
   desc.add_options()("output-dir", po::value<std::string>()->required(),
-                     "The directory in which to store the keyframe JPEGs.");
+                     "The directory in which to store output log files.");
 
   // Parse command line arguments.
   po::variables_map args;
@@ -329,7 +355,7 @@ int main(int argc, char* argv[]) {
 
   size_t queue_size = args["queue-size"].as<size_t>();
   bool block = args.count("block");
-  unsigned int num_frames = args["num-frames"].as<unsigned int>();
+  unsigned long num_frames = args["num-frames"].as<unsigned long>();
   bool generate_fake_vishashes = args.count("fake-vishashes");
   size_t fake_vishash_length = args["fake-vishash-length"].as<size_t>();
   std::string camera = "";
@@ -349,7 +375,6 @@ int main(int argc, char* argv[]) {
   std::vector<size_t> buf_lens = args["buf-lens"].as<std::vector<size_t>>();
   std::vector<size_t> nums_levels = args["levels"].as<std::vector<size_t>>();
   std::string output_dir = args["output-dir"].as<std::string>();
-
   if (generate_fake_vishashes) {
     if (camera != "") {
       WarnUnused("camera");
