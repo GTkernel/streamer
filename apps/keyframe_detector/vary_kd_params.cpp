@@ -71,7 +71,7 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
       frame->SetValue("frame_id", frame_id);
 
       cv::Mat vishash(fake_vishash_length, 1, CV_32FC1);
-      vishash.at<float>(0, 0) = (float)frame_id;
+      cv::randu(vishash, 0, 1);
       frame->SetValue("activations", vishash);
 
       frames->push_back(std::move(frame));
