@@ -60,6 +60,9 @@ class KeyframeBuffer {
   // operation, we preload the buffer with the last keyframe from the last run,
   // so we need the buffer to have one extra slot.
   bool on_first_buf_;
+  // The id of the last frame to be considered by the keyframe detection
+  // algorithm. This is the id of the last frame in the previous buffer.
+  unsigned long last_frame_processed_;
   // If this stream is open, then the keyframe selection results will be written
   // to it.
   std::ofstream log_;

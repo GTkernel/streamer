@@ -75,7 +75,7 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
     queries_->row(0).stableNormalize();
     queries_->row(0) *= is_positive ? 1 : -1;
   } else {
-    queries_->conservativeResize(queries_->rows() + 1, queries_->cols());
+    queries_->conservativeResize(queries_->rows() + 1, Eigen::NoChange);
     queries_->row(queries_->rows() - 1) = vishash_map;
     queries_->row(queries_->rows() - 1).stableNormalize();
     queries_->row(queries_->rows() - 1) *= is_positive ? 1 : -1;
@@ -95,10 +95,17 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
 bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
                                 int vishash_size, float threshold) {
   std::lock_guard<std::mutex> guard(query_guard_);
-  queries_ = std::make_unique<Eigen::MatrixXf>(num_queries * img_per_query,
-                                               vishash_size);
-  queries_->setRandom();
-  for (int i = 0; i < num_queries; ++i) {
+  if(queries_ == nullptr) {
+    queries_ = std::make_unique<Eigen::MatrixXf>(num_queries * img_per_query,
+                                                 vishash_size);
+    queries_->setRandom();
+  } else {
+    int old_num_rows = queries_->rows();
+    CHECK(num_queries > old_num_rows) << "Removing queries is not yet supported";
+    queries_->conservativeResize(num_queries * img_per_query, Eigen::NoChange);
+    queries_->block(old_num_rows, queries_->rows(), queries_->rows() - old_num_rows, queries_->cols()).setRandom();
+  }
+  for (int i = query_data_.size(); i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
     current_query->scores = std::make_unique<Eigen::VectorXf>(batch_size_);
 #ifdef USE_TENSORFLOW
