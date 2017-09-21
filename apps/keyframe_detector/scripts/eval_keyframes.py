@@ -1,8 +1,9 @@
-from __future__ import print_function
+#!/usr/bin/env python3
+
 import csv
 from collections import defaultdict
 import argparse
-import cPickle as pickle
+import pickle
 import os
 
 def __parse_args():
