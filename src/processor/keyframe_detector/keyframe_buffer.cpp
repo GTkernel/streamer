@@ -114,11 +114,22 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
 
   idx_t num_frames = buf_.size();
   idx_t num_frames_in_path = (idx_t)ceil(sel_ * num_frames);
-  if (!on_first_buf_) {
+  if (on_first_buf_) {
+    if (num_frames_in_path == 1) {
+      // If this is the first buffer, then it is possible that our keyframe path
+      // will consist of only one frame. By definition, this frame must be the
+      // first frame. This case will never happen for future buffers because
+      // there will always be at least two frames in the path (the last keyframe
+      // from the previous buffer and at least one keyframe from the current
+      // buffer).
+      return {0};
+    }
+  } else {
     // Add one to account for the fact that the first frame in the buffer is the
     // last keyframe from the previous buffer.
     ++num_frames_in_path;
   }
+
   // The number of graph edges that must be traversed by our path is one less
   // than the number of nodes in the path.
   idx_t num_steps = num_frames_in_path - 1;
