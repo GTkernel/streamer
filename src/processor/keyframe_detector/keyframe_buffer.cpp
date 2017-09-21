@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 
 KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len)
-    : target_buf_len_(buf_len), on_first_buf_(true) {
+    : target_buf_len_(buf_len), on_first_buf_(true), last_frame_processed_(0) {
   SetSelectivity(sel);
   // Allocate extra space for the last keyframe from the previous buffer.
   buf_.reserve(buf_len + 1);
@@ -15,6 +15,7 @@ KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len)
 
 void KeyframeBuffer::Stop() {
   if (log_.is_open()) {
+    log_ << "last frame processed: " << last_frame_processed_ << std::endl;
     log_.close();
   }
 }
@@ -53,10 +54,9 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     } else {
       start_frame_id = buf_[1]->GetValue<unsigned long>("frame_id");
     }
-    unsigned long end_frame_id =
-        buf_.back()->GetValue<unsigned long>("frame_id");
+    last_frame_processed_ = buf_.back()->GetValue<unsigned long>("frame_id");
     LOG(INFO) << "Keyframe detection running over frame range: {"
-              << start_frame_id << ", " << end_frame_id << "}";
+              << start_frame_id << ", " << last_frame_processed_ << "}";
 
     std::vector<idx_t> keyframe_idxs = GetKeyframeIdxs();
     auto idxs_it = keyframe_idxs.begin();
@@ -73,7 +73,7 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     for (; idxs_it != keyframe_idxs.end(); ++idxs_it) {
       std::unique_ptr<Frame> keyframe = std::move(buf_.at(*idxs_it));
       if (log_.is_open()) {
-        log_ << keyframe->GetValue<unsigned long>("frame_id") << "\n";
+        log_ << keyframe->GetValue<unsigned long>("frame_id") << std::endl;
       }
       keyframes.push_back(std::move(keyframe));
     }
