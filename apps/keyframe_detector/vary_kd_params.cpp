@@ -55,7 +55,7 @@ void Feeder(std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
   }
 
   for (auto& frame : *frames) {
-    stream->PushFrame(std::move(frame), block);
+    stream->PushFrame(std::make_unique<Frame>(frame), block);
   }
 }
 
@@ -125,11 +125,12 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
     for (const auto& proc : procs) {
       proc->Stop();
     }
-
-    auto stop_frame = std::make_unique<Frame>();
-    stop_frame->SetStopFrame(true);
-    frames->push_back(std::move(stop_frame));
   }
+  auto stop_frame = std::make_unique<Frame>();
+  stop_frame->SetStopFrame(true);
+  stop_frame->SetValue("frame_id",
+                       frames->back()->GetValue<unsigned long>("frame_id") + 1);
+  frames->push_back(std::move(stop_frame));
   return frames;
 }
 
@@ -168,7 +169,7 @@ void RunKeyframeDetector(
 
   std::ostringstream micros_filepath;
   micros_filepath << output_dir << "/keyframe_detector_" << sel << "_"
-                  << buf_len << "_" << levels << ".txt";
+                  << buf_len << "_" << levels << "_micros.txt";
 
   std::ofstream micros_log(micros_filepath.str());
   while (true) {
@@ -179,14 +180,15 @@ void RunKeyframeDetector(
       }
 
       std::ostringstream time_key;
-      time_key << "kd_level_" << levels << "_micros";
+      time_key << "kd_level_0_micros";
       std::string time_key_str = time_key.str();
       if (frame->Count(time_key_str)) {
-        micros_log << frame->GetValue<long>(time_key_str) << "\n";
+        micros_log << frame->GetValue<long>(time_key_str) << std::endl;
       }
     }
   }
   micros_log.close();
+  reader->UnSubscribe();
 
   if (feeder.joinable()) {
     frame_stream->Stop();
@@ -199,6 +201,25 @@ void RunKeyframeDetector(
   }
 }
 
+std::string GetProgressString(float sel, size_t buf_len, size_t levels,
+                              double total, double counter) {
+  std::ostringstream progress_bar;
+  progress_bar << "[";
+  double i = 0;
+  double current_percent = counter / total * 100;
+  for (; i < current_percent / 2; ++i) {
+    progress_bar << "|";
+  }
+  for (; i < 50; ++i) {
+    progress_bar << "-";
+  }
+  progress_bar << "]";
+  progress_bar << " " << std::setprecision(3) << current_percent << "% - "
+               << "Selectivity: " << sel << " , Buffer Length: " << buf_len
+               << " , Levels: " << levels;
+  return progress_bar.str();
+}
+
 void Run(size_t queue_size, bool block, unsigned int num_frames,
          bool generate_fake_vishashes, size_t fake_vishash_length,
          const std::string& camera_name, const std::string& model,
@@ -209,14 +230,27 @@ void Run(size_t queue_size, bool block, unsigned int num_frames,
       GenerateVishashes(generate_fake_vishashes, fake_vishash_length,
                         camera_name, model, layer, nne_batch_size, num_frames,
                         block, queue_size);
+  double total = sels.size() * buf_lens.size() * nums_levels.size();
+  double counter = 0;
   for (auto sel : sels) {
     for (auto buf_len : buf_lens) {
       for (auto levels : nums_levels) {
+        std::ostringstream output_subdir;
+        output_subdir << output_dir << "/" << sel << "_" << buf_len << "_"
+                      << levels;
+        std::string output_subdir_str = output_subdir.str();
+        boost::filesystem::path output_subdir_path(output_subdir_str);
+        boost::filesystem::create_directory(output_subdir_path);
+        std::cout << "\r"
+                  << GetProgressString(sel, buf_len, levels, total, ++counter);
+        std::cout.flush();
+        // std::cout << sel << " , " << buf_len << " , " << levels << std::endl;
         RunKeyframeDetector(queue_size, block, frames, sel, buf_len, levels,
-                            output_dir);
+                            output_subdir_str);
       }
     }
   }
+  std::cout << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -248,7 +282,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("layer", po::value<std::string>(),
                      "The layer to extract and use as the basis for keyframe "
                      "detection");
-  desc.add_options()("nne-batch-size,s", po::value<size_t>()->default_value(1),
+  desc.add_options()("nne-batch-size", po::value<size_t>()->default_value(1),
                      "Batch size of the NeuralNetEvaluator.");
   desc.add_options()(
       "sels",
