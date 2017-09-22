@@ -45,6 +45,7 @@ class ImageMatch : public Processor {
                 int query_id, bool is_positive, float threshold = 1.0);
   bool SetQueryMatrix(int num_queries, int img_per_query, int vishash_size,
                       float threshold = 0.0);
+  void SetQueryMatrix(std::shared_ptr<Eigen::MatrixXf> matrix, float threshold = 0.0);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;
   void SetSource(StreamPtr stream);
@@ -67,7 +68,7 @@ class ImageMatch : public Processor {
   bool linmod_ready_;
 #endif  // USE_TENSORFLOW
   unsigned int batch_size_;
-  std::unique_ptr<Eigen::MatrixXf> queries_;
+  std::shared_ptr<Eigen::MatrixXf> queries_;
   // vishash_batch_ stores the vishashes for the current batch of inputs
   std::unique_ptr<Eigen::MatrixXf> vishash_batch_;
   // cur_batch holds the current size of the batch

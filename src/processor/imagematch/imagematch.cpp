@@ -91,6 +91,22 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
   return true;
 }
 
+void ImageMatch::SetQueryMatrix(std::shared_ptr<Eigen::MatrixXf> matrix, float threshold) {
+  queries_ = matrix;
+  for (int i = 0; i < matrix->rows(); ++i) {
+    query_t* current_query = &query_data_[i];
+    current_query->scores = std::make_unique<Eigen::VectorXf>(batch_size_);
+#ifdef USE_TENSORFLOW
+    CreateSession(i);
+    current_query->linmod_ready = false;
+#endif  // USE_TENSORFLOW
+    current_query->query_id = i;
+    current_query->threshold = threshold;
+    current_query->indices.push_back(i);
+    current_query->paths.push_back("test");
+  }
+}
+
 // Fast random query matrix
 bool ImageMatch::SetQueryMatrix(int num_queries, int img_per_query,
                                 int vishash_size, float threshold) {
