@@ -91,7 +91,8 @@ bool ImageMatch::AddQuery(const std::string& path, std::vector<float> vishash,
   return true;
 }
 
-void ImageMatch::SetQueryMatrix(std::shared_ptr<Eigen::MatrixXf> matrix, float threshold) {
+void ImageMatch::SetQueryMatrix(std::shared_ptr<Eigen::MatrixXf> matrix,
+                                float threshold) {
   queries_ = matrix;
   for (int i = 0; i < matrix->rows(); ++i) {
     query_t* current_query = &query_data_[i];
