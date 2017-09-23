@@ -189,11 +189,11 @@ class FramePrinter : public boost::static_visitor<std::string> {
     return output.str();
   }
 
-  std::string operator()(const std::vector<std::pair<int, float>>& v) const {
+  std::string operator()(const std::vector<int>& v) const {
     std::ostringstream output;
-    output << "std::vector<std::pair<int, float>> = [" << std::endl;
+    output << "std::vector<int> = [" << std::endl;
     for (auto& s : v) {
-      output << "(" << s.first << ", " << s.second << ")" << std::endl;
+      output << s << std::endl;
     }
     output << "]";
     return output.str();
@@ -274,11 +274,10 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     return j;
   }
 
-  nlohmann::json operator()(const std::vector<std::pair<int, float>>& v) const {
+  nlohmann::json operator()(const std::vector<int>& v) const {
     nlohmann::json j;
     for (const auto& vi : v) {
-      j.push_back(vi.first);
-      j.push_back(vi.second);
+      j.push_back(vi);
     }
     return j;
   }
@@ -368,8 +367,8 @@ class FrameSize : public boost::static_visitor<unsigned long> {
     return size_bytes;
   }
 
-  unsigned long operator()(const std::vector<std::pair<int, float>>& v) const {
-    return v.size() * (sizeof(int) + sizeof(float));
+  unsigned long operator()(const std::vector<int>& v) const {
+    return v.size() * sizeof(int);
   }
 };
 
@@ -503,7 +502,7 @@ template void Frame::SetValue(std::string,
                               const std::vector<std::vector<double>>&);
 template void Frame::SetValue(std::string, const std::vector<Frame>&);
 template void Frame::SetValue(std::string,
-                              const std::vector<std::pair<int, float>>&);
+                              const std::vector<int>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
@@ -524,4 +523,4 @@ template std::vector<std::vector<float>> Frame::GetValue(std::string) const;
 template std::vector<float> Frame::GetValue(std::string) const;
 template std::vector<std::vector<double>> Frame::GetValue(std::string) const;
 template std::vector<Frame> Frame::GetValue(std::string) const;
-template std::vector<std::pair<int, float>> Frame::GetValue(std::string) const;
+template std::vector<int> Frame::GetValue(std::string) const;

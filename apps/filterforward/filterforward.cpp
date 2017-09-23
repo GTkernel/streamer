@@ -280,10 +280,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
   // Create ImageMatch level 0. Use the same batch size as the
   // NeuralNetEvaluator.
-  auto im_0 = std::make_shared<ImageMatch>("", false, nne_batch_size);
+  auto im_0 = std::make_shared<ImageMatch>(1024, 5, nne_batch_size);
   im_0->SetSource(nne_stream);
   im_0->SetBlockOnPush(block);
-  im_0->SetQueryMatrix(first_im_num_queries, 1, 1024);
+  im_0->SetQueryMatrix(first_im_num_queries);
   procs.push_back(im_0);
 
   // Create a FlowControlExit.
@@ -315,10 +315,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     // Create an ImageMatch.
     unsigned int kd_batch_size =
         ceil(kd_buf_params.first * kd_buf_params.second);
-    auto additional_im = std::make_shared<ImageMatch>("", false, kd_batch_size);
+    auto additional_im = std::make_shared<ImageMatch>(1024, 5, kd_batch_size);
     additional_im->SetSource(kd->GetSink(kd->GetSinkName(0)));
     additional_im->SetBlockOnPush(block);
-    additional_im->SetQueryMatrix(nums_queries.at(i), 1, 1024);
+    additional_im->SetQueryMatrix(nums_queries.at(i));
     procs.push_back(additional_im);
 
     // Create a logger thread to calculate statistics about ImageMatch's output
