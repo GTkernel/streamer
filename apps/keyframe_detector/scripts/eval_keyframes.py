@@ -5,62 +5,58 @@ from collections import defaultdict
 import argparse
 import pickle
 import os
+from pathlib import Path
 
 def __parse_args():
     parser = argparse.ArgumentParser(description="Evaluate Keyframe detector.");
     parser.add_argument("--verbose", dest="verbose",
             action="store_true", default=False,
             help="Print verbose")
-    parser.add_argument("--workdir", dest="workdir", default=os.getcwd(),
-            help="Working directory (stores all files and results)",
-            required=True)
-    parser.add_argument("--savepkl", dest="save_pkl", action="store_true",
-            default=False,
-            help="Save shot files and results as pickle files (default is csv)")
+    parser.add_argument("--outdir", dest="outdir", default=os.getcwd(),
+            help="Destination directory for all output files")
+    ## for converting dense labels to shots
     parser.add_argument("--labels", dest="labels_filepath",
-            help="Labels file (csv file with dense frame-wise labels)")
+            help="csv file with dense frame labels)")
     parser.add_argument("--extract_labels", dest="extract_labels",
             action="store_true", default=False,
             help="Extract labels for selected frame range")
     parser.add_argument("--labels_to_shots", dest="labels_to_shots",
             action="store_true", default=False,
             help="Generate shots file from label file")
+    ## for keyframe evaluation
     parser.add_argument("--shots", dest="shots_filepath",
             help="Shots file (binary pickle file with shot ranges)")
     parser.add_argument("--print_shots", dest="print_shots",
             action="store_true", default=False,
             help="Print shot to frame range")
-    parser.add_argument("--keyframes", dest="keyframes_filepath",
-            help="Keyframes file")
+    parser.add_argument("--keyframes_dir", dest="keyframes_basedir",
+            help="Evaluate all keyframe files in the keyframes_basedir")
+    parser.add_argument("--uniform_sampling", dest="uniform_sampling",
+            action="store_true", default=False,
+            help="Simulate uniform sampling for shot evaluation")
+    parser.add_argument("--random_sampling", dest="random_sampling",
+            action="store_true", default=False,
+            help="Simulate random sampling for shot evaluation")
+    parser.add_argument("--sampling_rate", dest="sampling_rate", default=0.5,
+            help="Start frame for evaluation",
+            type=float)
     parser.add_argument("--eval", dest="eval_keyframes",
             action="store_true", default=False,
             help="Evaluate keyframe shot coverage")
+    parser.add_argument("--eval_outfile", dest="eval_outfile",
+            default="dummy.csv", help="Evaluation output")
     parser.add_argument("--start_frame", dest="start_frame", default=0,
-                                 help="Start frame for evaluation")
+            help="Start frame for evaluation",
+            type=int)
     parser.add_argument("--num_frames", dest="num_frames", default=0,
-                                 help="Number of frames to evaluate")
+            help="Number of frames to evaluate",
+            type=int)
     args = parser.parse_args()
 
     return args
 
 
-def extract_labels(labels_filepath, extracted_labels_filepath, start_frame, end_frame):
-    with open(labels_filepath, "r") as rfile:
-        with open(extracted_labels_filepath, "w") as wfile:
-            csv_reader = csv.reader(rfile, delimiter=',')
-            csv_writer = csv.writer(wfile, delimiter=',')
-            header = csv_reader.__next__()
-            csv_writer.writerow(header)
-            for row in csv_reader:
-                frame_id = int(row[0])
-                if frame_id < start_frame:
-                    continue
-                if frame_id >= end_frame:
-                    break
-                csv_writer.writerow(row)
-
-
-def labels_to_shots(labels_filepath, shots_filepath, start_frame=0, num_frames=0, save_pkl=False):
+def labels_to_shots(labels_filepath, shots_filepath, start_frame, num_frames):
     frame_to_shot = defaultdict(int)
     shot_range_start = defaultdict(int)
     shot_range_end = defaultdict(int)
@@ -104,29 +100,19 @@ def labels_to_shots(labels_filepath, shots_filepath, start_frame=0, num_frames=0
 
         shot_range_end[shot_id] = cur_frame_id
 
-    shots_csvpath = shots_filepath + ".csv"
-    with open(shots_csvpath, "w") as shots_csv:
-        print("Writing shots csv: {}".format(shots_csvpath))
+    with open(shots_filepath, "w") as shots_csv:
+        print("Writing shots csv: {}".format(shots_filepath))
         csv_writer = csv.writer(shots_csv, delimiter=',')
         csv_writer.writerow(['shot_id', 'start_frame', 'end_frame'])
         for shot_id in range(0, len(shot_range_start)):
             csv_writer.writerow([shot_id, shot_range_start[shot_id], shot_range_end[shot_id]])
 
-    if save_pkl == True:
-        shot_range = defaultdict(range)
-        for shot_id in range(0, len(shot_range_start)):
-            shot_range[shot_id] = (shot_range_start[shot_id], shot_range_end[shot_id])
-        shots_pklpath = shots_filepath + ".pkl"
-        print("Writing shots pkl: {}".format(shots_pklpath))
-        shots_dict = [shot_to_frame_range, frame_to_shot]
-        pickle.dump(shots_dict, open(shots_pklpath, "wb"))
-
-def read_shots_csv(shots_csvpath, start_frame, end_frame):
+def read_shots(shots_filepath, start_frame, end_frame):
     frame_to_shot = defaultdict(int)
     shot_to_frame_range = defaultdict(range)
 
-    print("Reading shots csv: {}".format(shots_csvpath))
-    with open(shots_csvpath, "r") as shots_csv:
+    print("Reading shots csv: {}".format(shots_filepath))
+    with open(shots_filepath, "r") as shots_csv:
         csv_reader = csv.reader(shots_csv, delimiter=',')
         header = csv_reader.__next__() ## add checks
         for row in csv_reader:
@@ -142,21 +128,78 @@ def read_shots_csv(shots_csvpath, start_frame, end_frame):
                 frame_to_shot[frame_id] = shot_id
     return [shot_to_frame_range, frame_to_shot]
 
-def read_shots_file(shots_filepath, start_frame, end_frame):
-    file_ext = os.path.splitext(shots_filepath)[1]
-    if file_ext == '.csv':
-        [shot_to_frame_range, frame_to_shot] = read_shots_csv(shots_filepath, start_frame, end_frame)
-    elif file_ext == '.pkl':
-        [shot_to_frame_range, frame_to_shot] = pickle.load(open(shots_filepath, "rb"))
-        for shot_id, (shot_start, shot_end) in shot_range.iteriterms():
-            if shot_end < start_frame or shot_start > end_frame:
-                del shot_to_frame_range[shot_id]
-    return [shot_to_frame_range, frame_to_shot]
+def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
+    keyframes = []
+    with open(kfile, "r") as kf:
+        for frame_num in kf:
+            keyframes.append(int(frame_num))
 
-def print_shots(shots_filepath, start_frame, num_frames, verbose=False):
+    # Number of shots in the given frame range
+    shots = set()
+    for frame_id in range(start_frame, end_frame):
+        shots.add(frame_to_shot[frame_id])
+    total_shots = len(shots)
+    #print("Total shots: {}".format(len(shots)))
+
+    # Shots covered by selected keyframes
+    shot_coverage = set()
+    for frame_id in keyframes:
+        if frame_id >= start_frame and frame_id < end_frame:
+            shot_coverage.add(frame_to_shot[frame_id])
+    kf_shots = len(shot_coverage)
+    #print("KF shots: {}".format(len(shot_coverage)))
+    #print("KF shots pct: {0:2f}".format(len(shot_coverage)/total_shots))
+
+    kfile_basename = os.path.splitext(os.path.basename(kfile))[0]
+    kfile_split = kfile_basename.split("_")
+    level = kfile_split[2]
+    sel = kfile_split[3]
+    buf_len = kfile_split[4]
+    kf_shots_pct = "{0:.2f}".format(kf_shots/total_shots)
+    row = ['kd', sel, buf_len, level, total_shots, kf_shots, kf_shots_pct]
+    csv_write.writerow(row)
+
+def handle_eval_keyframes(args, start_frame, end_frame):
     end_frame = start_frame + num_frames
+    [shot_to_frame_range, frame_to_shot] = read_shots(args.shots_filepath, start_frame, end_frame)
 
-    [shot_to_frame_range, frame_to_shot] = read_shots_file(shots_filepath, start_frame, end_frame)
+    eval_outpath = os.path.join(args.outdir, args.eval_outfile)
+    with open(eval_outpath, "w") as outfile:
+        csv_writer = csv.writer(outfile, delimiter=',')
+        header = ['kf_type', 'sel', 'buf_len', 'level', 'total_shots', 'kf_shots', 'kf_shot_pct']
+        csv_writer.writerow(header)
+        ## Evaluate all keyframe files in the directory
+        keyframe_files = list(Path(args.keyframes_dir).glob("**/*.log"))
+        for kfile in keyframe_files:
+            eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_riter)
+
+
+def handle_extract_labels(args, start_frame, end_frame):
+    dataset_basename = os.path.splitext(os.path.basename(args.labels_filepath))[0]
+    extracted_labels_filepath = args.outdir + "/" + dataset_basename + "-s" + str(start_frame) + "-" + "e" + str(end_frame) + ".labels"
+
+    with open(args.labels_filepath, "r") as rfile:
+        with open(extracted_labels_filepath, "w") as wfile:
+            csv_reader = csv.reader(rfile, delimiter=',')
+            csv_writer = csv.writer(wfile, delimiter=',')
+            header = csv_reader.__next__()
+            csv_writer.writerow(header)
+            for row in csv_reader:
+                frame_id = int(row[0])
+                if frame_id < start_frame:
+                    continue
+                if frame_id >= end_frame:
+                    break
+                csv_writer.writerow(row)
+
+
+def handle_labels_to_shots(args, start_frame, end_frame):
+    dataset_basename = os.path.splitext(os.path.basename(args.labels_filepath))[0]
+    shots_filepath = args.outdir + "/" + dataset_basename + ".shots"
+    labels_to_shots(args.labels_filepath, shots_filepath, start_frame, end_frame)
+
+def handle_print_shots(args, start_frame, end_frame, verbose=False):
+    [shot_to_frame_range, frame_to_shot] = read_shots(args.shots_filepath, start_frame, end_frame)
 
     for shot_id, (shot_start, shot_end) in shot_to_frame_range.items():
         length = int(shot_end) - int(shot_start) + 1
@@ -172,53 +215,24 @@ def print_shots(shots_filepath, start_frame, num_frames, verbose=False):
     total_shots = len(shots)
     print("#shots (frame_to_shot): {}".format(total_shots))
 
-def eval_keyframes(shots_filepath, keyframes_filepath, shotcov_filepath, start_frame, num_frames, save_pkl=False):
-    end_frame = start_frame + num_frames
-
-    [shot_to_frame_range, frame_to_shot] = read_shots_file(shots_filepath, start_frame, end_frame)
-    # Number of shots in the given frame range
-    shots = set()
-    for frame_id in range(start_frame, end_frame):
-        shots.add(frame_to_shot[frame_id])
-    # Shots covered by selected keyframes
-    shot_coverage = set()
-    with open(keyframes_filepath, "r") as kf:
-        for frame_num in kf:
-            frame_id = int(frame_num)
-            if frame_id >= start_frame and frame_id < end_frame:
-                shot_id = frame_to_shot[frame_id]
-                shot_coverage.add(shot_id)
-    print("Total shots: {}".format(len(shots)))
-    print("Shots covered: {}".format(len(shot_coverage)))
-    if save_pkl == True:
-        print("Write shotcov: {}".format(shotcov_filepath))
-        pickle.dump([shots, shot_coverage], open(shotcov_filepath, "wb"))
-
 def main():
     args = __parse_args()
-    workdir = args.workdir
 
     start_frame = int(args.start_frame)
     num_frames = int(args.num_frames)
+    end_frame = start_frame + num_frames
 
     if args.extract_labels:
-        end_frame = start_frame + num_frames
-        dataset_basename = os.path.splitext(os.path.basename(args.labels_filepath))[0]
-        extracted_labels_filepath = workdir + "/" + dataset_basename + "-s" + str(start_frame) + "-" + "e" + str(start_frame + num_frames) + ".labels.csv"
-        extract_labels(args.labels_filepath, extracted_labels_filepath, start_frame, end_frame)
+        handle_extract_labels(args, start_frame, end_frame)
 
     if args.labels_to_shots:
-        dataset_basename = os.path.splitext(os.path.basename(args.labels_filepath))[0]
-        shots_filepath = workdir + "/" + dataset_basename + ".shots"
-        labels_to_shots(args.labels_filepath, shots_filepath, start_frame, num_frames)
+        handle_labels_to_shots(args, start_frame, end_frame)
 
     if args.print_shots:
-        print_shots(args.shots_filepath, start_frame, num_frames)
+        handle_print_shots(args, start_frame, end_frame)
 
     if args.eval_keyframes:
-        keyframes_basename = os.path.splitext(os.path.basename(args.keyframes_filepath))[0]
-        shotcov_filepath = workdir + "/" + keyframes_basename + ".shotcov"
-        eval_keyframes(args.shots_filepath, args.keyframes_filepath, shotcov_filepath, start_frame, num_frames)
+        handle_eval_keyframes(args, start_frame, end_frame)
 
 if __name__ == "__main__":
     main()
