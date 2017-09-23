@@ -32,9 +32,9 @@ void FramePush(cv::Mat m) {
 }
 
 void Run(const std::vector<string>& camera_names, const string& model_name,
-         bool display, size_t batch_size, std::string linmod_path,
-         std::string vishash_layer_name, bool do_linmod, std::string query_path,
-         int num_query, int image_per_query, bool use_fake_nne = false) {
+         bool display, size_t batch_size, std::string linmod_path, std::string linmod_params_path,
+        std::string vishash_layer_name, std::string query_path, int num_query, int image_per_query,
+        bool use_fake_nne = false) {
   std::stringstream csv_header;
   csv_header << "num queries"
              << ",";
@@ -70,7 +70,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
   NeuralNetEvaluator* neural_net_eval = new NeuralNetEvaluator(
       model_desc, input_shape, batch_size, vishash_layer);
   auto imagematch =
-      std::make_shared<ImageMatch>(linmod_path, do_linmod, batch_size);
+      std::make_shared<ImageMatch>(1024, 5, 1);
   auto exit_proc = std::make_shared<FlowControlExit>();
 
   if (!use_fake_nne) {
@@ -93,7 +93,6 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
   exit_proc->Start();
   imagematch->Start();
 
-  size_t vishash_size;
   cv::Mat vishash_mat;
   if (query_path != "") {
     cv::Mat img = cv::imread(query_path, 1);
@@ -113,13 +112,12 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     vishash_mat = frame->GetValue<cv::Mat>("activations");
     std::vector<float> vishash(vishash_mat.begin<float>(),
                                vishash_mat.end<float>());
-    vishash_size = vishash.size();
     if (use_fake_nne) {
-      imagematch->SetQueryMatrix(num_query, image_per_query, vishash_size);
+      imagematch->SetQueryMatrix(num_query);
     } else {
       for (int i = 0; i < num_query; ++i) {
         for (int j = 0; j < image_per_query; ++j) {
-          imagematch->AddQuery(query_path, vishash, i, true);
+          imagematch->AddQuery(linmod_path, linmod_params_path);
         }
       }
     }
@@ -179,11 +177,9 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       cv::Scalar outline_color(0, 0, 0);
       cv::Scalar label_color(200, 200, 250);
 
-      float score = frame
-                        ->GetValue<std::vector<std::pair<int, float>>>(
-                            "imagematch.scores")
-                        .at(0)
-                        .second;
+      float score = frame->GetValue<std::vector<int>>(
+                            "imagematch.matches")
+                        .at(0);
       cv::putText(img, std::to_string(score), label_point,
                   CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
 
@@ -250,6 +246,10 @@ int main(int argc, char* argv[]) {
       po::value<string>()->value_name("LINEAR_MODEL_PATH")->default_value(""),
       "Path to linear model to use for imagematch");
   desc.add_options()(
+      "linear_model_params",
+      po::value<string>()->value_name("LINEAR_MODEL_PARAMS")->default_value(""),
+      "Path to linear model params to use for imagematch");
+  desc.add_options()(
       "vishash_layer,v",
       po::value<string>()->value_name("VISHASH_LAYER")->required(),
       "Name of the Tensor to evaluate and use the output as the vishash");
@@ -291,7 +291,6 @@ int main(int argc, char* argv[]) {
 
   int device_number = vm["device"].as<int>();
   size_t batch_size = vm["batch_size"].as<size_t>();
-  std::string linmod_path = vm["linear_model_path"].as<std::string>();
   std::string query_path = vm["query_path"].as<std::string>();
   std::string vishash_layer_name = vm["vishash_layer"].as<std::string>();
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
@@ -300,12 +299,14 @@ int main(int argc, char* argv[]) {
   int num_query = vm["num_query"].as<int>();
   int image_per_query = vm["image_per_query"].as<int>();
   bool use_fake_nne = vm.count("use_fake_nne") != 0;
+  std::string linmod_path = vm["linear_model_path"].as<std::string>();
+  std::string linmod_params = vm["linear_model_params"].as<std::string>();
 
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
-  Run(camera_names, model, display, batch_size, linmod_path, vishash_layer_name,
-      linmod_path != "", query_path, num_query, image_per_query, use_fake_nne);
+  Run(camera_names, model, display, batch_size, linmod_path, linmod_params, vishash_layer_name,
+      query_path, num_query, image_per_query, use_fake_nne);
   return 0;
 }
