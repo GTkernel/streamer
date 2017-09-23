@@ -104,6 +104,12 @@ def parse_args(parser, validate_func):
         help="Streamer's configuration directory.",
         required=True)
     parser.add_argument(
+        "--queue-size",
+        default=16,
+        help="The queue size between processors.",
+        required=False,
+        type=int)
+    parser.add_argument(
         "--block",
         action="store_true",
         help="Whether to block when pushing frames.")
@@ -153,6 +159,10 @@ def parse_args(parser, validate_func):
     if validate_func is not None:
         validate_func(args)
 
+    queue_size = args.queue_size
+    if queue_size < 0:
+        raise Exception("\"--queue-size\" cannot be negative, but is: {}".format(queue_size))
+
     return args
 
 
@@ -165,26 +175,27 @@ def __run(cmd):
                               stdout=subprocess.PIPE).stdout.decode("UTF-8")[:-1]
 
 
-def __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, sel, buf_len,
-             levels, output_dir):
-    kd_app = path.join(streamer_root, "build", "apps", "keyframe_detector")
-    kd_cmd = ("{} --fake-vishashes ".format(kd_app) +
-              "--config-dir={} ".format(config_dir) +
-              "--fake-vishash-length={} ".format(fake_vishash_length) +
-              "--num-frames={} ".format(int(num_frames)) +
-              "--sel={} ".format(sel) +
-              "--buf-len={} ".format(buf_len) +
-              "--levels={} ".format(levels) +
-              "--output-dir={}".format(output_dir))
-    if block:
-        kd_cmd += " --block"
+def __run_kd(streamer_root, config_dir, queue_size, block, num_frames, fake_vishash_length, sel,
+             buf_len, levels, output_dir):
+    kd_app = path.join(streamer_root, "build", "apps", "keyframe_detector", "vary_kd_params")
+    kd_cmd = ("{} ".format(kd_app) +
+              "--config-dir {} ".format(config_dir) +
+              "--queue-size {} ".format(queue_size) +
+              "{}".format("--block " if block else "") +
+              "--num-frames {} ".format(int(num_frames)) +
+              "--fake-vishashes " +
+              "--fake-vishash-length {} ".format(fake_vishash_length) +
+              "--sels {} ".format(sel) +
+              "--buf-lens {} ".format(buf_len) +
+              "--levels {} ".format(levels) +
+              "--output-dir {}".format(output_dir))
     __run(kd_cmd)
 
-
 def __num_frames_to_trigger_detection(sel, buf_len, levels):
+    """This only works if the sel * buf_len of each buffer evenly divides the next buffer """
     return ((1.0 / sel) ** (levels - 1)) * buf_len
 
-def __vary(streamer_root, config_dir, block, fake_vishash_length, num_trials, vary_sel,
+def __vary(streamer_root, config_dir, queue_size, block, fake_vishash_length, num_trials, vary_sel,
            vary_buf_len, vary_levels, sel, sels, buf_len, buf_lens, levels, nums_levels,
            master_output_dir):
     dir_prefix = ""
@@ -201,29 +212,37 @@ def __vary(streamer_root, config_dir, block, fake_vishash_length, num_trials, va
     else:
         raise Exception("Must vary something!")
 
-    output_dirs = []
+    micros_files = []
     for value in values:
         output_dir = path.join(master_output_dir, dir_prefix + "_" + str(value))
-        output_dirs.append((value, output_dir))
+
         if not path.isdir(output_dir):
             os.mkdir(output_dir)
 
+        true_sel = sel
+        true_buf_len = buf_len
+        true_levels = levels
+
         if vary_sel:
-            num_frames = num_trials * __num_frames_to_trigger_detection(value, buf_len, levels)
-            __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, value,
-                     buf_len, levels, output_dir)
+            true_sel = value
         elif vary_buf_len:
-            num_frames = num_trials * __num_frames_to_trigger_detection(sel, value, levels)
-            __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, sel, value,
-                     levels, output_dir)
+            true_buf_len = value
         elif vary_levels:
-            num_frames = num_trials * __num_frames_to_trigger_detection(sel, buf_len, value)
-            __run_kd(streamer_root, config_dir, block, fake_vishash_length, num_frames, sel,
-                     buf_len, value, output_dir)
+            true_levels = value
         else:
             raise Exception("Must vary something!")
 
-    return output_dirs
+        num_frames = num_trials * __num_frames_to_trigger_detection(
+            true_sel, true_buf_len, true_levels)
+        __run_kd(streamer_root, config_dir, queue_size, block, num_frames, fake_vishash_length,
+                 true_sel, true_buf_len, true_levels, output_dir)
+        micros_file = path.join(output_dir,
+                                "{}_{}_{}".format(true_sel, true_buf_len, true_levels),
+                                "keyframe_detector_{}_{}_{}_micros.txt".format(
+                                    true_sel, true_buf_len, true_levels))
+        micros_files.append((value, micros_file))
+
+    return micros_files
 
 
 def get_key(vary_sel, vary_buf_len, vary_levels):
@@ -248,9 +267,10 @@ def run(args, filename_suffix):
     num_warmup_trials = args.warmup
     num_trials = num_warmup_trials + args.trials
     print("num_trials: {}".format(num_trials))
-    output_dirs = __vary(args.streamer_root, args.config_dir, args.block, args.vishash_length,
-                         num_trials, vary_sel, vary_buf_len, vary_levels, args.sel, args.sels,
-                         args.buf_len, args.buf_lens, args.levels, args.nums_levels, output_dir)
+    micros_files = __vary(args.streamer_root, args.config_dir, args.queue_size, args.block,
+                          args.vishash_length, num_trials, vary_sel, vary_buf_len, vary_levels,
+                          args.sel, args.sels, args.buf_len, args.buf_lens, args.levels,
+                          args.nums_levels, output_dir)
 
     # Build output CSV file for graphing script.
     key = get_key(vary_sel, vary_buf_len, vary_levels)
@@ -258,8 +278,8 @@ def run(args, filename_suffix):
     output_filepath = path.join(output_dir, "kd_latency_vary_" + key + "_" + suffix_to_use + ".csv")
     with open(output_filepath, "w") as output_file:
         output_file.write(key + ",min,max,median,average,standard_deviation\n")
-        for value, output_dir in output_dirs:
-            latencies = [float(line) for line in open(path.join(output_dir, "kd_micros.txt"))]
+        for value, micros_filepath in micros_files:
+            latencies = [float(line) for line in open(micros_filepath)]
             latencies_without_warmup = latencies[num_warmup_trials:]
             output_file.write(",".join([
                 str(value),
