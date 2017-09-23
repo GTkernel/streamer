@@ -110,9 +110,13 @@ void ImageMatch::Process() {
     }
   }
   cv::Mat activations = frame->GetValue<cv::Mat>("activations");
-  Eigen::Map<Eigen::VectorXf> vishash_map((float*)activations.data,
-                                          vishash_size_);
-  vishash_batch_->row(frames_batch_.size()) = vishash_map;
+  if(hidden_layer_weights_ != nullptr) {
+    Eigen::Map<Eigen::VectorXf> vishash_map((float*)activations.data,
+                                            vishash_size_);
+    vishash_batch_->row(frames_batch_.size()) = vishash_map;
+  } else {
+    nn_vishash_batch_.push_back(activations);
+  }
   frames_batch_.push_back(std::move(frame));
   if (frames_batch_.size() < batch_size_) {
       return;
@@ -122,23 +126,37 @@ void ImageMatch::Process() {
   std::lock_guard<std::mutex> guard(query_guard_);
   auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
 
+  float result = 0;
   if(hidden_layer_weights_ != nullptr) {
     // Use fake evaluation
     Eigen::MatrixXf out = ((*vishash_batch_) * (*hidden_layer_weights_)).matrix();
-    // TODO: issue with broadcasting
     out = (out.transpose().colwise() + (*hidden_layer_skews_)).transpose();
     // relu max
     out = out.cwiseMax(0);
     // logit multiplication and skew
-    out *= (*logit_weights_);
-    out.colwise() += (*logit_skews_);
-    out = out.array().exp();
-    Eigen::VectorXf sums = out.rowwise().sum();
-    out = out.array().colwise() / sums.array();
-    
+    for(decltype(query_data_.size()) i = 0; i < query_data_.size(); ++i) {
+      Eigen::MatrixXf new_out;
+      new_out = out * (*logit_weights_);
+      new_out.colwise() += (*logit_skews_);
+      new_out = new_out.array().exp();
+      Eigen::VectorXf sums = new_out.rowwise().sum();
+      new_out = new_out.array().colwise() / sums.array();
+      new_out = new_out.rowwise().maxCoeff();
+      for(decltype(batch_size_) i = 0; i < batch_size_; ++i) {
+        // Ensure that libeigen cannot be smart/lazy in evaluation
+        result += new_out(i);
+      }
+    }
   } else {
     // Use real evaluation
-    LOG(FATAL) << "Only fake evaluation supported at this time";
+    for(auto& query : query_data_) {
+      std::unordered_map<std::string, std::vector<cv::Mat>> input_map;
+      input_map["data"] = nn_vishash_batch_;
+      auto results = query.second.classifier->Evaluate(input_map, {"label"});
+      for(std::vector<cv::Mat>::size_type i = 0; i < results["label"].size(); ++i) {
+        (*(query.second.matches))(i) = results["label"][i].at<float>(0, 0);
+      }
+    }
   }
 
   auto matrix_end_time = boost::posix_time::microsec_clock::local_time();
@@ -163,6 +181,6 @@ void ImageMatch::Process() {
 
 void ImageMatch::AddClassifier(query_t* current_query, const std::string& model_path, const std::string& params_path) {
     Shape input_shape(1, 1024);
-    ModelDesc model_desc("classifier", MODEL_TYPE_CAFFE, model_path, params_path, 1, 1024, "input", "output");
+    ModelDesc model_desc("classifier", MODEL_TYPE_CAFFE, model_path, params_path, 1, 1024, "data", "label");
     current_query->classifier = std::make_unique<CaffeModel<float>>(model_desc, input_shape, batch_size_);
 }
