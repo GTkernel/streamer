@@ -33,7 +33,7 @@ void FramePush(cv::Mat m) {
 
 void Run(const std::vector<string>& camera_names, const string& model_name,
          bool display, size_t batch_size, std::string linmod_path, std::string linmod_params_path,
-        std::string vishash_layer_name, std::string query_path, int num_query, int image_per_query,
+        std::string vishash_layer_name, int num_query, int image_per_query,
         bool use_fake_nne = false) {
   std::stringstream csv_header;
   csv_header << "num queries"
@@ -94,33 +94,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
   imagematch->Start();
 
   cv::Mat vishash_mat;
-  if (query_path != "") {
-    cv::Mat img = cv::imread(query_path, 1);
-    std::unique_ptr<Frame> input = std::make_unique<Frame>();
-    input->SetValue("original_image", img);
-    ImageTransformer* it = new ImageTransformer(input_shape, true, true);
-    NeuralNetEvaluator* nne =
-        new NeuralNetEvaluator(model_desc, input_shape, 1, vishash_layer);
-    StreamPtr fake_input_stream = std::make_shared<Stream>();
-    it->SetSource("input", fake_input_stream);
-    nne->SetSource("input", it->GetSink("output"), "");
-    it->Start();
-    nne->Start();
-    auto reader = nne->GetSink(vishash_layer_name)->Subscribe();
-    fake_input_stream->PushFrame(std::move(input));
-    auto frame = reader->PopFrame();
-    vishash_mat = frame->GetValue<cv::Mat>("activations");
-    std::vector<float> vishash(vishash_mat.begin<float>(),
-                               vishash_mat.end<float>());
-    if (use_fake_nne) {
-      imagematch->SetQueryMatrix(num_query);
-    } else {
-      for (int i = 0; i < num_query; ++i) {
-        for (int j = 0; j < image_per_query; ++j) {
+  if (linmod_path != "") {
           imagematch->AddQuery(linmod_path, linmod_params_path);
-        }
-      }
-    }
   }
   if (use_fake_nne) {
     std::thread fake_nne_thread(FramePush, vishash_mat);
@@ -147,6 +122,10 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     auto end_timestamp = boost::posix_time::microsec_clock::local_time();
     auto diff = end_timestamp - frame->GetValue<boost::posix_time::ptime>(
                                     "capture_time_micros");
+    float score = frame->GetValue<std::vector<int>>(
+                          "imagematch.matches")
+                      .at(0);
+    LOG(INFO) << score;
     std::stringstream benchmark_summary;
     benchmark_summary << num_query << ",";
     benchmark_summary << image_per_query << ",";
@@ -257,10 +236,6 @@ int main(int argc, char* argv[]) {
                      po::value<string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
   desc.add_options()(
-      "query_path,q",
-      po::value<std::string>()->value_name("QUERY_PATH")->default_value(""),
-      "Path to query image (single image, for testing purposes)");
-  desc.add_options()(
       "num_query,n",
       po::value<int>()->value_name("NUM_QUERY")->default_value(1),
       "Number of times to duplicate query");
@@ -291,7 +266,6 @@ int main(int argc, char* argv[]) {
 
   int device_number = vm["device"].as<int>();
   size_t batch_size = vm["batch_size"].as<size_t>();
-  std::string query_path = vm["query_path"].as<std::string>();
   std::string vishash_layer_name = vm["vishash_layer"].as<std::string>();
   auto camera_names = SplitString(vm["camera"].as<string>(), ",");
   auto model = vm["model"].as<string>();
@@ -307,6 +281,6 @@ int main(int argc, char* argv[]) {
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
   Run(camera_names, model, display, batch_size, linmod_path, linmod_params, vishash_layer_name,
-      query_path, num_query, image_per_query, use_fake_nne);
+      num_query, image_per_query, use_fake_nne);
   return 0;
 }

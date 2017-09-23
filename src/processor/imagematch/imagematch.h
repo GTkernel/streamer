@@ -20,7 +20,7 @@ typedef struct query_t {
   // hold a binary coefficient matrix used to take a linear combination of rows
   // in queries_.
   std::unique_ptr<Eigen::VectorXf> matches;
-  std::unique_ptr<CaffeModel<float>> classifier;
+  std::unique_ptr<caffe::Net<float>> classifier;
 } query_t;
 
 class ImageMatch : public Processor {
@@ -61,8 +61,6 @@ class ImageMatch : public Processor {
   // Softmax
   // vishash_batch_ stores the vishashes for the current batch of inputs
   std::unique_ptr<Eigen::MatrixXf> vishash_batch_;
-  // nn_vishash_batch_ stores the vishashes in cv::Mat form
-  std::vector<cv::Mat> nn_vishash_batch_;
   // cur_batch_frames holds the actual frames in the batch
   std::vector<std::unique_ptr<Frame>> frames_batch_;
   std::unordered_map<int, query_t> query_data_;

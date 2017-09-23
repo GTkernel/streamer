@@ -37,7 +37,7 @@ std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
 void ImageMatch::AddQuery(const std::string& model_path,
                           const std::string& params_path) {
   std::lock_guard<std::mutex> guard(query_guard_);
-  CHECK(hidden_layer_weights_ != nullptr)
+  CHECK(hidden_layer_weights_ == nullptr)
       << "Cannot mix normal and fake queries";
   int query_id = query_data_.size();
   query_t* current_query = &query_data_[query_id];
@@ -73,11 +73,11 @@ void ImageMatch::SetQueryMatrix(int num_queries) {
   }
   if (logit_weights_ == nullptr) {
     logit_weights_ =
-        std::make_unique<Eigen::MatrixXf>(num_hidden_layers_ * num_queries, 2);
+        std::make_unique<Eigen::MatrixXf>(num_hidden_layers_, 2);
     logit_weights_->setRandom();
   } else {
     int old_num_rows = logit_weights_->rows();
-    logit_weights_->conservativeResize(num_hidden_layers_ * num_queries,
+    logit_weights_->conservativeResize(num_hidden_layers_,
                                        Eigen::NoChange);
     logit_weights_
         ->block(old_num_rows, logit_weights_->rows(),
@@ -91,7 +91,7 @@ void ImageMatch::SetQueryMatrix(int num_queries) {
   }
   for (int i = query_data_.size(); i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
-    current_query->matches = std::make_unique<Eigen::VectorXf>(batch_size_);
+    current_query->matches = std::make_unique<Eigen::VectorXf>(num_hidden_layers_);
     current_query->query_id = i;
   }
 }
@@ -124,14 +124,11 @@ void ImageMatch::Process() {
       frame->SetFlowControlEntrance(nullptr);
       return;
     }
-  }
-  cv::Mat activations = frame->GetValue<cv::Mat>("activations");
+  } cv::Mat activations = frame->GetValue<cv::Mat>("activations");
   if (hidden_layer_weights_ != nullptr) {
     Eigen::Map<Eigen::VectorXf> vishash_map((float*)activations.data,
                                             vishash_size_);
     vishash_batch_->row(frames_batch_.size()) = vishash_map;
-  } else {
-    nn_vishash_batch_.push_back(activations);
   }
   frames_batch_.push_back(std::move(frame));
   if (frames_batch_.size() < batch_size_) {
@@ -153,27 +150,21 @@ void ImageMatch::Process() {
     // logit multiplication and skew
     for (decltype(query_data_.size()) i = 0; i < query_data_.size(); ++i) {
       Eigen::MatrixXf new_out;
-      new_out = out * (*logit_weights_);
+      new_out = out.block(0, i * num_hidden_layers_, batch_size_, num_hidden_layers_) * (*logit_weights_);
       new_out.colwise() += (*logit_skews_);
       new_out = new_out.array().exp();
       Eigen::VectorXf sums = new_out.rowwise().sum();
       new_out = new_out.array().colwise() / sums.array();
       new_out = new_out.rowwise().maxCoeff();
-      for (decltype(batch_size_) i = 0; i < batch_size_; ++i) {
+      for (decltype(batch_size_) j = 0; j < batch_size_; ++j) {
         // Ensure that libeigen cannot be smart/lazy in evaluation
-        result += new_out(i);
+        result += new_out(j);
+        *(query_data_[i].matches) = new_out;
       }
     }
   } else {
     // Use real evaluation
     for (auto& query : query_data_) {
-      std::unordered_map<std::string, std::vector<cv::Mat>> input_map;
-      input_map["data"] = nn_vishash_batch_;
-      auto results = query.second.classifier->Evaluate(input_map, {"label"});
-      for (std::vector<cv::Mat>::size_type i = 0; i < results["label"].size();
-           ++i) {
-        (*(query.second.matches))(i) = results["label"][i].at<float>(0, 0);
-      }
     }
   }
 
@@ -204,9 +195,13 @@ void ImageMatch::Process() {
 void ImageMatch::AddClassifier(query_t* current_query,
                                const std::string& model_path,
                                const std::string& params_path) {
-  Shape input_shape(1, 1024);
-  ModelDesc model_desc("classifier", MODEL_TYPE_CAFFE, model_path, params_path,
-                       1, 1024, "data", "label");
+  caffe::Caffe::set_mode(caffe::Caffe::CPU);
   current_query->classifier =
-      std::make_unique<CaffeModel<float>>(model_desc, input_shape, batch_size_);
+      std::make_unique<caffe::Net<float>>(model_path, caffe::TEST);
+  current_query->classifier->CopyTrainedLayersFrom(params_path);
+  CHECK_EQ(current_query->classifier->num_inputs(), 1);
+  CHECK_EQ(current_query->classifier->num_outputs(), 1);
+  caffe::Blob<float>* input_layer = current_query->classifier->input_blobs().at(0);
+  input_layer->Reshape(batch_size_, 1, 1, 1024);
+  current_query->classifier->Reshape();
 }
