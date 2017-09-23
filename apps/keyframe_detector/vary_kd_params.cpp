@@ -146,6 +146,11 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
         if (frame->IsStopFrame()) {
           break;
         } else {
+          // Only keep the activations.
+          frame->Delete("original_bytes");
+          frame->Delete("original_image");
+          frame->Delete("image");
+
           frames->push_back(std::move(frame));
           ++count;
         }

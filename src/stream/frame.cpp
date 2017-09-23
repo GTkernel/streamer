@@ -429,6 +429,8 @@ void Frame::SetValue(std::string key, const T& val) {
   frame_data_[key] = val;
 }
 
+void Frame::Delete(std::string key) { frame_data_.erase(key); }
+
 std::string Frame::ToString() const {
   FramePrinter visitor;
   std::ostringstream output;
