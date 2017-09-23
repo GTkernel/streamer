@@ -53,7 +53,7 @@ class Frame {
                      std::vector<double>, std::vector<Rect>,
                      std::vector<FaceLandmark>, std::vector<std::vector<float>>,
                      std::vector<float>, std::vector<std::vector<double>>,
-                     std::vector<Frame>, std::vector<std::pair<int, float>>>;
+                     std::vector<Frame>, std::vector<int>>;
   size_t Count(std::string key) const;
   void SetStopFrame(bool stop_frame);
   bool IsStopFrame() const;
