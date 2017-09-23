@@ -69,11 +69,9 @@ void ImageMatch::SetQueryMatrix(int num_queries) {
     logit_weights_->block(old_num_rows, logit_weights_->rows(), logit_weights_->rows() - old_num_rows, logit_weights_->rows()).setRandom();
   }
   if(logit_skews_ == nullptr) {
-    logit_skews_ = std::make_unique<Eigen::VectorXf>(2 * num_queries);
+    logit_skews_ = std::make_unique<Eigen::VectorXf>(batch_size_);
     logit_skews_->setRandom();
   } else {
-    logit_skews_->conservativeResize(2 * num_queries);
-    logit_skews_->setRandom();
   }
   for (int i = query_data_.size(); i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
@@ -127,21 +125,17 @@ void ImageMatch::Process() {
   if(hidden_layer_weights_ != nullptr) {
     // Use fake evaluation
     Eigen::MatrixXf out = ((*vishash_batch_) * (*hidden_layer_weights_)).matrix();
-    LOG(INFO) << "input: (" << vishash_batch_->rows() << " x " << vishash_batch_->cols() << ")";
-    LOG(INFO) << "hidden: (" << hidden_layer_weights_->rows() << " x " << hidden_layer_weights_->cols() << ")";
     // TODO: issue with broadcasting
-    // out.colwise() += (*hidden_layer_skews_);
-    LOG(INFO) << "hidden out: (" << out.rows() << " x " << out.cols() << ")";
+    out = (out.transpose().colwise() + (*hidden_layer_skews_)).transpose();
     // relu max
     out = out.cwiseMax(0);
-    LOG(INFO) << "relu out: (" << out.rows() << " x " << out.cols() << ")";
     // logit multiplication and skew
     out *= (*logit_weights_);
-    LOG(INFO) << "logit: (" << logit_weights_->rows() << " x " << logit_weights_->cols() << ")";
-    LOG(INFO) << "logit weight out: (" << out.rows() << " x " << out.cols() << ")";
-    // out.colwise() += (*logit_skews_);
-    LOG(INFO) << "logit out: (" << out.rows() << " x " << out.cols() << ")";
-    // TODO softmax
+    out.colwise() += (*logit_skews_);
+    out = out.array().exp();
+    Eigen::VectorXf sums = out.rowwise().sum();
+    out = out.array().colwise() / sums.array();
+    
   } else {
     // Use real evaluation
     LOG(FATAL) << "Only fake evaluation supported at this time";
