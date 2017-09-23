@@ -29,8 +29,8 @@ def __parse_args():
     parser.add_argument("--print_shots", dest="print_shots",
             action="store_true", default=False,
             help="Print shot to frame range")
-    parser.add_argument("--keyframes_dir", dest="keyframes_basedir",
-            help="Evaluate all keyframe files in the keyframes_basedir")
+    parser.add_argument("--keyframes_dir", dest="keyframes_dir",
+            help="Evaluate all keyframe (.log) files in the directory")
     parser.add_argument("--uniform_sampling", dest="uniform_sampling",
             action="store_true", default=False,
             help="Simulate uniform sampling for shot evaluation")
@@ -132,13 +132,15 @@ def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
     keyframes = []
     with open(kfile, "r") as kf:
         for frame_num in kf:
-            keyframes.append(int(frame_num))
+            if frame_num.startswith("last frame processed:"):
+                end_frame = int(frame_num.split(":")[1])
+            else:
+                keyframes.append(int(frame_num))
 
     # Number of shots in the given frame range
     shots = set()
     for frame_id in range(start_frame, end_frame):
         shots.add(frame_to_shot[frame_id])
-    total_shots = len(shots)
     #print("Total shots: {}".format(len(shots)))
 
     # Shots covered by selected keyframes
@@ -146,7 +148,6 @@ def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
     for frame_id in keyframes:
         if frame_id >= start_frame and frame_id < end_frame:
             shot_coverage.add(frame_to_shot[frame_id])
-    kf_shots = len(shot_coverage)
     #print("KF shots: {}".format(len(shot_coverage)))
     #print("KF shots pct: {0:2f}".format(len(shot_coverage)/total_shots))
 
@@ -155,23 +156,30 @@ def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
     level = kfile_split[2]
     sel = kfile_split[3]
     buf_len = kfile_split[4]
-    kf_shots_pct = "{0:.2f}".format(kf_shots/total_shots)
-    row = ['kd', sel, buf_len, level, total_shots, kf_shots, kf_shots_pct]
-    csv_write.writerow(row)
+    total_frames = end_frame - start_frame
+    kf_frames = len(keyframes)
+    total_shots = len(shots)
+    kf_shots = len(shot_coverage)
+    if total_shots:
+        kf_shots_pct = "{0:.2f}".format(kf_shots/total_shots)
+    else:
+        kf_shots_pct = "{0:.2f}".format(0.00)
+    row = ['kd', sel, buf_len, level, total_frames, kf_frames, total_shots, kf_shots, kf_shots_pct]
+    csv_writer.writerow(row)
 
 def handle_eval_keyframes(args, start_frame, end_frame):
-    end_frame = start_frame + num_frames
     [shot_to_frame_range, frame_to_shot] = read_shots(args.shots_filepath, start_frame, end_frame)
 
     eval_outpath = os.path.join(args.outdir, args.eval_outfile)
+    print("Writing keyframes eval: {}".format(eval_outpath))
     with open(eval_outpath, "w") as outfile:
         csv_writer = csv.writer(outfile, delimiter=',')
-        header = ['kf_type', 'sel', 'buf_len', 'level', 'total_shots', 'kf_shots', 'kf_shot_pct']
+        header = ['kf_type', 'sel', 'buf_len', 'level', 'total_frames', 'kf_frames', 'total_shots', 'kf_shots', 'kf_shot_pct']
         csv_writer.writerow(header)
         ## Evaluate all keyframe files in the directory
         keyframe_files = list(Path(args.keyframes_dir).glob("**/*.log"))
         for kfile in keyframe_files:
-            eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_riter)
+            eval_kd_keyframes(frame_to_shot, str(kfile), start_frame, end_frame, csv_writer)
 
 
 def handle_extract_labels(args, start_frame, end_frame):
