@@ -25,7 +25,8 @@ typedef struct query_t {
 
 class ImageMatch : public Processor {
  public:
-  ImageMatch(unsigned int vishash_size = 1024, unsigned int num_hidden_layers = 5, unsigned int batch_size = 1);
+  ImageMatch(unsigned int vishash_size = 1024,
+             unsigned int num_hidden_layers = 5, unsigned int batch_size = 1);
 
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
@@ -45,7 +46,8 @@ class ImageMatch : public Processor {
   virtual void Process() override;
 
  private:
-  void AddClassifier(query_t* current_query, const std::string& model_path, const std::string& params_path);
+  void AddClassifier(query_t* current_query, const std::string& model_path,
+                     const std::string& params_path);
   unsigned int vishash_size_;
   unsigned int num_hidden_layers_;
   unsigned int batch_size_;
