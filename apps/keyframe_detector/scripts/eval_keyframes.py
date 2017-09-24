@@ -31,15 +31,12 @@ def __parse_args():
             help="Print shot to frame range")
     parser.add_argument("--keyframes_dir", dest="keyframes_dir",
             help="Evaluate all keyframe (.log) files in the directory")
-    parser.add_argument("--uniform_sampling", dest="uniform_sampling",
+    parser.add_argument("--sampling", dest="sampling",
             action="store_true", default=False,
             help="Simulate uniform sampling for shot evaluation")
-    parser.add_argument("--random_sampling", dest="random_sampling",
-            action="store_true", default=False,
-            help="Simulate random sampling for shot evaluation")
-    parser.add_argument("--sampling_rate", dest="sampling_rate", default=0.5,
-            help="Start frame for evaluation",
-            type=float)
+    parser.add_argument("--sampling_rates", dest="sampling_rates",
+            default="0.5, 0.25, 0.125, 0.0625",
+            help="Start frame for evaluation")
     parser.add_argument("--eval", dest="eval_keyframes",
             action="store_true", default=False,
             help="Evaluate keyframe shot coverage")
@@ -128,15 +125,7 @@ def read_shots(shots_filepath, start_frame, end_frame):
                 frame_to_shot[frame_id] = shot_id
     return [shot_to_frame_range, frame_to_shot]
 
-def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
-    keyframes = []
-    with open(kfile, "r") as kf:
-        for frame_num in kf:
-            if frame_num.startswith("last frame processed:"):
-                end_frame = int(frame_num.split(":")[1])
-            else:
-                keyframes.append(int(frame_num))
-
+def __eval_keyframes(frame_to_shot, keyframes, start_frame, end_frame):
     # Number of shots in the given frame range
     shots = set()
     for frame_id in range(start_frame, end_frame):
@@ -150,36 +139,67 @@ def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
             shot_coverage.add(frame_to_shot[frame_id])
     #print("KF shots: {}".format(len(shot_coverage)))
     #print("KF shots pct: {0:2f}".format(len(shot_coverage)/total_shots))
+    return [shots, shot_coverage]
 
-    kfile_basename = os.path.splitext(os.path.basename(kfile))[0]
-    kfile_split = kfile_basename.split("_")
-    level = kfile_split[2]
-    sel = kfile_split[3]
-    buf_len = kfile_split[4]
-    total_frames = end_frame - start_frame
-    kf_frames = len(keyframes)
-    total_shots = len(shots)
-    kf_shots = len(shot_coverage)
+def __eval_output_row(csv_writer, kf_type, sel, buf_len, level, total_frames, kf_frames, total_shots, kf_shots):
     if total_shots:
         kf_shots_pct = "{0:.2f}".format(kf_shots/total_shots)
     else:
         kf_shots_pct = "{0:.2f}".format(0.00)
-    row = ['kd', sel, buf_len, level, total_frames, kf_frames, total_shots, kf_shots, kf_shots_pct]
+    row = [kf_type, sel, buf_len, level, total_frames, kf_frames, total_shots, kf_shots, kf_shots_pct]
     csv_writer.writerow(row)
+
+
+def eval_sampling_keyframes(frame_to_shot, rate, start_frame, end_frame, csv_writer):
+    win = int(1/rate)
+    keyframes = [x for x in range(start_frame, end_frame) if x%win == 0]
+
+    [shots, shot_coverage] = __eval_keyframes(frame_to_shot, keyframes, start_frame, end_frame)
+
+    __eval_output_row(csv_writer, "sampling",
+            rate, -1, -1,
+            (end_frame - start_frame), len(keyframes),
+            len(shots), len(shot_coverage))
+
+def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
+    keyframes = []
+    with open(kfile, "r") as kf:
+        for frame_num in kf:
+            if frame_num.startswith("last frame processed:"):
+                end_frame = int(frame_num.split(":")[1])
+            else:
+                keyframes.append(int(frame_num))
+
+    [shots, shot_coverage] = __eval_keyframes(frame_to_shot, keyframes, start_frame, end_frame)
+
+    kfile_basename = os.path.splitext(os.path.basename(kfile))[0]
+    kfile_split = kfile_basename.split("_")
+    __eval_output_row(csv_writer, "kd",
+            kfile_split[3], kfile_split[4], kfile_split[2],
+            (end_frame - start_frame), len(keyframes),
+            len(shots), len(shot_coverage))
 
 def handle_eval_keyframes(args, start_frame, end_frame):
     [shot_to_frame_range, frame_to_shot] = read_shots(args.shots_filepath, start_frame, end_frame)
 
     eval_outpath = os.path.join(args.outdir, args.eval_outfile)
-    print("Writing keyframes eval: {}".format(eval_outpath))
     with open(eval_outpath, "w") as outfile:
+        print("Writing keyframes eval: {}".format(eval_outpath))
         csv_writer = csv.writer(outfile, delimiter=',')
         header = ['kf_type', 'sel', 'buf_len', 'level', 'total_frames', 'kf_frames', 'total_shots', 'kf_shots', 'kf_shot_pct']
         csv_writer.writerow(header)
+
         ## Evaluate all keyframe files in the directory
-        keyframe_files = list(Path(args.keyframes_dir).glob("**/*.log"))
-        for kfile in keyframe_files:
-            eval_kd_keyframes(frame_to_shot, str(kfile), start_frame, end_frame, csv_writer)
+        if args.keyframes_dir:
+                keyframe_files = list(Path(args.keyframes_dir).glob("**/*.log"))
+                for kfile in keyframe_files:
+                    eval_kd_keyframes(frame_to_shot, str(kfile), start_frame, end_frame, csv_writer)
+
+        ## Evaluate the performance of uniform sampling
+        if args.sampling:
+            sampling_rates = [float(x) for x in args.sampling_rates.split(",")]
+            for rate in sampling_rates:
+                eval_sampling_keyframes(frame_to_shot, rate, start_frame, end_frame, csv_writer)
 
 
 def handle_extract_labels(args, start_frame, end_frame):

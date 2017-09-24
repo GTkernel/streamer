@@ -49,8 +49,6 @@ echo "start_frame: $start_frame"
 echo "num_frames: $num_frames"
 echo "results_file: $results_file"
 
-eval_cmd="./eval_keyframes.py --outdir ${results_dir} --start_frame ${start_frame} --num_frames ${num_frames} --shots ${shots_file} --keyframes_dir ${keyframes_dir} --eval_outfile ${results_file} --eval"
+eval_cmd="./eval_keyframes.py --outdir ${results_dir} --start_frame ${start_frame} --num_frames ${num_frames} --shots ${shots_file} --keyframes_dir ${keyframes_dir} --sampling --eval_outfile ${results_file} --eval"
 echo "Executing: $eval_cmd"
 $eval_cmd
-#./eval_keyframes.py --outdir "${results_dir}" --start_frame "${start_frame}" --num_frames "${num_frames}" --shots "${shots_file}" --keyframes_dir "${keyframe_dir}" --eval_outfile "${results_file}" --eval
-
