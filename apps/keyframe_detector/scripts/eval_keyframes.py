@@ -37,6 +37,9 @@ def __parse_args():
     parser.add_argument("--sampling_rates", dest="sampling_rates",
             default="0.5, 0.25, 0.125, 0.0625",
             help="Start frame for evaluation")
+    parser.add_argument("--sampling_levels", dest="sampling_levels", default=4,
+            help="Start frame for evaluation",
+            type=int)
     parser.add_argument("--eval", dest="eval_keyframes",
             action="store_true", default=False,
             help="Evaluate keyframe shot coverage")
@@ -150,14 +153,15 @@ def __eval_output_row(csv_writer, kf_type, sel, buf_len, level, total_frames, kf
     csv_writer.writerow(row)
 
 
-def eval_sampling_keyframes(frame_to_shot, rate, start_frame, end_frame, csv_writer):
-    win = int(1/rate)
+def eval_sampling_keyframes(frame_to_shot, rate, level, start_frame, end_frame, csv_writer):
+    level_rate = rate**(level+1)
+    win = int(1/level_rate)
     keyframes = [x for x in range(start_frame, end_frame) if x%win == 0]
 
     [shots, shot_coverage] = __eval_keyframes(frame_to_shot, keyframes, start_frame, end_frame)
 
     __eval_output_row(csv_writer, "sampling",
-            rate, -1, -1,
+            level_rate, -1, level,
             (end_frame - start_frame), len(keyframes),
             len(shots), len(shot_coverage))
 
@@ -198,8 +202,10 @@ def handle_eval_keyframes(args, start_frame, end_frame):
         ## Evaluate the performance of uniform sampling
         if args.sampling:
             sampling_rates = [float(x) for x in args.sampling_rates.split(",")]
+            sampling_levels = int(args.sampling_levels)
             for rate in sampling_rates:
-                eval_sampling_keyframes(frame_to_shot, rate, start_frame, end_frame, csv_writer)
+                for level in range(0, sampling_levels):
+                    eval_sampling_keyframes(frame_to_shot, rate, level, start_frame, end_frame, csv_writer)
 
 
 def handle_extract_labels(args, start_frame, end_frame):
