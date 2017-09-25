@@ -127,10 +127,10 @@ def __compare_keyframes(keyframes_1, keyframes_2, first_is_veryfast_slow, leeway
     errors = [abs(keyframe - closest) - leeway for keyframe, closest in closest_pairs]
 
     total_error = sum(errors)
-    normalized_error = total_error / float(len(ground_truth))
+    #normalized_error = total_error / float(len(ground_truth))
     #print("total_error: {}".format(total_error))
     #print("normalized_error: {}".format(normalized_error))
-    return normalized_error
+    return total_error  # normalized_error
 
 
 def __compare(data_1, data_2, first_is_veryfast_slow, leeway_frames):
