@@ -135,7 +135,7 @@ def __compare_keyframes_jaccard(keyframes_1, keyframes_2, first_is_veryfast_slow
 
     #print("intersection: {}".format(intersection))
     #print("union: {}".format(union))
-    return float(len(intersection)) / len(union)
+    return float(len(intersection)) / len(keyframes_1)
 
 
 def __compare_keyframes_(keyframes_1, keyframes_2, first_is_veryfast_slow, leeway):
