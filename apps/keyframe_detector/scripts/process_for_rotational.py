@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import math
 import os
 from os import path
 
@@ -62,24 +63,31 @@ def __parse_dir(dir_path):
 
 
 def __frame_id_svf_to_vfs(frame_id, svf_split_id, vfs_split_id):
-
     if frame_id < svf_split_id:
-        result = frame_id / 4.0
+        return frame_id / 4.0
     else:
-        result = vfs_split_id + (frame_id - svf_split_id) * 4
-
-    # print("svf->vfs: {} -> {}".format(frame_id, result))
-    return result
+        return vfs_split_id + (frame_id - svf_split_id) * 4
 
 
 def __frame_id_vfs_to_svf(frame_id, svf_split_id, vfs_split_id):
     if frame_id < vfs_split_id:
-        result = frame_id * 4
+        return frame_id * 4
     else:
-        result = svf_split_id + (frame_id - vfs_split_id) / 4.0
+        return svf_split_id + (frame_id - vfs_split_id) / 4.0
 
-    # print("vfs->svf: {} -> {}".format(frame_id, result))
-    return result
+
+def __frame_id_vfs_to_normal(frame_id, vfs_split_id):
+    if frame_id < vfs_split_id:
+        return frame_id * 4
+    else:
+        return (vfs_split_id * 4) + (frame_id - vfs_split_id)
+
+
+def __frame_id_svf_to_normal(frame_id, svf_split_id):
+    if frame_id < svf_split_id:
+        return frame_id
+    else:
+        return svf_split_id + 4 * (frame_id - svf_split_id)
 
 
 def __find_closest(frames, target_frame):
@@ -95,7 +103,42 @@ def __find_closest(frames, target_frame):
     return closest
 
 
-def __compare_keyframes(keyframes_1, keyframes_2, first_is_veryfast_slow, leeway):
+def __compare_keyframes_jaccard(keyframes_1, keyframes_2, first_is_veryfast_slow, leeway):
+    num_keyframes = len(keyframes_1)
+    if num_keyframes == 0:
+        # If there is no data, explicitly note that.
+        return -1
+
+    if first_is_veryfast_slow:
+        keyframes_1_retimed = [__frame_id_vfs_to_normal(keyframe, vfs_split_id=140)
+                               for keyframe in keyframes_1]
+        keyframes_2_retimed = [__frame_id_svf_to_normal(keyframe, svf_split_id=560)
+                               for keyframe in keyframes_2]
+    else:
+        keyframes_1_retimed = [__frame_id_svf_to_normal(keyframe, svf_split_id=560)
+                               for keyframe in keyframes_1]
+        keyframes_2_retimed = [__frame_id_vfs_to_normal(keyframe, vfs_split_id=140)
+                               for keyframe in keyframes_2]
+
+    total_frames = 700
+    factor = 1
+    coeff = factor * (float(total_frames) / num_keyframes)
+
+    keyframes_1_scaled = [math.floor(keyframe / coeff) for keyframe in keyframes_1_retimed]
+    keyframes_2_scaled = [math.floor(keyframe / coeff) for keyframe in keyframes_2_retimed]
+
+    keyframes_1_set = set(keyframes_1_scaled)
+    keyframes_2_set = set(keyframes_2_scaled)
+
+    intersection = keyframes_1_set & keyframes_2_set
+    union = keyframes_1_set | keyframes_2_set
+
+    #print("intersection: {}".format(intersection))
+    #print("union: {}".format(union))
+    return float(len(intersection)) / len(union)
+
+
+def __compare_keyframes_(keyframes_1, keyframes_2, first_is_veryfast_slow, leeway):
     if len(keyframes_1) == 0:
         return 0
 
@@ -155,8 +198,8 @@ def __compare(data_1, data_2, first_is_veryfast_slow, leeway_frames):
             assert len(keyframes_1) == len(keyframes_2)
 
             similarity_levels_results.append(
-                __compare_keyframes(keyframes_1, keyframes_2, first_is_veryfast_slow,
-                                    leeway_frames))
+                __compare_keyframes_jaccard(keyframes_1, keyframes_2, first_is_veryfast_slow,
+                                            leeway_frames))
 
         results[key] = similarity_levels_results
 
