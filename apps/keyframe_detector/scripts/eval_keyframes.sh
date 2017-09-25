@@ -1,12 +1,19 @@
 #!/bin/bash
 
 dataset=$1
+shots_type=$2
 results_dir="/home/dulloor/filterforward/results"
 shots_file=""
 keyframes_dir=""
 start_frame=0
 num_frames=0
 results_file=""
+
+if [ "$shots_type" == "sparse" ]; then
+	results_dir="$results_dir/sparse"
+else
+	results_dir="$results_dir/dense"
+fi
 
 if [ "$dataset" == "coral" ]; then
 	shots_file="$results_dir/coral-reef-long-s0-d5010/coral-reef-long-s0-e5000.shots"
@@ -37,7 +44,7 @@ elif [ "$dataset" == "rotational" ]; then
 	keyframes_dir="/disk3/rotational/kd/1"
 	results_file="rotational.eval"
 else
-	echo "Usage: ./evaluate.sh (coral | jackson | train1 | train2 | rotational)" 
+	echo "Usage: ./evaluate.sh (coral | jackson | train1 | train2 | rotational) (dense | sparse)"
 	exit
 fi
 

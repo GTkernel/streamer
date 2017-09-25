@@ -23,6 +23,12 @@ def __parse_args():
     parser.add_argument("--labels_to_shots", dest="labels_to_shots",
             action="store_true", default=False,
             help="Generate shots file from label file")
+    parser.add_argument("--target_labels", dest="target_labels",
+            default="car, truck, bus, person",
+            help="Labels to consider for shots")
+    parser.add_argument("--sparse_shots", dest="sparse_shots",
+            action="store_true", default=False,
+            help="Define an event as change in the type of objects (default is any change in detections)")
     ## for keyframe evaluation
     parser.add_argument("--shots", dest="shots_filepath",
             help="Shots file (binary pickle file with shot ranges)")
@@ -56,7 +62,7 @@ def __parse_args():
     return args
 
 
-def labels_to_shots(labels_filepath, shots_filepath, start_frame, num_frames):
+def labels_to_shots(labels_filepath, shots_filepath, target_labels, sparse_shots, start_frame, num_frames):
     frame_to_shot = defaultdict(int)
     shot_range_start = defaultdict(int)
     shot_range_end = defaultdict(int)
@@ -84,7 +90,11 @@ def labels_to_shots(labels_filepath, shots_filepath, start_frame, num_frames):
                     break
 
             if cur_frame_id == frame_id:
-                cur_frame_objs[label] += 1
+                if label in target_labels:
+                    if sparse_shots:
+                        cur_frame_objs[label] = 1 # don't care about count
+                    else:
+                        cur_frame_objs[label] += 1
             else:
                 frame_to_shot[cur_frame_id] = shot_id
                 if cur_frame_id != 0 and cur_frame_objs != prev_frame_objs:
@@ -230,7 +240,8 @@ def handle_extract_labels(args, start_frame, end_frame):
 def handle_labels_to_shots(args, start_frame, end_frame):
     dataset_basename = os.path.splitext(os.path.basename(args.labels_filepath))[0]
     shots_filepath = args.outdir + "/" + dataset_basename + ".shots"
-    labels_to_shots(args.labels_filepath, shots_filepath, start_frame, end_frame)
+    target_labels = [x.strip() for x in args.target_labels.split(",")]
+    labels_to_shots(args.labels_filepath, shots_filepath, target_labels, args.sparse_shots, start_frame, end_frame)
 
 def handle_print_shots(args, start_frame, end_frame, verbose=False):
     [shot_to_frame_range, frame_to_shot] = read_shots(args.shots_filepath, start_frame, end_frame)
