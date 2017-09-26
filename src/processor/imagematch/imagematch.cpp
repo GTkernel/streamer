@@ -124,7 +124,8 @@ void ImageMatch::Process() {
       frame->SetFlowControlEntrance(nullptr);
       return;
     }
-  } cv::Mat activations = frame->GetValue<cv::Mat>("activations");
+  }
+  cv::Mat activations = frame->GetValue<cv::Mat>("activations");
   if (hidden_layer_weights_ != nullptr) {
     Eigen::Map<Eigen::VectorXf> vishash_map((float*)activations.data,
                                             vishash_size_);
@@ -165,6 +166,34 @@ void ImageMatch::Process() {
   } else {
     // Use real evaluation
     for (auto& query : query_data_) {
+      float* data = query.second.classifier->input_blobs().at(0)->mutable_cpu_data();
+      for(const auto& frame : frames_batch_) {
+        memcpy(data, frame->GetValue<cv::Mat>("activations").data, 1024 * sizeof(float));
+        data += 1024;
+      }
+      query.second.classifier->Forward();
+      CHECK_EQ(query.second.classifier->output_blobs().size(), 1);
+      caffe::Blob<float>* output_layer = query.second.classifier->output_blobs()[0];
+      auto layer_outputs = query.second.classifier->top_vecs();
+      //std::cout << layer_outputs.size() << std::endl;
+      //std::cout << layer_outputs.at(3).at(0)->cpu_data()[0] << std::endl;
+      //std::cout << layer_outputs.at(3).at(0)->cpu_data()[1] << std::endl;
+      //const float* begin = output_layer->cpu_data();
+      for(decltype(batch_size_) i = 0; i < batch_size_; ++i) {
+        float p_train = output_layer->cpu_data()[i * 2 + 1];
+        float p_notrain = output_layer->cpu_data()[i * 2];
+        p_train = std::exp(p_train);
+        p_notrain = std::exp(p_notrain);
+        float total = p_train + p_notrain;
+        p_train /= total;
+        p_notrain /= total;
+        //std::cout << "Frame: " << frames_batch_.at(i)->GetValue<unsigned long>("frame_id") << " Train: " << p_train << " Notrain: " << p_notrain << std::endl;
+        if(p_train > 0.125) {
+          ((*query.second.matches))(i) = 1;
+        } else {
+          ((*query.second.matches))(i) = 0;
+        }
+      }
     }
   }
 
@@ -173,6 +202,7 @@ void ImageMatch::Process() {
        batch_idx < frames_batch_.size(); ++batch_idx) {
     std::vector<int> image_match_matches;
     for (auto& query : query_data_) {
+      // TODO: thresholding
       if ((*(query.second.matches))(batch_idx) == 1) {
         image_match_matches.push_back(query.second.query_id);
       }
