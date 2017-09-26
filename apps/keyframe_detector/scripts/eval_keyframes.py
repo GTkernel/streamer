@@ -23,6 +23,12 @@ def __parse_args():
     parser.add_argument("--labels_to_shots", dest="labels_to_shots",
             action="store_true", default=False,
             help="Generate shots file from label file")
+    parser.add_argument("--target_labels", dest="target_labels",
+            default="car, truck, bus, person",
+            help="Labels to consider for shots")
+    parser.add_argument("--sparse_shots", dest="sparse_shots",
+            action="store_true", default=False,
+            help="Define an event as change in the type of objects (default is any change in detections)")
     ## for keyframe evaluation
     parser.add_argument("--shots", dest="shots_filepath",
             help="Shots file (binary pickle file with shot ranges)")
@@ -31,15 +37,15 @@ def __parse_args():
             help="Print shot to frame range")
     parser.add_argument("--keyframes_dir", dest="keyframes_dir",
             help="Evaluate all keyframe (.log) files in the directory")
-    parser.add_argument("--uniform_sampling", dest="uniform_sampling",
+    parser.add_argument("--sampling", dest="sampling",
             action="store_true", default=False,
             help="Simulate uniform sampling for shot evaluation")
-    parser.add_argument("--random_sampling", dest="random_sampling",
-            action="store_true", default=False,
-            help="Simulate random sampling for shot evaluation")
-    parser.add_argument("--sampling_rate", dest="sampling_rate", default=0.5,
+    parser.add_argument("--sampling_rates", dest="sampling_rates",
+            default="0.5, 0.25, 0.125, 0.0625",
+            help="Start frame for evaluation")
+    parser.add_argument("--sampling_levels", dest="sampling_levels", default=4,
             help="Start frame for evaluation",
-            type=float)
+            type=int)
     parser.add_argument("--eval", dest="eval_keyframes",
             action="store_true", default=False,
             help="Evaluate keyframe shot coverage")
@@ -56,7 +62,7 @@ def __parse_args():
     return args
 
 
-def labels_to_shots(labels_filepath, shots_filepath, start_frame, num_frames):
+def labels_to_shots(labels_filepath, shots_filepath, target_labels, sparse_shots, start_frame, num_frames):
     frame_to_shot = defaultdict(int)
     shot_range_start = defaultdict(int)
     shot_range_end = defaultdict(int)
@@ -84,7 +90,11 @@ def labels_to_shots(labels_filepath, shots_filepath, start_frame, num_frames):
                     break
 
             if cur_frame_id == frame_id:
-                cur_frame_objs[label] += 1
+                if label in target_labels:
+                    if sparse_shots:
+                        cur_frame_objs[label] = 1 # don't care about count
+                    else:
+                        cur_frame_objs[label] += 1
             else:
                 frame_to_shot[cur_frame_id] = shot_id
                 if cur_frame_id != 0 and cur_frame_objs != prev_frame_objs:
@@ -128,15 +138,7 @@ def read_shots(shots_filepath, start_frame, end_frame):
                 frame_to_shot[frame_id] = shot_id
     return [shot_to_frame_range, frame_to_shot]
 
-def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
-    keyframes = []
-    with open(kfile, "r") as kf:
-        for frame_num in kf:
-            if frame_num.startswith("last frame processed:"):
-                end_frame = int(frame_num.split(":")[1])
-            else:
-                keyframes.append(int(frame_num))
-
+def __eval_keyframes(frame_to_shot, keyframes, start_frame, end_frame):
     # Number of shots in the given frame range
     shots = set()
     for frame_id in range(start_frame, end_frame):
@@ -150,36 +152,70 @@ def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
             shot_coverage.add(frame_to_shot[frame_id])
     #print("KF shots: {}".format(len(shot_coverage)))
     #print("KF shots pct: {0:2f}".format(len(shot_coverage)/total_shots))
+    return [shots, shot_coverage]
 
-    kfile_basename = os.path.splitext(os.path.basename(kfile))[0]
-    kfile_split = kfile_basename.split("_")
-    level = kfile_split[2]
-    sel = kfile_split[3]
-    buf_len = kfile_split[4]
-    total_frames = end_frame - start_frame
-    kf_frames = len(keyframes)
-    total_shots = len(shots)
-    kf_shots = len(shot_coverage)
+def __eval_output_row(csv_writer, kf_type, sel, buf_len, level, total_frames, kf_frames, total_shots, kf_shots):
     if total_shots:
         kf_shots_pct = "{0:.2f}".format(kf_shots/total_shots)
     else:
         kf_shots_pct = "{0:.2f}".format(0.00)
-    row = ['kd', sel, buf_len, level, total_frames, kf_frames, total_shots, kf_shots, kf_shots_pct]
+    row = [kf_type, sel, buf_len, level, total_frames, kf_frames, total_shots, kf_shots, kf_shots_pct]
     csv_writer.writerow(row)
+
+
+def eval_sampling_keyframes(frame_to_shot, rate, level, start_frame, end_frame, csv_writer):
+    level_rate = rate**(level+1)
+    win = int(1/level_rate)
+    keyframes = [x for x in range(start_frame, end_frame) if x%win == 0]
+
+    [shots, shot_coverage] = __eval_keyframes(frame_to_shot, keyframes, start_frame, end_frame)
+
+    __eval_output_row(csv_writer, "sampling",
+            level_rate, -1, level,
+            (end_frame - start_frame), len(keyframes),
+            len(shots), len(shot_coverage))
+
+def eval_kd_keyframes(frame_to_shot, kfile, start_frame, end_frame, csv_writer):
+    keyframes = []
+    with open(kfile, "r") as kf:
+        for frame_num in kf:
+            if frame_num.startswith("last frame processed:"):
+                end_frame = int(frame_num.split(":")[1])
+            else:
+                keyframes.append(int(frame_num))
+
+    [shots, shot_coverage] = __eval_keyframes(frame_to_shot, keyframes, start_frame, end_frame)
+
+    kfile_basename = os.path.splitext(os.path.basename(kfile))[0]
+    kfile_split = kfile_basename.split("_")
+    __eval_output_row(csv_writer, "kd",
+            kfile_split[3], kfile_split[4], kfile_split[2],
+            (end_frame - start_frame), len(keyframes),
+            len(shots), len(shot_coverage))
 
 def handle_eval_keyframes(args, start_frame, end_frame):
     [shot_to_frame_range, frame_to_shot] = read_shots(args.shots_filepath, start_frame, end_frame)
 
     eval_outpath = os.path.join(args.outdir, args.eval_outfile)
-    print("Writing keyframes eval: {}".format(eval_outpath))
     with open(eval_outpath, "w") as outfile:
+        print("Writing keyframes eval: {}".format(eval_outpath))
         csv_writer = csv.writer(outfile, delimiter=',')
         header = ['kf_type', 'sel', 'buf_len', 'level', 'total_frames', 'kf_frames', 'total_shots', 'kf_shots', 'kf_shot_pct']
         csv_writer.writerow(header)
+
         ## Evaluate all keyframe files in the directory
-        keyframe_files = list(Path(args.keyframes_dir).glob("**/*.log"))
-        for kfile in keyframe_files:
-            eval_kd_keyframes(frame_to_shot, str(kfile), start_frame, end_frame, csv_writer)
+        if args.keyframes_dir:
+                keyframe_files = list(Path(args.keyframes_dir).glob("**/*.log"))
+                for kfile in keyframe_files:
+                    eval_kd_keyframes(frame_to_shot, str(kfile), start_frame, end_frame, csv_writer)
+
+        ## Evaluate the performance of uniform sampling
+        if args.sampling:
+            sampling_rates = [float(x) for x in args.sampling_rates.split(",")]
+            sampling_levels = int(args.sampling_levels)
+            for rate in sampling_rates:
+                for level in range(0, sampling_levels):
+                    eval_sampling_keyframes(frame_to_shot, rate, level, start_frame, end_frame, csv_writer)
 
 
 def handle_extract_labels(args, start_frame, end_frame):
@@ -204,7 +240,8 @@ def handle_extract_labels(args, start_frame, end_frame):
 def handle_labels_to_shots(args, start_frame, end_frame):
     dataset_basename = os.path.splitext(os.path.basename(args.labels_filepath))[0]
     shots_filepath = args.outdir + "/" + dataset_basename + ".shots"
-    labels_to_shots(args.labels_filepath, shots_filepath, start_frame, end_frame)
+    target_labels = [x.strip() for x in args.target_labels.split(",")]
+    labels_to_shots(args.labels_filepath, shots_filepath, target_labels, args.sparse_shots, start_frame, end_frame)
 
 def handle_print_shots(args, start_frame, end_frame, verbose=False):
     [shot_to_frame_range, frame_to_shot] = read_shots(args.shots_filepath, start_frame, end_frame)

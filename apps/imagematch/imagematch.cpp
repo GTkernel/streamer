@@ -32,9 +32,9 @@ void FramePush(cv::Mat m) {
 }
 
 void Run(const std::vector<string>& camera_names, const string& model_name,
-         bool display, size_t batch_size, std::string linmod_path, std::string linmod_params_path,
-        std::string vishash_layer_name, int num_query, int image_per_query,
-        bool use_fake_nne = false) {
+         bool display, size_t batch_size, std::string linmod_path,
+         std::string linmod_params_path, std::string vishash_layer_name,
+         int num_query, int image_per_query, bool use_fake_nne = false) {
   std::stringstream csv_header;
   csv_header << "num queries"
              << ",";
@@ -69,8 +69,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
   std::vector<std::string> vishash_layer = {vishash_layer_name};
   NeuralNetEvaluator* neural_net_eval = new NeuralNetEvaluator(
       model_desc, input_shape, batch_size, vishash_layer);
-  auto imagematch =
-      std::make_shared<ImageMatch>(1024, 5, 1);
+  auto imagematch = std::make_shared<ImageMatch>(1024, 5, 1);
   auto exit_proc = std::make_shared<FlowControlExit>();
 
   if (!use_fake_nne) {
@@ -95,7 +94,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
 
   cv::Mat vishash_mat;
   if (linmod_path != "") {
-          imagematch->AddQuery(linmod_path, linmod_params_path);
+    imagematch->AddQuery(linmod_path, linmod_params_path);
   }
   if (use_fake_nne) {
     std::thread fake_nne_thread(FramePush, vishash_mat);
@@ -122,9 +121,7 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
     auto end_timestamp = boost::posix_time::microsec_clock::local_time();
     auto diff = end_timestamp - frame->GetValue<boost::posix_time::ptime>(
                                     "capture_time_micros");
-    float score = frame->GetValue<std::vector<int>>(
-                          "imagematch.matches")
-                      .at(0);
+    float score = frame->GetValue<std::vector<int>>("imagematch.matches").at(0);
     LOG(INFO) << score;
     std::stringstream benchmark_summary;
     benchmark_summary << num_query << ",";
@@ -156,9 +153,8 @@ void Run(const std::vector<string>& camera_names, const string& model_name,
       cv::Scalar outline_color(0, 0, 0);
       cv::Scalar label_color(200, 200, 250);
 
-      float score = frame->GetValue<std::vector<int>>(
-                            "imagematch.matches")
-                        .at(0);
+      float score =
+          frame->GetValue<std::vector<int>>("imagematch.matches").at(0);
       cv::putText(img, std::to_string(score), label_point,
                   CV_FONT_HERSHEY_DUPLEX, font_size, label_color, 2, CV_AA);
 
@@ -280,7 +276,7 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
-  Run(camera_names, model, display, batch_size, linmod_path, linmod_params, vishash_layer_name,
-      num_query, image_per_query, use_fake_nne);
+  Run(camera_names, model, display, batch_size, linmod_path, linmod_params,
+      vishash_layer_name, num_query, image_per_query, use_fake_nne);
   return 0;
 }

@@ -44,6 +44,9 @@ class Frame {
   void SetValue(std::string key, const T& val);
   template <typename T>
   T GetValue(std::string key) const;
+  // Deletes the specified key from the frame, if it exists, otherwise does
+  // nothing if the key does not exist.
+  void Delete(std::string key);
   std::string ToString() const;
   nlohmann::json ToJson() const;
   using field_types =

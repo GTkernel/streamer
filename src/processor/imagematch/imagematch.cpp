@@ -72,13 +72,11 @@ void ImageMatch::SetQueryMatrix(int num_queries) {
     hidden_layer_skews_->setRandom();
   }
   if (logit_weights_ == nullptr) {
-    logit_weights_ =
-        std::make_unique<Eigen::MatrixXf>(num_hidden_layers_, 2);
+    logit_weights_ = std::make_unique<Eigen::MatrixXf>(num_hidden_layers_, 2);
     logit_weights_->setRandom();
   } else {
     int old_num_rows = logit_weights_->rows();
-    logit_weights_->conservativeResize(num_hidden_layers_,
-                                       Eigen::NoChange);
+    logit_weights_->conservativeResize(num_hidden_layers_, Eigen::NoChange);
     logit_weights_
         ->block(old_num_rows, logit_weights_->rows(),
                 logit_weights_->rows() - old_num_rows, logit_weights_->rows())
@@ -91,7 +89,8 @@ void ImageMatch::SetQueryMatrix(int num_queries) {
   }
   for (int i = query_data_.size(); i < num_queries; ++i) {
     query_t* current_query = &query_data_[i];
-    current_query->matches = std::make_unique<Eigen::VectorXf>(num_hidden_layers_);
+    current_query->matches =
+        std::make_unique<Eigen::VectorXf>(num_hidden_layers_);
     current_query->query_id = i;
   }
 }
@@ -151,7 +150,9 @@ void ImageMatch::Process() {
     // logit multiplication and skew
     for (decltype(query_data_.size()) i = 0; i < query_data_.size(); ++i) {
       Eigen::MatrixXf new_out;
-      new_out = out.block(0, i * num_hidden_layers_, batch_size_, num_hidden_layers_) * (*logit_weights_);
+      new_out = out.block(0, i * num_hidden_layers_, batch_size_,
+                          num_hidden_layers_) *
+                (*logit_weights_);
       new_out.colwise() += (*logit_skews_);
       new_out = new_out.array().exp();
       Eigen::VectorXf sums = new_out.rowwise().sum();
@@ -231,7 +232,8 @@ void ImageMatch::AddClassifier(query_t* current_query,
   current_query->classifier->CopyTrainedLayersFrom(params_path);
   CHECK_EQ(current_query->classifier->num_inputs(), 1);
   CHECK_EQ(current_query->classifier->num_outputs(), 1);
-  caffe::Blob<float>* input_layer = current_query->classifier->input_blobs().at(0);
+  caffe::Blob<float>* input_layer =
+      current_query->classifier->input_blobs().at(0);
   input_layer->Reshape(batch_size_, 1, 1, 1024);
   current_query->classifier->Reshape();
 }
