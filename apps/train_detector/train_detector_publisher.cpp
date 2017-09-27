@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
                      ("The maximum rate of the published stream. The actual "
                       "rate may be less. An fps of 0 disables throttling."));
   desc.add_options()(
-      "publish_url,u",
+      "publish-url,u",
       po::value<std::string>()->default_value("127.0.0.1:5536"),
       "host:port to publish the stream on (e.g., 127.0.0.1:5536)");
 
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
 
   std::string camera_name = args["camera"].as<std::string>();
   int fps = args["fps"].as<int>();
-  std::string publish_url = args["publish_url"].as<std::string>();
+  std::string publish_url = args["publish-url"].as<std::string>();
   Run(camera_name, fps, publish_url);
   return 0;
 }

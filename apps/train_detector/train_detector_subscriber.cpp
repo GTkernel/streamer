@@ -52,12 +52,13 @@ void Run(const std::string& publisher_url, const std::string& output_dir) {
 
 int main(int argc, char* argv[]) {
   po::options_description desc("Train Detector");
-  desc.add_options()("help,h", "print the help message");
-  desc.add_options()("config_dir,C", po::value<std::string>(),
+  desc.add_options()("help,h", "Print the help message.");
+  desc.add_options()("config-dir,C", po::value<std::string>(),
                      "The directory containing streamer's config files.");
-  desc.add_options()("publisher_url,u", po::value<std::string>()->required(),
-                     "The URL on which frames are being published.");
-  desc.add_options()("output_dir,o", po::value<std::string>()->required(),
+  desc.add_options()("publisher-url,u", po::value<std::string>()->required(),
+                     "The URL (host:port) on which frames are being "
+                     "published.");
+  desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      ("The root directory of the image storage database."));
 
   // Parse the command line arguments.
@@ -81,15 +82,16 @@ int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Initialize the streamer context. This must be called before using streamer.
-  Context::GetContext().Init();
 
   // Extract the command line arguments.
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
-  std::string publisher_url = args["publisher_url"].as<std::string>();
-  std::string output_dir = args["output_dir"].as<std::string>();
+  // Initialize the streamer context. This must be called before using streamer.
+  Context::GetContext().Init();
+
+  std::string publisher_url = args["publisher-url"].as<std::string>();
+  std::string output_dir = args["output-dir"].as<std::string>();
   Run(publisher_url, output_dir);
   return 0;
 }
