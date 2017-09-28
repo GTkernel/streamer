@@ -28,7 +28,7 @@ Streamer currently supports these DNN frameworks:
 
 ## Quick Start
 
-See [these detailed instructions](INSTALL.md) for more information about
+See [these detailed instructions](https://github.com/viscloud/streamer/wiki/Building) for more information about
 installing Streamer and its dependencies.
 
 ### 1. Compile Streamer
