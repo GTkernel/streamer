@@ -1,6 +1,7 @@
 // This application attaches to a published frame stream and stores the frames
 // on disk.
 
+#include <atomic>
 #include <cstdio>
 #include <iostream>
 #include <memory>
@@ -8,15 +9,38 @@
 #include <unordered_set>
 #include <vector>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 
 #include "common/context.h"
+#include "common/types.h"
 #include "processor/compressor.h"
 #include "processor/frame_writer.h"
 #include "processor/jpeg_writer.h"
 #include "processor/pubsub/frame_subscriber.h"
+#include "stream/stream.h"
 
 namespace po = boost::program_options;
+
+std::atomic<bool> stopped(false);
+
+void ProgressTracker(StreamPtr stream) {
+  StreamReader* reader = stream->Subscribe();
+  while (!stopped) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame != nullptr) {
+      std::cout << "\rReceived frame "
+                << frame->GetValue<unsigned long>("frame_id") << " with time "
+                << frame->GetValue<boost::posix_time::ptime>(
+                       "capture_time_micros");
+      // This is required in order to make the console update as soon as the
+      // above log is printed. Without this, the progress log will not update
+      // smoothly.
+      std::cout.flush();
+    }
+  }
+  reader->UnSubscribe();
+}
 
 void Run(const std::string& publisher_url, bool compress,
          std::unordered_set<std::string> fields_to_save,
@@ -59,6 +83,9 @@ void Run(const std::string& publisher_url, bool compress,
     (*procs_it)->Start();
   }
 
+  std::thread progress_thread =
+      std::thread([stream_to_write] { ProgressTracker(stream_to_write); });
+
   std::cout << "Press \"Enter\" to stop." << std::endl;
   getchar();
 
@@ -66,6 +93,10 @@ void Run(const std::string& publisher_url, bool compress,
   for (const auto& proc : procs) {
     proc->Stop();
   }
+
+  // Signal the progress thread to stop.
+  stopped = true;
+  progress_thread.join();
 }
 
 int main(int argc, char* argv[]) {
