@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <boost/program_options.hpp>
@@ -17,6 +18,7 @@
 namespace po = boost::program_options;
 
 void Run(const std::string& camera_name, int fps,
+         std::unordered_set<std::string> fields_to_send,
          const std::string& publish_url) {
   std::vector<std::shared_ptr<Processor>> procs;
 
@@ -35,7 +37,8 @@ void Run(const std::string& camera_name, int fps,
   }
 
   // Create FramePublisher (publishes frames via ZMQ).
-  auto publisher = std::make_shared<FramePublisher>(publish_url);
+  auto publisher =
+      std::make_shared<FramePublisher>(publish_url, fields_to_send);
   publisher->SetSource(frame_stream);
   procs.push_back(publisher);
 
@@ -63,6 +66,15 @@ int main(int argc, char* argv[]) {
   desc.add_options()("fps,f", po::value<int>()->default_value(0),
                      ("The maximum rate of the published stream. The actual "
                       "rate may be less. An fps of 0 disables throttling."));
+  desc.add_options()(
+      "fields-to-send",
+      po::value<std::vector<std::string>>()
+          ->multitoken()
+          ->composing()
+          ->default_value(
+              std::vector<std::string>{"original_bytes", "original_image"},
+              "{original_bytes, original_image}"),
+      "The fields to publish.");
   desc.add_options()(
       "publish-url,u",
       po::value<std::string>()->default_value("127.0.0.1:5536"),
@@ -99,7 +111,12 @@ int main(int argc, char* argv[]) {
 
   std::string camera_name = args["camera"].as<std::string>();
   int fps = args["fps"].as<int>();
+  std::vector<std::string> fields_to_send =
+      args["fields-to-send"].as<std::vector<std::string>>();
   std::string publish_url = args["publish-url"].as<std::string>();
-  Run(camera_name, fps, publish_url);
+  Run(camera_name, fps,
+      std::unordered_set<std::string>{fields_to_send.begin(),
+                                      fields_to_send.end()},
+      publish_url);
   return 0;
 }

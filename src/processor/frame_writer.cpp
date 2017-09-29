@@ -15,21 +15,18 @@
 constexpr auto SOURCE_NAME = "input";
 
 FrameWriter::FrameWriter(const std::unordered_set<std::string> fields,
-                         const std::string& output_dir,
-                         unsigned int frames_per_dir, const FileFormat format)
+                         const std::string& output_dir, const FileFormat format,
+                         bool save_fields_separately,
+                         unsigned int frames_per_dir)
     : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {}),
       fields_(fields),
       output_dir_(output_dir),
+      format_(format),
+      save_fields_separately_(save_fields_separately),
+      output_subdir_(""),
       frames_per_dir_(frames_per_dir),
       frames_in_current_dir_(0),
-      current_dir_(0),
-      format_(format) {
-  if (!boost::filesystem::exists(output_dir_)) {
-    LOG(FATAL) << "Directory \"" << output_dir_ << "\" does not exist.";
-  }
-
-  SetSubdir(current_dir_);
-}
+      current_dir_(0) {}
 
 std::shared_ptr<FrameWriter> FrameWriter::Create(
     const FactoryParamsType& params) {
@@ -58,8 +55,8 @@ std::shared_ptr<FrameWriter> FrameWriter::Create(
     LOG(FATAL) << "Unknown file format: " << format_s;
   }
 
-  return std::make_shared<FrameWriter>(
-      fields, output_dir, (unsigned int)frames_per_dir_int, format);
+  return std::make_shared<FrameWriter>(fields, output_dir, format, false,
+                                       (unsigned int)frames_per_dir_int);
 }
 
 void FrameWriter::SetSource(StreamPtr stream) {
@@ -73,41 +70,85 @@ bool FrameWriter::OnStop() { return true; }
 void FrameWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
   auto id = frame->GetValue<unsigned long>("frame_id");
-
-  std::stringstream filepath;
-  filepath << output_subdir_ << "/" << id << "." << GetExtension();
-  std::string filepath_s = filepath.str();
-  std::ofstream file(filepath_s, std::ios::binary | std::ios::out);
-  if (!file.is_open()) {
-    LOG(FATAL) << "Unable to open file \"" << filepath_s << "\".";
-  }
-
   auto frame_to_write = std::make_unique<Frame>(frame, fields_);
-  try {
-    switch (format_) {
-      case BINARY: {
-        boost::archive::binary_oarchive ar(file);
-        ar << frame_to_write;
-        break;
+
+  if (save_fields_separately_) {
+    std::unordered_map<std::string, Frame::field_types> field_map =
+        frame_to_write->GetFields();
+    for (const auto& p : field_map) {
+      std::string key = p.first;
+      Frame::field_types value = p.second;
+
+      std::stringstream filepath;
+      filepath << output_subdir_ << "/" << id << "_" << key << GetExtension();
+      std::string filepath_s = filepath.str();
+      std::ofstream file(filepath_s, std::ios::binary | std::ios::out);
+      if (!file.is_open()) {
+        LOG(FATAL) << "Unable to open file \"" << filepath_s << "\".";
       }
-      case JSON: {
-        file << frame_to_write->ToJson().dump(4);
-        break;
+
+      try {
+        switch (format_) {
+          case BINARY: {
+            boost::archive::binary_oarchive ar(file);
+            ar << value;
+            break;
+          }
+          case JSON: {
+            STREAMER_NOT_IMPLEMENTED;
+            break;
+          }
+          case TEXT: {
+            boost::archive::text_oarchive ar(file);
+            ar << value;
+            break;
+          }
+        }
+      } catch (const boost::archive::archive_exception& e) {
+        LOG(FATAL) << "Boost serialization error: " << e.what();
       }
-      case TEXT: {
-        boost::archive::text_oarchive ar(file);
-        ar << frame_to_write;
-        break;
+
+      file.close();
+      if (!file) {
+        LOG(FATAL) << "Unknown error while writing binary file \"" << filepath_s
+                   << "\".";
       }
     }
-  } catch (const boost::archive::archive_exception& e) {
-    LOG(FATAL) << "Boost serialization error: " << e.what();
-  }
+  } else {
+    std::stringstream filepath;
+    filepath << output_subdir_ << "/" << id << GetExtension();
+    std::string filepath_s = filepath.str();
+    std::ofstream file(filepath_s, std::ios::binary | std::ios::out);
+    if (!file.is_open()) {
+      LOG(FATAL) << "Unable to open file \"" << filepath_s << "\".";
+    }
 
-  file.close();
-  if (!file) {
-    LOG(FATAL) << "Unknown error while writing binary file \"" << filepath_s
-               << "\".";
+    try {
+      switch (format_) {
+        case BINARY: {
+          boost::archive::binary_oarchive ar(file);
+          ar << frame_to_write;
+          break;
+        }
+        case JSON: {
+          file << frame_to_write->ToJson().dump(4);
+          break;
+        }
+        case TEXT: {
+          boost::archive::text_oarchive ar(file);
+          ar << frame_to_write;
+          break;
+        }
+      }
+    } catch (const boost::archive::archive_exception& e) {
+      LOG(FATAL) << "Boost serialization error: " << e.what();
+    }
+
+    file.close();
+    if (!file) {
+      LOG(FATAL) << "Unknown error while writing binary file \"" << filepath_s
+                 << "\".";
+    }
   }
 
   // If we have filled up the current subdir, then move on to the next one.

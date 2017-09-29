@@ -58,6 +58,7 @@ class Frame {
                      std::vector<float>, std::vector<std::vector<double>>,
                      std::vector<Frame>, std::vector<int>>;
   size_t Count(std::string key) const;
+  std::unordered_map<std::string, field_types> GetFields();
   void SetStopFrame(bool stop_frame);
   bool IsStopFrame() const;
   // Returns the size in bytes of the data contained in the specified fields.

@@ -16,11 +16,13 @@ class FrameWriter : public Processor {
   enum FileFormat { BINARY, JSON, TEXT };
 
   // "fields" is a set of frame fields to save. If "fields" is an empty set,
-  // then all fields will be saved.
+  // then all fields will be saved. If "save_fields_separately" is true, then
+  // field will be saved in a separate file.
   FrameWriter(const std::unordered_set<std::string> fields = {},
               const std::string& output_dir = ".",
-              unsigned int frames_per_dir = 1000,
-              const FileFormat format = TEXT);
+              const FileFormat format = TEXT,
+              bool save_fields_separately = false,
+              unsigned int frames_per_dir = 1000);
 
   // "params" should contain three keys, "fields" (which should be a set of
   // field names), "output_dir", and "format" (which should be the textual
@@ -43,17 +45,23 @@ class FrameWriter : public Processor {
   std::unordered_set<std::string> fields_;
   // The root output directory filepath.
   std::string output_dir_;
+  // The file format in which to save frames.
+  FileFormat format_;
+  // Whether to save each field in a separate file.
+  bool save_fields_separately_;
+
+  // The remainder of the member variables pertain to the count-based hierarchy
+  // mode.
+
   // The filepath of the current output subdirectory.
   std::string output_subdir_;
-  // The maximum number of frames to store in each output subdirectory.
+  // If The maximum number of frames to store in each output subdirectory.
   unsigned int frames_per_dir_;
   // The number of frames that have already been stored in the current output
   // subdirectory.
   unsigned int frames_in_current_dir_;
   // The numeric name of the current output subdirectory.
   unsigned int current_dir_;
-  // The file format in which to save frames.
-  FileFormat format_;
 };
 
 #endif  // STREAMER_PROCESSOR_FRAME_WRITER_H_

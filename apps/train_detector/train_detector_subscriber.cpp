@@ -1,22 +1,26 @@
-// This application attaches to a published frame stream and stores the raw
-// image data, a metadata JSON file, and a JPEG thumbnail image on disk.
+// This application attaches to a published frame stream and stores the frames
+// on disk.
 
 #include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <boost/program_options.hpp>
 
 #include "common/context.h"
-#include "db_filewriter.h"
 #include "processor/compressor.h"
+#include "processor/frame_writer.h"
+#include "processor/jpeg_writer.h"
 #include "processor/pubsub/frame_subscriber.h"
 
 namespace po = boost::program_options;
 
-void Run(const std::string& publisher_url, const std::string& output_dir) {
+void Run(const std::string& publisher_url, bool compress,
+         std::unordered_set<std::string> fields_to_save,
+         bool save_fields_separately, const std::string& output_dir) {
   LOG(INFO) << "Detecting trains...";
 
   std::vector<std::shared_ptr<Processor>> procs;
@@ -24,17 +28,31 @@ void Run(const std::string& publisher_url, const std::string& output_dir) {
   // Create FrameSubscriber.
   auto subscriber = std::make_shared<FrameSubscriber>(publisher_url);
   procs.push_back(subscriber);
+  StreamPtr network_stream = subscriber->GetSink();
 
-  // Create Compressor.
-  auto compressor =
-      std::make_shared<Compressor>(Compressor::CompressionType::BZIP2);
-  compressor->SetSource(subscriber->GetSink());
-  procs.push_back(compressor);
+  StreamPtr stream_to_write;
+  if (compress) {
+    // Create Compressor.
+    auto compressor =
+        std::make_shared<Compressor>(Compressor::CompressionType::BZIP2);
+    compressor->SetSource(network_stream);
+    procs.push_back(compressor);
+    stream_to_write = compressor->GetSink();
+  } else {
+    stream_to_write = network_stream;
+  }
 
-  // Create DBFileWriter.
-  auto writer = std::make_shared<DBFileWriter>(output_dir);
-  writer->SetSource("input", compressor->GetSink());
-  procs.push_back(writer);
+  // Create FrameWriter.
+  auto frame_writer = std::make_shared<FrameWriter>(
+      fields_to_save, output_dir, FrameWriter::FileFormat::BINARY,
+      save_fields_separately);
+  frame_writer->SetSource(stream_to_write);
+  procs.push_back(frame_writer);
+
+  // Create JpegWriter.
+  auto jpeg_writer = std::make_shared<JpegWriter>("original_image", output_dir);
+  jpeg_writer->SetSource(stream_to_write);
+  procs.push_back(jpeg_writer);
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
@@ -58,6 +76,18 @@ int main(int argc, char* argv[]) {
   desc.add_options()("publisher-url,u", po::value<std::string>()->required(),
                      "The URL (host:port) on which frames are being "
                      "published.");
+  desc.add_options()("compress,c",
+                     "Whether to compress the \"original_bytes\" field.");
+  desc.add_options()(
+      "fields-to-save",
+      po::value<std::vector<std::string>>()
+          ->multitoken()
+          ->composing()
+          ->default_value(std::vector<std::string>{"original_bytes"},
+                          "{original_bytes}"),
+      "The fields to save.");
+  desc.add_options()("save-fields-separately",
+                     "Whether to save each frame field in a separate file.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      ("The root directory of the image storage database."));
 
@@ -91,7 +121,14 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   std::string publisher_url = args["publisher-url"].as<std::string>();
+  bool compress = args.count("compress");
+  bool save_fields_separately = args.count("save-fields-separately");
+  std::vector<std::string> fields_to_save =
+      args["fields-to-save"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  Run(publisher_url, output_dir);
+  Run(publisher_url, compress,
+      std::unordered_set<std::string>{fields_to_save.begin(),
+                                      fields_to_save.end()},
+      save_fields_separately, output_dir);
   return 0;
 }

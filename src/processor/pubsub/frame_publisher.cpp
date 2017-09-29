@@ -1,15 +1,18 @@
-#include "frame_publisher.h"
+
+#include "processor/pubsub/frame_publisher.h"
 
 #include <boost/archive/binary_oarchive.hpp>
 #include <zguide/examples/C++/zhelpers.hpp>
 
 constexpr auto SOURCE = "input";
 
-FramePublisher::FramePublisher(const std::string url)
+FramePublisher::FramePublisher(const std::string& url,
+                               std::unordered_set<std::string> fields_to_send)
     : Processor(PROCESSOR_TYPE_FRAME_PUBLISHER, {SOURCE}, {}),
       zmq_context_{1},
       zmq_publisher_{zmq_context_, ZMQ_PUB},
-      zmq_publisher_addr_("tcp://" + url) {
+      zmq_publisher_addr_("tcp://" + url),
+      fields_to_send_(fields_to_send) {
   // Bind the publisher socket
   LOG(INFO) << "Publishing frames on " << zmq_publisher_addr_;
   try {
@@ -47,7 +50,9 @@ void FramePublisher::Process() {
   std::stringstream frame_string;
   try {
     boost::archive::binary_oarchive ar(frame_string);
-    ar << frame;
+    // Make a copy of the frame, keeping only the fields that we are supposed to
+    // send.
+    ar << std::make_unique<Frame>(frame, fields_to_send_);
   } catch (const boost::archive::archive_exception& e) {
     LOG(INFO) << "Boost serialization error: " << e.what();
   }

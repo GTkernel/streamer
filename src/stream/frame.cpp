@@ -452,6 +452,10 @@ nlohmann::json Frame::ToJson() const {
 
 size_t Frame::Count(std::string key) const { return frame_data_.count(key); }
 
+std::unordered_map<std::string, Frame::field_types> Frame::GetFields() {
+  return frame_data_;
+}
+
 void Frame::SetStopFrame(bool stop_frame) {
   SetValue<bool>(STOP_FRAME_KEY, stop_frame);
 }
