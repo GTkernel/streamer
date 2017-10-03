@@ -21,7 +21,8 @@
 
 namespace po = boost::program_options;
 
-void Run(const std::string& camera_name, const std::string& output_dir) {
+void Run(const std::string& camera_name, bool save_fields_separately,
+         bool organize_by_time, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -36,8 +37,9 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
       "CameraSettings.Hue",        "CameraSettings.Gain",
       "CameraSettings.Gamma",      "CameraSettings.WBRed",
       "CameraSettings.WBBlue"};
-  auto writer = std::make_shared<FrameWriter>(fields, output_dir,
-                                              FrameWriter::FileFormat::JSON);
+  auto writer = std::make_shared<FrameWriter>(
+      fields, output_dir, FrameWriter::FileFormat::JSON, save_fields_separately,
+      1000, organize_by_time);
   writer->SetSource(camera->GetStream());
   procs.push_back(writer);
 
@@ -63,6 +65,10 @@ int main(int argc, char* argv[]) {
       "The directory containing streamer's configuration files.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
+  desc.add_options()("save-fields-separately,s",
+                     "Whether to save each field in a separate file.");
+  desc.add_options()("organize-by-time,t",
+                     "Whether to organize the output file by date and time.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the frame files.");
 
@@ -95,7 +101,9 @@ int main(int argc, char* argv[]) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
   std::string camera = args["camera"].as<std::string>();
+  bool save_fields_separately = args.count("save-fields-separately");
+  bool organize_by_time = args.count("organize-by-time");
   std::string output_dir = args["output-dir"].as<std::string>();
-  Run(camera, output_dir);
+  Run(camera, save_fields_separately, organize_by_time, output_dir);
   return 0;
 }

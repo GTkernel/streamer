@@ -17,12 +17,17 @@ class FrameWriter : public Processor {
 
   // "fields" is a set of frame fields to save. If "fields" is an empty set,
   // then all fields will be saved. If "save_fields_separately" is true, then
-  // field will be saved in a separate file.
+  // field will be saved in a separate file. If "organize_by_time" is true, then
+  // the frames will be stored in a date-time directory hierarchy and
+  // "frames_per_dir" will be ignored. If "organize_by_time" is false, then
+  // "frames_per_dir" will determine the number of frames saved in each output
+  // subdirectory.
   FrameWriter(const std::unordered_set<std::string> fields = {},
               const std::string& output_dir = ".",
               const FileFormat format = TEXT,
               bool save_fields_separately = false,
-              unsigned int frames_per_dir = 1000);
+              unsigned int frames_per_dir = 1000,
+              bool organize_by_time = false);
 
   // "params" should contain three keys, "fields" (which should be a set of
   // field names), "output_dir", and "format" (which should be the textual
@@ -49,9 +54,11 @@ class FrameWriter : public Processor {
   FileFormat format_;
   // Whether to save each field in a separate file.
   bool save_fields_separately_;
+  // Whether to create a date-timne directory hierarchy.
+  bool organize_by_time_;
 
   // The remainder of the member variables pertain to the count-based hierarchy
-  // mode.
+  // mode, and are invalid if "organize_by_time_" is true.
 
   // The filepath of the current output subdirectory.
   std::string output_subdir_;

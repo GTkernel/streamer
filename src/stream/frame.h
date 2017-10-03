@@ -49,6 +49,7 @@ class Frame {
   void Delete(std::string key);
   std::string ToString() const;
   nlohmann::json ToJson() const;
+  nlohmann::json GetFieldJson(const std::string& field) const;
   using field_types =
       boost::variant<int, std::string, float, double, long, unsigned long, bool,
                      boost::posix_time::ptime, boost::posix_time::time_duration,

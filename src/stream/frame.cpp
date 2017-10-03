@@ -452,6 +452,12 @@ nlohmann::json Frame::ToJson() const {
 
 size_t Frame::Count(std::string key) const { return frame_data_.count(key); }
 
+nlohmann::json Frame::GetFieldJson(const std::string& field) const {
+  nlohmann::json j;
+  j[field] = boost::apply_visitor(FrameJsonPrinter{}, frame_data_.at(field));
+  return j;
+}
+
 std::unordered_map<std::string, Frame::field_types> Frame::GetFields() {
   return frame_data_;
 }
