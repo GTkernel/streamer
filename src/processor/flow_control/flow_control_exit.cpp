@@ -29,7 +29,7 @@ void FlowControlExit::Process() {
   auto frame = GetFrame(SOURCE_NAME);
   auto entrance = frame->GetFlowControlEntrance();
   if (entrance) {
-    entrance->ReturnToken();
+    entrance->ReturnToken(frame->GetValue<unsigned long>("frame_id"));
     // Change the frame's FlowControlEntrance to null so that it does not try to
     // release the token again.
     frame->SetFlowControlEntrance(nullptr);

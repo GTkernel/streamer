@@ -32,7 +32,8 @@ void Throttler::Process() {
     if (flow_control_entrance) {
       // If a flow control entrance exists, then we need to inform it that a
       // frame is being dropped so that the flow control token is returned.
-      flow_control_entrance->ReturnToken();
+      flow_control_entrance->ReturnToken(
+          frame->GetValue<unsigned long>("frame_id"));
       // Change the frame's FlowControlEntrance to null so that it does not try
       // to release the token again.
       frame->SetFlowControlEntrance(nullptr);
