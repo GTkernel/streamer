@@ -69,7 +69,7 @@ void Run(const std::string& publisher_url, bool compress,
   // Create FrameWriter.
   auto frame_writer = std::make_shared<FrameWriter>(
       fields_to_save, output_dir, FrameWriter::FileFormat::BINARY,
-      save_fields_separately);
+      save_fields_separately, true);
   frame_writer->SetSource(stream_to_write);
   procs.push_back(frame_writer);
 

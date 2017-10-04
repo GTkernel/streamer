@@ -16,10 +16,100 @@
 
 constexpr auto SOURCE_NAME = "input";
 
+class SaveAsJpeg : public boost::static_visitor<void> {
+ public:
+  void operator()(const double&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const float&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const int&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const long&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const unsigned long&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const bool&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const boost::posix_time::ptime&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const boost::posix_time::time_duration&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::string&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<std::string>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<double>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<Rect>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<char>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const cv::Mat& v) const {
+    try {
+      cv::imwrite(filepath, v);
+    } catch (cv::Exception& e) {
+      LOG(FATAL) << "Unable to write JPEG file \"" << filepath
+                 << "\": " << e.what();
+    }
+  }
+
+  void operator()(const std::vector<FaceLandmark>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<std::vector<float>>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<float>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<std::vector<double>>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<Frame>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  void operator()(const std::vector<int>&) const {
+    throw std::runtime_error("Unable to save field as a Jpeg!");
+  }
+
+  std::string filepath = "image.jpg";
+};
+
 FrameWriter::FrameWriter(const std::unordered_set<std::string> fields,
                          const std::string& output_dir, const FileFormat format,
-                         bool save_fields_separately,
-                         unsigned int frames_per_dir, bool organize_by_time)
+                         bool save_fields_separately, bool organize_by_time,
+                         unsigned int frames_per_dir)
     : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {}),
       fields_(fields),
       output_dir_(output_dir),
@@ -62,7 +152,11 @@ std::shared_ptr<FrameWriter> FrameWriter::Create(
     LOG(FATAL) << "Unknown file format: " << format_s;
   }
 
-  return std::make_shared<FrameWriter>(fields, output_dir, format, false,
+  bool save_fields_separately = params.at("save_field_separately") == "1";
+  bool organize_by_time = params.at("organize_by_time") == "1";
+
+  return std::make_shared<FrameWriter>(fields, output_dir, format,
+                                       save_fields_separately, organize_by_time,
                                        (unsigned int)frames_per_dir_int);
 }
 
@@ -134,6 +228,12 @@ void FrameWriter::Process() {
             ar << value;
             break;
           }
+          case JPEG: {
+            SaveAsJpeg visitor;
+            visitor.filepath = filepath_s;
+            boost::apply_visitor(visitor, value);
+            break;
+          }
         }
       } catch (const boost::archive::archive_exception& e) {
         LOG(FATAL) << "Boost serialization error: " << e.what();
@@ -171,6 +271,9 @@ void FrameWriter::Process() {
           ar << frame_to_write;
           break;
         }
+        case JPEG: {
+          throw std::runtime_error("Cannot save entire frames as JPEGs!");
+        }
       }
     } catch (const boost::archive::archive_exception& e) {
       LOG(FATAL) << "Boost serialization error: " << e.what();
@@ -186,7 +289,7 @@ void FrameWriter::Process() {
   if (!organize_by_time_) {
     // If we have filled up the current subdir, then move on to the next one.
     ++frames_in_current_dir_;
-    if (frames_in_current_dir_ > frames_per_dir_) {
+    if (frames_in_current_dir_ == frames_per_dir_) {
       frames_in_current_dir_ = 0;
       ++current_dir_;
       SetSubdir(current_dir_);
@@ -202,6 +305,8 @@ std::string FrameWriter::GetExtension() {
       return ".json";
     case TEXT:
       return ".txt";
+    case JPEG:
+      return ".jpg";
   }
 
   LOG(FATAL) << "Unhandled FileFormat: " << format_;

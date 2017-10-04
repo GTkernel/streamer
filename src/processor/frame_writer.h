@@ -13,7 +13,7 @@
 // user can specify which frame fields to save (the default is all fields).
 class FrameWriter : public Processor {
  public:
-  enum FileFormat { BINARY, JSON, TEXT };
+  enum FileFormat { BINARY, JSON, TEXT, JPEG };
 
   // "fields" is a set of frame fields to save. If "fields" is an empty set,
   // then all fields will be saved. If "save_fields_separately" is true, then
@@ -26,8 +26,8 @@ class FrameWriter : public Processor {
               const std::string& output_dir = ".",
               const FileFormat format = TEXT,
               bool save_fields_separately = false,
-              unsigned int frames_per_dir = 1000,
-              bool organize_by_time = false);
+              bool organize_by_time = false,
+              unsigned int frames_per_dir = 1000);
 
   // "params" should contain three keys, "fields" (which should be a set of
   // field names), "output_dir", and "format" (which should be the textual
