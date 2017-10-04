@@ -30,7 +30,7 @@ void ProgressTracker(StreamPtr stream) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr) {
       std::cout << "\rReceived frame "
-                << frame->GetValue<unsigned long>("frame_id") << " with time "
+                << frame->GetValue<unsigned long>("frame_id") << " from time: "
                 << frame->GetValue<boost::posix_time::ptime>(
                        "capture_time_micros");
       // This is required in order to make the console update as soon as the
@@ -66,15 +66,24 @@ void Run(const std::string& publisher_url, bool compress,
     stream_to_write = network_stream;
   }
 
-  // Create FrameWriter.
-  auto frame_writer = std::make_shared<FrameWriter>(
-      fields_to_save, output_dir, FrameWriter::FileFormat::BINARY,
+  // Create FrameWriter for writing metadata.
+  auto metadata_writer = std::make_shared<FrameWriter>(
+      fields_to_save, output_dir, FrameWriter::FileFormat::JSON,
       save_fields_separately, true);
-  frame_writer->SetSource(stream_to_write);
-  procs.push_back(frame_writer);
+  metadata_writer->SetSource(stream_to_write);
+  procs.push_back(metadata_writer);
 
-  // Create JpegWriter.
-  auto jpeg_writer = std::make_shared<JpegWriter>("original_image", output_dir);
+  // Create FrameWriter for writing raw data.
+  auto raw_writer = std::make_shared<FrameWriter>(
+      std::unordered_set<std::string>{"original_image"}, output_dir,
+      FrameWriter::FileFormat::BINARY, save_fields_separately, true);
+  raw_writer->SetSource(stream_to_write);
+  procs.push_back(raw_writer);
+
+  // Create FrameWriter for writing Jpegs.
+  auto jpeg_writer = std::make_shared<FrameWriter>(
+      std::unordered_set<std::string>{"original_image"}, output_dir,
+      FrameWriter::FileFormat::JPEG, save_fields_separately, true);
   jpeg_writer->SetSource(stream_to_write);
   procs.push_back(jpeg_writer);
 
@@ -100,6 +109,14 @@ void Run(const std::string& publisher_url, bool compress,
 }
 
 int main(int argc, char* argv[]) {
+  std::vector<std::string> default_fields = {"capture_time_micros", "frame_id"};
+  std::ostringstream default_fields_str;
+  default_fields_str << "{ ";
+  for (const auto& field : default_fields) {
+    default_fields_str << "\"" << field << "\" ";
+  }
+  default_fields_str << "}";
+
   po::options_description desc("Train Detector");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()("config-dir,C", po::value<std::string>(),
@@ -114,8 +131,7 @@ int main(int argc, char* argv[]) {
       po::value<std::vector<std::string>>()
           ->multitoken()
           ->composing()
-          ->default_value(std::vector<std::string>{"original_bytes"},
-                          "{original_bytes}"),
+          ->default_value(default_fields, default_fields_str.str()),
       "The fields to save.");
   desc.add_options()("save-fields-separately",
                      "Whether to save each frame field in a separate file.");
