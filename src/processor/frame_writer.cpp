@@ -18,7 +18,7 @@ constexpr auto SOURCE_NAME = "input";
 FrameWriter::FrameWriter(const std::unordered_set<std::string> fields,
                          const std::string& output_dir, const FileFormat format,
                          bool save_fields_separately, bool organize_by_time,
-                         unsigned int frames_per_dir)
+                         unsigned long frames_per_dir)
     : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {}),
       fields_(fields),
       format_(format),
@@ -32,13 +32,6 @@ std::shared_ptr<FrameWriter> FrameWriter::Create(
   std::unordered_set<std::string> fields;
 
   std::string output_dir = params.at("output_dir");
-
-  int frames_per_dir_int = std::stoi(params.at("frames_per_dir"));
-  if (frames_per_dir_int < 0) {
-    throw std::invalid_argument(
-        "\"frame_per_dir\" must be greater than 0, but is: " +
-        std::to_string(frames_per_dir_int));
-  }
 
   std::string format_s = params.at("format");
   FileFormat format;
@@ -54,10 +47,10 @@ std::shared_ptr<FrameWriter> FrameWriter::Create(
 
   bool save_fields_separately = params.at("save_field_separately") == "1";
   bool organize_by_time = params.at("organize_by_time") == "1";
-
+  unsigned long frames_per_dir = std::stoul(params.at("frames_per_dir"));
   return std::make_shared<FrameWriter>(fields, output_dir, format,
                                        save_fields_separately, organize_by_time,
-                                       (unsigned int)frames_per_dir_int);
+                                       frames_per_dir);
 }
 
 void FrameWriter::SetSource(StreamPtr stream) {

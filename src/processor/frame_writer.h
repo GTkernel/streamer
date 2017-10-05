@@ -10,8 +10,8 @@
 #include "processor/processor.h"
 #include "utils/output_tracker.h"
 
-// The FrameWriter writes Frames to disk in either text or binary format. The
-// user can specify which frame fields to save (the default is all fields).
+// The FrameWriter writes Frames to disk in either binary, JSON, or text format.
+// The user can specify which frame fields to save (the default is all fields).
 class FrameWriter : public Processor {
  public:
   enum FileFormat { BINARY, JSON, TEXT };
@@ -28,7 +28,7 @@ class FrameWriter : public Processor {
               const FileFormat format = TEXT,
               bool save_fields_separately = false,
               bool organize_by_time = false,
-              unsigned int frames_per_dir = 1000);
+              unsigned long frames_per_dir = 1000);
 
   // "params" should contain three keys, "fields" (which should be a set of
   // field names), "output_dir", and "format" (which should be the textual
@@ -45,7 +45,6 @@ class FrameWriter : public Processor {
 
  private:
   std::string GetExtension();
-  void SetSubdir(unsigned int subdir);
 
   // The frame fields to save.
   std::unordered_set<std::string> fields_;
@@ -53,6 +52,7 @@ class FrameWriter : public Processor {
   FileFormat format_;
   // Whether to save each field in a separate file.
   bool save_fields_separately_;
+  // Tracks which directory frames should be written to.
   OutputTracker tracker_;
 };
 
