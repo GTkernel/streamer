@@ -8,7 +8,6 @@
 #include <boost/archive/archive_exception.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/date_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
 
@@ -16,114 +15,15 @@
 
 constexpr auto SOURCE_NAME = "input";
 
-class SaveAsJpeg : public boost::static_visitor<void> {
- public:
-  void operator()(const double&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const float&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const int&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const long&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const unsigned long&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const bool&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const boost::posix_time::ptime&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const boost::posix_time::time_duration&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::string&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<std::string>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<double>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<Rect>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<char>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const cv::Mat& v) const {
-    try {
-      cv::imwrite(filepath, v);
-    } catch (cv::Exception& e) {
-      LOG(FATAL) << "Unable to write JPEG file \"" << filepath
-                 << "\": " << e.what();
-    }
-  }
-
-  void operator()(const std::vector<FaceLandmark>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<std::vector<float>>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<float>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<std::vector<double>>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<Frame>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  void operator()(const std::vector<int>&) const {
-    throw std::runtime_error("Unable to save field as a Jpeg!");
-  }
-
-  std::string filepath = "image.jpg";
-};
-
 FrameWriter::FrameWriter(const std::unordered_set<std::string> fields,
                          const std::string& output_dir, const FileFormat format,
                          bool save_fields_separately, bool organize_by_time,
                          unsigned int frames_per_dir)
     : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {}),
       fields_(fields),
-      output_dir_(output_dir),
       format_(format),
       save_fields_separately_(save_fields_separately),
-      organize_by_time_(organize_by_time),
-      output_subdir_(""),
-      frames_per_dir_(frames_per_dir),
-      frames_in_current_dir_(0),
-      current_dir_(0) {
-  if (!organize_by_time) {
-    SetSubdir(current_dir_);
-  }
-}
+      tracker_{output_dir, organize_by_time, frames_per_dir} {}
 
 std::shared_ptr<FrameWriter> FrameWriter::Create(
     const FactoryParamsType& params) {
@@ -172,27 +72,15 @@ void FrameWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
   auto frame_to_write = std::make_unique<Frame>(frame, fields_);
 
-  // Accumulates the path at which this frame will be stored.
-  std::ostringstream base_filepath;
-
-  auto capture_time_micros =
-      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
-  if (organize_by_time_) {
-    // Add subdirectories for date and time.
-    std::string date_s =
-        boost::gregorian::to_iso_extended_string(capture_time_micros.date());
-    long hours = capture_time_micros.time_of_day().hours();
-    base_filepath << output_dir_ << "/" << date_s << "/" << hours << "/";
-    // Create the output directory, since it might not exist yet.
-    boost::filesystem::create_directories(
-        boost::filesystem::path{base_filepath.str()});
-  } else {
-    base_filepath << output_subdir_ << "/";
-  }
-
   // The filepath always includes the frame id and the capture time.
   auto id = frame->GetValue<unsigned long>("frame_id");
-  base_filepath << id << "_"
+  auto capture_time_micros =
+      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+
+  // Accumulates the path at which this frame will be stored.
+  std::ostringstream base_filepath;
+  base_filepath << tracker_.GetAndCreateOutputDir(capture_time_micros) << id
+                << "_"
                 << boost::posix_time::to_iso_extended_string(
                        capture_time_micros);
 
@@ -226,12 +114,6 @@ void FrameWriter::Process() {
           case TEXT: {
             boost::archive::text_oarchive ar(file);
             ar << value;
-            break;
-          }
-          case JPEG: {
-            SaveAsJpeg visitor;
-            visitor.filepath = filepath_s;
-            boost::apply_visitor(visitor, value);
             break;
           }
         }
@@ -271,9 +153,6 @@ void FrameWriter::Process() {
           ar << frame_to_write;
           break;
         }
-        case JPEG: {
-          throw std::runtime_error("Cannot save entire frames as JPEGs!");
-        }
       }
     } catch (const boost::archive::archive_exception& e) {
       LOG(FATAL) << "Boost serialization error: " << e.what();
@@ -283,16 +162,6 @@ void FrameWriter::Process() {
     if (!file) {
       LOG(FATAL) << "Unknown error while writing binary file \"" << filepath_s
                  << "\".";
-    }
-  }
-
-  if (!organize_by_time_) {
-    // If we have filled up the current subdir, then move on to the next one.
-    ++frames_in_current_dir_;
-    if (frames_in_current_dir_ == frames_per_dir_) {
-      frames_in_current_dir_ = 0;
-      ++current_dir_;
-      SetSubdir(current_dir_);
     }
   }
 }
@@ -305,19 +174,7 @@ std::string FrameWriter::GetExtension() {
       return ".json";
     case TEXT:
       return ".txt";
-    case JPEG:
-      return ".jpg";
   }
 
   LOG(FATAL) << "Unhandled FileFormat: " << format_;
-}
-
-void FrameWriter::SetSubdir(unsigned int subdir) {
-  current_dir_ = subdir;
-  output_subdir_ = output_dir_ + std::to_string(current_dir_);
-
-  std::ostringstream current_dir;
-  current_dir << output_dir_ << "/" << current_dir_;
-  output_subdir_ = current_dir.str();
-  boost::filesystem::create_directory(boost::filesystem::path{output_subdir_});
 }

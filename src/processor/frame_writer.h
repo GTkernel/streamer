@@ -8,12 +8,13 @@
 
 #include "common/types.h"
 #include "processor/processor.h"
+#include "utils/output_tracker.h"
 
 // The FrameWriter writes Frames to disk in either text or binary format. The
 // user can specify which frame fields to save (the default is all fields).
 class FrameWriter : public Processor {
  public:
-  enum FileFormat { BINARY, JSON, TEXT, JPEG };
+  enum FileFormat { BINARY, JSON, TEXT };
 
   // "fields" is a set of frame fields to save. If "fields" is an empty set,
   // then all fields will be saved. If "save_fields_separately" is true, then
@@ -48,27 +49,11 @@ class FrameWriter : public Processor {
 
   // The frame fields to save.
   std::unordered_set<std::string> fields_;
-  // The root output directory filepath.
-  std::string output_dir_;
   // The file format in which to save frames.
   FileFormat format_;
   // Whether to save each field in a separate file.
   bool save_fields_separately_;
-  // Whether to create a date-timne directory hierarchy.
-  bool organize_by_time_;
-
-  // The remainder of the member variables pertain to the count-based hierarchy
-  // mode, and are invalid if "organize_by_time_" is true.
-
-  // The filepath of the current output subdirectory.
-  std::string output_subdir_;
-  // If The maximum number of frames to store in each output subdirectory.
-  unsigned int frames_per_dir_;
-  // The number of frames that have already been stored in the current output
-  // subdirectory.
-  unsigned int frames_in_current_dir_;
-  // The numeric name of the current output subdirectory.
-  unsigned int current_dir_;
+  OutputTracker tracker_;
 };
 
 #endif  // STREAMER_PROCESSOR_FRAME_WRITER_H_

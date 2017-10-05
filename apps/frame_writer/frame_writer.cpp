@@ -25,7 +25,7 @@ void Run(const std::string& camera_name,
          const std::unordered_set<std::string> fields,
          const std::string& output_dir, FrameWriter::FileFormat format,
          bool save_fields_separately, bool organize_by_time,
-         unsigned int frames_per_dir) {
+         unsigned long frames_per_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -108,22 +108,23 @@ int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Initialize the streamer context. This must be called before using streamer.
-  Context::GetContext().Init();
 
   // Extract the command line arguments.
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
+  // Initialize the streamer context. This must be called before using streamer.
+  Context::GetContext().Init();
+
   std::string camera = args["camera"].as<std::string>();
   std::vector<std::string> fields =
       args["fields"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
   bool save_fields_separately = args.count("save-fields-separately");
   bool organize_by_time = args.count("organize-by-time");
-  unsigned int frames_per_dir = args["frames-per-dir"].as<unsigned int>();
+  unsigned long frames_per_dir = args["frames-per-dir"].as<unsigned long>();
   Run(camera, std::unordered_set<std::string>{fields.begin(), fields.end()},
-      output_dir, FrameWriter::FileFormat::JPEG, save_fields_separately,
+      output_dir, FrameWriter::FileFormat::JSON, save_fields_separately,
       organize_by_time, frames_per_dir);
   return 0;
 }

@@ -7,6 +7,7 @@
 
 #include "common/types.h"
 #include "processor/processor.h"
+#include "utils/output_tracker.h"
 
 // This Processor encodes a specified field from each frame as a JPEG file using
 // the default JPEG compression settings. Therefore, the specified field must
@@ -19,8 +20,9 @@ class JpegWriter : public Processor {
   // "key" denotes which field to encode, "output_dir" denotes the directory
   // in which the resulting files will be written, and "num_frames_per_dir" is
   // number of frames to put in each subdir in "output_dir".
-  JpegWriter(std::string key = "original_image", std::string output_dir = ".",
-             unsigned long num_frames_per_dir = 1000);
+  JpegWriter(const std::string& key = "original_image",
+             const std::string& output_dir = ".", bool organize_by_time = true,
+             unsigned long frames_per_dir = 1000);
 
   // "params" should contain two keys, "key" and "output_dir"
   static std::shared_ptr<JpegWriter> Create(const FactoryParamsType& params);
@@ -36,10 +38,7 @@ class JpegWriter : public Processor {
  private:
   // The frame field that will be encoded.
   std::string key_;
-  // The destination directory for output files.
-  std::string output_dir_;
-  // The number of frames to save in each output subdir.
-  unsigned long num_frames_per_dir_;
+  OutputTracker tracker_;
 };
 
 #endif  // STREAMER_PROCESSOR_JPEG_WRITER_H_

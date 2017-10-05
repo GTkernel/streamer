@@ -80,10 +80,9 @@ void Run(const std::string& publisher_url, bool compress,
   raw_writer->SetSource(stream_to_write);
   procs.push_back(raw_writer);
 
-  // Create FrameWriter for writing Jpegs.
-  auto jpeg_writer = std::make_shared<FrameWriter>(
-      std::unordered_set<std::string>{"original_image"}, output_dir,
-      FrameWriter::FileFormat::JPEG, save_fields_separately, true);
+  // Create JpegWriter.
+  auto jpeg_writer =
+      std::make_shared<JpegWriter>("original_image", output_dir, true);
   jpeg_writer->SetSource(stream_to_write);
   procs.push_back(jpeg_writer);
 

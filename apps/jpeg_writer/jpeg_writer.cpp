@@ -18,7 +18,8 @@
 
 namespace po = boost::program_options;
 
-void Run(const std::string& camera_name, const std::string& output_dir) {
+void Run(const std::string& camera_name, const std::string& output_dir,
+         bool organize_by_time, unsigned long frames_per_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -26,7 +27,8 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
   procs.push_back(camera);
 
   // Create JpegWriter.
-  auto writer = std::make_shared<JpegWriter>("original_image", output_dir);
+  auto writer = std::make_shared<JpegWriter>("original_image", output_dir,
+                                             organize_by_time, frames_per_dir);
   writer->SetSource(camera->GetStream());
   procs.push_back(writer);
 
@@ -54,6 +56,12 @@ int main(int argc, char* argv[]) {
                      "The name of the camera to use.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the frame JPEGs.");
+  desc.add_options()("organize-by-time,t",
+                     "Whether to organize the output file by date and time.");
+  desc.add_options()("frames-per-dir,n",
+                     po::value<unsigned long>()->default_value(1000),
+                     "The number of frames to save in each subdir. Only valid "
+                     "if \"--organize-by-time\" is not specified.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -76,15 +84,18 @@ int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Initialize the streamer context. This must be called before using streamer.
-  Context::GetContext().Init();
 
   // Extract the command line arguments.
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
+  // Initialize the streamer context. This must be called before using streamer.
+  Context::GetContext().Init();
+
   std::string camera = args["camera"].as<std::string>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  Run(camera, output_dir);
+  bool organize_by_time = args.count("organize-by-time");
+  unsigned long frames_per_dir = args["frames-per-dir"].as<unsigned long>();
+  Run(camera, output_dir, organize_by_time, frames_per_dir);
   return 0;
 }
