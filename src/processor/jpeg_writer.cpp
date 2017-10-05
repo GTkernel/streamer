@@ -39,11 +39,11 @@ bool JpegWriter::OnStop() { return true; }
 
 void JpegWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
+
   auto capture_time_micros =
       frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
-  auto id = frame->GetValue<unsigned long>("frame_id");
   std::ostringstream filepath;
-  filepath << tracker_.GetAndCreateOutputDir(capture_time_micros) << id << "_"
+  filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
            << boost::posix_time::to_iso_extended_string(capture_time_micros)
            << ".jpg";
   std::string filepath_s = filepath.str();

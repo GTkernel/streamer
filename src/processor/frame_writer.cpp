@@ -72,15 +72,10 @@ void FrameWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
   auto frame_to_write = std::make_unique<Frame>(frame, fields_);
 
-  // The filepath always includes the frame id and the capture time.
-  auto id = frame->GetValue<unsigned long>("frame_id");
   auto capture_time_micros =
       frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
-
-  // Accumulates the path at which this frame will be stored.
   std::ostringstream base_filepath;
-  base_filepath << tracker_.GetAndCreateOutputDir(capture_time_micros) << id
-                << "_"
+  base_filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
                 << boost::posix_time::to_iso_extended_string(
                        capture_time_micros);
 
