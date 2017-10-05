@@ -18,10 +18,12 @@
 #include "processor/frame_writer.h"
 #include "processor/jpeg_writer.h"
 #include "processor/pubsub/frame_subscriber.h"
+#include "stream/frame.h"
 #include "stream/stream.h"
 
 namespace po = boost::program_options;
 
+// Whether the pipeline has been stopped.
 std::atomic<bool> stopped(false);
 
 void ProgressTracker(StreamPtr stream) {
@@ -45,54 +47,49 @@ void ProgressTracker(StreamPtr stream) {
 void Run(const std::string& publisher_url, bool compress,
          std::unordered_set<std::string> fields_to_save,
          bool save_fields_separately, const std::string& output_dir) {
-  LOG(INFO) << "Detecting trains...";
-
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create FrameSubscriber.
   auto subscriber = std::make_shared<FrameSubscriber>(publisher_url);
   procs.push_back(subscriber);
-  StreamPtr network_stream = subscriber->GetSink();
 
-  StreamPtr stream_to_write;
+  StreamPtr stream = subscriber->GetSink();
   if (compress) {
     // Create Compressor.
     auto compressor =
         std::make_shared<Compressor>(Compressor::CompressionType::BZIP2);
-    compressor->SetSource(network_stream);
+    compressor->SetSource(stream);
     procs.push_back(compressor);
-    stream_to_write = compressor->GetSink();
-  } else {
-    stream_to_write = network_stream;
+    stream = compressor->GetSink();
   }
 
   // Create FrameWriter for writing metadata.
   auto metadata_writer = std::make_shared<FrameWriter>(
       fields_to_save, output_dir, FrameWriter::FileFormat::JSON,
       save_fields_separately, true);
-  metadata_writer->SetSource(stream_to_write);
+  metadata_writer->SetSource(stream);
   procs.push_back(metadata_writer);
 
-  // Create FrameWriter for writing raw data.
-  auto raw_writer = std::make_shared<FrameWriter>(
+  // Create FrameWriter for writing demosaiced image.
+  auto image_writer = std::make_shared<FrameWriter>(
       std::unordered_set<std::string>{"original_image"}, output_dir,
       FrameWriter::FileFormat::BINARY, save_fields_separately, true);
-  raw_writer->SetSource(stream_to_write);
-  procs.push_back(raw_writer);
+  image_writer->SetSource(stream);
+  procs.push_back(image_writer);
 
   // Create JpegWriter.
   auto jpeg_writer =
       std::make_shared<JpegWriter>("original_image", output_dir, true);
-  jpeg_writer->SetSource(stream_to_write);
+  jpeg_writer->SetSource(stream);
   procs.push_back(jpeg_writer);
+
+  std::thread progress_thread =
+      std::thread([stream] { ProgressTracker(stream); });
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start();
   }
-
-  std::thread progress_thread =
-      std::thread([stream_to_write] { ProgressTracker(stream_to_write); });
 
   std::cout << "Press \"Enter\" to stop." << std::endl;
   getchar();
@@ -116,12 +113,13 @@ int main(int argc, char* argv[]) {
   }
   default_fields_str << "}";
 
-  po::options_description desc("Train Detector");
+  po::options_description desc("Train detector subscriber app");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()("config-dir,C", po::value<std::string>(),
-                     "The directory containing streamer's config files.");
-  desc.add_options()("publisher-url,u", po::value<std::string>()->required(),
-                     "The URL (host:port) on which frames are being "
+                     "The directory containing Streamer's config files.");
+  desc.add_options()("publisher-url,u",
+                     po::value<std::string>()->default_value("127.0.0.1:5536"),
+                     "The URL (host:port) on which the frame stream is being "
                      "published.");
   desc.add_options()("compress,c",
                      "Whether to compress the \"original_bytes\" field.");
