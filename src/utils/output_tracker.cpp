@@ -13,6 +13,7 @@ OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
       organize_by_time_(organize_by_time),
       frames_per_dir_(frames_per_dir),
       frames_in_current_dir_(0),
+      current_dir_idx_(0),
       current_dirpath_("") {
   if (!boost::filesystem::exists(root_dir_)) {
     std::ostringstream msg;
@@ -41,12 +42,13 @@ std::string OutputTracker::GetAndCreateOutputDir(
         boost::filesystem::path{dirpath.str()});
     return dirpath.str();
   } else {
-    // If we have filled up the current subdir, then move on to the next one.
+    std::string dir = current_dirpath_;
     ++frames_in_current_dir_;
     if (frames_in_current_dir_ == frames_per_dir_) {
+      // If we have filled up the current subdir, then move on to the next one.
       ChangeSubdir(current_dir_idx_ + 1);
     }
-    return current_dirpath_;
+    return dir;
   }
 }
 
