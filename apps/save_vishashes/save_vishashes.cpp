@@ -43,9 +43,10 @@ void ProgressTracker(StreamPtr stream) {
   reader->UnSubscribe();
 }
 
-void Run(const std::string& camera_name, const std::string& model_name,
-         const std::string& layer, bool block, const std::string& output_dir,
-         unsigned long frames_per_dir) {
+void Run(bool block, const std::string& camera_name,
+         const std::string& model_name, const std::string& layer,
+         size_t nne_batch_size, const std::string& output_dir,
+         unsigned long frames_per_dir, bool save_jpegs) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -54,12 +55,14 @@ void Run(const std::string& camera_name, const std::string& model_name,
   procs.push_back(camera);
   StreamPtr camera_stream = camera->GetStream();
 
-  // Create JpegWriter.
-  auto jpeg_writer = std::make_shared<JpegWriter>("original_image", output_dir,
-                                                  false, frames_per_dir);
-  jpeg_writer->SetSource(camera_stream);
-  jpeg_writer->SetBlockOnPush(block);
-  procs.push_back(jpeg_writer);
+  if (save_jpegs) {
+    // Create JpegWriter.
+    auto jpeg_writer = std::make_shared<JpegWriter>(
+        "original_image", output_dir, false, frames_per_dir);
+    jpeg_writer->SetSource(camera_stream);
+    jpeg_writer->SetBlockOnPush(block);
+    procs.push_back(jpeg_writer);
+  }
 
   // Create ImageTransformer.
   ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model_name);
@@ -72,7 +75,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
 
   // Create NeuralNetEvaluator.
   auto nne = std::make_shared<NeuralNetEvaluator>(
-      model_desc, input_shape, 4, std::vector<std::string>{layer});
+      model_desc, input_shape, nne_batch_size, std::vector<std::string>{layer});
   nne->SetSource(transformer->GetSink(), layer);
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
@@ -116,24 +119,27 @@ void Run(const std::string& camera_name, const std::string& model_name,
 
 int main(int argc, char* argv[]) {
   po::options_description desc(
-      "Stores the features vector for a camera stream as text files.");
+      "Stores the feature vectors for a camera stream as JSON files");
   desc.add_options()("help,h", "Print the help message.");
-  desc.add_options()(
-      "config-dir,C", po::value<std::string>(),
-      "The directory containing streamer's configuration files.");
+  desc.add_options()("config-dir,C", po::value<std::string>(),
+                     "The directory containing Streamer's configuration "
+                     "files.");
+  desc.add_options()("block,b", "Whether to block when pushing frames.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
   desc.add_options()("model,m", po::value<std::string>()->required(),
                      "The name of the model to evaluate.");
   desc.add_options()("layer,l", po::value<std::string>()->required(),
                      "The name of the layer to extract.");
-  desc.add_options()("block,b", "Whether to block when pushing frames.");
+  desc.add_options()("nne-batch-size,s", po::value<size_t>()->default_value(1),
+                     "The batch size to use for DNN inference.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the JPEGs and vishash "
                      "file.");
   desc.add_options()("frames-per-dir,n",
                      po::value<unsigned long>()->default_value(1000),
                      "The number of frames to put in each output subdir.");
+  desc.add_options()("save-jpegs,j", "Whether to save a JPEG of every frame.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -164,12 +170,15 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
+  bool block = args.count("block");
   auto camera_name = args["camera"].as<std::string>();
   auto model = args["model"].as<std::string>();
   auto layer = args["layer"].as<std::string>();
-  bool block = args.count("block");
+  auto nne_batch_size = args["nne-batch-size"].as<size_t>();
   auto output_dir = args["output-dir"].as<std::string>();
   auto frames_per_dir = args["frames-per-dir"].as<unsigned long>();
-  Run(camera_name, model, layer, block, output_dir, frames_per_dir);
+  bool save_jpegs = args.count("save-jpegs");
+  Run(block, camera_name, model, layer, nne_batch_size, output_dir,
+      frames_per_dir, save_jpegs);
   return 0;
 }
