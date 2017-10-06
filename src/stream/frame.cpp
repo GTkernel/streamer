@@ -245,7 +245,19 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
                                     cv::FileStorage::MEMORY |
                                     cv::FileStorage::FORMAT_JSON);
     fs << "cvMat" << v;
-    return fs.releaseAndGetString();
+    std::string str = fs.releaseAndGetString();
+
+    // There is a bug in lohmann::json::parse() for the sequence "0.,", so
+    // replace all such sequences with "0,".
+    std::string bad_seq = "0.,";
+    size_t pos = str.find(bad_seq);
+    while (pos != std::string::npos) {
+      str.replace(pos, 3, "0,");
+      pos = str.find(bad_seq);
+    }
+
+    // Convert the JSON string into a JSON object.
+    return nlohmann::json::parse(str);
   }
 
   nlohmann::json operator()(const std::vector<float>& v) const { return v; }
