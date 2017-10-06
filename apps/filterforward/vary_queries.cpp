@@ -103,11 +103,6 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
         // Assemble log message;
         std::ostringstream msg;
-        if(frame->GetValue<std::vector<int>>("imagematch.matches").size() >= 1) {
-          net_bw_bps = 1;
-        } else {
-          net_bw_bps = 0;
-        }
         msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
 
         if ((current_time - previous_time).total_seconds() >= 2) {
@@ -285,13 +280,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
   // Create ImageMatch level 0. Use the same batch size as the
   // NeuralNetEvaluator.
-  auto im_0 = std::make_shared<ImageMatch>(1024, 5, nne_batch_size);
+  auto im_0 = std::make_shared<ImageMatch>("", false, nne_batch_size);
   im_0->SetSource(nne_stream);
   im_0->SetBlockOnPush(block);
-  //im_0->SetQueryMatrix(first_im_num_queries);
-  for(int i = 0; i < first_im_num_queries; ++i) {
-    im_0->AddQuery("/home/tskim/models/simple_classifier.prototxt", "/home/tskim/models/_iter_1000.caffemodel");
-  }
+  im_0->SetQueryMatrix(first_im_num_queries, 1, 1024);
   procs.push_back(im_0);
 
   // Create a FlowControlExit.
@@ -323,12 +315,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     // Create an ImageMatch.
     unsigned int kd_batch_size =
         ceil(kd_buf_params.first * kd_buf_params.second);
-    auto additional_im = std::make_shared<ImageMatch>(1024, 5, kd_batch_size);
+    auto additional_im = std::make_shared<ImageMatch>("", false, kd_batch_size);
     additional_im->SetSource(kd->GetSink(kd->GetSinkName(0)));
     additional_im->SetBlockOnPush(block);
-    for(int j = 0; j < nums_queries.at(i); ++j) {
-      additional_im->AddQuery("/home/tskim/models/simple_classifier.prototxt", "/home/tskim/models/_iter_1000.caffemodel");
-    }
+    additional_im->SetQueryMatrix(nums_queries.at(i), 1, 1024);
     procs.push_back(additional_im);
 
     // Create a logger thread to calculate statistics about ImageMatch's output
