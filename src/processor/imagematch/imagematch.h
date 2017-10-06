@@ -30,7 +30,7 @@ class ImageMatch : public Processor {
 
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
-  // Add real query with classifier
+  // Add real query with Micro Classifier
   void AddQuery(const std::string& model_path, const std::string& params_path);
   void SetQueryMatrix(int num_queries);
   void SetSink(StreamPtr stream);
@@ -46,24 +46,20 @@ class ImageMatch : public Processor {
   virtual void Process() override;
 
  private:
-  void AddClassifier(query_t* current_query, const std::string& model_path,
+  // SetClassifier is a helper function to add/replace a Micro Classifier for
+  // an existing query
+  void SetClassifier(query_t* current_query, const std::string& model_path,
                      const std::string& params_path);
+  // vishash_size_ 
   unsigned int vishash_size_;
-  unsigned int num_hidden_layers_;
   unsigned int batch_size_;
-  // Hidden layers
-  std::shared_ptr<Eigen::MatrixXf> hidden_layer_weights_;
-  std::shared_ptr<Eigen::VectorXf> hidden_layer_skews_;
-  // Relu
-  // Logistic Regression
-  std::shared_ptr<Eigen::MatrixXf> logit_weights_;
-  std::shared_ptr<Eigen::VectorXf> logit_skews_;
-  // Softmax
-  // vishash_batch_ stores the vishashes for the current batch of inputs
-  std::unique_ptr<Eigen::MatrixXf> vishash_batch_;
   // cur_batch_frames holds the actual frames in the batch
   std::vector<std::unique_ptr<Frame>> frames_batch_;
+  // query_data_ stores information related to the query  
+  // as well as state data regarding the most recent run of the
+  // Micro Classifier related to this query
   std::unordered_map<int, query_t> query_data_;
+  // Lock to prevent race conditions when adding/modifying queries
   std::mutex query_guard_;
 };
 
