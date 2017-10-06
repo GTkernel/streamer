@@ -55,7 +55,7 @@ class ImageMatch : public Processor {
   unsigned int batch_size_;
   // cur_batch_frames holds the actual frames in the batch
   std::vector<std::unique_ptr<Frame>> frames_batch_;
-  // query_data_ stores information related to the query  
+  // query_data_ stores information related to the query
   // as well as state data regarding the most recent run of the
   // Micro Classifier related to this query
   std::unordered_map<int, query_t> query_data_;

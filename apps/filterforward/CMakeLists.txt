@@ -9,6 +9,3 @@ ENDMACRO()
 
 add_executable(filterforward EXCLUDE_FROM_ALL filterforward.cpp)
 BUILD_ONE(filterforward)
-
-add_executable(vary_queries EXCLUDE_FROM_ALL vary_queries.cpp)
-BUILD_ONE(vary_queries)

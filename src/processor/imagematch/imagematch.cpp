@@ -18,11 +18,10 @@ constexpr auto SINK_NAME = "output";
 ImageMatch::ImageMatch(unsigned int vishash_size, unsigned int batch_size)
     : Processor(PROCESSOR_TYPE_IMAGEMATCH, {SOURCE_NAME}, {SINK_NAME}),
       vishash_size_(vishash_size),
-      batch_size_(batch_size) {
-}
+      batch_size_(batch_size) {}
 
 std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
-  //TODO
+  // TODO
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
