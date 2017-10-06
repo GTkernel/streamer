@@ -96,7 +96,7 @@ void FrameWriter::Process() {
             break;
           }
           case JSON: {
-            file << frame_to_write->GetFieldJson(key).dump(4);
+            file << frame_to_write->GetFieldJson(key).dump(-1);
             break;
           }
           case TEXT: {
@@ -133,7 +133,7 @@ void FrameWriter::Process() {
           break;
         }
         case JSON: {
-          file << frame_to_write->ToJson().dump(4);
+          file << frame_to_write->ToJson().dump(-1);
           break;
         }
         case TEXT: {
