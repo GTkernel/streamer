@@ -14,6 +14,7 @@
 #include <gst/gst.h>
 #include <boost/program_options.hpp>
 
+#include "camera/camera.h"
 #include "camera/camera_manager.h"
 #include "common/context.h"
 #include "processor/frame_writer.h"
