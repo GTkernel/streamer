@@ -2,17 +2,16 @@
 #ifndef STREAMER_PROCESSOR_THROTTLER_H_
 #define STREAMER_PROCESSOR_THROTTLER_H_
 
-#include "common/types.h"
-#include "model/model.h"
-#include "processor/processor.h"
+#include <memory>
 
-/**
- * @brief A processor that limits the rate of frames being passed through.
- */
+#include "common/types.h"
+#include "processor/processor.h"
+#include "utils/time_utils.h"
+
+// A processor that a stream's framerate to a specified maximum.
 class Throttler : public Processor {
  public:
-  Throttler(int fps);
-  void SetFps(int fps);
+  Throttler(double fps);
   static std::shared_ptr<Throttler> Create(const FactoryParamsType& params);
 
   void SetSource(StreamPtr stream);
@@ -21,14 +20,15 @@ class Throttler : public Processor {
   StreamPtr GetSink();
   using Processor::GetSink;
 
+  void SetFps(double fps);
+
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
   virtual void Process() override;
 
  private:
-  int fps_;
-  unsigned long long delay_ms_;
+  double delay_ms_;
   Timer timer_;
 };
 

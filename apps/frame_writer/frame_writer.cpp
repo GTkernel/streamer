@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("organize-by-time,t",
                      "Whether to organize the output file by date and time.");
   desc.add_options()("frames-per-dir,n",
-                     po::value<unsigned int>()->default_value(1000),
+                     po::value<unsigned long>()->default_value(1000),
                      "The number of frames to save in each subdir. Only valid "
                      "if \"--organize-by-time\" is not specified.");
 

@@ -45,7 +45,7 @@ void ProgressTracker(StreamPtr stream) {
   reader->UnSubscribe();
 }
 
-void Run(const std::string& camera_name, int fps,
+void Run(const std::string& camera_name, double fps,
          std::unordered_set<std::string> fields_to_send,
          const std::string& publish_url) {
   std::vector<std::shared_ptr<Processor>> procs;
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   std::string camera_name = args["camera"].as<std::string>();
-  int fps = args["fps"].as<int>();
+  double fps = args["fps"].as<double>();
   std::vector<std::string> fields_to_send =
       args["fields-to-send"].as<std::vector<std::string>>();
   std::string publish_url = args["publish-url"].as<std::string>();
