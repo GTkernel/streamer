@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
                      "The directory containing Streamer's config files.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
-  desc.add_options()("fps,f", po::value<int>()->default_value(0),
+  desc.add_options()("fps,f", po::value<double>()->default_value(0),
                      ("The desired maximum rate of the published stream. The "
                       "actual rate may be less. An fps of 0 disables "
                       "throttling."));
