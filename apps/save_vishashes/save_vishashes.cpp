@@ -1,22 +1,22 @@
 
-#include <cstdio>
+#include <atomic>
 #include <iostream>
 #include <memory>
-#include <ostream>
-#include <sstream>
 #include <string>
+#include <thread>
+#include <unordered_set>
 #include <vector>
 
 #include <glog/logging.h>
 #include <gst/gst.h>
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include <opencv2/opencv.hpp>
 
+#include "camera/camera.h"
 #include "camera/camera_manager.h"
 #include "common/context.h"
 #include "common/types.h"
 #include "model/model_manager.h"
+#include "processor/frame_writer.h"
 #include "processor/image_transformer.h"
 #include "processor/jpeg_writer.h"
 #include "processor/neural_net_evaluator.h"
@@ -24,82 +24,99 @@
 
 namespace po = boost::program_options;
 
+// Whether the pipeline has been stopped.
+std::atomic<bool> stopped(false);
+
+void ProgressTracker(StreamPtr stream) {
+  StreamReader* reader = stream->Subscribe();
+  while (!stopped) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame != nullptr) {
+      std::cout << "\rSaved feature vector for frame "
+                << frame->GetValue<unsigned long>("frame_id");
+      // This is required in order to make the console update as soon as the
+      // above log is printed. Without this, the progress log will not update
+      // smoothly.
+      std::cout.flush();
+    }
+  }
+  reader->UnSubscribe();
+}
+
 void Run(const std::string& camera_name, const std::string& model_name,
          const std::string& layer, bool block, const std::string& output_dir,
-         unsigned int frames_per_dir) {
+         unsigned long frames_per_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
-  // Camera.
-  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  // Create Camera.
+  std::shared_ptr<Camera> camera =
+      CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
-  auto camera_stream = camera->GetSink("output");
+  StreamPtr camera_stream = camera->GetStream();
 
-  // JpegWriter.
+  // Create JpegWriter.
   auto jpeg_writer = std::make_shared<JpegWriter>("original_image", output_dir,
-                                                  frames_per_dir);
+                                                  false, frames_per_dir);
   jpeg_writer->SetSource(camera_stream);
   jpeg_writer->SetBlockOnPush(block);
   procs.push_back(jpeg_writer);
 
-  // ImageTransformer.
-  auto model_desc = ModelManager::GetInstance().GetModelDesc(model_name);
+  // Create ImageTransformer.
+  ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model_name);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   auto transformer =
       std::make_shared<ImageTransformer>(input_shape, true, true);
-  transformer->SetSource("input", camera_stream);
+  transformer->SetSource(camera_stream);
   transformer->SetBlockOnPush(block);
   procs.push_back(transformer);
 
-  // NeuralNetEvaluator.
-  std::vector<std::string> output_layer_names = {layer};
-  auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
-                                                  output_layer_names);
-  nne->SetSource("input", transformer->GetSink("output"), layer);
+  // Create NeuralNetEvaluator.
+  auto nne = std::make_shared<NeuralNetEvaluator>(
+      model_desc, input_shape, 4, std::vector<std::string>{layer});
+  nne->SetSource(transformer->GetSink(), layer);
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
+  StreamPtr nne_stream = nne->GetSink(layer);
+
+  // Create FrameWriter.
+  auto frame_writer = std::make_shared<FrameWriter>(
+      std::unordered_set<std::string>{"frame_id", "activations"}, output_dir,
+      FrameWriter::FileFormat::JSON, false, false, frames_per_dir);
+  frame_writer->SetSource(nne_stream);
+  frame_writer->SetBlockOnPush(block);
+  procs.push_back(frame_writer);
+
+  auto reader = nne->GetSink(layer)->Subscribe();
+
+  std::thread progress_thread =
+      std::thread([nne_stream] { ProgressTracker(nne_stream); });
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start();
   }
 
-  auto reader = nne->GetSink(layer)->Subscribe();
+  // Loop until we receive a stop frame.
   while (true) {
-    auto frame = reader->PopFrame();
-    if (frame->IsStopFrame()) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame != nullptr && frame->IsStopFrame()) {
       break;
     }
-    auto frame_id = frame->GetValue<unsigned long>("frame_id");
-    LOG(INFO) << "Saving feature vector for frame: " << frame_id;
-
-    // Save vishash to file.
-    std::ostringstream dirpath;
-    auto dir_num = frame_id / frames_per_dir;
-    dirpath << output_dir << "/" << dir_num;
-    auto dirpath_str = dirpath.str();
-    boost::filesystem::path dir(dirpath_str);
-    boost::filesystem::create_directory(dir);
-
-    std::ostringstream filepath;
-    filepath << dirpath_str << "/" << frame_id << "_feature_vector.txt";
-    std::ofstream vishash_file(filepath.str());
-
-    auto activations = frame->GetValue<cv::Mat>("activations");
-    for (auto it = activations.begin<float>(); it != activations.end<float>();
-         ++it) {
-      vishash_file << *it << "\n";
-    }
-    vishash_file.close();
   }
 
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
     proc->Stop();
   }
+
+  // Signal the progress thread to stop.
+  stopped = true;
+  progress_thread.join();
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Runs image classification on a video stream");
+  po::options_description desc(
+      "Stores the features vector for a camera stream as text files.");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
@@ -115,7 +132,7 @@ int main(int argc, char* argv[]) {
                      "The directory in which to store the JPEGs and vishash "
                      "file.");
   desc.add_options()("frames-per-dir,n",
-                     po::value<unsigned int>()->default_value(100),
+                     po::value<unsigned long>()->default_value(1000),
                      "The number of frames to put in each output subdir.");
 
   // Parse the command line arguments.
@@ -139,19 +156,20 @@ int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Initialize the streamer context. This must be called before using streamer.
-  Context::GetContext().Init();
 
   // Extract the command line arguments.
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
+  // Initialize the streamer context. This must be called before using streamer.
+  Context::GetContext().Init();
+
   auto camera_name = args["camera"].as<std::string>();
   auto model = args["model"].as<std::string>();
   auto layer = args["layer"].as<std::string>();
   bool block = args.count("block");
   auto output_dir = args["output-dir"].as<std::string>();
-  auto frames_per_dir = args["frames-per-dir"].as<unsigned int>();
+  auto frames_per_dir = args["frames-per-dir"].as<unsigned long>();
   Run(camera_name, model, layer, block, output_dir, frames_per_dir);
   return 0;
 }
