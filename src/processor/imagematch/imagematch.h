@@ -25,8 +25,7 @@ typedef struct query_t {
 
 class ImageMatch : public Processor {
  public:
-  ImageMatch(unsigned int vishash_size = 1024,
-             unsigned int num_hidden_layers = 5, unsigned int batch_size = 1);
+  ImageMatch(unsigned int vishash_size = 1024, unsigned int batch_size = 1);
 
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
@@ -50,8 +49,9 @@ class ImageMatch : public Processor {
   // an existing query
   void SetClassifier(query_t* current_query, const std::string& model_path,
                      const std::string& params_path);
-  // vishash_size_ 
+  // vishash_size_ should hold the number of elements (floats) in the vishash
   unsigned int vishash_size_;
+  // Batch size should be above 0
   unsigned int batch_size_;
   // cur_batch_frames holds the actual frames in the batch
   std::vector<std::unique_ptr<Frame>> frames_batch_;

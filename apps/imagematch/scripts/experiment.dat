@@ -1,3 +1,0 @@
---num_query 1 --image_per_query 1 --batch_size 1
---num_query 1 --image_per_query 1 --batch_size 2
---num_query 1 --image_per_query 1 --batch_size 4

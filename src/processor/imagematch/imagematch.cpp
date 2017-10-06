@@ -15,8 +15,7 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
-ImageMatch::ImageMatch(unsigned int vishash_size,
-                       unsigned int num_hidden_layers, unsigned int batch_size)
+ImageMatch::ImageMatch(unsigned int vishash_size, unsigned int batch_size)
     : Processor(PROCESSOR_TYPE_IMAGEMATCH, {SOURCE_NAME}, {SINK_NAME}),
       vishash_size_(vishash_size),
       batch_size_(batch_size) {
@@ -84,8 +83,8 @@ void ImageMatch::Process() {
         query.second.classifier->input_blobs().at(0)->mutable_cpu_data();
     for (const auto& frame : frames_batch_) {
       memcpy(data, frame->GetValue<cv::Mat>("activations").data,
-             1024 * sizeof(float));
-      data += 1024;
+             vishash_size_ * sizeof(float));
+      data += vishash_size_;
     }
     query.second.classifier->Forward();
     // TODO Add error message
@@ -160,6 +159,6 @@ void ImageMatch::SetClassifier(query_t* current_query,
   caffe::Blob<float>* input_layer =
       current_query->classifier->input_blobs().at(0);
   // TODO hardcoded 1024
-  input_layer->Reshape(batch_size_, 1, 1, 1024);
+  input_layer->Reshape(batch_size_, 1, 1, vishash_size_);
   current_query->classifier->Reshape();
 }
