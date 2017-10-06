@@ -51,8 +51,8 @@ void Run(const std::string& camera_name, double fps,
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
-  auto& camera_manager = CameraManager::GetInstance();
-  auto camera = camera_manager.GetCamera(camera_name);
+  std::shared_ptr<Camera> camera =
+      CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
   StreamPtr stream = camera->GetStream();
@@ -152,11 +152,10 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  std::string camera_name = args["camera"].as<std::string>();
-  double fps = args["fps"].as<double>();
-  std::vector<std::string> fields_to_send =
-      args["fields-to-send"].as<std::vector<std::string>>();
-  std::string publish_url = args["publish-url"].as<std::string>();
+  auto camera_name = args["camera"].as<std::string>();
+  auto fps = args["fps"].as<double>();
+  auto fields_to_send = args["fields-to-send"].as<std::vector<std::string>>();
+  auto publish_url = args["publish-url"].as<std::string>();
   Run(camera_name, fps,
       std::unordered_set<std::string>{fields_to_send.begin(),
                                       fields_to_send.end()},

@@ -25,7 +25,8 @@ void Run(const std::string& camera_name, const std::string& field,
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
-  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  std::shared_ptr<Camera> camera =
+      CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
   // Create BinaryFileWriter.
@@ -49,7 +50,7 @@ void Run(const std::string& camera_name, const std::string& field,
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Stores raw frame data.");
+  po::options_description desc("Stores raw frame data binary files.");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
@@ -97,11 +98,11 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  std::string camera = args["camera"].as<std::string>();
-  std::string field = args["field"].as<std::string>();
-  std::string output_dir = args["output-dir"].as<std::string>();
+  auto camera = args["camera"].as<std::string>();
+  auto field = args["field"].as<std::string>();
+  auto output_dir = args["output-dir"].as<std::string>();
   bool organize_by_time = args.count("organize-by-time");
-  unsigned long frames_per_dir = args["frames-per-dir"].as<unsigned long>();
+  auto frames_per_dir = args["frames-per-dir"].as<unsigned long>();
   Run(camera, field, output_dir, organize_by_time, frames_per_dir);
   return 0;
 }

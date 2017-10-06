@@ -30,7 +30,8 @@ void Run(const std::string& camera_name,
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
-  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  std::shared_ptr<Camera> camera =
+      CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
   // Create FrameWriter.
@@ -63,7 +64,7 @@ int main(int argc, char* argv[]) {
   }
   default_fields_str << "}";
 
-  po::options_description desc("Stores frames as text files.");
+  po::options_description desc("Stores frames as JSON files.");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
@@ -117,13 +118,12 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  std::string camera = args["camera"].as<std::string>();
-  std::vector<std::string> fields =
-      args["fields"].as<std::vector<std::string>>();
-  std::string output_dir = args["output-dir"].as<std::string>();
+  auto camera = args["camera"].as<std::string>();
+  auto fields = args["fields"].as<std::vector<std::string>>();
+  auto output_dir = args["output-dir"].as<std::string>();
   bool save_fields_separately = args.count("save-fields-separately");
   bool organize_by_time = args.count("organize-by-time");
-  unsigned long frames_per_dir = args["frames-per-dir"].as<unsigned long>();
+  auto frames_per_dir = args["frames-per-dir"].as<unsigned long>();
   Run(camera, std::unordered_set<std::string>{fields.begin(), fields.end()},
       output_dir, FrameWriter::FileFormat::JSON, save_fields_separately,
       organize_by_time, frames_per_dir);

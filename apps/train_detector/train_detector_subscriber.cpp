@@ -164,12 +164,11 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  std::string publisher_url = args["publisher-url"].as<std::string>();
+  auto publisher_url = args["publisher-url"].as<std::string>();
   bool compress = args.count("compress");
   bool save_fields_separately = args.count("save-fields-separately");
-  std::vector<std::string> fields_to_save =
-      args["fields-to-save"].as<std::vector<std::string>>();
-  std::string output_dir = args["output-dir"].as<std::string>();
+  auto fields_to_save = args["fields-to-save"].as<std::vector<std::string>>();
+  auto output_dir = args["output-dir"].as<std::string>();
   Run(publisher_url, compress,
       std::unordered_set<std::string>{fields_to_save.begin(),
                                       fields_to_save.end()},
