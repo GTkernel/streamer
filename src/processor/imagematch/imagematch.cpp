@@ -57,16 +57,16 @@ void ImageMatch::Process() {
 
   auto frame = GetFrame("input");
   CHECK(frame != nullptr);
-  // TODO: Send to exit instead of releasing frame
-  // If no queries, release frame
+  // If no queries, Send frame with empty imagematch fields
+  std::lock_guard<std::mutex> guard(query_guard_);
   if (query_data_.empty()) {
-    std::lock_guard<std::mutex> guard(query_guard_);
-    auto flow_control_entrance = frame->GetFlowControlEntrance();
-    if (flow_control_entrance) {
-      flow_control_entrance->ReturnToken();
-      frame->SetFlowControlEntrance(nullptr);
-      return;
-    }
+    std::vector<int> image_match_matches;
+    frame->SetValue("imagematch.matches", image_match_matches);
+    auto end_time = boost::posix_time::microsec_clock::local_time();
+    frame->SetValue("imagematch.end_to_end_time_micros", 0);
+    frame->SetValue("imagematch.matrix_multiply_time_micros", 0);
+    PushFrame(SINK_NAME, std::move(frame));
+    return;
   }
   cv::Mat activations = frame->GetValue<cv::Mat>("activations");
   frames_batch_.push_back(std::move(frame));
@@ -75,7 +75,6 @@ void ImageMatch::Process() {
   }
 
   // Calculate similarity using Micro Classifiers
-  std::lock_guard<std::mutex> guard(query_guard_);
   auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
 
   for (auto& query : query_data_) {
@@ -139,7 +138,7 @@ void ImageMatch::Process() {
     frames_batch_.at(batch_idx)->SetValue(
         "imagematch.matrix_multiply_time_micros",
         (matrix_end_time - overhead_end_time).total_microseconds());
-    PushFrame("output", std::move(frames_batch_.at(batch_idx)));
+    PushFrame(SINK_NAME, std::move(frames_batch_.at(batch_idx)));
   }
   frames_batch_.clear();
   return;
