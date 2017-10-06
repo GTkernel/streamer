@@ -19,6 +19,7 @@ typedef struct query_t {
   // matrix. This could be made more efficient by using an Eigen::VectorXd to
   // hold a binary coefficient matrix used to take a linear combination of rows
   // in queries_.
+  float threshold;
   std::unique_ptr<Eigen::VectorXf> matches;
   std::unique_ptr<caffe::Net<float>> classifier;
 } query_t;
@@ -30,8 +31,8 @@ class ImageMatch : public Processor {
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
   // Add real query with Micro Classifier
-  void AddQuery(const std::string& model_path, const std::string& params_path);
-  void SetQueryMatrix(int num_queries);
+  void AddQuery(const std::string& model_path, const std::string& params_path,
+                float threshold = 0.125);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;
   void SetSource(StreamPtr stream);

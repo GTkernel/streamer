@@ -27,12 +27,13 @@ std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
 }
 
 void ImageMatch::AddQuery(const std::string& model_path,
-                          const std::string& params_path) {
+                          const std::string& params_path, float threshold) {
   std::lock_guard<std::mutex> guard(query_guard_);
   int query_id = query_data_.size();
   query_t* current_query = &query_data_[query_id];
   current_query->matches = std::make_unique<Eigen::VectorXf>(batch_size_);
   current_query->query_id = query_id;
+  current_query->threshold = threshold;
   SetClassifier(current_query, model_path, params_path);
 }
 
@@ -112,9 +113,7 @@ void ImageMatch::Process() {
       //   normalize by total
       p_nomatch /= total;
       p_match /= total;
-      // threshold (hard coded to be 0.125 for now)
-      // TODO remove hardcoded threshold and add as param
-      if (p_match > 0.125) {
+      if (p_match > query.second.threshold) {
         ((*query.second.matches))(i) = 1;
       } else {
         ((*query.second.matches))(i) = 0;
@@ -157,7 +156,6 @@ void ImageMatch::SetClassifier(query_t* current_query,
   CHECK_EQ(current_query->classifier->num_outputs(), 1);
   caffe::Blob<float>* input_layer =
       current_query->classifier->input_blobs().at(0);
-  // TODO hardcoded 1024
   input_layer->Reshape(batch_size_, 1, 1, vishash_size_);
   current_query->classifier->Reshape();
 }
