@@ -68,6 +68,8 @@ void GstVideoCapture::CheckBuffer() {
     gst_cv_.wait(
         lock, [this] { return !connected_ || frames_.size() < max_buf_size_; });
     if (!connected_) {
+      // The pipeline has been destroyed while we were waiting. We should return
+      // immediately.
       return;
     }
   }
@@ -172,6 +174,8 @@ void GstVideoCapture::DestroyPipeline() {
   pipeline_ = NULL;
 
   connected_ = false;
+  // Wake up CheckBuffer(), if it's waiting.
+  gst_cv_.notify_all();
 }
 
 /**
@@ -199,8 +203,8 @@ cv::Mat GstVideoCapture::GetPixels(unsigned long frame_id) {
 
   cv::Mat pixels = frames_.front();
   frames_.pop_front();
-  // Wake up any threads waiting for space in the frame queue. This has the
-  // effect of releasing backpressure on the GStreamer pipeline.
+  // Wake up CheckBuffer() if it's waiting for space in the frame queue. This
+  // has the effect of releasing backpressure from the GStreamer pipeline.
   gst_cv_.notify_all();
   return pixels;
 }
