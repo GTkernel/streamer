@@ -247,8 +247,8 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     fs << "cvMat" << v;
     std::string str = fs.releaseAndGetString();
 
-    // There is a bug in lohmann::json::parse() for the sequence "<num>.[ ,]", so
-    // replace all such sequences with "<num>[ ,]".
+    // There is a bug in lohmann::json::parse() for the sequence "<num>.[ ,]",
+    // so replace all such sequences with "<num>[ ,]".
     std::regex bad_seq("([0-9]+)\\.([ ,])");
     str = std::regex_replace(str, bad_seq, "$1$2");
 

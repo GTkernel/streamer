@@ -6,8 +6,9 @@
 #include <chrono>
 
 GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
-                     int height)
+                     int height, unsigned long max_buf_size)
     : Camera(name, video_uri, width, height),
+      capture_{max_buf_size},
       output_filepath_(""),
       file_framerate_(0) {}
 

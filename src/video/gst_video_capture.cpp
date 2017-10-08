@@ -59,6 +59,19 @@ void GstVideoCapture::CheckBuffer() {
     return;
   }
 
+  std::unique_lock<std::mutex> lock(capture_lock_);
+  if (frames_.size() >= max_buf_size_) {
+    // If the frame queue is not being drained fast enough, then wait here, thus
+    // applying backpressure to the GStreamer pipeline.
+    LOG(INFO)
+        << "GSTCamera frame queue full. Applying backpressure to GStreamer...";
+    gst_cv_.wait(
+        lock, [this] { return !connected_ || frames_.size() < max_buf_size_; });
+    if (!connected_) {
+      return;
+    }
+  }
+
   GstSample* sample = gst_app_sink_pull_sample(appsink_);
 
   if (sample == NULL) {
@@ -92,15 +105,7 @@ void GstVideoCapture::CheckBuffer() {
   CHECK(frame.size[0] == original_size_.height);
 
   // Push the frame
-  {
-    std::lock_guard<std::mutex> guard(capture_lock_);
-    frames_.push_back(frame);
-    if (frames_.size() > 1) {
-      LOG(ERROR) << "Pipeline failed to consume frame in time, "
-                 << " gst_video_capture internal frames queue size: "
-                 << frames_.size();
-    }
-  }
+  frames_.push_back(frame);
   capture_cv_.notify_all();
 
   gst_buffer_unmap(buffer, &map);
@@ -126,13 +131,14 @@ void GstVideoCapture::CheckBus() {
 /**
  * @brief Initialize the capture with a uri. Only supports rtsp protocol now.
  */
-GstVideoCapture::GstVideoCapture()
+GstVideoCapture::GstVideoCapture(unsigned long max_buf_size)
     : appsink_(nullptr),
       pipeline_(nullptr),
       connected_(false),
       current_frame_id_(0),
       last_frame_id_(0),
-      found_last_frame_(false) {
+      found_last_frame_(false),
+      max_buf_size_(max_buf_size) {
   // Get decoder element
   decoder_element_ = Context::GetContext().GetString(H264_DECODER_GST_ELEMENT);
 }
@@ -193,7 +199,9 @@ cv::Mat GstVideoCapture::GetPixels(unsigned long frame_id) {
 
   cv::Mat pixels = frames_.front();
   frames_.pop_front();
-
+  // Wake up any threads waiting for space in the frame queue. This has the
+  // effect of releasing backpressure on the GStreamer pipeline.
+  gst_cv_.notify_all();
   return pixels;
 }
 
@@ -232,7 +240,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri,
     pipeline << video_path;
     LOG(INFO) << pipeline.str();
   } else if (video_protocol == "file") {
-    LOG(WARNING) << "Reading H.264-encoded data from file using GStreamer";
+    LOG(INFO) << "Reading H.264-encoded data from file using GStreamer";
     pipeline << "filesrc location=\"" << video_path
              << "\" ! qtdemux ! h264parse ! ";
     if (output_filepath != "") {
@@ -250,6 +258,7 @@ bool GstVideoCapture::CreatePipeline(std::string video_uri,
   pipeline << " ! videoconvert "
               "! capsfilter caps=video/x-raw,format=(string)BGR "
               "! appsink name=sink sync=true";
+
   if (output_filepath != "" &&
       (video_protocol == "rtsp" || video_protocol == "file")) {
     pipeline << " t. ! queue ! mp4mux ! filesink location=" << output_filepath;

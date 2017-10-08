@@ -24,7 +24,7 @@
  */
 class GstVideoCapture {
  public:
-  GstVideoCapture();
+  GstVideoCapture(unsigned long max_buf_size = 10);
   ~GstVideoCapture();
   cv::Mat GetPixels(unsigned long frame_id);
   cv::Size GetOriginalFrameSize() const;
@@ -67,6 +67,8 @@ class GstVideoCapture {
   GstPipeline* pipeline_;
   GstBus* bus_;
   std::mutex capture_lock_;
+  // Used to apply backpressure to the GStreamer pipeline.
+  std::condition_variable gst_cv_;
   std::condition_variable capture_cv_;
   std::deque<cv::Mat> frames_;
   bool connected_;
@@ -80,6 +82,7 @@ class GstVideoCapture {
   // True if the end of the stream has been detected. Set by the "Eos()"
   // callback.
   bool found_last_frame_;
+  unsigned long max_buf_size_;
 };
 
 #endif  // STREAMER_VIDEO_GST_VIDEO_CAPTURE_H_
