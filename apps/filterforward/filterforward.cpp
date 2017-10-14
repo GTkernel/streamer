@@ -57,7 +57,13 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             std::vector<std::string> fields, const std::string& output_dir,
-            const unsigned int num_frames) {
+            const unsigned int num_frames, bool display = false) {
+  cv::Mat current_image;
+  cv::Mat last_match = cv::Mat::zeros(640, 480, CV_32F);
+  if(display) {
+    cv::namedWindow("current_image", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("last_match", cv::WINDOW_AUTOSIZE);
+  }
   std::ostringstream log;
   bool is_first_frame = true;
   double total_bytes = 0;
@@ -82,6 +88,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         start_time = boost::posix_time::microsec_clock::local_time();
         previous_time = start_time;
       } else {
+        current_image = frame->GetValue<cv::Mat>("original_image");
         total_bytes += frame->GetRawSizeBytes(
             std::unordered_set<std::string>{fields.begin(), fields.end()});
 
@@ -105,11 +112,19 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         std::ostringstream msg;
         if (frame->GetValue<std::vector<int>>("imagematch.matches").size() >=
             1) {
+          if(display) {
+            last_match = frame->GetValue<cv::Mat>("original_image");
+          }
           net_bw_bps = 1;
         } else {
           net_bw_bps = 0;
         }
         msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
+        if(display) {
+          cv::imshow("current_image", current_image);
+          cv::imshow("last_match", last_match);
+          cv::waitKey(1);
+        }
 
         if ((current_time - previous_time).total_seconds() >= 2) {
           // Every two seconds, log a frame's metrics to the console so that the
@@ -188,7 +203,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          unsigned int file_fps, int throttled_fps, unsigned int tokens,
          const std::string& model, const std::string& layer,
          size_t nne_batch_size, std::vector<std::string> fields,
-         const std::string& output_dir) {
+         const std::string& output_dir, bool display) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -306,8 +321,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // level's output stream.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
   logger_threads.push_back(
-      std::thread([fc_exit_sink, log_time, fields, output_dir, num_frames] {
-        Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames);
+      std::thread([fc_exit_sink, log_time, fields, output_dir, num_frames, display] {
+        Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames, display);
       }));
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
@@ -410,6 +425,7 @@ int main(int argc, char* argv[]) {
                      "The fields to send over the network");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
+  desc.add_options()("display,d", "Enable display.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -453,7 +469,8 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> fields =
       args["fields"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
+  bool display = args.count("display");
   Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
-      tokens, model, layer, nne_batch_size, fields, output_dir);
+      tokens, model, layer, nne_batch_size, fields, output_dir, display);
   return 0;
 }
