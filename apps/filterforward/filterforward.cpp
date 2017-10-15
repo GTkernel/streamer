@@ -60,7 +60,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             const unsigned int num_frames, bool display = false) {
   cv::Mat current_image;
   cv::Mat last_match = cv::Mat::zeros(640, 480, CV_32F);
-  if(display) {
+  if (display) {
     cv::namedWindow("current_image", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("last_match", cv::WINDOW_AUTOSIZE);
   }
@@ -112,7 +112,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         std::ostringstream msg;
         if (frame->GetValue<std::vector<int>>("imagematch.matches").size() >=
             1) {
-          if(display) {
+          if (display) {
             last_match = frame->GetValue<cv::Mat>("original_image");
           }
           net_bw_bps = 1;
@@ -120,7 +120,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           net_bw_bps = 0;
         }
         msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
-        if(display) {
+        if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
           cv::waitKey(1);
@@ -320,10 +320,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create a logger thread to calculate statistics about the first ImageMatch
   // level's output stream.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
-  logger_threads.push_back(
-      std::thread([fc_exit_sink, log_time, fields, output_dir, num_frames, display] {
-        Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames, display);
-      }));
+  logger_threads.push_back(std::thread([fc_exit_sink, log_time, fields,
+                                        output_dir, num_frames, display] {
+    Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames, display);
+  }));
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
   StreamPtr kd_input_stream = nne_stream;
