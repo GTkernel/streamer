@@ -9,6 +9,8 @@
 #include "camera/camera_manager.h"
 #include "processor/pubsub/frame_publisher.h"
 
+#include "processor/throttler.h"
+
 namespace po = boost::program_options;
 
 /**
@@ -16,24 +18,29 @@ namespace po = boost::program_options;
  *
  * Pipeline:  Camera -> FramePublisher
  */
-void Run(std::string camera_name, std::string server) {
+void Run(std::string camera_name, std::string server, double fps) {
   // Set up camera
   auto& camera_manager = CameraManager::GetInstance();
   CHECK(camera_manager.HasCamera(camera_name))
       << "Camera " << camera_name << " does not exist";
   auto camera = camera_manager.GetCamera(camera_name);
 
+  auto throttler = new Throttler(fps);
+  throttler->SetSource(camera->GetStream());
+
   // Set up FramePublisher (publishes frames via ZMQ)
   auto publisher = new FramePublisher(server);
-  publisher->SetSource(camera->GetStream());
+  publisher->SetSource(throttler->GetSink());
 
   publisher->Start();
+  throttler->Start();
   camera->Start();
 
   std::cout << "Press \"Enter\" to stop." << std::endl;
   getchar();
 
   camera->Stop();
+  throttler->Stop();
   publisher->Stop();
 }
 
@@ -52,6 +59,8 @@ int main(int argc, char* argv[]) {
                      "host:port to connect to (e.g., example.com:4444)");
   desc.add_options()("camera,c", po::value<string>()->required(),
                      "The name of the camera to use");
+  desc.add_options()("fps,f", po::value<double>()->required(),
+                     "The maximum framerate at which to publish.");
 
   po::variables_map vm;
   try {
@@ -79,6 +88,7 @@ int main(int argc, char* argv[]) {
 
   auto server = vm["publish_url"].as<string>();
   auto camera_name = vm["camera"].as<string>();
+  auto fps = vm["fps"].as<double>();
 
-  Run(camera_name, server);
+  Run(camera_name, server, fps);
 }
