@@ -62,7 +62,6 @@ void ImageMatch::Process() {
   if (query_data_.empty()) {
     std::vector<int> image_match_matches;
     frame->SetValue("imagematch.matches", image_match_matches);
-    auto end_time = boost::posix_time::microsec_clock::local_time();
     frame->SetValue("imagematch.end_to_end_time_micros", 0);
     frame->SetValue("imagematch.matrix_multiply_time_micros", 0);
     PushFrame(SINK_NAME, std::move(frame));
