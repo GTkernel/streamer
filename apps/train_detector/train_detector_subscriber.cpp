@@ -44,13 +44,13 @@ void ProgressTracker(StreamPtr stream) {
   reader->UnSubscribe();
 }
 
-void Run(const std::string& publisher_url, bool compress,
+void Run(const std::string& publish_url, bool compress,
          std::unordered_set<std::string> fields_to_save,
          bool save_fields_separately, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create FrameSubscriber.
-  auto subscriber = std::make_shared<FrameSubscriber>(publisher_url);
+  auto subscriber = std::make_shared<FrameSubscriber>(publish_url);
   procs.push_back(subscriber);
 
   StreamPtr stream = subscriber->GetSink();
@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()("config-dir,C", po::value<std::string>(),
                      "The directory containing Streamer's config files.");
-  desc.add_options()("publisher-url,u",
+  desc.add_options()("publish-url,u",
                      po::value<std::string>()->default_value("127.0.0.1:5536"),
                      "The URL (host:port) on which the frame stream is being "
                      "published.");
@@ -164,12 +164,12 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  auto publisher_url = args["publisher-url"].as<std::string>();
+  auto publish_url = args["publish-url"].as<std::string>();
   bool compress = args.count("compress");
   bool save_fields_separately = args.count("save-fields-separately");
   auto fields_to_save = args["fields-to-save"].as<std::vector<std::string>>();
   auto output_dir = args["output-dir"].as<std::string>();
-  Run(publisher_url, compress,
+  Run(publish_url, compress,
       std::unordered_set<std::string>{fields_to_save.begin(),
                                       fields_to_save.end()},
       save_fields_separately, output_dir);
