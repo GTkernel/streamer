@@ -6,7 +6,7 @@
 
 
 
-void Run(const string pipeline_filepath, bool display) {
+void Run(const string pipeline_filepath) {
   std::ifstream i(pipeline_filepath);
   nlohmann::json json;
   i >> json;
@@ -33,7 +33,6 @@ int main(int argc, char *argv[]) {
                      boost::program_options::value<string>()->value_name(
 		         "PIPELINE-FILE")->required(),
                      "Path to the JSON file describing a pipeline");
-  desc.add_options()("display,d", "Enable display or not");
   desc.add_options()("device", boost::program_options::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
   desc.add_options()("config-dir,C",
@@ -62,12 +61,11 @@ int main(int argc, char *argv[]) {
 
   int device_number = args["device"].as<int>();
   string pipeline_filepath = args["pipeline-file"].as<string>();
-  bool display = args.count("display") != 0;
 
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
-  Run(pipeline_filepath, display);
+  Run(pipeline_filepath);
   return 0;
 }
