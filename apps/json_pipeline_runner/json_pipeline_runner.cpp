@@ -1,71 +1,72 @@
+/**
+ * @brief json_pipeline_runner.cpp - Deploy pipeline from JSON spec
+ */
+
+#include <cstdio>
 
 #include <boost/program_options.hpp>
 
+#include "camera/camera_manager.h"
 #include "pipeline/pipeline.h"
-#include "streamer.h"
 
+namespace po = boost::program_options;
 
-
-void Run(const string pipeline_filepath) {
+/**
+ * @brief Deploy pipeline from JSON Spec
+ *
+ */
+void Run(std::string pipeline_filepath) {
   std::ifstream i(pipeline_filepath);
   nlohmann::json json;
   i >> json;
 
   std::shared_ptr<Pipeline> pipeline = Pipeline::ConstructPipeline(json);
-
-  printf("Before Pipeline::Start()\n");
   pipeline->Start();
-  printf("After Pipeline::Start()\n");
 
   while(true) {};
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   gst_init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
 
-  boost::program_options::options_description desc(
-      "Runs the pipeline described by a JSON file");
-  desc.add_options()("help,h", "Print the help message");
-  desc.add_options()("pipeline-file,f",
-                     boost::program_options::value<string>()->value_name(
-		         "PIPELINE-FILE")->required(),
+  po::options_description desc("Runs the pipeline described by a JSON file");
+  desc.add_options()("help,h", "print the help message");
+  desc.add_options()("config_dir,C", po::value<string>(),
+                     "The directory to find streamer's configuration");
+  desc.add_options()("pipeline_file,f", po::value<string>(),
                      "Path to the JSON file describing a pipeline");
-  desc.add_options()("device", boost::program_options::value<int>()->default_value(-1),
-                     "which device to use, -1 for CPU, > 0 for GPU device");
-  desc.add_options()("config-dir,C",
-                     boost::program_options::value<string>()->value_name("CONFIG-DIR"),
-		     "The directory to find streamer's configurations");
 
-  boost::program_options::variables_map args;
+  po::variables_map vm;
   try {
-    boost::program_options::store(
-        boost::program_options::parse_command_line(argc, argv, desc), args);
-    boost::program_options::notify(args);
-  } catch (const boost::program_options::error &e) {
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+  } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;
   }
 
-  if (args.count("help")) {
+  if (vm.count("help")) {
     std::cout << desc << std::endl;
     return 1;
   }
 
-  if (args.count("config-dir")) {
-    Context::GetContext().SetConfigDir(args["config-dir"].as<string>());
-  }
+  //// Parse arguments
 
-  int device_number = args["device"].as<int>();
-  string pipeline_filepath = args["pipeline-file"].as<string>();
+  if (vm.count("config_dir")) {
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+  }
 
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
-  Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
+
+  auto pipeline_filepath = vm["pipeline_file"].as<string>();
 
   Run(pipeline_filepath);
+
   return 0;
 }
+
