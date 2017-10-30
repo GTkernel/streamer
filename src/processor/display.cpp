@@ -16,7 +16,7 @@ Display::Display(std::string key, unsigned int angle, float zoom,
       window_name_(window_name) {
 
     CHECK(zoom >= 0 && zoom <= 1) << "Display zoom must be between 0 and 1";
-    CHECK(angle == 0 || angle == 90 || angle == 180 || angle == 270) 
+    CHECK(angle == 0 || angle == 90 || angle == 180 || angle == 270)
         << "Display angle must be one of {0, 90, 180, 270}";
 }
 
@@ -48,6 +48,8 @@ void Display::Process() {
     cv::resize(img, m, cv::Size(), 1, 1);
   RotateImage(m, angle_);
   cv::imshow(window_name_, m);
+
+  unsigned char q = cv::waitKey(10);
 
   PushFrame(SINK_NAME, std::move(frame));
 }
