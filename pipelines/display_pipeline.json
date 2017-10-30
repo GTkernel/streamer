@@ -1,0 +1,23 @@
+{
+  "pipeline_name": "Display",
+  "processors": [{
+      "processor_name": "Camera",
+      "processor_type": "Camera",
+      "parameters": {
+        "camera_name": "GST_TEST"
+      }
+    },
+    {
+      "processor_name": "Display",
+      "processor_type": "Display",
+      "parameters": {
+        "key": "original_image",
+        "angle": "90",
+        "zoom": "1"
+      },
+      "inputs": {
+        "input": "Camera:output"
+      }
+    }
+  ]
+}
