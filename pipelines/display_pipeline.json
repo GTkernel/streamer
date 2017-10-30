@@ -13,7 +13,8 @@
       "parameters": {
         "key": "original_image",
         "angle": "90",
-        "zoom": "1"
+        "zoom": "1",
+        "window_name": "display_window"
       },
       "inputs": {
         "input": "Camera:output"

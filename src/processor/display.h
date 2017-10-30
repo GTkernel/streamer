@@ -9,7 +9,8 @@
 // The Display processor displays frames at a specified zoom and angle
 class Display : public Processor {
  public:
-  Display(std::string key, unsigned int angle, float zoom);
+  Display(std::string key, unsigned int angle, float zoom,
+          std::string window_name_);
   static std::shared_ptr<Display> Create(const FactoryParamsType& params);
 
   void SetSource(StreamPtr stream);
@@ -27,6 +28,7 @@ class Display : public Processor {
   std::string key_;
   unsigned int angle_;
   float zoom_;
+  std::string window_name_;
 };
 
 #endif  // STREAMER_PROCESSOR_DISPLAY_H_

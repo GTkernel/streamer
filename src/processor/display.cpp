@@ -7,11 +7,13 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
-Display::Display(std::string key, unsigned int angle, float zoom)
+Display::Display(std::string key, unsigned int angle, float zoom,
+                 std::string window_name)
     : Processor(PROCESSOR_TYPE_DISPLAY, {SOURCE_NAME}, {SINK_NAME}),
       key_(key),
       angle_(angle),
-      zoom_(zoom) {
+      zoom_(zoom),
+      window_name_(window_name) {
 
     CHECK(zoom >= 0 && zoom <= 1) << "Display zoom must be between 0 and 1";
     CHECK(angle == 0 || angle == 90 || angle == 180 || angle == 270) 
@@ -22,7 +24,8 @@ std::shared_ptr<Display> Display::Create(const FactoryParamsType& params) {
   std::string key = params.at("key");
   unsigned int angle = std::stoi(params.at("angle"));
   double zoom = std::stod(params.at("zoom"));
-  return std::make_shared<Display>(key, angle, zoom);
+  std::string window_name = params.at("window_name");
+  return std::make_shared<Display>(key, angle, zoom, window_name);
 }
 
 void Display::SetSource(StreamPtr stream) {
@@ -44,7 +47,7 @@ void Display::Process() {
   else
     cv::resize(img, m, cv::Size(), 1, 1);
   RotateImage(m, angle_);
-  cv::imshow("Display Window", m);
+  cv::imshow(window_name_, m);
 
   PushFrame(SINK_NAME, std::move(frame));
 }
