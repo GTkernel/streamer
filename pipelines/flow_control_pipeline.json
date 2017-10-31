@@ -14,7 +14,7 @@
         "max_tokens": "5"
       },
       "inputs": {
-        "input": "Camera:output"
+        "input": "Camera"
       }
     },
     {
@@ -24,7 +24,7 @@
         "fps": "10"
       },
       "inputs": {
-        "input": "Entrance:output"
+        "input": "Entrance"
       }
     },
     {
@@ -33,7 +33,7 @@
       "parameters": {
       },
       "inputs": {
-        "input": "FirstThrottler:output"
+        "input": "FirstThrottler"
       }
     },
     {
@@ -43,7 +43,7 @@
         "fps": "5"
       },
       "inputs": {
-        "input": "Exit:output"
+        "input": "Exit"
       }
     }
   ]

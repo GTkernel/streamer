@@ -15,7 +15,7 @@
         "output_dir": "/tmp/frame_writer/"
       },
       "inputs": {
-        "input": "Camera:output"
+        "input": "Camera"
       }
     }
 

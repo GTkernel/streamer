@@ -17,7 +17,7 @@
         "subtract_mean": "false"
       },
       "inputs": {
-        "input": "Camera:output"
+        "input": "Camera"
       }
     },
     {
@@ -29,7 +29,7 @@
         "num_labels": "5"
       },
       "inputs": {
-        "input": "Transformer:output"
+        "input": "Transformer"
       }
     }
   ]
