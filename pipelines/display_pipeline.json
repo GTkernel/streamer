@@ -13,7 +13,7 @@
       "parameters": {
         "key": "original_image",
         "angle": "90",
-        "zoom": "1",
+        "size_ratio": "0.5",
         "window_name": "display_window"
       },
       "inputs": {
