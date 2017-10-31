@@ -11,6 +11,8 @@
 #include "pipeline/spl_parser.h"
 #include "processor/processor_factory.h"
 
+constexpr auto DEFAULT_SINK_NAME = "output";
+
 std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
     const std::vector<SPLStatement>& spl_statements) {
   std::shared_ptr<Pipeline> pipeline(new Pipeline);
@@ -98,14 +100,22 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(nlohmann::json json) {
       std::shared_ptr<Processor> cur_processor =
           pipeline->GetProcessor(cur_proc_id);
 
-      // auto inputs = *inputs_it;
       for (const auto input : inputs) {
         std::string src = input.first;
         std::string stream_id = input.second;
-        int i = stream_id.find(":");
-        std::string src_proc_id = stream_id.substr(0, i);
-        std::string sink = stream_id.substr(i + 1, stream_id.length());
-
+        size_t i = stream_id.find(":");
+        std::string src_proc_id;
+        std::string sink;
+        if (i == std::string::npos) {
+            // Use default sink name
+            src_proc_id = stream_id;
+            sink = DEFAULT_SINK_NAME;
+        }
+        else {
+            // Use custom sink name
+            src_proc_id = stream_id.substr(0, i);
+            sink = stream_id.substr(i + 1, stream_id.length());
+        }
         std::shared_ptr<Processor> src_processor =
             pipeline->GetProcessor(src_proc_id);
 
