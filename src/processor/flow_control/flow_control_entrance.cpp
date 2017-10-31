@@ -47,6 +47,7 @@ void FlowControlEntrance::Process() {
   {
     std::lock_guard<std::mutex> guard(mtx_);
     if (num_tokens_available_) {
+      frames_with_tokens_.insert(id);
       --num_tokens_available_;
       push = true;
     }
@@ -60,11 +61,18 @@ void FlowControlEntrance::Process() {
   }
 }
 
-void FlowControlEntrance::ReturnToken() {
+void FlowControlEntrance::ReturnToken(unsigned long frame_id) {
   std::lock_guard<std::mutex> guard(mtx_);
-  ++num_tokens_available_;
-  if (num_tokens_available_ > max_tokens_) {
-    throw std::runtime_error(
-        "More flow control tokens have been returned than were distributed.");
+  if (frames_with_tokens_.find(frame_id) == frames_with_tokens_.end()) {
+    LOG(INFO) << "Frame " << frame_id
+              << " releasing token that was not issued.";
+  } else {
+    frames_with_tokens_.erase(frame_id);
+
+    ++num_tokens_available_;
+    if (num_tokens_available_ > max_tokens_) {
+      throw std::runtime_error(
+          "More flow control tokens have been returned than were distributed.");
+    }
   }
 }

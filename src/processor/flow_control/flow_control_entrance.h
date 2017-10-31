@@ -17,7 +17,7 @@ class FlowControlEntrance : public Processor {
   // queue in the flow control domain. This is to ensure that no frames are
   // dropped due to queue overflow.
   FlowControlEntrance(unsigned int max_tokens);
-  void ReturnToken();
+  void ReturnToken(unsigned long frame_id);
   static std::shared_ptr<FlowControlEntrance> Create(
       const FactoryParamsType& params);
 
@@ -37,6 +37,8 @@ class FlowControlEntrance : public Processor {
   // of tokens.
   unsigned int max_tokens_;
   unsigned int num_tokens_available_;
+  // IDs of frame with tokens
+  std::unordered_set<unsigned long> frames_with_tokens_;
   std::mutex mtx_;
 };
 

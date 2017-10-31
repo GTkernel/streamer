@@ -86,6 +86,12 @@ class Processor {
   virtual double GetAvgQueueLatencyMs() const;
 
   /**
+   * @brief Get overall throughput of processor.
+   * @return in FPS.
+   */
+  virtual double GetHistoricalProcessFps();
+
+  /**
    * @brief Get the type of the processor
    */
   ProcessorType GetType() const;
@@ -94,7 +100,7 @@ class Processor {
 
   // Configure whether this processor should block when pushing frames to its
   // outputs streams if any of its output streams is full.
-  void SetBlockOnPush(bool block);
+  virtual void SetBlockOnPush(bool block);
 
  protected:
   /**
@@ -143,6 +149,7 @@ class Processor {
  private:
   const ProcessorType type_;
   zmq::socket_t* control_socket_;
+  Timer processor_timer_;
   // Whether to block when pushing frames if any output streams are full.
   std::atomic<bool> block_on_push_;
 };

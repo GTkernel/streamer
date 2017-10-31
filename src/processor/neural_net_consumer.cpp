@@ -15,7 +15,7 @@ NeuralNetConsumer::NeuralNetConsumer(
 NeuralNetConsumer::NeuralNetConsumer(
     ProcessorType type, const std::vector<std::string>& source_names,
     const std::vector<std::string>& sink_names)
-    : Processor(type, source_names, sink_names) {}
+    : Processor(type, source_names, sink_names), nne_(NULL) {}
 
 void NeuralNetConsumer::SetSource(const string& name, StreamPtr stream) {
   if (NneIsPrivate()) {
@@ -24,6 +24,15 @@ void NeuralNetConsumer::SetSource(const string& name, StreamPtr stream) {
   } else {
     Processor::SetSource(name, stream);
   }
+}
+
+void NeuralNetConsumer::SetBlockOnPush(bool block) {
+  if (NneIsPrivate()) {
+    // If we are managing the NeuralNetEvaluator, then call SetBlockOnPush() for
+    // it as well.
+    nne_->SetBlockOnPush(block);
+  }
+  Processor::SetBlockOnPush(block);
 }
 
 double NeuralNetConsumer::GetTrailingAvgProcessingLatencyMs() const {

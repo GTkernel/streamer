@@ -42,7 +42,12 @@ Processor::~Processor() {
   delete control_socket_;
 }
 
-StreamPtr Processor::GetSink(const string& name) { return sinks_[name]; }
+StreamPtr Processor::GetSink(const string& name) {
+  if (sinks_.find(name) == sinks_.end()) {
+    throw std::out_of_range(name);
+  }
+  return sinks_.at(name);
+}
 
 void Processor::SetSource(const string& name, StreamPtr stream) {
   if (sources_.find(name) == sources_.end()) {
@@ -59,6 +64,8 @@ void Processor::SetSource(const string& name, StreamPtr stream) {
 bool Processor::Start() {
   LOG(INFO) << "Start called";
   CHECK(stopped_) << "Processor has already started";
+
+  processor_timer_.Start();
 
   // Check sources are filled
   for (const auto& source : sources_) {
@@ -122,12 +129,11 @@ void Processor::ProcessorLoop() {
 
       auto frame = source_stream->PopFrame();
       if (frame == nullptr) {
-        if (stopped_) {
-          // We can't get frame, we should have stopped
-          return;
-        } else {
-          LOG(ERROR) << "Frame was null!";
-        }
+        // The only way for PopFrame() to return a nullptr when called without a
+        // a timeout is if Stop() was called on the StreamReader. That should
+        // only happen if this processor is being stopped. Therefore, we should
+        // just return.
+        return;
       } else if (frame->IsStopFrame()) {
         // This frame is signaling the pipeline to stop. We need to forward
         // it to our sinks, then not process it or any future frames.
@@ -177,6 +183,10 @@ bool Processor::IsStarted() const { return !stopped_; }
 
 double Processor::GetTrailingAvgProcessingLatencyMs() const {
   return trailing_avg_processing_latency_ms_;
+}
+
+double Processor::GetHistoricalProcessFps() {
+  return num_frames_processed_ / (processor_timer_.ElapsedMSec() / 1000);
 }
 
 double Processor::GetAvgProcessingLatencyMs() const {
