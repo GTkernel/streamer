@@ -1,5 +1,5 @@
 {
-  "pipeline_name": "FlowControl",
+  "pipeline_name": "FlowControlExample",
   "processors": [{
       "processor_name": "Camera",
       "processor_type": "Camera",
@@ -11,7 +11,7 @@
       "processor_name": "Entrance",
       "processor_type": "FlowControlEntrance",
       "parameters": {
-        "max_tokens": "50"
+        "max_tokens": "5"
       },
       "inputs": {
         "input": "Camera:output"

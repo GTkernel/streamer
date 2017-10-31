@@ -1,5 +1,5 @@
 {
-  "pipeline_name": "Display",
+  "pipeline_name": "DisplayExample",
   "processors": [{
       "processor_name": "Camera",
       "processor_type": "Camera",
@@ -12,9 +12,9 @@
       "processor_type": "Display",
       "parameters": {
         "key": "original_image",
-        "angle": "90",
+        "angle": "0",
         "size_ratio": "0.5",
-        "window_name": "display_window"
+        "window_name": "Camera Stream"
       },
       "inputs": {
         "input": "Camera:output"

@@ -1,5 +1,5 @@
 {
-  "pipeline_name": "ObjectClassifier",
+  "pipeline_name": "ImageClassifierExample",
   "processors": [{
       "processor_name": "Camera",
       "processor_type": "Camera",
@@ -24,7 +24,7 @@
       "processor_name": "Classifier",
       "processor_type": "ImageClassifier",
       "parameters": {
-        "model": "inception",
+        "model": "googlenet",
         "num_channels": "3",
         "num_labels": "5"
       },

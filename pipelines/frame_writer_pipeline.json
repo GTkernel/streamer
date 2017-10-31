@@ -1,5 +1,5 @@
 {
-  "pipeline_name": "ObjectClassifier",
+  "pipeline_name": "FrameWriterExample",
   "processors": [{
       "processor_name": "Camera",
       "processor_type": "Camera",
@@ -12,7 +12,7 @@
       "processor_type": "FrameWriter",
       "parameters": {
         "format": "binary",
-        "output_dir": "/tmp/classifier_output"
+        "output_dir": "/tmp/frame_writer/"
       },
       "inputs": {
         "input": "Camera:output"
