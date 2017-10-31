@@ -168,8 +168,6 @@ bool Pipeline::Start() {
 
 void Pipeline::Stop() {
   std::deque<Vertex> c;
-  // TODO: This should 'reverse_dependency_graph_' but there is currently a
-  // race condition of sorts that causes a "Frame was null!" error.
   boost::topological_sort(reverse_dependency_graph_, std::front_inserter(c));
   std::cout << "Pipeline stop order: ";
   for (auto& i : c) {
