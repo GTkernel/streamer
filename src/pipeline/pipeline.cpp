@@ -2,6 +2,7 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 11/5/16.
 //
 
+#include <boost/graph/topological_sort.hpp>
 #include <unordered_map>
 
 #include "json/src/json.hpp"
@@ -23,8 +24,10 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
         std::shared_ptr<Processor> processor;
         processor = ProcessorFactory::Create(stmt.processor_type, stmt.params);
         pipeline->processors_.insert({stmt.processor_name, processor});
-        pipeline->dependency_graph_.insert({processor.get(), {}});
-        pipeline->reverse_dependency_graph_.insert({processor.get(), {}});
+        pipeline->processor_names_.push_back(stmt.processor_name);
+        boost::add_vertex(stmt.processor_name, pipeline->dependency_graph_);
+        boost::add_vertex(stmt.processor_name,
+                          pipeline->reverse_dependency_graph_);
         break;
       }
       case SPL_STATEMENT_CONNECT: {
@@ -41,10 +44,12 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(
         lhs_processor->SetSource(stmt.lhs_stream_name,
                                  rhs_processor->GetSink(stmt.rhs_stream_name));
 
-        pipeline->dependency_graph_[lhs_processor.get()].insert(
-            rhs_processor.get());
-        pipeline->reverse_dependency_graph_[rhs_processor.get()].insert(
-            lhs_processor.get());
+        boost::add_edge_by_label(stmt.lhs_processor_name,
+                                 stmt.rhs_processor_name,
+                                 pipeline->dependency_graph_);
+        boost::add_edge_by_label(stmt.rhs_processor_name,
+                                 stmt.lhs_processor_name,
+                                 pipeline->reverse_dependency_graph_);
         break;
       }
       default:
@@ -60,7 +65,6 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(nlohmann::json json) {
   std::cout << "Pipeline:\n" + json.dump(4) << std::endl;
 
   std::shared_ptr<Pipeline> pipeline(new Pipeline);
-  std::unordered_map<std::string, std::string> id_to_type;
 
   // First pass to create all processors
   for (auto& processor_spec : processors) {
@@ -83,9 +87,10 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(nlohmann::json json) {
     std::shared_ptr<Processor> processor =
         ProcessorFactory::Create(processor_type, params);
     pipeline->processors_.insert({processor_name, processor});
-    pipeline->dependency_graph_.insert({processor.get(), {}});
-    pipeline->reverse_dependency_graph_.insert({processor.get(), {}});
-    id_to_type[processor_name] = processor_type_str;
+
+    pipeline->processor_names_.push_back(processor_name);
+    boost::add_vertex(processor_name, pipeline->dependency_graph_);
+    boost::add_vertex(processor_name, pipeline->reverse_dependency_graph_);
   }
 
   // Second pass to create all processors
@@ -119,10 +124,10 @@ std::shared_ptr<Pipeline> Pipeline::ConstructPipeline(nlohmann::json json) {
             pipeline->GetProcessor(src_proc_id);
 
         cur_processor->SetSource(src, src_processor->GetSink(sink));
-        pipeline->dependency_graph_[cur_processor.get()].insert(
-            src_processor.get());
-        pipeline->reverse_dependency_graph_[src_processor.get()].insert(
-            cur_processor.get());
+        boost::add_edge_by_label(src_proc_id, cur_proc_id,
+                                 pipeline->reverse_dependency_graph_);
+        boost::add_edge_by_label(cur_proc_id, src_proc_id,
+                                 pipeline->dependency_graph_);
 
         std::cout << "Connected source \"" << src << "\" of processor \""
                   << cur_proc_id << "\" to the sink \"" << sink
@@ -148,66 +153,29 @@ std::shared_ptr<Processor> Pipeline::GetProcessor(const std::string& name) {
 }
 
 bool Pipeline::Start() {
-  while (true) {
-    bool some_processor_started = false;
-    unsigned int started_processor = 0;
-    for (const auto& itr : dependency_graph_) {
-      auto processor = itr.first;
-      // For all not yet start processors
-      if (!processor->IsStarted()) {
-        unsigned int started_dep = 0;
-        for (const auto& dep : itr.second) {
-          if (dep->IsStarted()) started_dep += 1;
-        }
-        if (itr.second.size() == started_dep) {
-          // All dependencies have started
-          processor->Start();
-          some_processor_started = true;
-        }
-      } else {
-        started_processor += 1;
-      }
-    }  // For
-    if (started_processor == dependency_graph_.size()) {
-      // All processors have started
-      break;
-    } else {
-      if (some_processor_started) {
-        // Scan again
-      } else {
-        // We have a loop
-        LOG(ERROR) << "Has cycle in pipeline dependency graph!";
-        return false;
-      }
-    }
-  }  // While
+  std::deque<Vertex> c;
+  boost::topological_sort(dependency_graph_, std::front_inserter(c));
+  std::cout << "Pipeline start order: ";
+  for (auto& i : c) {
+    auto name = processor_names_[i];
+    std::cout << name << " ";
+    processors_[name]->Start();
+  }
+  std::cout << std::endl;
 
   return true;
 }
 
 void Pipeline::Stop() {
-  while (true) {
-    unsigned int stopped_processor = 0;
-    for (const auto& itr : reverse_dependency_graph_) {
-      auto processor = itr.first;
-      // For all not yet stop processors
-      if (processor->IsStarted()) {
-        unsigned int stopped_dep = 0;
-        for (const auto& dep : itr.second) {
-          if (!dep->IsStarted()) stopped_dep += 1;
-        }
-        if (itr.second.size() == stopped_dep) {
-          // All dependencies have stopped
-          processor->Stop();
-        }
-      } else {
-        stopped_processor += 1;
-      }
-    }  // For
-    if (stopped_processor == reverse_dependency_graph_.size()) {
-      // All processors have stopped
-      break;
-    }
-    // No need to check for cycle, it has been checked in Start()
-  }  // While
+  std::deque<Vertex> c;
+  // TODO: This should 'reverse_dependency_graph_' but there is currently a
+  // race condition of sorts that causes a "Frame was null!" error.
+  boost::topological_sort(dependency_graph_, std::front_inserter(c));
+  std::cout << "Pipeline stop order: ";
+  for (auto& i : c) {
+    auto name = processor_names_[i];
+    std::cout << name << " ";
+    processors_[name]->Stop();
+  }
+  std::cout << std::endl;
 }

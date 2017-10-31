@@ -5,6 +5,8 @@
 #ifndef STREAMER_PIPELINE_PIPELINE_H_
 #define STREAMER_PIPELINE_PIPELINE_H_
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/labeled_graph.hpp>
 #include <unordered_map>
 
 #include "json/src/json.hpp"
@@ -14,6 +16,11 @@
 #include "processor/processor.h"
 
 class Pipeline {
+  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>
+      AdjList;
+  typedef boost::labeled_graph<AdjList, std::string, boost::hash_mapS> Graph;
+  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+
  public:
   static std::shared_ptr<Pipeline> ConstructPipeline(
       const std::vector<SPLStatement>& spl_statements);
@@ -43,13 +50,12 @@ class Pipeline {
   void Stop();
 
  private:
-  std::unordered_map<string, std::shared_ptr<Processor>> processors_;
+  std::unordered_map<std::string, std::shared_ptr<Processor>> processors_;
+  std::vector<std::string> processor_names_;
   // I depend on who
-  std::unordered_map<Processor*, std::unordered_set<Processor*>>
-      dependency_graph_;
+  Graph dependency_graph_;
   // Who depends on me
-  std::unordered_map<Processor*, std::unordered_set<Processor*>>
-      reverse_dependency_graph_;
+  Graph reverse_dependency_graph_;
 };
 
 #endif  // STREAMER_PIPELINE_PIPELINE_H_
