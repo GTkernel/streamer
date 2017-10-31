@@ -71,6 +71,8 @@ bool Processor::Start(size_t buf_size) {
   LOG(INFO) << "Start called";
   CHECK(stopped_) << "Processor has already started";
 
+  processor_timer_.Start();
+
   // Check sources are filled
   for (const auto& source : sources_) {
     CHECK(source.second != nullptr)
@@ -194,6 +196,10 @@ bool Processor::IsStarted() const { return !stopped_; }
 
 double Processor::GetTrailingAvgProcessingLatencyMs() const {
   return trailing_avg_processing_latency_ms_;
+}
+
+double Processor::GetHistoricalProcessFps() {
+  return num_frames_processed_ / (processor_timer_.ElapsedMSec() / 1000);
 }
 
 double Processor::GetAvgProcessingLatencyMs() const {
