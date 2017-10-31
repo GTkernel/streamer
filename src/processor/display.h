@@ -32,4 +32,3 @@ class Display : public Processor {
 };
 
 #endif  // STREAMER_PROCESSOR_DISPLAY_H_
-

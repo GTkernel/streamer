@@ -14,10 +14,9 @@ Display::Display(std::string key, unsigned int angle, float zoom,
       angle_(angle),
       zoom_(zoom),
       window_name_(window_name) {
-
-    CHECK(zoom >= 0 && zoom <= 1) << "Display zoom must be between 0 and 1";
-    CHECK(angle == 0 || angle == 90 || angle == 180 || angle == 270)
-        << "Display angle must be one of {0, 90, 180, 270}";
+  CHECK(zoom >= 0 && zoom <= 1) << "Display zoom must be between 0 and 1";
+  CHECK(angle == 0 || angle == 90 || angle == 180 || angle == 270)
+      << "Display angle must be one of {0, 90, 180, 270}";
 }
 
 std::shared_ptr<Display> Display::Create(const FactoryParamsType& params) {

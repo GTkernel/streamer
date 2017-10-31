@@ -13,11 +13,10 @@
 #include "pipeline/spl_parser.h"
 #include "processor/processor.h"
 
-
 class Pipeline {
  public:
   static std::shared_ptr<Pipeline> ConstructPipeline(
-      const std::vector<SPLStatement> &spl_statements);
+      const std::vector<SPLStatement>& spl_statements);
   static std::shared_ptr<Pipeline> ConstructPipeline(nlohmann::json json);
 
   /**
