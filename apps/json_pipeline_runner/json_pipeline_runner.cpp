@@ -57,7 +57,7 @@ static std::shared_ptr<std::thread> ShowGraph(
 }
 #endif
 
-void Run(const std::string& pipeline_filepath, bool show_graph) {
+void Run(const std::string& pipeline_filepath, bool dry_run, bool show_graph) {
   std::ifstream i(pipeline_filepath);
   nlohmann::json json;
   i >> json;
@@ -70,10 +70,14 @@ void Run(const std::string& pipeline_filepath, bool show_graph) {
   auto t = show_graph ? ShowGraph(pipeline) : nullptr;
 #endif
 
-  pipeline->Start();
+  if (!dry_run) {
+    pipeline->Start();
+  }
 
-  std::cout << "Press \"Enter\" to stop." << std::endl;
-  getchar();
+  if (!dry_run || show_graph){
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
+  }
 
 #ifdef USE_GRAPHVIZ
   if (show_graph) {
@@ -82,7 +86,9 @@ void Run(const std::string& pipeline_filepath, bool show_graph) {
   }
 #endif
 
-  pipeline->Stop();
+  if (!dry_run) {
+    pipeline->Stop();
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -92,6 +98,7 @@ int main(int argc, char* argv[]) {
                      "The directory containing Streamer's config files.");
   desc.add_options()("pipeline,p", po::value<std::string>()->required(),
                      "Path to a JSON file describing a pipeline.");
+  desc.add_options()("dry-run,n", "Create pipeline but do not run it");
 #ifdef USE_GRAPHVIZ
   desc.add_options()("graph,g", "Display pipeline graph visually");
 #endif
@@ -126,11 +133,12 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   std::string pipeline_filepath = args["pipeline"].as<std::string>();
+  bool dry_run = args.count("dry-run");
   bool show_graph = false;
 #ifdef USE_GRAPHVIZ
   show_graph = args.count("graph");
 #endif
   std::cout << show_graph << std::endl;
-  Run(pipeline_filepath, show_graph);
+  Run(pipeline_filepath, dry_run, show_graph);
   return 0;
 }
