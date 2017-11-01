@@ -42,6 +42,11 @@ class Pipeline {
   // Processor failed to stop.
   bool Stop();
 
+  /**
+   * @brief Get reverse dependency graph in (the pipeline) in GraphViz format
+   */
+  const std::string GetGraph() const;
+
  private:
   std::unordered_map<std::string, std::shared_ptr<Processor>> processors_;
   std::vector<std::string> processor_names_;
