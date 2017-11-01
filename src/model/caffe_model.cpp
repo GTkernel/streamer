@@ -167,7 +167,7 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src,
 
   std::vector<int> mat_size;
   decltype(src->shape(0)) total_size = 1;
-  for (decltype(src->num_axes()) i = 1; i < src->num_axes(); ++i) {
+  for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
     mat_size.push_back(src->shape(i));
     total_size *= src->shape(i);
   }
@@ -188,7 +188,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   // mat_size is used to construct the cv::Mat
   std::vector<int> mat_size;
   decltype(src->shape(0)) total_size = 1;
-  for (decltype(src->num_axes()) i = 1; i < src->num_axes(); ++i) {
+  for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
     mat_size.push_back(src->shape(i));
     total_size *= src->shape(i);
   }
