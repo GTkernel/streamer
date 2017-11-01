@@ -1,17 +1,15 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 11/5/16.
-//
 
 #ifndef STREAMER_PIPELINE_PIPELINE_H_
 #define STREAMER_PIPELINE_PIPELINE_H_
 
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/labeled_graph.hpp>
+#include <memory>
+#include <string>
 #include <unordered_map>
 
-#include "json/src/json.hpp"
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/labeled_graph.hpp>
+#include <json/src/json.hpp>
 
-#include "common/common.h"
 #include "pipeline/spl_parser.h"
 #include "processor/processor.h"
 
@@ -22,39 +20,34 @@ class Pipeline {
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
  public:
+  Pipeline();
+
+  // Creates a Pipeline from SPL statements.
   static std::shared_ptr<Pipeline> ConstructPipeline(
       const std::vector<SPLStatement>& spl_statements);
+  // Creates a Pipeline from a JSON specification.
   static std::shared_ptr<Pipeline> ConstructPipeline(nlohmann::json json);
 
-  /**
-   * @brief Initialize the pipeline from spl statements
-   * @param spl_statements The spl statements used to construct the pipeline
-   */
-  Pipeline();
-  /**
-   * @brief Get a processor of the pipeline by its name
-   * @return The processor
-   */
+  // Returns the Processor with the specified name.
   std::shared_ptr<Processor> GetProcessor(const string& name);
 
+  // Returns all of the Processors in this Pipeline.
   std::unordered_map<string, std::shared_ptr<Processor>> GetProcessors();
 
-  /**
-   * @brief Start executing the pipeline
-   */
+  // Starts executing the pipeline. Returns true if successful, or false if a
+  // Processor failed to start.
   bool Start();
 
-  /**
-   * @brief Stop executing the pipeline
-   */
-  void Stop();
+  // Stops executing the pipeline. Returns true if successful, or false if a
+  // Processor failed to stop.
+  bool Stop();
 
  private:
   std::unordered_map<std::string, std::shared_ptr<Processor>> processors_;
   std::vector<std::string> processor_names_;
-  // I depend on who
+  // Graph that tracks the Processors that each Processor depends on.
   Graph dependency_graph_;
-  // Who depends on me
+  // Graph that tracks the Processors that depend on each Processor.
   Graph reverse_dependency_graph_;
 };
 
