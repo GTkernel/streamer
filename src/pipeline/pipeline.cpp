@@ -189,6 +189,7 @@ bool Pipeline::Stop() {
       return false;
     }
   }
+  LOG(INFO) << msg.str();
 
   return true;
 }
