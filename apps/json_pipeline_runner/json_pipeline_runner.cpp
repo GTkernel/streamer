@@ -36,7 +36,7 @@ static std::shared_ptr<std::thread> ShowGraph(
 
   char* buf;
   unsigned int len;
-  err = gvRenderData(gvc, dg, "png", &buf, &len);
+  err = gvRenderData(gvc, dg, "bmp", &buf, &len);
   CHECK(err == 0);
   buf = (char*)realloc(buf, len + 1);
 
