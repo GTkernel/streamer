@@ -1,0 +1,50 @@
+{
+  "pipeline_name": "FlowControlExample",
+  "processors": [{
+      "processor_name": "Camera",
+      "processor_type": "Camera",
+      "parameters": {
+        "camera_name": "GST_TEST"
+      }
+    },
+    {
+      "processor_name": "Entrance",
+      "processor_type": "FlowControlEntrance",
+      "parameters": {
+        "max_tokens": "5"
+      },
+      "inputs": {
+        "input": "Camera"
+      }
+    },
+    {
+      "processor_name": "FirstThrottler",
+      "processor_type": "Throttler",
+      "parameters": {
+        "fps": "10"
+      },
+      "inputs": {
+        "input": "Entrance"
+      }
+    },
+    {
+      "processor_name": "Exit",
+      "processor_type": "FlowControlExit",
+      "parameters": {
+      },
+      "inputs": {
+        "input": "FirstThrottler"
+      }
+    },
+    {
+      "processor_name": "SecondThrottler",
+      "processor_type": "Throttler",
+      "parameters": {
+        "fps": "5"
+      },
+      "inputs": {
+        "input": "Exit"
+      }
+    }
+  ]
+}
