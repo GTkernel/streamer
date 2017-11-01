@@ -74,7 +74,7 @@ void Run(const std::string& pipeline_filepath, bool dry_run, bool show_graph) {
     pipeline->Start();
   }
 
-  if (!dry_run || show_graph){
+  if (!dry_run || show_graph) {
     std::cout << "Press \"Enter\" to stop." << std::endl;
     getchar();
   }
