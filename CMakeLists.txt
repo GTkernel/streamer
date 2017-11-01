@@ -29,7 +29,7 @@ pkg_check_modules(GLOG REQUIRED libglog)
 pkg_check_modules(EIGEN3 REQUIRED eigen3)
 pkg_check_modules(ZMQ REQUIRED libzmq)
 find_package(Boost REQUIRED COMPONENTS
-  system filesystem serialization iostreams thread date_time)
+  system filesystem serialization iostreams thread date_time graph)
 find_package(JeMalloc)
 
 # Determine if is on Tegra
@@ -142,6 +142,15 @@ if (USE_RPC)
     ${GRPC_INCLUDE_DIRS}
   )
   add_definitions("-D USE_RPC")
+endif()
+
+option(USE_GRAPHVIZ "Build GraphViz support." OFF)
+if (USE_GRAPHVIZ)
+  pkg_check_modules(GVC REQUIRED libgvc)
+  include_directories(SYSTEM
+    ${GVC_INCLUDE_DIRS}
+  )
+  add_definitions("-D USE_GRAPHVIZ")
 endif()
 
 # Common include paths

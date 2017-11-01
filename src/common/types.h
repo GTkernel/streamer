@@ -204,6 +204,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_COMPRESSOR,
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_DB_WRITER,
+  PROCESSOR_TYPE_DISPLAY,
   PROCESSOR_TYPE_ENCODER,
   PROCESSOR_TYPE_FACE_TRACKER,
 #ifdef USE_CAFFE
@@ -246,6 +247,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_CUSTOM;
   } else if (type == "DbWriter") {
     return PROCESSOR_TYPE_DB_WRITER;
+  } else if (type == "Display") {
+    return PROCESSOR_TYPE_DISPLAY;
   } else if (type == "GstVideoEncoder") {
     return PROCESSOR_TYPE_ENCODER;
   } else if (type == "FaceTracker") {
@@ -316,6 +319,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "Custom";
     case PROCESSOR_TYPE_DB_WRITER:
       return "DbWriter";
+    case PROCESSOR_TYPE_DISPLAY:
+      return "Display";
     case PROCESSOR_TYPE_ENCODER:
       return "GstVideoEncoder";
     case PROCESSOR_TYPE_FACE_TRACKER:
