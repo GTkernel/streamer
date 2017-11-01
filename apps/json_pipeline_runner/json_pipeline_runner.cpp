@@ -28,10 +28,7 @@ static std::shared_ptr<std::thread> ShowGraph(
   Agraph_t* dg = agmemread(graph.c_str());
   CHECK(dg != NULL);
 
-  int err = gvFreeLayout(gvc, dg);
-  CHECK(err == 0);
-
-  err = gvLayout(gvc, dg, "dot");
+  int err = gvLayout(gvc, dg, "dot");
   CHECK(err == 0);
 
   char* buf;
@@ -41,7 +38,7 @@ static std::shared_ptr<std::thread> ShowGraph(
   buf = (char*)realloc(buf, len + 1);
 
   std::vector<char> data(buf, buf + len);
-  free(buf);
+  gvFreeRenderData(buf);
 
   cv::Mat data_mat(data, true);
   cv::Mat img = cv::imdecode(data_mat, cv::IMREAD_COLOR);
