@@ -83,8 +83,8 @@ void ImageMatch::Process() {
       data += vishash_size_;
     }
     query.second.classifier->Forward();
-    CHECK_EQ(query.second.classifier->output_blobs().size(), 1) <<
-                        "MicroClassifier(TM) should only have one output";
+    CHECK_EQ(query.second.classifier->output_blobs().size(), 1)
+        << "MicroClassifier(TM) should only have one output";
     caffe::Blob<float>* output_layer =
         query.second.classifier->output_blobs()[0];
     auto layer_outputs = query.second.classifier->top_vecs();
@@ -117,8 +117,8 @@ void ImageMatch::Process() {
     }
   }
 #else
-    LOG(FATAL) << "ImageMatch cannot be used without Caffe support";
-#endif // USE_CAFFE
+  LOG(FATAL) << "ImageMatch cannot be used without Caffe support";
+#endif  // USE_CAFFE
 
   auto matrix_end_time = boost::posix_time::microsec_clock::local_time();
   for (decltype(frames_batch_.size()) batch_idx = 0;
@@ -158,5 +158,5 @@ void ImageMatch::SetClassifier(query_t* current_query,
       current_query->classifier->input_blobs().at(0);
   input_layer->Reshape(batch_size_, 1, 1, vishash_size_);
   current_query->classifier->Reshape();
-#endif // USE_CAFFE
+#endif  // USE_CAFFE
 }

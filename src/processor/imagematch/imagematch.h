@@ -6,7 +6,7 @@
 
 #ifdef USE_CAFFE
 #include <caffe/caffe.hpp>
-#endif // USE_CAFFE
+#endif  // USE_CAFFE
 
 #include <Eigen/Dense>
 
@@ -23,7 +23,7 @@ typedef struct query_t {
   std::unique_ptr<Eigen::VectorXf> matches;
 #ifdef USE_CAFFE
   std::unique_ptr<caffe::Net<float>> classifier;
-#endif // USE_CAFFE
+#endif  // USE_CAFFE
 } query_t;
 
 class ImageMatch : public Processor {
