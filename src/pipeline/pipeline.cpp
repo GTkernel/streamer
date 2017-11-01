@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <boost/graph/graphviz.hpp>
 #include <boost/graph/topological_sort.hpp>
 
 #include "common/types.h"
@@ -192,4 +193,11 @@ bool Pipeline::Stop() {
   LOG(INFO) << msg.str();
 
   return true;
+}
+
+const std::string Pipeline::GetGraph() const {
+  std::ostringstream o;
+  boost::write_graphviz(o, reverse_dependency_graph_,
+                        boost::make_label_writer(processor_names_.data()));
+  return o.str();
 }

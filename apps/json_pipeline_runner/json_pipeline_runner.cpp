@@ -7,22 +7,80 @@
 #include <string>
 
 #include <boost/program_options.hpp>
+#ifdef USE_GRAPHVIZ
+#include <graphviz/gvc.h>
+#endif
 #include <json/src/json.hpp>
 
 #include "pipeline/pipeline.h"
 
 namespace po = boost::program_options;
 
-void Run(const std::string& pipeline_filepath) {
+#ifdef USE_GRAPHVIZ
+static std::atomic<bool> done(false);
+
+static std::shared_ptr<std::thread> ShowGraph(
+    std::shared_ptr<Pipeline> pipeline) {
+  std::string graph = pipeline->GetGraph();
+  std::cout << "Pipeline:\n" + graph << std::endl;
+
+  GVC_t* gvc = gvContext();
+  Agraph_t* dg = agmemread(graph.c_str());
+  CHECK(dg != NULL);
+
+  int err = gvFreeLayout(gvc, dg);
+  CHECK(err == 0);
+
+  err = gvLayout(gvc, dg, "dot");
+  CHECK(err == 0);
+
+  char* buf;
+  unsigned int len;
+  err = gvRenderData(gvc, dg, "png", &buf, &len);
+  CHECK(err == 0);
+  buf = (char*)realloc(buf, len + 1);
+
+  std::vector<char> data(buf, buf + len);
+  free(buf);
+
+  cv::Mat data_mat(data, true);
+  cv::Mat img = cv::imdecode(data_mat, cv::IMREAD_COLOR);
+
+  auto t = std::make_shared<std::thread>([img] {
+    while (!done) {
+      cv::imshow("Graph", img);
+      cv::waitKey(10);
+    }
+  });
+
+  return t;
+}
+#endif
+
+void Run(const std::string& pipeline_filepath, bool show_graph) {
   std::ifstream i(pipeline_filepath);
   nlohmann::json json;
   i >> json;
 
+  std::cout << "Pipeline:\n" + json.dump(4) << std::endl;
+
   std::shared_ptr<Pipeline> pipeline = Pipeline::ConstructPipeline(json);
+
+#ifdef USE_GRAPHVIZ
+  auto t = show_graph ? ShowGraph(pipeline) : nullptr;
+#endif
+
   pipeline->Start();
 
   std::cout << "Press \"Enter\" to stop." << std::endl;
   getchar();
+
+#ifdef USE_GRAPHVIZ
+  if (show_graph) {
+    done = true;
+    t->join();
+  }
+#endif
 
   pipeline->Stop();
 }
@@ -34,6 +92,9 @@ int main(int argc, char* argv[]) {
                      "The directory containing Streamer's config files.");
   desc.add_options()("pipeline,p", po::value<std::string>()->required(),
                      "Path to a JSON file describing a pipeline.");
+#ifdef USE_GRAPHVIZ
+  desc.add_options()("graph,g", "Display pipeline graph visually");
+#endif
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -65,6 +126,11 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   std::string pipeline_filepath = args["pipeline"].as<std::string>();
-  Run(pipeline_filepath);
+  bool show_graph = false;
+#ifdef USE_GRAPHVIZ
+  show_graph = args.count("graph");
+#endif
+  std::cout << show_graph << std::endl;
+  Run(pipeline_filepath, show_graph);
   return 0;
 }
