@@ -7,8 +7,6 @@
 #include <zmq.hpp>
 
 #include "common/common.h"
-#include "model/caffe_model.h"
-#include "model/model_manager.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "utils/utils.h"
 
@@ -21,7 +19,6 @@ ImageMatch::ImageMatch(unsigned int vishash_size, unsigned int batch_size)
       batch_size_(batch_size) {}
 
 std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
-  // TODO
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
 }
@@ -76,6 +73,7 @@ void ImageMatch::Process() {
   // Calculate similarity using Micro Classifiers
   auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
 
+#ifdef USE_CAFFE
   for (auto& query : query_data_) {
     float* data =
         query.second.classifier->input_blobs().at(0)->mutable_cpu_data();
@@ -85,8 +83,8 @@ void ImageMatch::Process() {
       data += vishash_size_;
     }
     query.second.classifier->Forward();
-    // TODO Add error message
-    CHECK_EQ(query.second.classifier->output_blobs().size(), 1);
+    CHECK_EQ(query.second.classifier->output_blobs().size(), 1) <<
+                        "MicroClassifier(TM) should only have one output";
     caffe::Blob<float>* output_layer =
         query.second.classifier->output_blobs()[0];
     auto layer_outputs = query.second.classifier->top_vecs();
@@ -118,6 +116,9 @@ void ImageMatch::Process() {
       }
     }
   }
+#else
+    LOG(FATAL) << "ImageMatch cannot be used without Caffe support";
+#endif // USE_CAFFE
 
   auto matrix_end_time = boost::posix_time::microsec_clock::local_time();
   for (decltype(frames_batch_.size()) batch_idx = 0;
@@ -146,6 +147,7 @@ void ImageMatch::Process() {
 void ImageMatch::SetClassifier(query_t* current_query,
                                const std::string& model_path,
                                const std::string& params_path) {
+#ifdef USE_CAFFE
   caffe::Caffe::set_mode(caffe::Caffe::CPU);
   current_query->classifier =
       std::make_unique<caffe::Net<float>>(model_path, caffe::TEST);
@@ -156,4 +158,5 @@ void ImageMatch::SetClassifier(query_t* current_query,
       current_query->classifier->input_blobs().at(0);
   input_layer->Reshape(batch_size_, 1, 1, vishash_size_);
   current_query->classifier->Reshape();
+#endif // USE_CAFFE
 }
