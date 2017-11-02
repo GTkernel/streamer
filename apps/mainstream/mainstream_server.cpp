@@ -133,8 +133,9 @@ void Run(const string& camera_name, const string& net_name,
       throttler->SetSource("input", sink);
 
       // Make nne and set source
+      // TODO batch size
       std::shared_ptr<NeuralNetEvaluator> nn =
-          std::make_shared<NeuralNetEvaluator>(new_model_desc, input_shape,
+          std::make_shared<NeuralNetEvaluator>(new_model_desc, input_shape, 1,
                                                output_layers);
       nn->SetSource("input", throttler->GetSink("output"), input_layer);
       nn->SetBlockOnPush(true);

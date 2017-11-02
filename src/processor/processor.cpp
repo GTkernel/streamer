@@ -2,6 +2,8 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
+#include <stdexcept>
+
 #include "processor.h"
 #include "utils/utils.h"
 
@@ -42,6 +44,10 @@ Processor::~Processor() {
   delete control_socket_;
 }
 
+void Processor::SetSink(const std::string& name, StreamPtr stream) {
+  sinks_[name] = stream;
+}
+
 StreamPtr Processor::GetSink(const string& name) {
   if (sinks_.find(name) == sinks_.end()) {
     throw std::out_of_range(name);
@@ -61,7 +67,7 @@ void Processor::SetSource(const string& name, StreamPtr stream) {
   sources_[name] = stream;
 }
 
-bool Processor::Start() {
+bool Processor::Start(size_t buf_size) {
   LOG(INFO) << "Start called";
   CHECK(stopped_) << "Processor has already started";
 
@@ -75,7 +81,7 @@ bool Processor::Start() {
 
   // Subscribe sources
   for (auto& source : sources_) {
-    readers_.emplace(source.first, source.second->Subscribe());
+    readers_.emplace(source.first, source.second->Subscribe(buf_size));
   }
 
   stopped_ = false;
@@ -117,6 +123,14 @@ bool Processor::Stop() {
   return result;
 }
 
+void Processor::ProcessorLoopDirect() {
+  CHECK(Init()) << "Processor is not able to be initialized";
+  while (!stopped_ && !found_last_frame_) {
+    Process();
+    ++num_frames_processed_;
+  }
+}
+
 void Processor::ProcessorLoop() {
   CHECK(Init()) << "Processor is not able to be initialized";
   Timer local_timer;
@@ -147,7 +161,6 @@ void Processor::ProcessorLoop() {
         double end_ms = Context::GetContext().GetTimer().ElapsedMSec();
         queue_latency_sum_ms_ += end_ms - start_ms;
         source_frame_cache_[source_name] = std::move(frame);
-        break;
       }
     }
 
@@ -215,4 +228,11 @@ void Processor::PushFrame(const string& sink_name,
 std::unique_ptr<Frame> Processor::GetFrame(const string& source_name) {
   CHECK(source_frame_cache_.count(source_name) != 0);
   return std::move(source_frame_cache_[source_name]);
+}
+
+std::unique_ptr<Frame> Processor::GetFrameDirect(const string& source_name) {
+  if (readers_.find(source_name) == readers_.end()) {
+    throw std::out_of_range(source_name);
+  }
+  return readers_.at(source_name)->PopFrame();
 }

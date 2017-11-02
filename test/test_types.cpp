@@ -117,9 +117,15 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_IMAGE_TRANSFORMER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGE_TRANSFORMER)));
+  EXPECT_EQ(PROCESSOR_TYPE_IMAGEMATCH,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_IMAGEMATCH)));
   EXPECT_EQ(PROCESSOR_TYPE_JPEG_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_JPEG_WRITER)));
+  EXPECT_EQ(PROCESSOR_TYPE_KEYFRAME_DETECTOR,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_KEYFRAME_DETECTOR)));
   EXPECT_EQ(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_NEURAL_NET_EVALUATOR)));
@@ -138,6 +144,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_STRIDER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_STRIDER)));
+  EXPECT_EQ(PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR,
+            GetProcessorTypeByString(GetStringForProcessorType(
+                PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR)));
   EXPECT_EQ(PROCESSOR_TYPE_THROTTLER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_THROTTLER)));

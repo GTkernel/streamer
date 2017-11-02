@@ -11,6 +11,7 @@
 #include <gst/gst.h>
 #include <boost/program_options.hpp>
 
+#include "camera/camera.h"
 #include "camera/camera_manager.h"
 #include "common/context.h"
 #include "processor/binary_file_writer.h"
@@ -18,16 +19,19 @@
 
 namespace po = boost::program_options;
 
-void Run(const std::string& camera_name, const std::string& output_dir) {
+void Run(const std::string& camera_name, const std::string& field,
+         const std::string& output_dir, bool organize_by_time,
+         unsigned long frames_per_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
-  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
+  std::shared_ptr<Camera> camera =
+      CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
   // Create BinaryFileWriter.
-  auto writer =
-      std::make_shared<BinaryFileWriter>("original_bytes", output_dir);
+  auto writer = std::make_shared<BinaryFileWriter>(
+      field, output_dir, organize_by_time, frames_per_dir);
   writer->SetSource(camera->GetStream());
   procs.push_back(writer);
 
@@ -46,15 +50,24 @@ void Run(const std::string& camera_name, const std::string& output_dir) {
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Stores raw frame data.");
+  po::options_description desc("Stores raw frame data binary files.");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
       "The directory containing streamer's configuration files.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
+  desc.add_options()("field,f",
+                     po::value<std::string>()->default_value("original_bytes"),
+                     "The field to save.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the raw frame data.");
+  desc.add_options()("organize-by-time,t",
+                     "Whether to organize the output file by date and time.");
+  desc.add_options()("frames-per-dir,n",
+                     po::value<unsigned long>()->default_value(1000),
+                     "The number of frames to save in each subdir. Only valid "
+                     "if \"--organize-by-time\" is not specified.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -77,15 +90,19 @@ int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = 1;
   FLAGS_colorlogtostderr = 1;
-  // Initialize the streamer context. This must be called before using streamer.
-  Context::GetContext().Init();
 
   // Extract the command line arguments.
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
-  std::string camera = args["camera"].as<std::string>();
-  std::string output_dir = args["output-dir"].as<std::string>();
-  Run(camera, output_dir);
+  // Initialize the streamer context. This must be called before using streamer.
+  Context::GetContext().Init();
+
+  auto camera = args["camera"].as<std::string>();
+  auto field = args["field"].as<std::string>();
+  auto output_dir = args["output-dir"].as<std::string>();
+  bool organize_by_time = args.count("organize-by-time");
+  auto frames_per_dir = args["frames-per-dir"].as<unsigned long>();
+  Run(camera, field, output_dir, organize_by_time, frames_per_dir);
   return 0;
 }

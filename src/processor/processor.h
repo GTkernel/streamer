@@ -40,12 +40,19 @@ class Processor {
    * sinks.
    * @return True if start successfully, false otherwise.
    */
-  bool Start();
+  bool Start(size_t buf_size = 16);
   /**
    * @brief Stop processing
    * @return True if stop sucsessfully, false otherwise.
    */
   bool Stop();
+
+  /**
+   * @brief Override a sink stream.
+   * @param name Name of the sink.
+   * @param stream Stream to be set.
+   */
+  void SetSink(const std::string& name, StreamPtr stream);
 
   /**
    * @brief Get sink stream of the processor by name.
@@ -122,8 +129,10 @@ class Processor {
   virtual void Process() = 0;
 
   std::unique_ptr<Frame> GetFrame(const string& source_name);
+  std::unique_ptr<Frame> GetFrameDirect(const string& source_name);
   void PushFrame(const string& sink_name, std::unique_ptr<Frame> frame);
   void ProcessorLoop();
+  void ProcessorLoopDirect();
 
   std::unordered_map<string, std::unique_ptr<Frame>> source_frame_cache_;
   std::unordered_map<string, StreamPtr> sources_;

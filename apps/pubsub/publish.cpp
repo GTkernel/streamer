@@ -1,84 +1,100 @@
-/**
- * @brief publish.cpp - Send frames over ZMQ
- */
+// publish.cpp - Sends frames over ZMQ.
 
 #include <cstdio>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include <boost/program_options.hpp>
 
+#include "camera/camera.h"
 #include "camera/camera_manager.h"
+#include "processor/processor.h"
 #include "processor/pubsub/frame_publisher.h"
+#include "processor/throttler.h"
 
 namespace po = boost::program_options;
 
-/**
- * @brief Publish frames via ZMQ
- *
- * Pipeline:  Camera -> FramePublisher
- */
-void Run(std::string camera_name, std::string server) {
-  // Set up camera
-  auto& camera_manager = CameraManager::GetInstance();
-  CHECK(camera_manager.HasCamera(camera_name))
-      << "Camera " << camera_name << " does not exist";
-  auto camera = camera_manager.GetCamera(camera_name);
+void Run(const std::string& camera_name, double fps,
+         const std::string& publish_url) {
+  std::vector<std::shared_ptr<Processor>> procs;
 
-  // Set up FramePublisher (publishes frames via ZMQ)
-  auto publisher = new FramePublisher(server);
-  publisher->SetSource(camera->GetStream());
+  // Create Camera.
+  std::shared_ptr<Camera> camera =
+      CameraManager::GetInstance().GetCamera(camera_name);
+  procs.push_back(camera);
 
-  publisher->Start();
-  camera->Start();
+  // Create Throttler.
+  auto throttler = std::make_shared<Throttler>(fps);
+  throttler->SetSource(camera->GetStream());
+  procs.push_back(throttler);
+
+  // Create FramePublisher (publishes frames via ZMQ).
+  auto publisher = std::make_shared<FramePublisher>(publish_url);
+  publisher->SetSource(throttler->GetSink());
+  procs.push_back(publisher);
+
+  // Start the processors in reverse order.
+  for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
+    (*procs_it)->Start();
+  }
 
   std::cout << "Press \"Enter\" to stop." << std::endl;
   getchar();
 
-  camera->Stop();
-  publisher->Stop();
+  // Stop the processors in forward order.
+  for (const auto& proc : procs) {
+    proc->Stop();
+  }
 }
 
 int main(int argc, char* argv[]) {
-  gst_init(&argc, &argv);
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_alsologtostderr = 1;
-  FLAGS_colorlogtostderr = 1;
-
   po::options_description desc("Simple Frame Sender App for Streamer");
-  desc.add_options()("help,h", "print the help message");
-  desc.add_options()("config_dir,C", po::value<string>(),
-                     "The directory to find streamer's configuration");
-  desc.add_options()("publish_url,s",
-                     po::value<string>()->default_value("127.0.0.1:5536"),
-                     "host:port to connect to (e.g., example.com:4444)");
-  desc.add_options()("camera,c", po::value<string>()->required(),
-                     "The name of the camera to use");
+  desc.add_options()("help,h", "print the help message.");
+  desc.add_options()("config-dir,C", po::value<std::string>(),
+                     "The directory containing Streamer's config files.");
+  desc.add_options()("camera,c",
+                     po::value<std::string>()->default_value("GST_TEST"),
+                     "The name of the camera to use.");
+  desc.add_options()("fps,f", po::value<double>()->default_value(1.0),
+                     "The maximum framerate at which to publish.");
+  desc.add_options()(
+      "publish-url,p",
+      po::value<std::string>()->default_value("127.0.0.1:5536"),
+      "The URL (host:port) to which to publish the frame stream.");
 
-  po::variables_map vm;
+  // Parse the command line arguments.
+  po::variables_map args;
   try {
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
+    po::store(po::parse_command_line(argc, argv, desc), args);
+    if (args.count("help")) {
+      std::cout << desc << std::endl;
+      return 1;
+    }
+    po::notify(args);
   } catch (const po::error& e) {
     std::cerr << e.what() << std::endl;
     std::cout << desc << std::endl;
     return 1;
   }
 
-  if (vm.count("help")) {
-    std::cout << desc << std::endl;
-    return 1;
+  // Set up GStreamer.
+  gst_init(&argc, &argv);
+  // Set up glog.
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_alsologtostderr = 1;
+  FLAGS_colorlogtostderr = 1;
+
+  // Extract the command line arguments.
+  if (args.count("config-dir")) {
+    Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
-
-  //// Parse arguments
-
-  if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
-  }
-
-  // Init streamer context, this must be called before using streamer.
+  // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  auto server = vm["publish_url"].as<string>();
-  auto camera_name = vm["camera"].as<string>();
-
-  Run(camera_name, server);
+  std::string camera_name = args["camera"].as<std::string>();
+  double fps = args["fps"].as<double>();
+  std::string publish_url = args["publish-url"].as<std::string>();
+  Run(camera_name, fps, publish_url);
 }

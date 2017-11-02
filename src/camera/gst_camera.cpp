@@ -6,11 +6,15 @@
 #include <chrono>
 
 GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
-                     int height)
-    : Camera(name, video_uri, width, height) {}
+                     int height, unsigned long max_buf_size)
+    : Camera(name, video_uri, width, height),
+      capture_{max_buf_size},
+      output_filepath_(""),
+      file_framerate_(0) {}
 
 bool GSTCamera::Init() {
-  bool opened = capture_.CreatePipeline(video_uri_);
+  bool opened =
+      capture_.CreatePipeline(video_uri_, output_filepath_, file_framerate_);
 
   // Determine if we should block when pushing frames.
   std::string video_protocol;
@@ -29,6 +33,14 @@ bool GSTCamera::Init() {
 
   return true;
 }
+
+void GSTCamera::SetOutputFilepath(const std::string& output_filepath) {
+  output_filepath_ = output_filepath;
+}
+void GSTCamera::SetFileFramerate(unsigned int file_framerate) {
+  file_framerate_ = file_framerate;
+}
+
 bool GSTCamera::OnStop() {
   capture_.DestroyPipeline();
   return true;
@@ -39,7 +51,6 @@ void GSTCamera::Process() {
 
   if (capture_.NextFrameIsLast()) {
     frame->SetStopFrame(true);
-    PushFrame("output", std::move(frame));
   } else {
     const cv::Mat& pixels =
         capture_.GetPixels(frame->GetValue<unsigned long>("frame_id"));
@@ -53,8 +64,8 @@ void GSTCamera::Process() {
                                       (char*)pixels.data +
                                           pixels.total() * pixels.elemSize()));
     frame->SetValue("original_image", pixels);
-    PushFrame("output", std::move(frame));
   }
+  PushFrame("output", std::move(frame));
 }
 
 CameraType GSTCamera::GetCameraType() const { return CAMERA_TYPE_GST; }

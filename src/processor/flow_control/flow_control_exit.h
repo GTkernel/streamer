@@ -16,6 +16,9 @@ class FlowControlExit : public Processor {
   static std::shared_ptr<FlowControlExit> Create(
       const FactoryParamsType& params);
 
+  void SetSink(StreamPtr stream);
+  using Processor::SetSink;
+
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
 

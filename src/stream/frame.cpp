@@ -5,6 +5,7 @@
 #include "frame.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 #include <opencv2/core/core.hpp>
 
@@ -27,6 +28,12 @@ class FramePrinter : public boost::static_visitor<std::string> {
   }
 
   std::string operator()(const int& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
+  std::string operator()(const long& v) const {
     std::ostringstream output;
     output << v;
     return output.str();
@@ -101,12 +108,20 @@ class FramePrinter : public boost::static_visitor<std::string> {
   }
 
   std::string operator()(const cv::Mat& v) const {
-    std::ostringstream output, mout;
-    cv::Mat tmp;
-    v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
-    mout << tmp;
-    output << "cv::Mat(size = " << v.cols << "x" << v.rows
-           << ") = " << mout.str().substr(0, 20) << "...]";
+    std::ostringstream output;
+    output << "cv::Mat";
+    int dims = v.dims;
+    if (dims <= 2) {
+      cv::Mat tmp;
+      v.copyTo(tmp);
+
+      std::ostringstream mout;
+      mout << tmp;
+      output << "(size = " << v.cols << "x" << v.rows
+             << ") = " << mout.str().substr(0, 20) << "...]";
+    } else {
+      output << " = Unable to print because dims (" << dims << ") > 2";
+    }
     return output.str();
   }
 
@@ -173,6 +188,16 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << "]";
     return output.str();
   }
+
+  std::string operator()(const std::vector<int>& v) const {
+    std::ostringstream output;
+    output << "std::vector<int> = [" << std::endl;
+    for (auto& s : v) {
+      output << s << std::endl;
+    }
+    output << "]";
+    return output.str();
+  }
 };
 
 class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
@@ -182,6 +207,8 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
   nlohmann::json operator()(const float& v) const { return v; }
 
   nlohmann::json operator()(const int& v) const { return v; }
+
+  nlohmann::json operator()(const long& v) const { return v; }
 
   nlohmann::json operator()(const unsigned long& v) const { return v; }
 
@@ -218,7 +245,15 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
                                     cv::FileStorage::MEMORY |
                                     cv::FileStorage::FORMAT_JSON);
     fs << "cvMat" << v;
-    return fs.releaseAndGetString();
+    std::string str = fs.releaseAndGetString();
+
+    // There is a bug in lohmann::json::parse() for the sequence "<num>.[ ,]",
+    // so replace all such sequences with "<num>[ ,]".
+    std::regex bad_seq("([0-9]+)\\.([ ,])");
+    str = std::regex_replace(str, bad_seq, "$1$2");
+
+    // Convert the JSON string into a JSON object.
+    return nlohmann::json::parse(str);
   }
 
   nlohmann::json operator()(const std::vector<float>& v) const { return v; }
@@ -245,6 +280,103 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
       j.push_back(vi.ToJson());
     }
     return j;
+  }
+
+  nlohmann::json operator()(const std::vector<int>& v) const {
+    nlohmann::json j;
+    for (const auto& vi : v) {
+      j.push_back(vi);
+    }
+    return j;
+  }
+};
+
+class FrameSize : public boost::static_visitor<unsigned long> {
+ public:
+  unsigned long operator()(const double&) const { return sizeof(double); }
+
+  unsigned long operator()(const float&) const { return sizeof(float); }
+
+  unsigned long operator()(const int&) const { return sizeof(int); }
+
+  unsigned long operator()(const long&) const { return sizeof(long); }
+
+  unsigned long operator()(const unsigned long&) const {
+    return sizeof(unsigned long);
+  }
+
+  unsigned long operator()(const bool&) const { return sizeof(bool); }
+
+  unsigned long operator()(const boost::posix_time::ptime&) const {
+    STREAMER_NOT_IMPLEMENTED;
+    return 0;
+  }
+
+  unsigned long operator()(const boost::posix_time::time_duration&) const {
+    STREAMER_NOT_IMPLEMENTED;
+    return 0;
+  }
+
+  unsigned long operator()(const std::string& v) const { return v.length(); }
+
+  unsigned long operator()(const std::vector<std::string>& v) const {
+    unsigned long size_bytes = 0;
+    for (const auto& s : v) {
+      size_bytes += s.length();
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<double>& v) const {
+    return v.size() * sizeof(double);
+  }
+
+  unsigned long operator()(const std::vector<Rect>& v) const {
+    return v.size() * sizeof(Rect);
+  }
+
+  unsigned long operator()(const std::vector<char>& v) const {
+    return v.size();
+  }
+
+  unsigned long operator()(const cv::Mat& v) const {
+    return v.total() * sizeof(float);
+  }
+
+  unsigned long operator()(const std::vector<float>& v) const {
+    return v.size() * sizeof(float);
+  }
+
+  unsigned long operator()(const std::vector<FaceLandmark>& v) const {
+    return v.size() * sizeof(FaceLandmark);
+  }
+
+  unsigned long operator()(const std::vector<std::vector<double>>& v) const {
+    unsigned long size_bytes = 0;
+    for (const auto& vec : v) {
+      size_bytes += vec.size() * sizeof(double);
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<std::vector<float>>& v) const {
+    unsigned long size_bytes = 0;
+    for (const auto& vec : v) {
+      size_bytes += vec.size() * sizeof(float);
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<Frame>& v) const {
+    unsigned long size_bytes = 0;
+    for (const auto& f : v) {
+      size_bytes += f.GetRawSizeBytes();
+    }
+    return size_bytes;
+  }
+
+  unsigned long operator()(const std::vector<int>& v) const {
+    return v.size() * sizeof(int);
   }
 };
 
@@ -305,6 +437,8 @@ void Frame::SetValue(std::string key, const T& val) {
   frame_data_[key] = val;
 }
 
+void Frame::Delete(std::string key) { frame_data_.erase(key); }
+
 std::string Frame::ToString() const {
   FramePrinter visitor;
   std::ostringstream output;
@@ -324,6 +458,18 @@ nlohmann::json Frame::ToJson() const {
   return j;
 }
 
+size_t Frame::Count(std::string key) const { return frame_data_.count(key); }
+
+nlohmann::json Frame::GetFieldJson(const std::string& field) const {
+  nlohmann::json j;
+  j[field] = boost::apply_visitor(FrameJsonPrinter{}, frame_data_.at(field));
+  return j;
+}
+
+std::unordered_map<std::string, Frame::field_types> Frame::GetFields() {
+  return frame_data_;
+}
+
 void Frame::SetStopFrame(bool stop_frame) {
   SetValue<bool>(STOP_FRAME_KEY, stop_frame);
 }
@@ -332,10 +478,31 @@ bool Frame::IsStopFrame() const {
   return Count(STOP_FRAME_KEY) && GetValue<bool>(STOP_FRAME_KEY);
 }
 
+unsigned long Frame::GetRawSizeBytes(
+    std::unordered_set<std::string> fields) const {
+  for (const auto& field : fields) {
+    if (frame_data_.find(field) == frame_data_.end()) {
+      throw std::invalid_argument("Unknown field: " + field);
+    }
+  }
+
+  bool use_all_fields = fields.empty();
+  FrameSize visitor;
+  unsigned long size_bytes = 0;
+  for (auto it = frame_data_.begin(); it != frame_data_.end(); ++it) {
+    std::string field = it->first;
+    if (use_all_fields || fields.find(field) != fields.end()) {
+      size_bytes += boost::apply_visitor(visitor, frame_data_.at(field));
+    }
+  }
+  return size_bytes;
+}
+
 // Types declared in Field
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
 template void Frame::SetValue(std::string, const int&);
+template void Frame::SetValue(std::string, const long&);
 template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const bool&);
 template void Frame::SetValue(std::string, const boost::posix_time::ptime&);
@@ -354,10 +521,12 @@ template void Frame::SetValue(std::string, const std::vector<float>&);
 template void Frame::SetValue(std::string,
                               const std::vector<std::vector<double>>&);
 template void Frame::SetValue(std::string, const std::vector<Frame>&);
+template void Frame::SetValue(std::string, const std::vector<int>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
 template int Frame::GetValue(std::string) const;
+template long Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
 template bool Frame::GetValue(std::string) const;
 template boost::posix_time::ptime Frame::GetValue(std::string) const;
@@ -373,3 +542,4 @@ template std::vector<std::vector<float>> Frame::GetValue(std::string) const;
 template std::vector<float> Frame::GetValue(std::string) const;
 template std::vector<std::vector<double>> Frame::GetValue(std::string) const;
 template std::vector<Frame> Frame::GetValue(std::string) const;
+template std::vector<int> Frame::GetValue(std::string) const;

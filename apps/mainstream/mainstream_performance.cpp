@@ -149,7 +149,7 @@ void MeasurePerformance(const std::string split_layer, int num_apps,
     // All NNs should be application specific
     for (int i = 0; i < num_apps; i++) {
       std::shared_ptr<NeuralNetEvaluator> nne =
-          std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+          std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                output_layers2);
       nne->SetSource("input", transformer->GetSink("output"), input1);
       procs.push_back(nne);
@@ -159,21 +159,21 @@ void MeasurePerformance(const std::string split_layer, int num_apps,
     }
   } else if (split_layer == "dense_2/Softmax:0") {
     // Only base NN is needed
-    base_nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+    base_nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                     output_layers1);
     base_nne->SetSource("input", transformer->GetSink("output"), input1);
     procs.push_back(base_nne);
     endpoint_nnes.push_back(base_nne);
   } else {
     // Both task and base NNs are needed
-    base_nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+    base_nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                     output_layers1);
     base_nne->SetSource("input", transformer->GetSink("output"), input1);
     procs.push_back(base_nne);
 
     for (int i = 0; i < num_apps; i++) {
       std::shared_ptr<NeuralNetEvaluator> nne =
-          std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+          std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                output_layers2);
       nne->SetSource("input", base_nne->GetSink(output1), input2);
       procs.push_back(nne);

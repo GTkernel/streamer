@@ -16,6 +16,12 @@ class ImageTransformer : public Processor {
   static std::shared_ptr<ImageTransformer> Create(
       const FactoryParamsType& params);
 
+  void SetSource(StreamPtr stream);
+  using Processor::SetSource;
+
+  StreamPtr GetSink();
+  using Processor::GetSink;
+
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;

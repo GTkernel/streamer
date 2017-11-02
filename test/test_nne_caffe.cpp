@@ -267,7 +267,7 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   Shape input_shape(CHANNELS, WIDTH, HEIGHT);
   ModelDesc desc("TestExtractIntermediateActivationsCaffe", MODEL_TYPE_CAFFE,
                  NETWORK_FILEPATH, WEIGHTS_FILEPATH, WIDTH, HEIGHT, "", "prob");
-  NeuralNetEvaluator nne(desc, input_shape, OUTPUTS);
+  NeuralNetEvaluator nne(desc, input_shape, 1, OUTPUTS);
   ASSERT_EQ(nne.GetSinkNames().size(), OUTPUTS.size());
 
   // Configure the mean image
@@ -280,6 +280,7 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
   // Construct frame with input image in it
   auto input_frame = std::make_unique<Frame>();
+  input_frame->SetValue("frame_id", (unsigned long)0);
   input_frame->SetValue("original_image", original_image);
   input_frame->SetValue("image", preprocessed_image);
 

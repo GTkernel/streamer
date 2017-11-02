@@ -5,6 +5,7 @@
 #include "processor/binary_file_writer.h"
 #ifdef USE_CAFFE
 #include "processor/caffe_facenet.h"
+#include "processor/imagematch/imagematch.h"
 #endif  // USE_CAFFE
 #include "processor/compressor.h"
 #include "processor/db_writer.h"
@@ -22,6 +23,7 @@
 #include "processor/detectors/object_detector.h"
 #include "processor/detectors/opencv_people_detector.h"
 #include "processor/face_tracker.h"
+#include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_motion_detector.h"
 #include "processor/pubsub/frame_publisher.h"
@@ -32,6 +34,7 @@
 #include "processor/rpc/frame_sender.h"
 #endif  // USE_RPC
 #include "processor/strider.h"
+#include "processor/temporal_region_selector.h"
 #include "processor/throttler.h"
 #include "video/gst_video_encoder.h"
 
@@ -56,6 +59,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return Facenet::Create(params);
+    case PROCESSOR_TYPE_IMAGEMATCH:
+      return ImageMatch::Create(params);
 #endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return FlowControlEntrance::Create(params);
@@ -81,6 +86,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return ImageTransformer::Create(params);
     case PROCESSOR_TYPE_JPEG_WRITER:
       return JpegWriter::Create(params);
+    case PROCESSOR_TYPE_KEYFRAME_DETECTOR:
+      return KeyframeDetector::Create(params);
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return NeuralNetEvaluator::Create(params);
     case PROCESSOR_TYPE_OBJECT_TRACKER:
@@ -95,6 +102,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return OpenCVPeopleDetector::Create(params);
     case PROCESSOR_TYPE_STRIDER:
       return Strider::Create(params);
+    case PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR:
+      return TemporalRegionSelector::Create(params);
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
     case PROCESSOR_TYPE_INVALID:

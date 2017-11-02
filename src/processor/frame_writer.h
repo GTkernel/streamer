@@ -2,25 +2,33 @@
 #ifndef STREAMER_PROCESSOR_FRAME_WRITER_H_
 #define STREAMER_PROCESSOR_FRAME_WRITER_H_
 
-#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_set>
 
 #include "common/types.h"
 #include "processor/processor.h"
+#include "utils/output_tracker.h"
 
-// The FrameWriter writes Frames to disk in either text or binary format. The
-// user can specify which frame fields to save (the default is all fields).
+// The FrameWriter writes Frames to disk in either binary, JSON, or text format.
+// The user can specify which frame fields to save (the default is all fields).
 class FrameWriter : public Processor {
  public:
   enum FileFormat { BINARY, JSON, TEXT };
 
   // "fields" is a set of frame fields to save. If "fields" is an empty set,
-  // then all fields will be saved.
+  // then all fields will be saved. If "save_fields_separately" is true, then
+  // field will be saved in a separate file. If "organize_by_time" is true, then
+  // the frames will be stored in a date-time directory hierarchy and
+  // "frames_per_dir" will be ignored. If "organize_by_time" is false, then
+  // "frames_per_dir" will determine the number of frames saved in each output
+  // subdirectory.
   FrameWriter(const std::unordered_set<std::string> fields = {},
               const std::string& output_dir = ".",
-              const FileFormat format = TEXT);
+              const FileFormat format = TEXT,
+              bool save_fields_separately = false,
+              bool organize_by_time = false,
+              unsigned long frames_per_dir = 1000);
 
   // "params" should contain three keys, "fields" (which should be a set of
   // field names), "output_dir", and "format" (which should be the textual
@@ -38,9 +46,14 @@ class FrameWriter : public Processor {
  private:
   std::string GetExtension();
 
+  // The frame fields to save.
   std::unordered_set<std::string> fields_;
-  std::string output_dir_;
+  // The file format in which to save frames.
   FileFormat format_;
+  // Whether to save each field in a separate file.
+  bool save_fields_separately_;
+  // Tracks which directory frames should be written to.
+  OutputTracker tracker_;
 };
 
 #endif  // STREAMER_PROCESSOR_FRAME_WRITER_H_

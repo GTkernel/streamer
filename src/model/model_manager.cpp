@@ -175,7 +175,8 @@ std::unique_ptr<Model> ModelManager::CreateModel(const ModelDesc& model_desc,
       throw std::logic_error("Cannot create a model for MODEL_TYPE_INVALID.");
     case MODEL_TYPE_CAFFE:
 #ifdef USE_CAFFE
-      return std::make_unique<CaffeModel<float>>(model_desc, input_shape);
+      return std::make_unique<CaffeModel<float>>(model_desc, input_shape,
+                                                 batch_size);
 #else
       throw std::logic_error(
           "Not built with Caffe. Failed to initialize model!");

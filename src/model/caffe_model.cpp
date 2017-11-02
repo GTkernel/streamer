@@ -8,8 +8,9 @@
 #include "model/model_manager.h"
 
 template <typename DType>
-CaffeModel<DType>::CaffeModel(const ModelDesc& model_desc, Shape input_shape)
-    : Model(model_desc, input_shape) {}
+CaffeModel<DType>::CaffeModel(const ModelDesc& model_desc, Shape input_shape,
+                              size_t batch_size)
+    : Model(model_desc, input_shape, batch_size) {}
 
 template <typename DType>
 void CaffeModel<DType>::Load() {
@@ -52,11 +53,11 @@ void CaffeModel<DType>::Load() {
 
 // Load the network.
 #ifdef USE_OPENCL
-  net_.reset(new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST,
+  net_ = std::make_unique<caffe::Net<DType>>(model_desc_.GetModelDescPath(), caffe::TEST,
                                    caffe::Caffe::GetDefaultDevice()));
 #else
-  net_.reset(
-      new caffe::Net<DType>(model_desc_.GetModelDescPath(), caffe::TEST));
+  net_ = std::make_unique<caffe::Net<DType>>(model_desc_.GetModelDescPath(),
+                                             caffe::TEST);
 #endif  // USE_OPENCL
   net_->CopyTrainedLayersFrom(model_desc_.GetModelParamsPath());
 
@@ -67,25 +68,27 @@ void CaffeModel<DType>::Load() {
       << "Input layer should have 1 or 3 channels.";
 
   caffe::Blob<DType>* input_layer = net_->input_blobs().at(0);
-  // Adjust input dimensions
-  // batch size is enforced to be 1
-  input_layer->Reshape(1, input_shape_.channel, input_shape_.height,
+  input_layer->Reshape(batch_size_, input_shape_.channel, input_shape_.height,
                        input_shape_.width);
   // Forward dimension change to all layers.
   net_->Reshape();
 }
 
 template <typename DType>
-std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
-    const std::unordered_map<std::string, cv::Mat>& input_map,
+std::unordered_map<std::string, std::vector<cv::Mat>>
+CaffeModel<DType>::Evaluate(
+    const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
   CHECK_EQ(input_map.size(), 1)
       << "For Caffe models, exactly one input must be provided.";
   // There is only one value in the input map, and the second entry in the pair
   // is the input data.
-  auto input = input_map.begin()->second;
+  CHECK_EQ(input_map.begin()->second.size(), batch_size_)
+      << "Wrong batch size, "
+      << "expected: " << batch_size_ << "found: " << input_map.at(0).size();
 
-  // Subtract the mean image
+  caffe::Blob<DType>* input_layer = net_->input_blobs().at(0);
+  DType* data = input_layer->mutable_cpu_data();
   int format;
   if (input_shape_.channel == 3) {
     format = CV_32FC3;
@@ -95,43 +98,43 @@ std::unordered_map<std::string, cv::Mat> CaffeModel<DType>::Evaluate(
   cv::Scalar mean_colors = ModelManager::GetInstance().GetMeanColors();
   cv::Mat mean_image = cv::Mat(
       cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
-  cv::Mat input_normalized;
-  cv::subtract(input, mean_image, input_normalized);
-  input_normalized *= model_desc_.GetInputScale();
+  for (const auto& input : input_map.begin()->second) {
+    // Subtract the mean image
+    cv::Mat input_normalized;
+    cv::subtract(input, mean_image, input_normalized);
+    input_normalized *= model_desc_.GetInputScale();
 
-  // Format the input data in the way that Caffe expects
-  auto input_layer = net_->input_blobs().at(0);
-  DType* data = input_layer->mutable_cpu_data();
-  // This loop creates a cv::Mat for each channel that is configured to point to
-  // a particular location in "data", but the data itself is not populated until
-  // the call to cv::split(). output_channels points to the correct offsets in
-  // the Caffe input blob
-  std::vector<cv::Mat> output_channels;
-  for (decltype(input_shape_.channel) j = 0; j < input_shape_.channel; ++j) {
-    cv::Mat channel(input_shape_.height, input_shape_.width, CV_32F, data);
-    output_channels.push_back(channel);
-    data += input_shape_.width * input_shape_.height;
+    // Format the input data in the way that Caffe expects
+    // This loop creates a cv::Mat for each channel that is configured to point
+    // to a particular location in "data", but the data itself is not populated
+    // until the call to cv::split(). output_channels points to the correct
+    // offsets in the Caffe input blob
+    std::vector<cv::Mat> output_channels;
+    for (decltype(input_shape_.channel) j = 0; j < input_shape_.channel; ++j) {
+      cv::Mat channel(input_shape_.height, input_shape_.width, CV_32F, data);
+      output_channels.push_back(channel);
+      data += input_shape_.width * input_shape_.height;
+    }
+    cv::split(input_normalized, output_channels);
   }
-  cv::split(input_normalized, output_channels);
 
   // Evaluate model on input
   net_->Forward();
 
   // Grab all the output layers
-  std::unordered_map<std::string, cv::Mat> output_layers;
+  std::unordered_map<std::string, std::vector<cv::Mat>> output_layers;
   for (const auto& layer : output_layer_names) {
-    output_layers[layer] = GetLayerOutput(layer);
+    for (decltype(batch_size_) batch_idx = 0; batch_idx < batch_size_;
+         ++batch_idx) {
+      output_layers[layer].push_back(GetLayerOutput(layer, batch_idx));
+    }
   }
   return output_layers;
 }
 
 template <typename DType>
-void CaffeModel<DType>::Forward() {
-  net_->Forward();
-}
-
-template <typename DType>
-cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string& layer_name) const {
+cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string& layer_name,
+                                          int batch_idx) const {
   const std::vector<std::vector<caffe::Blob<DType>*>> layer_outputs =
       net_->top_vecs();
   // Find the correct layer to extract
@@ -146,19 +149,21 @@ cv::Mat CaffeModel<DType>::GetLayerOutput(const std::string& layer_name) const {
   // The last layer is often 2-dimensional (batch, 1D array of probabilities)
   // Intermediate layers are always 4-dimensional
   if (myblob->num_axes() == 2) {
-    return BlobToMat2d(myblob);
+    return BlobToMat2d(myblob, batch_idx);
   } else if (myblob->num_axes() == 4) {
-    return BlobToMat4d(myblob);
+    return BlobToMat4d(myblob, batch_idx);
   } else {
     LOG(FATAL)
         << "Error, only 2D and 4D feature vectors are supported at this time";
   }
+  return cv::Mat();
 }
 
 template <typename DType>
-cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src) {
-  int batch_size = src->shape(0);
-  CHECK(batch_size == 1) << "Batch size must be 1, but it is " << batch_size;
+cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src,
+                                       int batch_idx) const {
+  decltype(batch_size_) batch_size = src->shape(0);
+  CHECK(batch_size == batch_size_) << "Incorrect batch size";
 
   std::vector<int> mat_size;
   decltype(src->shape(0)) total_size = 1;
@@ -166,16 +171,18 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src) {
     mat_size.push_back(src->shape(i));
     total_size *= src->shape(i);
   }
-  cv::Mat ret_mat(mat_size, CV_32F);
   float* data = src->mutable_cpu_data();
-  memcpy(ret_mat.data, data, total_size * sizeof(float));
+  cv::Mat ret_mat(mat_size, CV_32F);
+  memcpy(ret_mat.data, data + total_size * batch_idx,
+         total_size * sizeof(float));
   return ret_mat;
 }
 
 template <typename DType>
-cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src) {
-  int batch_size = src->shape(0);
-  CHECK(batch_size == 1) << "Batch size must be 1, but it is " << batch_size;
+cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
+                                       int batch_idx) const {
+  decltype(batch_size_) batch_size = src->shape(0);
+  CHECK(batch_size == batch_size_) << "Incorrect batch size";
 
   // mat_size holds the axes dimensions of the blob
   // mat_size is used to construct the cv::Mat
@@ -185,9 +192,10 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src) {
     mat_size.push_back(src->shape(i));
     total_size *= src->shape(i);
   }
-  cv::Mat ret_mat(mat_size, CV_32F);
   float* data = src->mutable_cpu_data();
-  memcpy(ret_mat.data, data, total_size * sizeof(float));
+  cv::Mat ret_mat(mat_size, CV_32F);
+  memcpy(ret_mat.data, data + total_size * batch_idx,
+         total_size * sizeof(float));
   return ret_mat;
 }
 

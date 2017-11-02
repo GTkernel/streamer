@@ -6,9 +6,12 @@
 
 #include "model/model_manager.h"
 
+constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
+
 ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
                                    bool convert)
-    : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {"input"}, {"output"}),
+    : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {SOURCE_NAME}, {SINK_NAME}),
       target_shape_(target_shape),
       crop_(crop),
       convert_(convert) {}
@@ -32,9 +35,15 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
                                             true, true);
 }
 
+void ImageTransformer::SetSource(StreamPtr stream) {
+  Processor::SetSource(SOURCE_NAME, stream);
+}
+
+StreamPtr ImageTransformer::GetSink() { return Processor::GetSink(SINK_NAME); }
+
 void ImageTransformer::Process() {
   Timer timer;
-  auto frame = GetFrame("input");
+  auto frame = GetFrame(SOURCE_NAME);
   const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
   timer.Start();
 
@@ -95,7 +104,7 @@ void ImageTransformer::Process() {
   }
 
   frame->SetValue("image", sample_float);
-  PushFrame("output", std::move(frame));
+  PushFrame(SINK_NAME, std::move(frame));
 }
 
 bool ImageTransformer::Init() { return true; }

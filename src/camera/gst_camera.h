@@ -11,7 +11,11 @@
 class GSTCamera : public Camera {
  public:
   GSTCamera(const string& name, const string& video_uri, int width = -1,
-            int height = -1);
+            int height = -1, unsigned long max_buf_size = 10);
+  // Must be set before calling Init()
+  // Otherwise it will default to no file output
+  void SetOutputFilepath(const std::string& output_filepath);
+  void SetFileFramerate(unsigned int file_framerate);
   virtual CameraType GetCameraType() const override;
 
   virtual float GetExposure() override;
@@ -52,6 +56,8 @@ class GSTCamera : public Camera {
 
  private:
   GstVideoCapture capture_;
+  std::string output_filepath_;
+  unsigned int file_framerate_;
 };
 
 #endif  // STREAMER_CAMERA_GST_CAMERA_H_

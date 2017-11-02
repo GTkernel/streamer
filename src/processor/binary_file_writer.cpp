@@ -4,18 +4,29 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <vector>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 constexpr auto SOURCE_NAME = "input";
 
-BinaryFileWriter::BinaryFileWriter(std::string key, std::string output_dir)
+BinaryFileWriter::BinaryFileWriter(const std::string& field,
+                                   const std::string& output_dir,
+                                   bool organize_by_time,
+                                   unsigned long frames_per_dir)
     : Processor(PROCESSOR_TYPE_BINARY_FILE_WRITER, {SOURCE_NAME}, {}),
-      key_(key),
-      output_dir_(output_dir) {}
+      field_(field),
+      tracker_{output_dir, organize_by_time, frames_per_dir} {}
 
 std::shared_ptr<BinaryFileWriter> BinaryFileWriter::Create(
     const FactoryParamsType& params) {
-  return std::make_shared<BinaryFileWriter>(params.at("key"),
-                                            params.at("output_dir"));
+  std::string field = params.at("field");
+  std::string output_dir = params.at("output_dir");
+  bool organize_by_time = params.at("organize_by_time") == "1";
+  unsigned long frames_per_dir = std::stoul(params.at("frames_per_dir"));
+  return std::make_shared<BinaryFileWriter>(field, output_dir, organize_by_time,
+                                            frames_per_dir);
 }
 
 void BinaryFileWriter::SetSource(StreamPtr stream) {
@@ -27,15 +38,14 @@ bool BinaryFileWriter::Init() { return true; }
 bool BinaryFileWriter::OnStop() { return true; }
 
 void BinaryFileWriter::Process() {
-  if (!boost::filesystem::exists(output_dir_)) {
-    LOG(FATAL) << "Directory \"" << output_dir_ << "\" does not exist.";
-  }
-
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
 
-  std::stringstream filepath;
-  auto id = frame->GetValue<unsigned long>("frame_id");
-  filepath << output_dir_ << "/" << id << ".bin";
+  auto capture_time_micros =
+      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+  std::ostringstream filepath;
+  filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
+           << boost::posix_time::to_iso_extended_string(capture_time_micros)
+           << "_" << field_ << ".bin";
   std::string filepath_s = filepath.str();
   std::ofstream file(filepath_s, std::ios::binary | std::ios::out);
   if (!file.is_open()) {
@@ -44,12 +54,12 @@ void BinaryFileWriter::Process() {
 
   std::vector<char> bytes;
   try {
-    bytes = frame->GetValue<std::vector<char>>(key_);
+    bytes = frame->GetValue<std::vector<char>>(field_);
   } catch (boost::bad_get& e) {
-    LOG(FATAL) << "Unable to get key \"" << key_
+    LOG(FATAL) << "Unable to get field \"" << field_
                << "\" as an std::vector<char>: " << e.what();
   } catch (std::out_of_range& e) {
-    LOG(FATAL) << "Key \"" << key_ << "\" not in frame.";
+    LOG(FATAL) << "Field \"" << field_ << "\" not in frame.";
   }
   try {
     file.write((char*)bytes.data(), bytes.size());

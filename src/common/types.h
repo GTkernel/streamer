@@ -209,6 +209,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_FACE_TRACKER,
 #ifdef USE_CAFFE
   PROCESSOR_TYPE_FACENET,
+  PROCESSOR_TYPE_IMAGEMATCH,
 #endif  // USE_CAFFE
   PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
   PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
@@ -223,12 +224,14 @@ enum ProcessorType {
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
   PROCESSOR_TYPE_JPEG_WRITER,
+  PROCESSOR_TYPE_KEYFRAME_DETECTOR,
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
   PROCESSOR_TYPE_OBJECT_DETECTOR,
   PROCESSOR_TYPE_OBJECT_TRACKER,
   PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
   PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
   PROCESSOR_TYPE_STRIDER,
+  PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR,
   PROCESSOR_TYPE_THROTTLER,
   PROCESSOR_TYPE_INVALID
 };
@@ -253,6 +256,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
 #ifdef USE_CAFFE
   } else if (type == "Facenet") {
     return PROCESSOR_TYPE_FACENET;
+  } else if (type == "ImageMatch") {
+    return PROCESSOR_TYPE_IMAGEMATCH;
 #endif  // USE_CAFFE
   } else if (type == "FlowControlEntrance") {
     return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
@@ -278,6 +283,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_IMAGE_TRANSFORMER;
   } else if (type == "JpegWriter") {
     return PROCESSOR_TYPE_JPEG_WRITER;
+  } else if (type == "KeyframeDetector") {
+    return PROCESSOR_TYPE_KEYFRAME_DETECTOR;
   } else if (type == "NeuralNetEvaluator") {
     return PROCESSOR_TYPE_NEURAL_NET_EVALUATOR;
   } else if (type == "ObjectDetector") {
@@ -290,6 +297,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
   } else if (type == "Strider") {
     return PROCESSOR_TYPE_STRIDER;
+  } else if (type == "TemporalRegionSelector") {
+    return PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR;
   } else if (type == "Throttler") {
     return PROCESSOR_TYPE_THROTTLER;
   } else {
@@ -319,6 +328,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return "Facenet";
+    case PROCESSOR_TYPE_IMAGEMATCH:
+      return "ImageMatch";
 #endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return "FlowControlEntrance";
@@ -344,6 +355,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "ImageTransformer";
     case PROCESSOR_TYPE_JPEG_WRITER:
       return "JpegWriter";
+    case PROCESSOR_TYPE_KEYFRAME_DETECTOR:
+      return "KeyframeDetector";
     case PROCESSOR_TYPE_NEURAL_NET_EVALUATOR:
       return "NeuralNetEvaluator";
     case PROCESSOR_TYPE_OBJECT_DETECTOR:
@@ -356,6 +369,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "OpenCVPeopleDetector";
     case PROCESSOR_TYPE_STRIDER:
       return "Strider";
+    case PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR:
+      return "TemporalRegionSelector";
     case PROCESSOR_TYPE_THROTTLER:
       return "Throttler";
     case PROCESSOR_TYPE_INVALID:

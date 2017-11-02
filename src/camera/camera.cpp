@@ -3,6 +3,7 @@
 //
 
 #include "camera.h"
+#include <stdexcept>
 
 #include "common/types.h"
 #include "utils/time_utils.h"
@@ -40,13 +41,21 @@ bool Camera::Capture(cv::Mat& image) {
     for (int i = 0; i < 3; i++) {
       reader->PopFrame();
     }
-    image = reader->PopFrame()->GetValue<cv::Mat>("original_image");
+    auto frame = reader->PopFrame();
+    if (frame == nullptr) {
+      throw std::runtime_error("Got null frame");
+    }
+    image = frame->GetValue<cv::Mat>("original_image");
     reader->UnSubscribe();
     Stop();
   } else {
     LOG(WARNING) << "not stopped.";
     auto reader = stream_->Subscribe();
-    image = reader->PopFrame()->GetValue<cv::Mat>("original_image");
+    auto frame = reader->PopFrame();
+    if (frame == nullptr) {
+      throw std::runtime_error("Got null frame");
+    }
+    image = frame->GetValue<cv::Mat>("original_image");
     reader->UnSubscribe();
   }
 
