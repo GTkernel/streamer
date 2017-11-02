@@ -7,5 +7,7 @@ MACRO(BUILD_ONE app)
   ADD_BUILD_REQS(${app})
 ENDMACRO()
 
+if (USE_CAFFE)
 add_executable(filterforward EXCLUDE_FROM_ALL filterforward.cpp)
 BUILD_ONE(filterforward)
+endif ()

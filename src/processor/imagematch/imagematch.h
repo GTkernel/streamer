@@ -4,9 +4,7 @@
 
 #include <mutex>
 
-#ifdef USE_CAFFE
 #include <caffe/caffe.hpp>
-#endif  // USE_CAFFE
 
 #include <Eigen/Dense>
 
