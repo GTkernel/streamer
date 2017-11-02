@@ -256,6 +256,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
 #ifdef USE_CAFFE
   } else if (type == "Facenet") {
     return PROCESSOR_TYPE_FACENET;
+  } else if (type == "ImageMatch") {
+    return PROCESSOR_TYPE_IMAGEMATCH;
 #endif  // USE_CAFFE
   } else if (type == "FlowControlEntrance") {
     return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
@@ -275,8 +277,6 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_FRAME_WRITER;
   } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
-  } else if (type == "ImageMatch") {
-    return PROCESSOR_TYPE_IMAGEMATCH;
   } else if (type == "ImageSegmenter") {
     return PROCESSOR_TYPE_IMAGE_SEGMENTER;
   } else if (type == "ImageTransformer") {
@@ -328,6 +328,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return "Facenet";
+    case PROCESSOR_TYPE_IMAGEMATCH:
+      return "ImageMatch";
 #endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return "FlowControlEntrance";
@@ -351,8 +353,6 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "ImageSegmenter";
     case PROCESSOR_TYPE_IMAGE_TRANSFORMER:
       return "ImageTransformer";
-    case PROCESSOR_TYPE_IMAGEMATCH:
-      return "ImageMatch";
     case PROCESSOR_TYPE_JPEG_WRITER:
       return "JpegWriter";
     case PROCESSOR_TYPE_KEYFRAME_DETECTOR:
