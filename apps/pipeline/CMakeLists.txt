@@ -10,5 +10,5 @@ MACRO(BUILD_ONE app)
   ADD_BUILD_REQS(${app})
 ENDMACRO()
 
-add_executable(streamer_pipeline_json EXCLUDE_FROM_ALL json_pipeline_runner.cpp)
-BUILD_ONE(streamer_pipeline_json)
+add_executable(pipeline EXCLUDE_FROM_ALL pipeline.cpp)
+BUILD_ONE(pipeline)
