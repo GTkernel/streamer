@@ -1,16 +1,21 @@
 // Deploys a pipeline from a JSON specification
 
+#include <atomic>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include <boost/program_options.hpp>
 #ifdef USE_GRAPHVIZ
 #include <graphviz/gvc.h>
 #endif  // USE_GRAPHVIZ
 #include <json/src/json.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "pipeline/pipeline.h"
 
