@@ -76,7 +76,7 @@ void Run(bool block, const std::string& camera_name,
   // Create NeuralNetEvaluator.
   auto nne = std::make_shared<NeuralNetEvaluator>(
       model_desc, input_shape, nne_batch_size, std::vector<std::string>{layer});
-  nne->SetSource(transformer->GetSink(), layer);
+  nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
   StreamPtr nne_stream = nne->GetSink(layer);
