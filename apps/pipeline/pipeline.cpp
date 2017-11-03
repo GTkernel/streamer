@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
                      "The directory containing Streamer's config files.");
   desc.add_options()("pipeline,p", po::value<std::string>()->required(),
                      "Path to a JSON file describing a pipeline.");
-  desc.add_options()("dry-run,d", "Create the pipeline but do not run it.");
+  desc.add_options()("dry-run,n", "Create the pipeline but do not run it.");
   desc.add_options()("graph,g",
                      "Display the pipeline graph. Requires the "
                      "\"libgraphviz-dev\" package.");
