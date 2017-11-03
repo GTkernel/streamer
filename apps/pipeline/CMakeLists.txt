@@ -1,8 +1,12 @@
+pkg_check_modules(GVC libgvc)
+
 MACRO(BUILD_ONE app)
   if (JEMALLOC_FOUND)
     target_link_libraries(${app} ${JAMALLOC_LIBRARIES})
   endif ()
   if (GVC_FOUND)
+    include_directories(SYSTEM ${GVC_INCLUDE_DIRS} )
+    add_definitions("-DGRAPHVIZ")
     target_link_libraries(${app} ${GVC_LIBRARIES})
   endif ()
   target_link_libraries(${app} streamer ${Boost_PROGRAM_OPTIONS_LIBRARY})

@@ -11,9 +11,9 @@
 #include <vector>
 
 #include <boost/program_options.hpp>
-#ifdef USE_GRAPHVIZ
+#ifdef GRAPHVIZ
 #include <graphviz/gvc.h>
-#endif  // USE_GRAPHVIZ
+#endif  // GRAPHVIZ
 #include <json/src/json.hpp>
 #include <opencv2/opencv.hpp>
 
@@ -21,7 +21,7 @@
 
 namespace po = boost::program_options;
 
-#ifdef USE_GRAPHVIZ
+#ifdef GRAPHVIZ
 static std::atomic<bool> stopped(false);
 
 static std::shared_ptr<std::thread> ShowGraph(const std::string& graph) {
@@ -53,7 +53,7 @@ static std::shared_ptr<std::thread> ShowGraph(const std::string& graph) {
 
   return t;
 }
-#endif  // USE_GRAPHVIZ
+#endif  // GRAPHVIZ
 
 void Run(const std::string& pipeline_filepath, bool dry_run, bool show_graph,
          bool dump_graph, const std::string& dump_graph_filepath) {
@@ -73,13 +73,13 @@ void Run(const std::string& pipeline_filepath, bool dry_run, bool show_graph,
 
   std::shared_ptr<std::thread> graph_thread = nullptr;
   if (show_graph) {
-#ifdef USE_GRAPHVIZ
+#ifdef GRAPHVIZ
     graph_thread = ShowGraph(graph);
 #else
     throw std::runtime_error(
         "Please install the \"libgraphviz-dev\" package and "
         "recompile this app to enable displaying the pipeline graph.");
-#endif  // USE_GRAPHVIZ
+#endif  // GRAPHVIZ
   }
 
   if (!dry_run) {
@@ -93,12 +93,12 @@ void Run(const std::string& pipeline_filepath, bool dry_run, bool show_graph,
     getchar();
   }
 
-#ifdef USE_GRAPHVIZ
+#ifdef GRAPHVIZ
   if (show_graph) {
     stopped = true;
     graph_thread->join();
   }
-#endif  // USE_GRAPHVIZ
+#endif  // GRAPHVIZ
 
   if (!dry_run) {
     pipeline->Stop();
