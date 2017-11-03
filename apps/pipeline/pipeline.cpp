@@ -24,12 +24,11 @@ namespace po = boost::program_options;
 #ifdef USE_GRAPHVIZ
 static std::atomic<bool> stopped(false);
 
-static std::shared_ptr<std::thread> ShowGraph(
-    std::shared_ptr<Pipeline> pipeline) {
-  GVC_t* gvc = gvContext();
-  Agraph_t* dg = agmemread(pipeline->GetGraph().c_str());
+static std::shared_ptr<std::thread> ShowGraph(const std::string& graph) {
+  Agraph_t* dg = agmemread(graph.c_str());
   CHECK(dg != NULL);
 
+  GVC_t* gvc = gvContext();
   int err = gvLayout(gvc, dg, "dot");
   CHECK(err == 0);
 
@@ -56,16 +55,26 @@ static std::shared_ptr<std::thread> ShowGraph(
 }
 #endif  // USE_GRAPHVIZ
 
-void Run(const std::string& pipeline_filepath, bool dry_run, bool show_graph) {
+void Run(const std::string& pipeline_filepath, bool dry_run, bool show_graph,
+         bool dump_graph, const std::string& dump_graph_filepath) {
   std::ifstream i(pipeline_filepath);
   nlohmann::json json;
   i >> json;
   std::shared_ptr<Pipeline> pipeline = Pipeline::ConstructPipeline(json);
 
+  // Generate the graph representation of the pipeline.
+  std::string graph = pipeline->GetGraph();
+  if (dump_graph) {
+    std::ofstream graph_file(dump_graph_filepath,
+                             std::ofstream::out | std::ofstream::trunc);
+    graph_file << graph;
+    graph_file.close();
+  }
+
   std::shared_ptr<std::thread> graph_thread = nullptr;
   if (show_graph) {
 #ifdef USE_GRAPHVIZ
-    graph_thread = ShowGraph(pipeline);
+    graph_thread = ShowGraph(graph);
 #else
     throw std::runtime_error(
         "Please install the \"libgraphviz-dev\" package and "
@@ -107,6 +116,9 @@ int main(int argc, char* argv[]) {
   desc.add_options()("graph,g",
                      "Display the pipeline graph. Requires the "
                      "\"libgraphviz-dev\" package.");
+  desc.add_options()("dump-graph,o", po::value<std::string>(),
+                     "Save the GraphViz textual representation in "
+                     "the specified file.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -140,6 +152,11 @@ int main(int argc, char* argv[]) {
   std::string pipeline_filepath = args["pipeline"].as<std::string>();
   bool dry_run = args.count("dry-run");
   bool show_graph = args.count("graph");
-  Run(pipeline_filepath, dry_run, show_graph);
+  bool dump_graph = args.count("dump-graph");
+  std::string dump_graph_filepath = "";
+  if (dump_graph) {
+    dump_graph_filepath = args["dump-graph"].as<std::string>();
+  }
+  Run(pipeline_filepath, dry_run, show_graph, dump_graph, dump_graph_filepath);
   return 0;
 }
