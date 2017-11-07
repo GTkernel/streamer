@@ -1,11 +1,7 @@
-/**
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- *
- */
-
 #ifndef STREAMER_UTILS_YOLO_UTILS_H_
 #define STREAMER_UTILS_YOLO_UTILS_H_
 #include <fstream>
+#include <opencv2/opencv.hpp>
 
 typedef struct {
   int index;

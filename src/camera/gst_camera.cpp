@@ -5,7 +5,7 @@
 
 #include <chrono>
 
-GSTCamera::GSTCamera(const string& name, const string& video_uri, int width,
+GSTCamera::GSTCamera(const std::string& name, const std::string& video_uri, int width,
                      int height, unsigned long max_buf_size)
     : Camera(name, video_uri, width, height),
       capture_{max_buf_size},

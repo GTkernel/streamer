@@ -5,9 +5,9 @@
 #ifndef STREAMER_CAMERA_CAMERA_MANAGER_H_
 #define STREAMER_CAMERA_CAMERA_MANAGER_H_
 
+#include <string>
 #include <unordered_map>
 #include "camera/camera.h"
-#include "common/common.h"
 #include "gst_camera.h"
 
 #ifdef USE_PTGRAY
@@ -27,12 +27,12 @@ class CameraManager {
  public:
   CameraManager();
   CameraManager(const CameraManager& other) = delete;
-  std::unordered_map<string, std::shared_ptr<Camera>> GetCameras();
-  std::shared_ptr<Camera> GetCamera(const string& name);
-  bool HasCamera(const string& name) const;
+  std::unordered_map<std::string, std::shared_ptr<Camera>> GetCameras();
+  std::shared_ptr<Camera> GetCamera(const std::string& name);
+  bool HasCamera(const std::string& name) const;
 
  private:
-  std::unordered_map<string, std::shared_ptr<Camera>> cameras_;
+  std::unordered_map<std::string, std::shared_ptr<Camera>> cameras_;
 };
 
 #endif  // STREAMER_CAMERA_CAMERA_MANAGER_H_

@@ -35,8 +35,8 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const string& camera_name, const string& net_name,
-         const string& models_dir) {
+void Run(const std::string& camera_name, const std::string& net_name,
+         const std::string& models_dir) {
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
@@ -198,16 +198,16 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Simple camera display test");
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("camera",
-                     po::value<string>()->value_name("CAMERA")->required(),
+                     po::value<std::string>()->value_name("CAMERA")->required(),
                      "The name of the camera to use");
   desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR")->required(),
+                     po::value<std::string>()->value_name("CONFIG_DIR")->required(),
                      "The directory to find streamer's configurations");
   desc.add_options()("net,n",
-                     po::value<string>()->value_name("NET")->required(),
+                     po::value<std::string>()->value_name("NET")->required(),
                      "The name of the neural net to run");
   desc.add_options()("models,m",
-                     po::value<string>()->value_name("MODELS")->required(),
+                     po::value<std::string>()->value_name("MODELS")->required(),
                      "The name of the neural net to run");
 
   std::signal(SIGINT, SignalHandler);
@@ -229,15 +229,15 @@ int main(int argc, char* argv[]) {
 
   // Parse arguments
   if (args.count("config_dir")) {
-    Context::GetContext().SetConfigDir(args["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(args["config_dir"].as<std::string>());
   }
 
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  auto camera_name = args["camera"].as<string>();
-  auto net_name = args["net"].as<string>();
-  auto models_dir = args["models"].as<string>();
+  auto camera_name = args["camera"].as<std::string>();
+  auto net_name = args["net"].as<std::string>();
+  auto models_dir = args["models"].as<std::string>();
 
   // Run mainstream server
   Run(camera_name, net_name, models_dir);

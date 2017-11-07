@@ -10,6 +10,8 @@
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
+#include <opencv2/opencv.hpp>
+
 #include "json/src/json.hpp"
 #include "sys/stat.h"
 #include "utils/file_utils.h"
@@ -55,7 +57,7 @@ void DoWriteDB(std::string filename, time_t cur_time,
   }
 }
 
-DBFileWriter::DBFileWriter(const string& root_dir)
+DBFileWriter::DBFileWriter(const std::string& root_dir)
     : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {}) {
   root_dir_ = root_dir;
   while (root_dir_.back() == '/') {

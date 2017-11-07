@@ -9,11 +9,11 @@ SPLParser::SPLParser() {}
 // TODO: this is definitely going to be rewrite..
 class Tokenizer {
  public:
-  Tokenizer(const string& str) : str_(str), index_(0) {}
+  Tokenizer(const std::string& str) : str_(str), index_(0) {}
 
   bool HasNext() { return index_ != str_.length(); }
 
-  string NextToken() {
+  std::string NextToken() {
     size_t end = str_.length();
     if (index_ == end) return "";
 
@@ -37,7 +37,7 @@ class Tokenizer {
           ch == ',' || ch == '\n') {
         if (!token_started) {
           index_ += 1;
-          return string(1, ch);
+          return std::string(1, ch);
         } else {
           return str_.substr(start, index_ - start);
         }
@@ -66,7 +66,7 @@ class Tokenizer {
   }
 
  private:
-  string str_;
+  std::string str_;
   size_t index_;
 };
 
@@ -77,7 +77,7 @@ class Tokenizer {
     return false;                             \
   } while (0)
 
-bool SPLParser::Parse(const string& spl,
+bool SPLParser::Parse(const std::string& spl,
                       std::vector<SPLStatement>& statements) {
   DLOG(INFO) << "Parsing:" << std::endl << spl;
 
@@ -85,11 +85,11 @@ bool SPLParser::Parse(const string& spl,
 
   while (tokenizer.HasNext()) {
     // Parse one statement at a time
-    string t1 = tokenizer.NextToken();
+    std::string t1 = tokenizer.NextToken();
 
     if (t1 == "\n" || t1 == "") continue;
 
-    string t2 = tokenizer.NextToken();
+    std::string t2 = tokenizer.NextToken();
     if (t2 == "") PARSE_ERROR("Expect token after " + t1 + "||", spl);
 
     SPLStatement statement;
@@ -97,14 +97,14 @@ bool SPLParser::Parse(const string& spl,
     if (t2 == "=") {
       statement.processor_name = t1;
       // Processor creation
-      string t3 = tokenizer.NextToken();
+      std::string t3 = tokenizer.NextToken();
       if (t3 == "") PARSE_ERROR("Expect 'processor' or 'camera'", spl);
       if (t3 == "camera" || t3 == "processor") {
         statement.statement_type = SPL_STATEMENT_PROCESSOR;
 
-        string t4 = tokenizer.NextToken();
+        std::string t4 = tokenizer.NextToken();
         if (t4 != "(") PARSE_ERROR("Expect ( after " + t3, spl);
-        string t5 = tokenizer.NextToken();
+        std::string t5 = tokenizer.NextToken();
         if (t5 == "") PARSE_ERROR("Expect token after " + t4, spl);
 
         // Special condition for camera processor, where the token here is the
@@ -116,18 +116,18 @@ bool SPLParser::Parse(const string& spl,
           statement.processor_type = GetProcessorTypeByString(t5);
         }
 
-        string t6 = tokenizer.NextToken();
+        std::string t6 = tokenizer.NextToken();
         if (t6 == ")") {
           // Done
           statements.push_back(statement);
         } else if (t6 == ",") {
           while (t6 == ",") {
-            string key = tokenizer.NextToken();
+            std::string key = tokenizer.NextToken();
             if (key == "")
               PARSE_ERROR("Expect param key name after " + t6, spl);
-            string equal = tokenizer.NextToken();
+            std::string equal = tokenizer.NextToken();
             if (equal != "=") PARSE_ERROR("Expect = after " + key, spl);
-            string value = tokenizer.NextToken();
+            std::string value = tokenizer.NextToken();
             if (value == "") PARSE_ERROR("Expect value after =", spl);
             statement.params.insert({key, value});
             t6 = tokenizer.NextToken();
@@ -148,28 +148,28 @@ bool SPLParser::Parse(const string& spl,
       statement.statement_type = SPL_STATEMENT_CONNECT;
       statement.lhs_processor_name = t1;
 
-      string t3 = tokenizer.NextToken();
+      std::string t3 = tokenizer.NextToken();
       if (t3 == "") PARSE_ERROR("Expect stream name for " + t1, spl);
       statement.lhs_stream_name = t3;
 
-      string t4 = tokenizer.NextToken();
+      std::string t4 = tokenizer.NextToken();
       if (t4 != "]") PARSE_ERROR("Bracket [ is not closed", spl);
 
-      string equal = tokenizer.NextToken();
+      std::string equal = tokenizer.NextToken();
       if (equal != "=") PARSE_ERROR("RHS stream is not specified", spl);
 
-      string t5 = tokenizer.NextToken();
+      std::string t5 = tokenizer.NextToken();
       if (t5 == "") PARSE_ERROR("RHS processor name is not valid", spl);
       statement.rhs_processor_name = t5;
 
-      string t6 = tokenizer.NextToken();
+      std::string t6 = tokenizer.NextToken();
       if (t6 != "[") PARSE_ERROR("RHS stream is not specified", spl);
 
-      string t7 = tokenizer.NextToken();
+      std::string t7 = tokenizer.NextToken();
       if (t7 == "") PARSE_ERROR("RHS stream name is not valid", spl);
       statement.rhs_stream_name = t7;
 
-      string t8 = tokenizer.NextToken();
+      std::string t8 = tokenizer.NextToken();
       if (t8 != "]") PARSE_ERROR("Bracket [ is not closed", spl);
 
       statements.push_back(statement);
@@ -177,7 +177,7 @@ bool SPLParser::Parse(const string& spl,
       PARSE_ERROR("Expect = or [ after " + t1, spl);
     }
 
-    string t_last = tokenizer.NextToken();
+    std::string t_last = tokenizer.NextToken();
     if (t_last != "\n" && t_last != "") {
       PARSE_ERROR("Expect a newline after a statement", spl);
     }

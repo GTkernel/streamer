@@ -3,8 +3,12 @@
 //
 
 #include <cstdio>
-
-#include "streamer.h"
+#include "processor/image_transformer.h"
+#include "processor/image_segmenter.h"
+#include "common/types.h"
+#include "model/model_manager.h"
+#include "camera/camera_manager.h"
+#include <opencv2/opencv.hpp>
 
 int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
@@ -34,9 +38,9 @@ int main(int argc, char* argv[]) {
   }
 
   // Get options
-  string camera_name = argv[1];
-  string model_name = argv[2];
-  string display_on = argv[3];
+  std::string camera_name = argv[1];
+  std::string model_name = argv[2];
+  std::string display_on = argv[3];
 
   // Check options
   CHECK(model_manager.HasModel(model_name))

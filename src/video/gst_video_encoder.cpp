@@ -12,7 +12,7 @@
 const static char* ENCODER_SRC_NAME = "encoder_src";
 
 GstVideoEncoder::GstVideoEncoder(int width, int height,
-                                 const string& output_filename)
+                                 const std::string& output_filename)
     : Processor(PROCESSOR_TYPE_ENCODER, {"input"}, {"output"}),
       width_(width),
       height_(height),
@@ -43,7 +43,7 @@ GstVideoEncoder::GstVideoEncoder(int width, int height, int port, bool tcp)
 std::shared_ptr<GstVideoEncoder> GstVideoEncoder::Create(
     const FactoryParamsType& params) {
   int port = -1;
-  string filename;
+  std::string filename;
 
   if (params.count("port") != 0) {
     port = atoi(params.at("port").c_str());
@@ -85,7 +85,7 @@ void GstVideoEncoder::EnoughDataCB(GstAppSrc*, gpointer user_data) {
  * file if ouput_filename_ is not empty, or a pipeline to stream the video
  * through a udp port if port_ is not empty.
  */
-string GstVideoEncoder::BuildPipelineString() {
+std::string GstVideoEncoder::BuildPipelineString() {
   std::ostringstream ss;
 
   ss << "appsrc name=" << ENCODER_SRC_NAME << " ! "
@@ -114,7 +114,7 @@ string GstVideoEncoder::BuildPipelineString() {
   return ss.str();
 }
 
-string GstVideoEncoder::BuildCapsString() {
+std::string GstVideoEncoder::BuildCapsString() {
   std::ostringstream ss;
   ss << "video/x-raw,format=(string)BGR,width=" << width_
      << ",height=" << height_ << ",framerate=(fraction)30/1";
@@ -140,7 +140,7 @@ bool GstVideoEncoder::Init() {
 
   // Build Gst pipeline
   GError* err = nullptr;
-  string pipeline_str = BuildPipelineString();
+  std::string pipeline_str = BuildPipelineString();
 
   gst_pipeline_ = GST_PIPELINE(gst_parse_launch(pipeline_str.c_str(), &err));
   if (err != nullptr) {
@@ -175,7 +175,7 @@ bool GstVideoEncoder::Init() {
   gst_appsrc_ = appsrc;
 
   // Set the caps of the appsrc
-  string caps_str = BuildCapsString();
+  std::string caps_str = BuildCapsString();
   gst_caps_ = gst_caps_from_string(caps_str.c_str());
 
   if (gst_caps_ == nullptr) {
@@ -344,6 +344,6 @@ void GstVideoEncoder::Process() {
   return;
 }
 
-void GstVideoEncoder::SetEncoderElement(const string& encoder) {
+void GstVideoEncoder::SetEncoderElement(const std::string& encoder) {
   encoder_element_ = encoder;
 }

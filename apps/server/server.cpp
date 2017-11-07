@@ -8,13 +8,12 @@
 #include <csignal>
 
 #include "server_utils.h"
-#include "streamer.h"
 
 namespace po = boost::program_options;
 
 #define STRING_PATTERN "([a-zA-Z0-9_]+)"
 
-std::unordered_map<string, PipelinePtr> pipelines;
+std::unordered_map<std::string, PipelinePtr> pipelines;
 
 void StartUp() {
 #ifdef USE_VIMBA
@@ -35,7 +34,7 @@ static void SetUpEndpoints(HttpServer& server) {
   // GET /hello
   server.resource["^/hello$"]["GET"] = [](HttpServerResponse response,
                                           HttpServerRequest) {
-    string content = "Hello from streamer";
+    std::string content = "Hello from streamer";
     LOG(INFO) << "Here";
     Send200Response(response, content);
   };
@@ -59,7 +58,7 @@ static void SetUpEndpoints(HttpServer& server) {
   server.resource["^/cameras/" STRING_PATTERN "/control$"]["POST"] =
       [](HttpServerResponse response, HttpServerRequest request) {
         LOG(INFO) << "Received " << request->path;
-        string camera_name = request->path_match[1];
+        std::string camera_name = request->path_match[1];
         auto camera = CameraManager::GetInstance().GetCamera(camera_name);
 
         pt::ptree doc;
@@ -77,13 +76,13 @@ static void SetUpEndpoints(HttpServer& server) {
           shape.width = doc.get<int>("width");
           shape.height = doc.get<int>("height");
 
-          string mode_str = doc.get<string>("video_mode");
+          std::string mode_str = doc.get<std::string>("video_mode");
           if (mode_str == "mode_0") {
             mode = CAMERA_MODE_0;
           } else if (mode_str == "mode_1") {
             mode = CAMERA_MODE_1;
           } else {
-            string warning_message = mode_str + "is not a supported mode";
+            std::string warning_message = mode_str + "is not a supported mode";
             LOG(WARNING) << warning_message;
             Send400Response(response, warning_message);
             return;
@@ -107,7 +106,7 @@ static void SetUpEndpoints(HttpServer& server) {
         }
 
         if (doc.count("move")) {
-          string direction = doc.get<string>("move");
+          std::string direction = doc.get<std::string>("move");
           if (direction == "up") {
             camera->MoveUp();
           } else if (direction == "down") {
@@ -118,7 +117,7 @@ static void SetUpEndpoints(HttpServer& server) {
             camera->MoveRight();
           } else {
             Send400Response(response,
-                            string("Not valid move direction: ") + direction);
+                            std::string("Not valid move direction: ") + direction);
           }
         }
 
@@ -129,7 +128,7 @@ static void SetUpEndpoints(HttpServer& server) {
   server.resource["^/cameras/" STRING_PATTERN "/capture$"]["GET"] =
       [&camera_manager, &server](HttpServerResponse response,
                                  HttpServerRequest request) {
-        string camera_name = request->path_match[1];
+        std::string camera_name = request->path_match[1];
         LOG(INFO) << "Received " << request->path;
         if (camera_manager.HasCamera(camera_name)) {
           auto camera = camera_manager.GetCamera(camera_name);
@@ -153,9 +152,9 @@ static void SetUpEndpoints(HttpServer& server) {
       [&camera_manager](HttpServerResponse response,
                         HttpServerRequest request) {
         LOG(INFO) << "Received " << request->path;
-        string camera_name = request->path_match[1];
+        std::string camera_name = request->path_match[1];
         if (camera_manager.HasCamera(camera_name)) {
-          string camera_dir = camera_name;
+          std::string camera_dir = camera_name;
           Send200Response(response, DirectoryToJson(camera_dir));
         } else {
           Send400Response(response, "Camera not found: " + camera_name);
@@ -175,15 +174,15 @@ static void SetUpEndpoints(HttpServer& server) {
     pt::ptree doc;
     pt::read_json(request->content, doc);
 
-    string pipeline_name = doc.get<string>("name");
+    std::string pipeline_name = doc.get<std::string>("name");
 
     if (pipelines.count(pipeline_name) != 0) {
       Send400Response(response,
-                      string("Pipeline: ") + pipeline_name + " already exists");
+                      std::string("Pipeline: ") + pipeline_name + " already exists");
       return;
     }
 
-    string spl = doc.get<string>("spl");
+    std::string spl = doc.get<std::string>("spl");
     SPLParser parser;
     std::vector<SPLStatement> statements;
     bool result = parser.Parse(spl, statements);
@@ -213,10 +212,10 @@ static void SetUpEndpoints(HttpServer& server) {
   // data: name
   server.resource["^/pipelines/" STRING_PATTERN "$"]["DELETE"] =
       [](HttpServerResponse response, HttpServerRequest request) {
-        string pipeline_name = request->path_match[1];
+        std::string pipeline_name = request->path_match[1];
 
         if (pipelines.count(pipeline_name) == 0) {
-          Send400Response(response, string("Pipeline: ") + pipeline_name +
+          Send400Response(response, std::string("Pipeline: ") + pipeline_name +
                                         " does not exist");
           return;
         }
@@ -245,7 +244,7 @@ static void SetUpEndpoints(HttpServer& server) {
         pt::ptree doc;
         pt::read_json(request->content, doc);
 
-        string filepath = doc.get<string>("path");
+        std::string filepath = doc.get<std::string>("path");
 
         if (!FileExists(filepath)) {
           Send400Response(response, "File not exist");
@@ -265,7 +264,7 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Streamer server that exports an HTTP API");
   desc.add_options()(
       "config_dir,C",
-      po::value<string>()->value_name("CONFIG_DIR")->default_value("./config"),
+      po::value<std::string>()->value_name("CONFIG_DIR")->default_value("./config"),
       "The directory to find streamer's configurations");
   desc.add_options()("port,p",
                      po::value<int>()->value_name("PORT")->default_value(15213),
@@ -286,7 +285,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+  Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   Context::GetContext().Init();
 
   size_t server_thread_num = 1;

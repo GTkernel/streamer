@@ -1,6 +1,3 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
-//
 
 #include "camera/camera_manager.h"
 

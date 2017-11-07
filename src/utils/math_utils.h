@@ -1,11 +1,6 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
-//
 
 #ifndef STREAMER_UTILS_MATH_UTILS_H_
 #define STREAMER_UTILS_MATH_UTILS_H_
-
-#include "common/common.h"
 
 inline bool PairCompare(const std::pair<float, int>& lhs,
                         const std::pair<float, int>& rhs) {

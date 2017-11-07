@@ -22,7 +22,7 @@ typedef std::shared_ptr<HttpServer::Request> HttpServerRequest;
 namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
-string CameraToJson(Camera* camera, pt::ptree& root) {
+std::string CameraToJson(Camera* camera, pt::ptree& root) {
   std::ostringstream ss;
 
   root.put("name", camera->GetName());
@@ -42,7 +42,7 @@ string CameraToJson(Camera* camera, pt::ptree& root) {
   return ss.str();
 }
 
-string ListToJson(const string& list_name,
+std::string ListToJson(const std::string& list_name,
                   const std::vector<pt::ptree>& pt_list) {
   pt::ptree root;
   std::ostringstream ss;
@@ -59,7 +59,7 @@ string ListToJson(const string& list_name,
   return ss.str();
 }
 
-string DirectoryToJson(const string& dir_path) {
+std::string DirectoryToJson(const std::string& dir_path) {
   pt::ptree root;
 
   std::ostringstream ss;
@@ -68,8 +68,8 @@ string DirectoryToJson(const string& dir_path) {
 
   for (const auto& file : fs::directory_iterator(dir_path)) {
     if (!fs::is_directory(file.status())) {
-      string filename = file.path().filename().string();
-      string filepath = dir_path + "/" + filename;
+      std::string filename = file.path().filename().string();
+      std::string filepath = dir_path + "/" + filename;
       pt::ptree file_node;
 
       file_node.put("path", filepath);
@@ -81,7 +81,7 @@ string DirectoryToJson(const string& dir_path) {
       const struct tm* time = localtime(&stat_buf.st_mtime);
       char timestr[128];
       strftime(timestr, sizeof(timestr), "%Y-%m-%d+%H:%M:%S", time);
-      file_node.put("created_at", string(timestr));
+      file_node.put("created_at", std::string(timestr));
       files_node.push_back({"", file_node});
     }
   }
@@ -95,7 +95,7 @@ string DirectoryToJson(const string& dir_path) {
 #define RN "\r\n"
 #define RN2 "\r\n\r\n"
 
-void Send200Response(HttpServerResponse res, const string& content) {
+void Send200Response(HttpServerResponse res, const std::string& content) {
   *res << "HTTP/1.1 200 OK" << RN << "Content-Length: " << content.length()
        << RN2 << content;
 }
@@ -109,13 +109,13 @@ void SendResponseSuccess(HttpServerResponse res) {
   Send200Response(res, ss.str());
 }
 
-void Send400Response(HttpServerResponse res, const string& content) {
+void Send400Response(HttpServerResponse res, const std::string& content) {
   *res << "HTTP/1.1 400 Bad Request" << RN
        << "Content-Length: " << content.length() << RN2 << content;
 }
 
 void SendBytes(HttpServer& server, HttpServerResponse res, const char* buf,
-               size_t total, const string& content_type) {
+               size_t total, const std::string& content_type) {
   *res << "HTTP/1.1 200 OK" << RN << "Content-Type: " << content_type << RN
        << "Content-Length: " << total << RN2;
 
@@ -148,7 +148,7 @@ void RecursiveSend(HttpServer& server, HttpServerResponse res,
 }
 
 void SendFile(HttpServer& server, HttpServerResponse res,
-              const string& filepath, const string& content_type) {
+              const std::string& filepath, const std::string& content_type) {
   CHECK(FileExists(filepath)) << "File not found: " << filepath;
 
   auto ifs = std::make_shared<std::ifstream>();

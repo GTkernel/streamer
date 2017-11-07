@@ -17,7 +17,6 @@
 #include <caffe/layers/memory_data_layer.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "common/common.h"
 #include "model/model.h"
 #include "processor/detectors/object_detector.h"
 

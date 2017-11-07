@@ -1,11 +1,9 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
-//
 
 #ifndef STREAMER_UTILS_CUDA_UTILS_H_
 #define STREAMER_UTILS_CUDA_UTILS_H_
 
-#include "common/common.h"
+#include <glog/logging.h>
+#include <string>
 
 #ifdef USE_CUDA
 #include <cuda.h>

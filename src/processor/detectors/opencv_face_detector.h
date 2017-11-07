@@ -11,7 +11,6 @@
 #include <opencv2/objdetect/objdetect.hpp>
 #endif  // USE_CUDA
 
-#include "common/common.h"
 #include "common/types.h"
 #include "processor/detectors/object_detector.h"
 

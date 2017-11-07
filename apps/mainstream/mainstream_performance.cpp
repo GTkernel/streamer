@@ -23,10 +23,10 @@ namespace po = boost::program_options;
 
 // Global arguments
 struct Configurations {
-  std::vector<string> camera_names;
-  string net;
+  std::vector<std::string> camera_names;
+  std::string net;
   int num_apps;
-  string outfile;
+  std::string outfile;
   bool resnet;
   bool inception;
   bool mobilenets;
@@ -261,16 +261,16 @@ int main(int argc, char* argv[]) {
   FLAGS_colorlogtostderr = 1;
 
   po::options_description desc("Benchmark for streamer");
-  desc.add_options()("net,n", po::value<string>()->value_name("NET"),
+  desc.add_options()("net,n", po::value<std::string>()->value_name("NET"),
                      "The name of the neural net to run");
-  desc.add_options()("camera,c", po::value<string>()->value_name("CAMERAS"),
+  desc.add_options()("camera,c", po::value<std::string>()->value_name("CAMERAS"),
                      "Name of camera to use");
   desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR"),
+                     po::value<std::string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configuration");
   desc.add_options()("numapps", po::value<int>()->default_value(-1),
                      "Number classifiers to run");
-  desc.add_options()("outfile", po::value<string>()->default_value(""),
+  desc.add_options()("outfile", po::value<std::string>()->default_value(""),
                      "File to store results");
   desc.add_options()("resnet,r", "Use ResNet50 architecture or not");
   desc.add_options()("inception,i", "Use InceptionV3 architecture or not");
@@ -289,17 +289,17 @@ int main(int argc, char* argv[]) {
   //// Parse arguments
 
   if (vm.count("config_dir"))
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   Context::GetContext().Init();
 
   if (vm.count("camera")) {
-    auto camera = vm["camera"].as<string>();
+    auto camera = vm["camera"].as<std::string>();
     CONFIG.camera_names = SplitString(camera, ",");
   }
 
-  if (vm.count("net")) CONFIG.net = vm["net"].as<string>();
+  if (vm.count("net")) CONFIG.net = vm["net"].as<std::string>();
   if (vm.count("numapps")) CONFIG.num_apps = vm["numapps"].as<int>();
-  if (vm.count("outfile")) CONFIG.outfile = vm["outfile"].as<string>();
+  if (vm.count("outfile")) CONFIG.outfile = vm["outfile"].as<std::string>();
   if (vm.count("resnet")) CONFIG.resnet = vm.count("resnet") != 0;
   if (vm.count("inception")) CONFIG.inception = vm.count("inception") != 0;
   if (vm.count("mobilenets")) CONFIG.mobilenets = vm.count("mobilenets") != 0;

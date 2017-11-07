@@ -9,7 +9,10 @@
 #include "processor/flow_control/flow_control_entrance.h"
 
 /////// Stream
-Stream::Stream(string name) : name_(name) {}
+
+Stream::Stream(std::string name) : name_(name) {}
+
+constexpr unsigned int ms_per_sec = 1000;
 
 StreamReader* Stream::Subscribe(size_t max_buffer_size) {
   std::lock_guard<std::mutex> guard(stream_lock_);
@@ -166,13 +169,13 @@ void StreamReader::UnSubscribe() {
   stream_->UnSubscribe(this);
 }
 
-double StreamReader::GetPushFps() { return 1000 / running_push_ms_; }
+double StreamReader::GetPushFps() { return ms_per_sec / running_push_ms_; }
 
-double StreamReader::GetPopFps() { return 1000 / running_pop_ms_; }
+double StreamReader::GetPopFps() { return ms_per_sec / running_pop_ms_; }
 
 double StreamReader::GetHistoricalFps() {
   return num_frames_popped_ /
-         ((timer_.ElapsedMSec() - first_frame_pop_ms_) / 1000);
+         ((timer_.ElapsedMSec() - first_frame_pop_ms_) / ms_per_sec);
 }
 
 void StreamReader::Stop() {

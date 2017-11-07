@@ -7,7 +7,7 @@
 #include <tinytoml/include/toml/toml.h>
 
 TEST(TINYTOML_TEST, TINYTOML_TEST) {
-  string test_toml_string =
+  std::string test_toml_string =
       "arr1 = [ 1, 2, 3 ]\n"
       "arr2 = [ \"red\", \"yellow\", \"green\" ]\n"
       "arr3 = [ [ 1, 2 ], [3, 4, 5] ]\n"

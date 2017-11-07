@@ -18,7 +18,7 @@ GTEST_API_ int main(int argc, char** argv) {
   FLAGS_colorlogtostderr = 1;
   FLAGS_minloglevel = 0;
   if (argc >= 2) {
-    string config_dir = argv[1];
+    std::string config_dir = argv[1];
     LOG(INFO) << config_dir;
     Context::GetContext().SetConfigDir(config_dir);
   } else {

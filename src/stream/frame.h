@@ -20,7 +20,6 @@
 #include <boost/variant/apply_visitor.hpp>
 #include <json/src/json.hpp>
 
-#include "common/common.h"
 #include "common/context.h"
 
 // Forward declaration to break the cycle:

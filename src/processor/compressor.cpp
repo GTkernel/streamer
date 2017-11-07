@@ -6,6 +6,8 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
+#include "utils/utils.h"
+
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 

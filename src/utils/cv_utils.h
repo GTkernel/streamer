@@ -8,7 +8,7 @@
 #ifndef STREAMER_UTILS_CV_UTILS_H_
 #define STREAMER_UTILS_CV_UTILS_H_
 
-#include "common/common.h"
+#include <opencv2/opencv.hpp>
 
 inline cv::Scalar HSV2RGB(const float h, const float s, const float v) {
   const int h_i = static_cast<int>(h * 6);

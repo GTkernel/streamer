@@ -17,17 +17,17 @@ struct Configurations {
   // Enable verbose logging or not
   bool verbose;
   // The name of processors to use
-  std::vector<string> processor_names;
+  std::vector<std::string> processor_names;
   // The name of cameras to use
-  std::vector<string> camera_names;
+  std::vector<std::string> camera_names;
   // The encoder to use
-  string encoder;
+  std::string encoder;
   // The decoder to use
-  string decoder;
+  std::string decoder;
   // The name of the experiment to run
-  string experiment;
+  std::string experiment;
   // The network model to use
-  string net;
+  std::string net;
   // Duration of a test
   int time;
   // Device number
@@ -100,7 +100,7 @@ void RunEndToEndExperiment() {
   if (CONFIG.store) {
     for (decltype(camera_size) i = 0; i < camera_size; ++i) {
       auto classifier = classifiers.at(i);
-      string output_filename = CONFIG.camera_names.at(i) + ".mp4";
+      std::string output_filename = CONFIG.camera_names.at(i) + ".mp4";
 
       std::shared_ptr<GstVideoEncoder> encoder(
           new GstVideoEncoder(cameras.at(i)->GetWidth(),
@@ -215,27 +215,27 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Benchmark for streamer");
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("net,n",
-                     po::value<string>()->value_name("NET")->required(),
+                     po::value<std::string>()->value_name("NET")->required(),
                      "The name of the neural net to run");
-  desc.add_options()("camera,c", po::value<string>()->value_name("CAMERAS"),
+  desc.add_options()("camera,c", po::value<std::string>()->value_name("CAMERAS"),
                      "The name of the camera to use, if there are multiple "
                      "cameras to be used, separate with ,");
   desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR"),
+                     po::value<std::string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configuration");
   desc.add_options()("experiment,e",
-                     po::value<string>()->value_name("EXP")->required(),
+                     po::value<std::string>()->value_name("EXP")->required(),
                      "Experiment to run");
   desc.add_options()("verbose,v", po::value<bool>()->default_value(false),
                      "Verbose logging or not");
-  desc.add_options()("encoder", po::value<string>(), "Encoder to use");
-  desc.add_options()("decoder", po::value<string>(), "Decoder to use");
+  desc.add_options()("encoder", po::value<std::string>(), "Encoder to use");
+  desc.add_options()("decoder", po::value<std::string>(), "Decoder to use");
   desc.add_options()("time,t", po::value<int>()->default_value(10),
                      "Duration of the experiment");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
   desc.add_options()(
-      "pipeline,p", po::value<string>()->value_name("pipeline"),
+      "pipeline,p", po::value<std::string>()->value_name("pipeline"),
       "The processor pipeline to run, separate processor with ,");
   desc.add_options()("store", po::value<bool>()->default_value(false),
                      "Write video at the end of the pipeline or not");
@@ -262,36 +262,36 @@ int main(int argc, char* argv[]) {
   //// Prase arguments
 
   if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   }
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
   if (vm.count("pipeline")) {
-    auto pipeline = vm["pipeline"].as<string>();
+    auto pipeline = vm["pipeline"].as<std::string>();
     CONFIG.processor_names = SplitString(pipeline, ",");
   }
 
   if (vm.count("camera")) {
-    auto camera = vm["camera"].as<string>();
+    auto camera = vm["camera"].as<std::string>();
     CONFIG.camera_names = SplitString(camera, ",");
   }
 
   if (vm.count("experiment")) {
-    CONFIG.experiment = vm["experiment"].as<string>();
+    CONFIG.experiment = vm["experiment"].as<std::string>();
   }
 
   if (vm.count("net")) {
-    CONFIG.net = vm["net"].as<string>();
+    CONFIG.net = vm["net"].as<std::string>();
   }
 
   if (vm.count("encoder")) {
-    CONFIG.encoder = vm["encoder"].as<string>();
+    CONFIG.encoder = vm["encoder"].as<std::string>();
     Context::GetContext().SetString(H264_ENCODER_GST_ELEMENT, CONFIG.encoder);
   }
 
   if (vm.count("decoder")) {
-    CONFIG.decoder = vm["decoder"].as<string>();
+    CONFIG.decoder = vm["decoder"].as<std::string>();
     Context::GetContext().SetString(H264_DECODER_GST_ELEMENT, CONFIG.decoder);
   }
 

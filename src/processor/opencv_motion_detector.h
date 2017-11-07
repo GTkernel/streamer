@@ -10,7 +10,6 @@
 
 #include <chrono>
 #include <opencv2/opencv.hpp>
-#include "common/common.h"
 #include "processor.h"
 
 class OpenCVMotionDetector : public Processor {

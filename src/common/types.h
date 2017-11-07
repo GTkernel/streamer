@@ -6,6 +6,7 @@
 #define STREAMER_COMMON_TYPES_H_
 
 #include <cstdlib>
+#include <glog/logging.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -13,7 +14,6 @@
 #include <boost/serialization/access.hpp>
 #include <json/src/json.hpp>
 
-#include "common/common.h"
 #include "common/serialization.h"
 
 /**

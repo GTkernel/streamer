@@ -6,7 +6,6 @@
 
 #include <zmq.hpp>
 
-#include "common/common.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "utils/utils.h"
 

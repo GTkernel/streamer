@@ -13,8 +13,6 @@
 #include <gst/gstmemory.h>
 #include <opencv2/opencv.hpp>
 
-#include "common/common.h"
-
 /**
  * @brief Video capture for reading frames from GStreamer. Return frames in
  * OpenCV BGR Mat. Internally the video capture is using GStreamer-1.0's
@@ -40,7 +38,7 @@ class GstVideoCapture {
    *
    * @param decoder The name of the deocder gstreamer element.
    */
-  void SetDecoderElement(const string& decoder);
+  void SetDecoderElement(const std::string& decoder);
   bool NextFrameIsLast() const;
 
  private:
@@ -72,7 +70,7 @@ class GstVideoCapture {
   std::condition_variable capture_cv_;
   std::deque<cv::Mat> frames_;
   bool connected_;
-  string decoder_element_;
+  std::string decoder_element_;
   // The monotonically-increasing id of the most recent frame to be returned by
   // "GetPixels()". This is used by the "Eos()" callback to calculate the id of
   // the last frame.
