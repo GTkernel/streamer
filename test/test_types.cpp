@@ -83,6 +83,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_FACENET,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FACENET)));
+  EXPECT_EQ(PROCESSOR_TYPE_IMAGEMATCH,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_IMAGEMATCH)));
 #endif  // USE_CAFFE
   EXPECT_EQ(PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
             GetProcessorTypeByString(GetStringForProcessorType(
@@ -117,9 +120,6 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_IMAGE_TRANSFORMER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGE_TRANSFORMER)));
-  EXPECT_EQ(PROCESSOR_TYPE_IMAGEMATCH,
-            GetProcessorTypeByString(
-                GetStringForProcessorType(PROCESSOR_TYPE_IMAGEMATCH)));
   EXPECT_EQ(PROCESSOR_TYPE_JPEG_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_JPEG_WRITER)));
