@@ -104,8 +104,8 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
   VimbaCamera* vimba_camera_;
 };
 
-VimbaCamera::VimbaCamera(const std::string& name, const std::string& video_uri, int width,
-                         int height, CameraModeType mode,
+VimbaCamera::VimbaCamera(const std::string& name, const std::string& video_uri,
+                         int width, int height, CameraModeType mode,
                          CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
@@ -129,8 +129,8 @@ bool VimbaCamera::Init() {
     VmbAPI::CameraPtrVector cameras;
     CHECK_VIMBA(vimba_system_.GetCameras(cameras));
     decltype(cameras.size()) device_idx = StringToInt(ip);
-    CHECK(device_idx < cameras.size())
-        << "Invalid camera index: " << device_idx;
+    CHECK(device_idx < cameras.size()) << "Invalid camera index: "
+                                       << device_idx;
     camera_ = cameras[device_idx];
     camera_->Open(VmbAccessModeFull);
   }

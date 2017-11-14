@@ -11,8 +11,10 @@
 #include "model/model_manager.h"
 
 namespace ssd {
-Detector::Detector(const std::string& model_file, const std::string& weights_file,
-                   const std::string& mean_file, const std::string& mean_value) {
+Detector::Detector(const std::string& model_file,
+                   const std::string& weights_file,
+                   const std::string& mean_file,
+                   const std::string& mean_value) {
   // Set Caffe backend
   int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
 
@@ -100,7 +102,8 @@ std::vector<std::vector<float> > Detector::Detect(const cv::Mat& img) {
 }
 
 /* Load the mean file in binaryproto format. */
-void Detector::SetMean(const std::string& mean_file, const std::string& mean_value) {
+void Detector::SetMean(const std::string& mean_file,
+                       const std::string& mean_value) {
   cv::Scalar channel_mean;
   if (!mean_file.empty()) {
     CHECK(mean_value.empty())

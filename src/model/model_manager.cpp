@@ -51,8 +51,8 @@ ModelManager::ModelManager() {
     } else if (type_string == "ncs") {
       type = MODEL_TYPE_NCS;
     }
-    CHECK(type != MODEL_TYPE_INVALID)
-        << "Type " << type_string << " is not a valid mode type";
+    CHECK(type != MODEL_TYPE_INVALID) << "Type " << type_string
+                                      << " is not a valid mode type";
     std::vector<std::string> desc_paths;
     std::vector<std::string> params_paths;
     auto desc_path = model_value.find("desc_path");
@@ -150,10 +150,11 @@ ModelDesc ModelManager::GetModelDesc(const std::string& name) const {
   return GetModelDescs(name).at(0);
 }
 
-std::vector<ModelDesc> ModelManager::GetModelDescs(const std::string& name) const {
+std::vector<ModelDesc> ModelManager::GetModelDescs(
+    const std::string& name) const {
   auto itr = model_descs_.find(name);
-  CHECK(itr != model_descs_.end())
-      << "Model description with name " << name << " is not present";
+  CHECK(itr != model_descs_.end()) << "Model description with name " << name
+                                   << " is not present";
   return itr->second;
 }
 

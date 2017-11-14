@@ -417,11 +417,10 @@ int main(int argc, char* argv[]) {
                      "detection and ImageMatch.");
   desc.add_options()("nne-batch-size,s", po::value<size_t>()->default_value(1),
                      "nne batch size");
-  desc.add_options()("fields",
-                     po::value<std::vector<std::string>>()
-                         ->multitoken()
-                         ->composing()
-                         ->required(),
+  desc.add_options()("fields", po::value<std::vector<std::string>>()
+                                   ->multitoken()
+                                   ->composing()
+                                   ->required(),
                      "The fields to send over the network");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");

@@ -3,9 +3,9 @@
 //
 
 #include "model.h"
-#include "common/types.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "common/types.h"
 
 Model::Model(const ModelDesc& model_desc, Shape input_shape, size_t batch_size)
     : model_desc_(model_desc),

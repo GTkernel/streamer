@@ -6,7 +6,8 @@
 
 #include <boost/filesystem.hpp>
 
-GigeFileWriter::GigeFileWriter(const std::string& directory, size_t frames_per_file)
+GigeFileWriter::GigeFileWriter(const std::string& directory,
+                               size_t frames_per_file)
     : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {}),
       directory_(directory),
       frames_written_(0),

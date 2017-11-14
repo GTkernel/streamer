@@ -52,7 +52,8 @@ class Context {
     return double_values_[key];
   }
   std::string GetString(const std::string& key) {
-    CHECK(string_values_.count(key) != 0) << "No std::string value with key " << key;
+    CHECK(string_values_.count(key) != 0) << "No std::string value with key "
+                                          << key;
     return string_values_[key];
   }
   bool GetBool(const std::string& key) {
@@ -68,7 +69,9 @@ class Context {
   void SetString(const std::string& key, const std::string& value) {
     string_values_[key] = value;
   }
-  void SetBool(const std::string& key, bool value) { bool_values_[key] = value; }
+  void SetBool(const std::string& key, bool value) {
+    bool_values_[key] = value;
+  }
 
   Timer GetTimer() { return timer_; }
 
@@ -135,8 +138,10 @@ class Context {
     std::string decoder_element =
         decoder_value->get<std::string>(H264_DECODER_GST_ELEMENT);
 
-    std::string validated_encoder_element = ValidateEncoderElement(encoder_element);
-    std::string validated_decoder_element = ValidateDecoderElement(decoder_element);
+    std::string validated_encoder_element =
+        ValidateEncoderElement(encoder_element);
+    std::string validated_decoder_element =
+        ValidateDecoderElement(decoder_element);
 
     if (validated_encoder_element != encoder_element) {
       LOG(WARNING) << "Using encoder " << validated_encoder_element

@@ -5,9 +5,9 @@
 #ifndef STREAMER_MODEL_MODEL_H_
 #define STREAMER_MODEL_MODEL_H_
 
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <string>
 #include "common/types.h"
 
 #include "model.h"
@@ -20,8 +20,9 @@ class ModelDesc {
  public:
   ModelDesc() {}
   ModelDesc(const std::string& name, const ModelType& type,
-            const std::string& model_desc_path, const std::string& model_params_path,
-            int input_width, int input_height, std::string default_input_layer,
+            const std::string& model_desc_path,
+            const std::string& model_params_path, int input_width,
+            int input_height, std::string default_input_layer,
             std::string default_output_layer)
       : name_(name),
         type_(type),

@@ -15,8 +15,8 @@
     }                                        \
   } while (0)
 
-PGRCamera::PGRCamera(const std::string& name, const std::string& video_uri, int width,
-                     int height, CameraModeType mode,
+PGRCamera::PGRCamera(const std::string& name, const std::string& video_uri,
+                     int width, int height, CameraModeType mode,
                      CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),

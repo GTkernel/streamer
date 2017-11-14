@@ -16,8 +16,8 @@ void Run(const std::string& camera_name, float zoom, unsigned int angle,
   std::shared_ptr<Camera> camera;
   CameraManager& camera_manager = CameraManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name))
-      << "Camera " << camera_name << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                               << " does not exist";
 
   camera = camera_manager.GetCamera(camera_name);
   camera->Start();

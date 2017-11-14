@@ -63,9 +63,9 @@ void SignalHandler(int) {
 }
 
 void Run(const std::vector<std::string>& camera_names,
-         const std::string& mtcnn_model_name, const std::string& facenet_model_name,
-         bool display, float scale, float motion_threshold,
-         float motion_max_duration) {
+         const std::string& mtcnn_model_name,
+         const std::string& facenet_model_name, bool display, float scale,
+         float motion_threshold, float motion_max_duration) {
   // Silence complier warning sayings when certain options are turned off.
   (void)motion_threshold;
   (void)motion_max_duration;
@@ -84,8 +84,8 @@ void Run(const std::vector<std::string>& camera_names,
   CHECK(model_manager.HasModel(facenet_model_name))
       << "Model " << facenet_model_name << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name))
-        << "Camera " << camera_name << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                                 << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -249,17 +249,18 @@ int main(int argc, char* argv[]) {
 
   po::options_description desc("Multi-camera end to end video ingestion demo");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("mtcnn_model,m",
-                     po::value<std::string>()->value_name("MTCNN_MODEL")->required(),
-                     "The name of the mtcnn model to run");
+  desc.add_options()(
+      "mtcnn_model,m",
+      po::value<std::string>()->value_name("MTCNN_MODEL")->required(),
+      "The name of the mtcnn model to run");
   desc.add_options()(
       "facenet_model",
       po::value<std::string>()->value_name("FACENET_MODEL")->required(),
       "The name of the facenet model to run");
-  desc.add_options()("camera,c",
-                     po::value<std::string>()->value_name("CAMERAS")->required(),
-                     "The name of the camera to use, if there are multiple "
-                     "cameras to be used, separate with ,");
+  desc.add_options()(
+      "camera,c", po::value<std::string>()->value_name("CAMERAS")->required(),
+      "The name of the camera to use, if there are multiple "
+      "cameras to be used, separate with ,");
   desc.add_options()("display,d", "Enable display or not");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");

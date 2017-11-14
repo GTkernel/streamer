@@ -5,8 +5,8 @@
 #ifndef STREAMER_COMMON_TYPES_H_
 #define STREAMER_COMMON_TYPES_H_
 
-#include <cstdlib>
 #include <glog/logging.h>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <unordered_map>

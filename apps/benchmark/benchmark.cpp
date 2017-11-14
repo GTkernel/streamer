@@ -217,7 +217,8 @@ int main(int argc, char* argv[]) {
   desc.add_options()("net,n",
                      po::value<std::string>()->value_name("NET")->required(),
                      "The name of the neural net to run");
-  desc.add_options()("camera,c", po::value<std::string>()->value_name("CAMERAS"),
+  desc.add_options()("camera,c",
+                     po::value<std::string>()->value_name("CAMERAS"),
                      "The name of the camera to use, if there are multiple "
                      "cameras to be used, separate with ,");
   desc.add_options()("config_dir,C",

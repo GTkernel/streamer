@@ -94,13 +94,15 @@ static const std::string arr_r50[] = {"input_1",
                                       "activation_49/Relu",
                                       "dense_2/Softmax:0"};
 
-std::vector<std::string> layers_iv3(arr_iv3, arr_iv3 + sizeof(arr_iv3) /
-                                                           sizeof(arr_iv3[0]));
-std::vector<std::string> layers_r50(arr_r50, arr_r50 + sizeof(arr_r50) /
-                                                           sizeof(arr_r50[0]));
-std::vector<std::string> layers_mnets(arr_mnets,
-                                      arr_mnets + sizeof(arr_mnets) /
-                                                      sizeof(arr_mnets[0]));
+std::vector<std::string> layers_iv3(arr_iv3,
+                                    arr_iv3 +
+                                        sizeof(arr_iv3) / sizeof(arr_iv3[0]));
+std::vector<std::string> layers_r50(arr_r50,
+                                    arr_r50 +
+                                        sizeof(arr_r50) / sizeof(arr_r50[0]));
+std::vector<std::string> layers_mnets(arr_mnets, arr_mnets +
+                                                     sizeof(arr_mnets) /
+                                                         sizeof(arr_mnets[0]));
 
 void MeasurePerformance(const std::string split_layer, int num_apps,
                         std::string file_prefix) {
@@ -263,7 +265,8 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Benchmark for streamer");
   desc.add_options()("net,n", po::value<std::string>()->value_name("NET"),
                      "The name of the neural net to run");
-  desc.add_options()("camera,c", po::value<std::string>()->value_name("CAMERAS"),
+  desc.add_options()("camera,c",
+                     po::value<std::string>()->value_name("CAMERAS"),
                      "Name of camera to use");
   desc.add_options()("config_dir,C",
                      po::value<std::string>()->value_name("CONFIG_DIR"),

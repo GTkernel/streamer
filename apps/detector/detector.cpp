@@ -47,9 +47,10 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<std::string>& camera_names, const std::string& detector_type,
-         const std::string& detector_model, bool display, float scale,
-         float detector_confidence_threshold, const std::string& detector_targets) {
+void Run(const std::vector<std::string>& camera_names,
+         const std::string& detector_type, const std::string& detector_model,
+         bool display, float scale, float detector_confidence_threshold,
+         const std::string& detector_targets) {
   // Silence complier warning sayings when certain options are turned off.
   (void)detector_confidence_threshold;
   (void)detector_targets;
@@ -63,11 +64,11 @@ void Run(const std::vector<std::string>& camera_names, const std::string& detect
   ModelManager& model_manager = ModelManager::GetInstance();
 
   // Check options
-  CHECK(model_manager.HasModel(detector_model))
-      << "Model " << detector_model << " does not exist";
+  CHECK(model_manager.HasModel(detector_model)) << "Model " << detector_model
+                                                << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name))
-        << "Camera " << camera_name << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                                 << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -252,12 +253,13 @@ int main(int argc, char* argv[]) {
       "detector_model,m",
       po::value<std::string>()->value_name("DETECTOR_MODEL")->required(),
       "The name of the detector model to run");
-  desc.add_options()("detector_targets", po::value<std::string>()->default_value(""),
+  desc.add_options()("detector_targets",
+                     po::value<std::string>()->default_value(""),
                      "The name of the target to detect, separate with ,");
-  desc.add_options()("camera,c",
-                     po::value<std::string>()->value_name("CAMERAS")->required(),
-                     "The name of the camera to use, if there are multiple "
-                     "cameras to be used, separate with ,");
+  desc.add_options()(
+      "camera,c", po::value<std::string>()->value_name("CAMERAS")->required(),
+      "The name of the camera to use, if there are multiple "
+      "cameras to be used, separate with ,");
   desc.add_options()("display,d", "Enable display or not");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");

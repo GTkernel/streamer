@@ -43,7 +43,7 @@ std::string CameraToJson(Camera* camera, pt::ptree& root) {
 }
 
 std::string ListToJson(const std::string& list_name,
-                  const std::vector<pt::ptree>& pt_list) {
+                       const std::vector<pt::ptree>& pt_list) {
   pt::ptree root;
   std::ostringstream ss;
 

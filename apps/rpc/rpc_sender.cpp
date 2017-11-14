@@ -27,8 +27,8 @@ void Run() {
   // Set up camera
   auto camera_name = CONFIG.camera_name;
   auto& camera_manager = CameraManager::GetInstance();
-  CHECK(camera_manager.HasCamera(camera_name))
-      << "Camera " << camera_name << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                               << " does not exist";
   auto camera = camera_manager.GetCamera(camera_name);
 
   // Set up FrameSender (sends frames over RPC)

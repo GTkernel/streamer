@@ -42,7 +42,7 @@ bool Compressor::OnStop() { return true; }
 void Compressor::Process() {
   auto frame = GetFrame(SOURCE_NAME);
   auto future = std::async(std::launch::async,
-                           [this, frame = std::move(frame)]() mutable {
+                           [ this, frame = std::move(frame) ]() mutable {
                              return this->CompressFrame(std::move(frame));
                            });
   {

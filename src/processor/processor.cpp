@@ -75,8 +75,8 @@ bool Processor::Start(size_t buf_size) {
 
   // Check sources are filled
   for (const auto& source : sources_) {
-    CHECK(source.second != nullptr)
-        << "Source \"" << source.first << "\" is not set.";
+    CHECK(source.second != nullptr) << "Source \"" << source.first
+                                    << "\" is not set.";
   }
 
   // Subscribe sources
@@ -230,7 +230,8 @@ std::unique_ptr<Frame> Processor::GetFrame(const std::string& source_name) {
   return std::move(source_frame_cache_[source_name]);
 }
 
-std::unique_ptr<Frame> Processor::GetFrameDirect(const std::string& source_name) {
+std::unique_ptr<Frame> Processor::GetFrameDirect(
+    const std::string& source_name) {
   if (readers_.find(source_name) == readers_.end()) {
     throw std::out_of_range(source_name);
   }

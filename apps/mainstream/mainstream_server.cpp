@@ -40,8 +40,8 @@ void Run(const std::string& camera_name, const std::string& net_name,
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name))
-      << "Camera " << camera_name << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                               << " does not exist";
 
   camera = camera_manager.GetCamera(camera_name);
   camera->SetBlockOnPush(true);
@@ -200,9 +200,10 @@ int main(int argc, char* argv[]) {
   desc.add_options()("camera",
                      po::value<std::string>()->value_name("CAMERA")->required(),
                      "The name of the camera to use");
-  desc.add_options()("config_dir,C",
-                     po::value<std::string>()->value_name("CONFIG_DIR")->required(),
-                     "The directory to find streamer's configurations");
+  desc.add_options()(
+      "config_dir,C",
+      po::value<std::string>()->value_name("CONFIG_DIR")->required(),
+      "The directory to find streamer's configurations");
   desc.add_options()("net,n",
                      po::value<std::string>()->value_name("NET")->required(),
                      "The name of the neural net to run");
