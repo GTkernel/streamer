@@ -22,12 +22,12 @@ class GigeFileWriter : public Processor {
    * {frame_count / frames_per_file}.dat
    * @param frames_per_file Number of frames per file.
    */
-  GigeFileWriter(const string& directory, size_t frames_per_file);
+  GigeFileWriter(const std::string& directory, size_t frames_per_file);
 
   size_t GetFramesWritten() { return frames_written_; }
-  string GetCurrentFilename() { return current_filename_; }
-  string GetCurrentDirectory() { return directory_; }
-  void SetDirectory(const string& directory) { directory_ = directory; }
+  std::string GetCurrentFilename() { return current_filename_; }
+  std::string GetCurrentDirectory() { return directory_; }
+  void SetDirectory(const std::string& directory) { directory_ = directory; }
 
  protected:
   virtual bool Init() override;
@@ -35,8 +35,8 @@ class GigeFileWriter : public Processor {
   virtual void Process() override;
 
  private:
-  string directory_;
-  string current_filename_;
+  std::string directory_;
+  std::string current_filename_;
   size_t frames_written_;
   size_t frames_per_file_;
 

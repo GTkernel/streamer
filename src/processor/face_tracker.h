@@ -11,7 +11,6 @@
 #include <cv.h>
 #include <boost/optional.hpp>
 
-#include "common/common.h"
 #include "processor.h"
 
 class FaceTracker : public Processor {

@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  std::string publish_url = args["publish-url"].as<string>();
+  std::string publish_url = args["publish-url"].as<std::string>();
   float zoom = args["zoom"].as<float>();
   std::set<unsigned int> angles = std::set<unsigned int>{0, 90, 180, 270};
   unsigned int angle = args["rotate"].as<unsigned int>();

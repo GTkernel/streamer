@@ -112,4 +112,5 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
   }
 
   LOG(FATAL) << "Unhandled ProcessorType: " << GetStringForProcessorType(type);
+  return nullptr;
 }

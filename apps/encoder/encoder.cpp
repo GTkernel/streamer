@@ -12,7 +12,7 @@ namespace po = boost::program_options;
 using std::cout;
 using std::endl;
 
-void Run(const string& camera_name, string& dst_file, int port) {
+void Run(const std::string& camera_name, std::string& dst_file, int port) {
   if (dst_file == "" && port == -1) {
     cout << "Specify output_filename or port" << endl;
     return;
@@ -20,8 +20,8 @@ void Run(const string& camera_name, string& dst_file, int port) {
 
   CameraManager& camera_manager = CameraManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name))
-      << "Camera " << camera_name << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                               << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
@@ -68,14 +68,14 @@ int main(int argc, char* argv[]) {
   po::options_description desc("GigE camera demo");
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("camera",
-                     po::value<string>()->value_name("CAMERA")->required(),
+                     po::value<std::string>()->value_name("CAMERA")->required(),
                      "The name of the camera to use");
-  desc.add_options()("output,o", po::value<string>()->value_name("OUTPUT"),
+  desc.add_options()("output,o", po::value<std::string>()->value_name("OUTPUT"),
                      "The name of the file to store the video file");
   desc.add_options()("port,p", po::value<int>()->value_name("PORT"),
                      "The port to be used to stream the video");
   desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR"),
+                     po::value<std::string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
 
   po::variables_map vm;
@@ -95,15 +95,15 @@ int main(int argc, char* argv[]) {
 
   ///////// Parse arguments
   if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   }
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  auto camera_name = vm["camera"].as<string>();
-  string output_filename;
+  auto camera_name = vm["camera"].as<std::string>();
+  std::string output_filename;
   int port = -1;
-  if (vm.count("output") != 0) output_filename = vm["output"].as<string>();
+  if (vm.count("output") != 0) output_filename = vm["output"].as<std::string>();
   if (vm.count("port") != 0) port = vm["port"].as<int>();
 
   Run(camera_name, output_filename, port);

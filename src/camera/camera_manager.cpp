@@ -1,6 +1,3 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
-//
 
 #include "camera/camera_manager.h"
 
@@ -121,8 +118,8 @@ CameraManager::GetCameras() {
 
 std::shared_ptr<Camera> CameraManager::GetCamera(const std::string& name) {
   auto itr = cameras_.find(name);
-  CHECK(itr != cameras_.end())
-      << "Camera with name " << name << " is not present";
+  CHECK(itr != cameras_.end()) << "Camera with name " << name
+                               << " is not present";
   return itr->second;
 }
 

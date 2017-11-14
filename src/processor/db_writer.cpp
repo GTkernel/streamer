@@ -87,7 +87,7 @@ void DbWriter::Process() {
 void DbWriter::WriteFile(const std::string& camera_id,
                          const std::vector<std::string>& uuids,
                          unsigned long timestamp,
-                         const std::vector<string>& tags,
+                         const std::vector<std::string>& tags,
                          const std::vector<std::vector<double>>& features) {
   for (size_t i = 0; i < uuids.size(); ++i) {
     if (uuids.size() == features.size()) {
@@ -115,7 +115,7 @@ void DbWriter::WriteFile(const std::string& camera_id,
 void DbWriter::WriteAthena(const std::string& camera_id,
                            const std::vector<std::string>& uuids,
                            unsigned long timestamp,
-                           const std::vector<string>& tags,
+                           const std::vector<std::string>& tags,
                            const std::vector<std::vector<double>>& features) {
   for (size_t i = 0; i < uuids.size(); ++i) {
     if (uuids.size() == features.size()) {

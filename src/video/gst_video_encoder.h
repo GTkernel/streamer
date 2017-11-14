@@ -11,7 +11,6 @@
 #include "gst/gst.h"
 #include "gst/gstbuffer.h"
 
-#include "common/common.h"
 #include "common/types.h"
 #include "processor/processor.h"
 
@@ -20,7 +19,7 @@
  */
 class GstVideoEncoder : public Processor {
  public:
-  GstVideoEncoder(int width, int height, const string& output_filename);
+  GstVideoEncoder(int width, int height, const std::string& output_filename);
   GstVideoEncoder(int width, int height, int port, bool tcp = true);
 
   /**
@@ -29,7 +28,7 @@ class GstVideoEncoder : public Processor {
    *
    * @param encoder The name of the deocder gstreamer element.
    */
-  void SetEncoderElement(const string& encoder);
+  void SetEncoderElement(const std::string& encoder);
 
   static std::shared_ptr<GstVideoEncoder> Create(
       const FactoryParamsType& params);
@@ -40,8 +39,8 @@ class GstVideoEncoder : public Processor {
   virtual void Process() override;
 
  private:
-  string BuildPipelineString();
-  string BuildCapsString();
+  std::string BuildPipelineString();
+  std::string BuildCapsString();
 
   // GST Callbacks
   static void NeedDataCB(GstAppSrc* appsrc, guint size, gpointer user_data);
@@ -53,7 +52,7 @@ class GstVideoEncoder : public Processor {
   // Frame size in bytes
   size_t frame_size_bytes_;
   int port_;
-  string output_filename_;
+  std::string output_filename_;
   // Use tcp for streaming or not (udp)
   bool tcp_;
 
@@ -73,7 +72,7 @@ class GstVideoEncoder : public Processor {
   std::mutex encoder_lock_;
 
   // Encoder to use
-  string encoder_element_;
+  std::string encoder_element_;
 };
 
 #endif  // STREAMER_VIDEO_GST_VIDEO_ENCODER_H_

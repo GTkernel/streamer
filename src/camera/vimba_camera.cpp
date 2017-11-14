@@ -104,8 +104,8 @@ class VimbaCameraFrameObserver : public VmbAPI::IFrameObserver {
   VimbaCamera* vimba_camera_;
 };
 
-VimbaCamera::VimbaCamera(const string& name, const string& video_uri, int width,
-                         int height, CameraModeType mode,
+VimbaCamera::VimbaCamera(const std::string& name, const std::string& video_uri,
+                         int width, int height, CameraModeType mode,
                          CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
@@ -115,7 +115,7 @@ VimbaCamera::VimbaCamera(const string& name, const string& video_uri, int width,
 CameraType VimbaCamera::GetCameraType() const { return CAMERA_TYPE_VIMBA; }
 
 bool VimbaCamera::Init() {
-  string protocol, ip;
+  std::string protocol, ip;
   ParseProtocolAndPath(video_uri_, protocol, ip);
 
   CHECK_VIMBA(vimba_system_.Startup());
@@ -129,8 +129,8 @@ bool VimbaCamera::Init() {
     VmbAPI::CameraPtrVector cameras;
     CHECK_VIMBA(vimba_system_.GetCameras(cameras));
     decltype(cameras.size()) device_idx = StringToInt(ip);
-    CHECK(device_idx < cameras.size())
-        << "Invalid camera index: " << device_idx;
+    CHECK(device_idx < cameras.size()) << "Invalid camera index: "
+                                       << device_idx;
     camera_ = cameras[device_idx];
     camera_->Open(VmbAccessModeFull);
   }
@@ -409,7 +409,7 @@ void VimbaCamera::SetImageSizeAndMode(Shape shape, CameraModeType mode) {
 
 CameraPixelFormatType VimbaCamera::GetPixelFormat() {
   VmbAPI::FeaturePtr pFeature;
-  string vimba_pfmt;
+  std::string vimba_pfmt;
 
   CHECK_VIMBA(camera_->GetFeatureByName("PixelFormat", pFeature));
   CHECK_VIMBA(pFeature->GetValue(vimba_pfmt));
@@ -426,7 +426,7 @@ void VimbaCamera::SetPixelFormat(CameraPixelFormatType pixel_format) {
 }
 
 CameraPixelFormatType VimbaCamera::VimbaPfmt2CameraPfmt(
-    const string& vmb_pfmt) {
+    const std::string& vmb_pfmt) {
   if (vmb_pfmt == "Mono8") {
     return CAMERA_PIXEL_FORMAT_MONO8;
   } else if (vmb_pfmt == "BayerRG8" || vmb_pfmt == "BayerGB8" ||
@@ -450,7 +450,7 @@ CameraPixelFormatType VimbaCamera::VimbaPfmt2CameraPfmt(
   return CAMERA_PIXEL_FORMAT_MONO8;
 }
 
-string VimbaCamera::CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt) {
+std::string VimbaCamera::CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt) {
   VmbAPI::FeaturePtr pFeature;
   CHECK_VIMBA(camera_->GetFeatureByName("PixelFormat", pFeature));
   bool available;

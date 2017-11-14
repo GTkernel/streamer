@@ -11,7 +11,6 @@
 #include <opencv2/objdetect/objdetect.hpp>
 #endif  // USE_CUDA
 
-#include "common/common.h"
 #include "processor/processor.h"
 
 class OpenCVPeopleDetector : public Processor {

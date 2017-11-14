@@ -10,8 +10,8 @@
 static const size_t SLIDING_WINDOW_SIZE = 25;
 
 Processor::Processor(ProcessorType type,
-                     const std::vector<string>& source_names,
-                     const std::vector<string>& sink_names)
+                     const std::vector<std::string>& source_names,
+                     const std::vector<std::string>& sink_names)
     : num_frames_processed_(0),
       avg_processing_latency_ms_(0),
       processing_latencies_sum_ms_(0),
@@ -48,14 +48,14 @@ void Processor::SetSink(const std::string& name, StreamPtr stream) {
   sinks_[name] = stream;
 }
 
-StreamPtr Processor::GetSink(const string& name) {
+StreamPtr Processor::GetSink(const std::string& name) {
   if (sinks_.find(name) == sinks_.end()) {
     throw std::out_of_range(name);
   }
   return sinks_.at(name);
 }
 
-void Processor::SetSource(const string& name, StreamPtr stream) {
+void Processor::SetSource(const std::string& name, StreamPtr stream) {
   if (sources_.find(name) == sources_.end()) {
     std::ostringstream sources;
     for (const auto& s : sources_) {
@@ -75,8 +75,8 @@ bool Processor::Start(size_t buf_size) {
 
   // Check sources are filled
   for (const auto& source : sources_) {
-    CHECK(source.second != nullptr)
-        << "Source \"" << source.first << "\" is not set.";
+    CHECK(source.second != nullptr) << "Source \"" << source.first
+                                    << "\" is not set.";
   }
 
   // Subscribe sources
@@ -216,7 +216,7 @@ zmq::socket_t* Processor::GetControlSocket() { return control_socket_; };
 
 void Processor::SetBlockOnPush(bool block) { block_on_push_ = block; }
 
-void Processor::PushFrame(const string& sink_name,
+void Processor::PushFrame(const std::string& sink_name,
                           std::unique_ptr<Frame> frame) {
   CHECK(sinks_.count(sink_name) != 0);
   if (frame->IsStopFrame()) {
@@ -225,12 +225,13 @@ void Processor::PushFrame(const string& sink_name,
   sinks_[sink_name]->PushFrame(std::move(frame), block_on_push_);
 }
 
-std::unique_ptr<Frame> Processor::GetFrame(const string& source_name) {
+std::unique_ptr<Frame> Processor::GetFrame(const std::string& source_name) {
   CHECK(source_frame_cache_.count(source_name) != 0);
   return std::move(source_frame_cache_[source_name]);
 }
 
-std::unique_ptr<Frame> Processor::GetFrameDirect(const string& source_name) {
+std::unique_ptr<Frame> Processor::GetFrameDirect(
+    const std::string& source_name) {
   if (readers_.find(source_name) == readers_.end()) {
     throw std::out_of_range(source_name);
   }

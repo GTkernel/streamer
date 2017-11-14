@@ -12,7 +12,8 @@
 #include "utils/yolo_utils.h"
 
 namespace yolo {
-Detector::Detector(const string& model_file, const string& weights_file) {
+Detector::Detector(const std::string& model_file,
+                   const std::string& weights_file) {
   // Set Caffe backend
   int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
 

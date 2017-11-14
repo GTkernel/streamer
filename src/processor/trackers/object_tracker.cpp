@@ -51,8 +51,8 @@ void ObjectTracker::Process() {
   }
 
   std::vector<Rect> tracked_bboxes;
-  std::vector<string> tracked_tags;
-  std::vector<string> tracked_uuids;
+  std::vector<std::string> tracked_tags;
+  std::vector<std::string> tracked_uuids;
   std::vector<std::vector<double>> features;
   if (frame->Count("bounding_boxes") > 0) {
     auto bboxes = frame->GetValue<std::vector<Rect>>("bounding_boxes");

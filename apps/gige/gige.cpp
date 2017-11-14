@@ -14,8 +14,6 @@
 #include "streamer.h"
 
 namespace po = boost::program_options;
-using std::cout;
-using std::endl;
 
 /**
  * @brief Overlay text onto an image
@@ -23,7 +21,7 @@ using std::endl;
  * @param text The text to be added.
  * @param nrow The row of the text in the image.
  */
-void AddText(cv::Mat& img, const string& text, int nrow) {
+void AddText(cv::Mat& img, const std::string& text, int nrow) {
   // Maximum lines of text
   const int MAX_LINE = 14;
   const int FONT_FACE = CV_FONT_HERSHEY_SIMPLEX;
@@ -54,9 +52,9 @@ void AddGrayBackground(cv::Mat& img) {
   cv::addWeighted(color, alpha, roi, 1 - alpha, 0.0, roi);
 }
 
-void WriteCameraInfo(CameraPtr camera, const string& video_dir) {
+void WriteCameraInfo(CameraPtr camera, const std::string& video_dir) {
   STREAMER_SLEEP(100);
-  string filename = video_dir + "/camera_parameters.txt";
+  std::string filename = video_dir + "/camera_parameters.txt";
   std::ofstream f(filename);
 
   f << camera->GetCameraInfo();
@@ -77,7 +75,7 @@ void CleanUp() {
 #endif  // USE_VIMBA
 }
 
-void Run(const string& camera_name, bool display, size_t frames_per_file) {
+void Run(const std::string& camera_name, bool display, size_t frames_per_file) {
   StartUp();
 
   auto& camera_manager = CameraManager::GetInstance();
@@ -117,54 +115,48 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
       int row_idx = 0;
       AddText(image_to_show, "Parameters:", row_idx++);
       AddText(image_to_show,
-              string() + "[R] Record: " +
+              std::string() + "[R] Record: " +
                   (file_writer->IsStarted() ? file_writer->GetCurrentFilename()
                                             : "NO"),
               row_idx++);
       AddText(image_to_show,
-              string() + "[H] Img Size: " +
+              std::string() + "[H] Img Size: " +
                   std::to_string(camera->GetImageSize().width) + "x" +
                   std::to_string(camera->GetImageSize().height),
               row_idx++);
 
-      AddText(
-          image_to_show,
-          string() + "[E] Exposure: " + std::to_string(camera->GetExposure()),
-          row_idx++);
-      AddText(
-          image_to_show,
-          string() + "[N] Gain: " + std::to_string(camera->GetGain()) + "dB",
-          row_idx++);
+      AddText(image_to_show, std::string() + "[E] Exposure: " +
+                                 std::to_string(camera->GetExposure()),
+              row_idx++);
+      AddText(image_to_show, std::string() + "[N] Gain: " +
+                                 std::to_string(camera->GetGain()) + "dB",
+              row_idx++);
       AddText(image_to_show, "--------------------", row_idx++);
-      AddText(
-          image_to_show,
-          string() + "[S] Sharpness: " + std::to_string(camera->GetSharpness()),
-          row_idx++);
+      AddText(image_to_show, std::string() + "[S] Sharpness: " +
+                                 std::to_string(camera->GetSharpness()),
+              row_idx++);
 
-      AddText(
-          image_to_show,
-          string() + "[V] Hue: " + std::to_string(camera->GetHue()) + " deg",
-          row_idx++);
-      AddText(image_to_show,
-              string() + "[U] Saturation: " +
-                  std::to_string(camera->GetSaturation()) + "%",
+      AddText(image_to_show, std::string() + "[V] Hue: " +
+                                 std::to_string(camera->GetHue()) + " deg",
               row_idx++);
-      AddText(image_to_show,
-              string() + "[B] Brightness: " +
-                  std::to_string(camera->GetBrightness()) + "%",
+      AddText(image_to_show, std::string() + "[U] Saturation: " +
+                                 std::to_string(camera->GetSaturation()) + "%",
               row_idx++);
-      AddText(image_to_show,
-              string() + "[G] Gamma: " + std::to_string(camera->GetGamma()),
+      AddText(image_to_show, std::string() + "[B] Brightness: " +
+                                 std::to_string(camera->GetBrightness()) + "%",
+              row_idx++);
+      AddText(image_to_show, std::string() + "[G] Gamma: " +
+                                 std::to_string(camera->GetGamma()),
               row_idx++);
 
       AddText(image_to_show,
-              string() + "[O,P] WB " +
-                  "R:" + std::to_string((int)camera->GetWBRed()) +
-                  " B:" + std::to_string((int)camera->GetWBBlue()),
+              std::string() + "[O,P] WB " + "R:" +
+                  std::to_string((int)camera->GetWBRed()) + " B:" +
+                  std::to_string((int)camera->GetWBBlue()),
               row_idx++);
       AddText(
           image_to_show,
-          string() + "[M] Color: " +
+          std::string() + "[M] Color: " +
               (camera->GetPixelFormat() != CAMERA_PIXEL_FORMAT_MONO8 ? "YES"
                                                                      : "MONO"),
           row_idx++);
@@ -196,7 +188,7 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
         } else if (k == 's') {
           camera->SetSharpness(camera->GetSharpness() * 0.95f);
         } else if (k == 'S') {
-          cout << "Increase sharpness" << endl;
+          std::cout << "Increase sharpness" << std::endl;
           camera->SetSharpness(camera->GetSharpness() * 1.05f + 0.5f);
         } else if (k == 'H') {
           camera->SetImageSizeAndMode(Shape(1600, 1200), CAMERA_MODE_0);
@@ -235,7 +227,7 @@ void Run(const string& camera_name, bool display, size_t frames_per_file) {
         } else if (k == 'M') {
           camera->SetPixelFormat(CAMERA_PIXEL_FORMAT_RAW12);
         } else if (k == 'R') {
-          string output_directory = GetCurrentTimeString(
+          std::string output_directory = GetCurrentTimeString(
               camera->GetName() + "-streamer-%Y%m%d-%H%M%S");
           file_writer->SetDirectory(output_directory);
           file_writer->Start();
@@ -279,13 +271,13 @@ int main(int argc, char* argv[]) {
   po::options_description desc("GigE camera demo");
   desc.add_options()("help,h", "print the help message");
   desc.add_options()("camera",
-                     po::value<string>()->value_name("CAMERA")->required(),
+                     po::value<std::string>()->value_name("CAMERA")->required(),
                      "The name of the camera to use");
 
   desc.add_options()("display,d", "Enable display or not");
 
   desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR"),
+                     po::value<std::string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
 
   po::variables_map vm;
@@ -293,8 +285,8 @@ int main(int argc, char* argv[]) {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
   } catch (const po::error& e) {
-    std::cerr << e.what() << endl;
-    cout << desc << endl;
+    std::cerr << e.what() << std::endl;
+    std::cout << desc << std::endl;
     return 1;
   }
 
@@ -305,12 +297,12 @@ int main(int argc, char* argv[]) {
 
   ///////// Parse arguments
   if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   }
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  auto camera_name = vm["camera"].as<string>();
+  auto camera_name = vm["camera"].as<std::string>();
   bool display = vm.count("display") != 0;
   Run(camera_name, display, 1 /* frames per file */);
 

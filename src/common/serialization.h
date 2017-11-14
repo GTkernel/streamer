@@ -4,6 +4,7 @@
 
 #include <boost/date_time/posix_time/time_serialize.hpp>
 #include <boost/serialization/array.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace boost {
 namespace serialization {

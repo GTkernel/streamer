@@ -5,13 +5,22 @@
  * @author Shao-Wen Yang <shao-wen.yang@intel.com>
  */
 
+#include <glog/logging.h>
 #include <boost/program_options.hpp>
 #include <csignal>
-#include "streamer.h"
+#include <iostream>
+
+#include "camera/camera_manager.h"
+#include "model/model_manager.h"
+
+#include "video/gst_video_encoder.h"
+
+#include "processor/db_writer.h"
+#include "processor/detectors/object_detector.h"
+#include "processor/image_transformer.h"
+#include "processor/trackers/object_tracker.h"
 
 namespace po = boost::program_options;
-using std::cout;
-using std::endl;
 
 /////// Global vars
 std::vector<std::shared_ptr<Camera>> cameras;
@@ -52,17 +61,17 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string>& camera_names, const string& detector_type,
-         const string& detector_model, bool display, float scale,
-         float detector_confidence_threshold, float detector_idle_duration,
-         const string& detector_targets, const std::string& tracker_type,
-         float tracker_calibration_duration, bool db_write_to_file,
-         const std::string& athena_address) {
+void Run(const std::vector<std::string>& camera_names,
+         const std::string& detector_type, const std::string& detector_model,
+         bool display, float scale, float detector_confidence_threshold,
+         float detector_idle_duration, const std::string& detector_targets,
+         const std::string& tracker_type, float tracker_calibration_duration,
+         bool db_write_to_file, const std::string& athena_address) {
   // Silence complier warning sayings when certain options are turned off.
   (void)detector_confidence_threshold;
   (void)detector_targets;
 
-  cout << "Run tracker_obj demo" << endl;
+  std::cout << "Run tracker_obj demo" << std::endl;
 
   std::signal(SIGINT, SignalHandler);
 
@@ -71,11 +80,11 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
   ModelManager& model_manager = ModelManager::GetInstance();
 
   // Check options
-  CHECK(model_manager.HasModel(detector_model))
-      << "Model " << detector_model << " does not exist";
+  CHECK(model_manager.HasModel(detector_model)) << "Model " << detector_model
+                                                << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name))
-        << "Camera " << camera_name << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                                 << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -161,7 +170,7 @@ void Run(const std::vector<string>& camera_names, const string& detector_type,
   //////// Processor started, display the results
 
   if (display) {
-    for (string camera_name : camera_names) {
+    for (std::string camera_name : camera_names) {
       cv::namedWindow(camera_name, cv::WINDOW_NORMAL);
     }
   }
@@ -258,21 +267,21 @@ int main(int argc, char* argv[]) {
   desc.add_options()("help,h", "print the help message");
   desc.add_options()(
       "detector_type",
-      po::value<string>()->value_name("DETECTOR_TYPE")->required(),
+      po::value<std::string>()->value_name("DETECTOR_TYPE")->required(),
       "The name of the detector type to run");
   desc.add_options()(
       "detector_model,m",
-      po::value<string>()->value_name("DETECTOR_MODEL")->required(),
+      po::value<std::string>()->value_name("DETECTOR_MODEL")->required(),
       "The name of the detector model to run");
-  desc.add_options()("camera,c",
-                     po::value<string>()->value_name("CAMERAS")->required(),
-                     "The name of the camera to use, if there are multiple "
-                     "cameras to be used, separate with ,");
+  desc.add_options()(
+      "camera,c", po::value<std::string>()->value_name("CAMERAS")->required(),
+      "The name of the camera to use, if there are multiple "
+      "cameras to be used, separate with ,");
   desc.add_options()("display,d", "Enable display or not");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
   desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR"),
+                     po::value<std::string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
   desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
                      "scale factor before mtcnn");
@@ -282,9 +291,11 @@ int main(int argc, char* argv[]) {
   desc.add_options()("detector_idle_duration",
                      po::value<float>()->default_value(1.0),
                      "detector idle duration");
-  desc.add_options()("detector_targets", po::value<string>()->default_value(""),
+  desc.add_options()("detector_targets",
+                     po::value<std::string>()->default_value(""),
                      "The name of the target to detect, separate with ,");
-  desc.add_options()("tracker_type", po::value<string>()->default_value("dlib"),
+  desc.add_options()("tracker_type",
+                     po::value<std::string>()->default_value("dlib"),
                      "The name of the tracker type to run");
   desc.add_options()("tracker_calibration_duration",
                      po::value<float>()->default_value(2.0),
@@ -292,7 +303,8 @@ int main(int argc, char* argv[]) {
   desc.add_options()("db_write_to_file",
                      po::value<bool>()->default_value(false),
                      "Enable db write to file or not");
-  desc.add_options()("athena_address", po::value<string>()->default_value(""),
+  desc.add_options()("athena_address",
+                     po::value<std::string>()->default_value(""),
                      "The address of the athena server");
 
   po::variables_map vm;
@@ -312,27 +324,27 @@ int main(int argc, char* argv[]) {
 
   ///////// Parse arguments
   if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   }
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
   int device_number = vm["device"].as<int>();
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
-  auto camera_names = SplitString(vm["camera"].as<string>(), ",");
-  auto detector_type = vm["detector_type"].as<string>();
-  auto detector_model = vm["detector_model"].as<string>();
+  auto camera_names = SplitString(vm["camera"].as<std::string>(), ",");
+  auto detector_type = vm["detector_type"].as<std::string>();
+  auto detector_model = vm["detector_model"].as<std::string>();
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   float detector_confidence_threshold =
       vm["detector_confidence_threshold"].as<float>();
   float detector_idle_duration = vm["detector_idle_duration"].as<float>();
-  auto detector_targets = vm["detector_targets"].as<string>();
-  auto tracker_type = vm["tracker_type"].as<string>();
+  auto detector_targets = vm["detector_targets"].as<std::string>();
+  auto tracker_type = vm["tracker_type"].as<std::string>();
   float tracker_calibration_duration =
       vm["tracker_calibration_duration"].as<float>();
   bool db_write_to_file = vm["db_write_to_file"].as<bool>();
-  auto athena_address = vm["athena_address"].as<string>();
+  auto athena_address = vm["athena_address"].as<std::string>();
   Run(camera_names, detector_type, detector_model, display, scale,
       detector_confidence_threshold, detector_idle_duration, detector_targets,
       tracker_type, tracker_calibration_duration, db_write_to_file,

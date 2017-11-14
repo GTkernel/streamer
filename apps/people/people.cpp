@@ -18,15 +18,15 @@ int main(int argc, char* argv[]) {
 
   CameraManager& camera_manager = CameraManager::GetInstance();
 
-  if (string(argv[1]) == "-h" || argc < 2) {
+  if (std::string(argv[1]) == "-h" || argc < 2) {
     std::cerr << "Usage: ./people CAMERA DISPLAY \n"
               << "\n"
               << " CAMERA: The name of the camera\n"
               << " DISPLAY: Enable preview or not (true)\n";
   }
 
-  string camera_name = argv[1];
-  string display = argv[2];
+  std::string camera_name = argv[1];
+  std::string display = argv[2];
   bool display_on = (display == "true");
 
   auto camera = camera_manager.GetCamera(camera_name);

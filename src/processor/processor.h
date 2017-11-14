@@ -12,7 +12,6 @@
 
 #include <zmq.hpp>
 
-#include "common/common.h"
 #include "stream/stream.h"
 
 class Pipeline;
@@ -32,8 +31,8 @@ class Processor {
   friend class VimbaCameeraFrameObserver;
 #endif  // USE_VIMBA
  public:
-  Processor(ProcessorType type, const std::vector<string>& source_names,
-            const std::vector<string>& sink_names);
+  Processor(ProcessorType type, const std::vector<std::string>& source_names,
+            const std::vector<std::string>& sink_names);
   virtual ~Processor();
   /**
    * @brief Start processing, drain frames from sources and send output to
@@ -59,14 +58,14 @@ class Processor {
    * @param name Name of the sink.
    * @return Stream with the name.
    */
-  StreamPtr GetSink(const string& name);
+  StreamPtr GetSink(const std::string& name);
 
   /**
    * @brief Set the source of the processor by name.
    * @param name Name of the source.
    * @param stream Stream to be set.
    */
-  virtual void SetSource(const string& name, StreamPtr stream);
+  virtual void SetSource(const std::string& name, StreamPtr stream);
 
   /**
    * @brief Check if the processor has started.
@@ -128,16 +127,16 @@ class Processor {
    */
   virtual void Process() = 0;
 
-  std::unique_ptr<Frame> GetFrame(const string& source_name);
-  std::unique_ptr<Frame> GetFrameDirect(const string& source_name);
-  void PushFrame(const string& sink_name, std::unique_ptr<Frame> frame);
+  std::unique_ptr<Frame> GetFrame(const std::string& source_name);
+  std::unique_ptr<Frame> GetFrameDirect(const std::string& source_name);
+  void PushFrame(const std::string& sink_name, std::unique_ptr<Frame> frame);
   void ProcessorLoop();
   void ProcessorLoopDirect();
 
-  std::unordered_map<string, std::unique_ptr<Frame>> source_frame_cache_;
-  std::unordered_map<string, StreamPtr> sources_;
-  std::unordered_map<string, StreamPtr> sinks_;
-  std::unordered_map<string, StreamReader*> readers_;
+  std::unordered_map<std::string, std::unique_ptr<Frame>> source_frame_cache_;
+  std::unordered_map<std::string, StreamPtr> sources_;
+  std::unordered_map<std::string, StreamPtr> sinks_;
+  std::unordered_map<std::string, StreamReader*> readers_;
 
   std::thread process_thread_;
   std::atomic<bool> stopped_;

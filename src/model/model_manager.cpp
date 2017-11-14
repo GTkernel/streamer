@@ -6,7 +6,6 @@
 
 #include <stdexcept>
 
-#include "common/common.h"
 #include "common/context.h"
 #ifdef USE_CAFFE
 #include "model/caffe_model.h"
@@ -16,7 +15,7 @@
 #endif  // USE_TENSORFLOW
 #include "utils/utils.h"
 
-static const string MODEL_TOML_FILENAME = "models.toml";
+static const std::string MODEL_TOML_FILENAME = "models.toml";
 
 ModelManager& ModelManager::GetInstance() {
   static ModelManager manager;
@@ -25,7 +24,7 @@ ModelManager& ModelManager::GetInstance() {
 
 ModelManager::ModelManager() {
   // FIXME: Use a safer way to construct path.
-  string model_toml_path =
+  std::string model_toml_path =
       Context::GetContext().GetConfigFile(MODEL_TOML_FILENAME);
   auto root_value = ParseTomlFromFile(model_toml_path);
   // Get mean colors
@@ -40,8 +39,8 @@ ModelManager::ModelManager() {
   auto model_values = root_value.find("model")->as<toml::Array>();
 
   for (const auto& model_value : model_values) {
-    string name = model_value.get<string>("name");
-    string type_string = model_value.get<string>("type");
+    std::string name = model_value.get<std::string>("name");
+    std::string type_string = model_value.get<std::string>("type");
     ModelType type = MODEL_TYPE_INVALID;
     if (type_string == "caffe") {
       type = MODEL_TYPE_CAFFE;
@@ -52,10 +51,10 @@ ModelManager::ModelManager() {
     } else if (type_string == "ncs") {
       type = MODEL_TYPE_NCS;
     }
-    CHECK(type != MODEL_TYPE_INVALID)
-        << "Type " << type_string << " is not a valid mode type";
-    std::vector<string> desc_paths;
-    std::vector<string> params_paths;
+    CHECK(type != MODEL_TYPE_INVALID) << "Type " << type_string
+                                      << " is not a valid mode type";
+    std::vector<std::string> desc_paths;
+    std::vector<std::string> params_paths;
     auto desc_path = model_value.find("desc_path");
     if (desc_path->is<toml::Array>()) {
       auto desc_path_array = desc_path->as<toml::Array>();
@@ -63,7 +62,7 @@ ModelManager::ModelManager() {
         desc_paths.push_back(m.as<std::string>());
       }
     } else {
-      string desc_path_str = desc_path->as<string>();
+      std::string desc_path_str = desc_path->as<std::string>();
       desc_paths.push_back(desc_path_str);
     }
 
@@ -75,7 +74,7 @@ ModelManager::ModelManager() {
           params_paths.push_back(m.as<std::string>());
         }
       } else {
-        string params_path_str = params_path->as<string>();
+        std::string params_path_str = params_path->as<std::string>();
         params_paths.push_back(params_path_str);
       }
     } else {
@@ -120,11 +119,11 @@ ModelManager::ModelManager() {
 
       auto label_file_value = model_value.find("label_file");
       if (label_file_value != nullptr) {
-        model_desc.SetLabelFilePath(label_file_value->as<string>());
+        model_desc.SetLabelFilePath(label_file_value->as<std::string>());
       }
       auto voc_config_value = model_value.find("voc_config");
       if (voc_config_value != nullptr) {
-        model_desc.SetVocConfigPath(voc_config_value->as<string>());
+        model_desc.SetVocConfigPath(voc_config_value->as<std::string>());
       }
       if ((input_scale_value != nullptr) && (type_string == "caffe")) {
         model_desc.SetInputScale(input_scale_value->as<double>());
@@ -147,18 +146,19 @@ ModelManager::GetAllModelDescs() const {
   return model_descs_;
 }
 
-ModelDesc ModelManager::GetModelDesc(const string& name) const {
+ModelDesc ModelManager::GetModelDesc(const std::string& name) const {
   return GetModelDescs(name).at(0);
 }
 
-std::vector<ModelDesc> ModelManager::GetModelDescs(const string& name) const {
+std::vector<ModelDesc> ModelManager::GetModelDescs(
+    const std::string& name) const {
   auto itr = model_descs_.find(name);
-  CHECK(itr != model_descs_.end())
-      << "Model description with name " << name << " is not present";
+  CHECK(itr != model_descs_.end()) << "Model description with name " << name
+                                   << " is not present";
   return itr->second;
 }
 
-bool ModelManager::HasModel(const string& name) const {
+bool ModelManager::HasModel(const std::string& name) const {
   return model_descs_.count(name) != 0;
 }
 

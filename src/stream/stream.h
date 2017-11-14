@@ -11,7 +11,6 @@
 #include <queue>
 #include <unordered_set>
 
-#include "common/common.h"
 #include "common/timer.h"
 #include "frame.h"
 
@@ -91,7 +90,7 @@ class StreamReader {
  */
 class Stream {
  public:
-  Stream(string name = "");
+  Stream(std::string name = "");
   /**
    * @brief Push a frame into the stream.
    * @param frame The frame to be pushed into the stream.
@@ -102,7 +101,7 @@ class Stream {
   /**
    * @brief Get the name of the stream.
    */
-  string GetName() { return name_; }
+  std::string GetName() { return name_; }
 
   /**
    * @brief Get a reader from the stream.
@@ -122,7 +121,7 @@ class Stream {
 
  private:
   // Stream name for profiling and debugging
-  string name_;
+  std::string name_;
   // The readers of the stream
   std::vector<std::shared_ptr<StreamReader>> readers_;
   // Stream lock

@@ -62,10 +62,10 @@ void SignalHandler(int) {
   exit(0);
 }
 
-void Run(const std::vector<string>& camera_names,
-         const string& mtcnn_model_name, const string& facenet_model_name,
-         bool display, float scale, float motion_threshold,
-         float motion_max_duration) {
+void Run(const std::vector<std::string>& camera_names,
+         const std::string& mtcnn_model_name,
+         const std::string& facenet_model_name, bool display, float scale,
+         float motion_threshold, float motion_max_duration) {
   // Silence complier warning sayings when certain options are turned off.
   (void)motion_threshold;
   (void)motion_max_duration;
@@ -84,8 +84,8 @@ void Run(const std::vector<string>& camera_names,
   CHECK(model_manager.HasModel(facenet_model_name))
       << "Model " << facenet_model_name << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name))
-        << "Camera " << camera_name << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                                 << " does not exist";
   }
 
   ////// Start cameras, processors
@@ -145,7 +145,7 @@ void Run(const std::vector<string>& camera_names,
     tracker_output_readers.push_back(tracker_output->Subscribe());
 
     // encoders, encode each camera stream
-    string output_filename = camera_names[i] + ".mp4";
+    std::string output_filename = camera_names[i] + ".mp4";
 
     std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
         cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
@@ -184,7 +184,7 @@ void Run(const std::vector<string>& camera_names,
   //////// Processor started, display the results
 
   if (display) {
-    for (string camera_name : camera_names) {
+    for (std::string camera_name : camera_names) {
       cv::namedWindow(camera_name, cv::WINDOW_NORMAL);
     }
   }
@@ -249,22 +249,23 @@ int main(int argc, char* argv[]) {
 
   po::options_description desc("Multi-camera end to end video ingestion demo");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("mtcnn_model,m",
-                     po::value<string>()->value_name("MTCNN_MODEL")->required(),
-                     "The name of the mtcnn model to run");
+  desc.add_options()(
+      "mtcnn_model,m",
+      po::value<std::string>()->value_name("MTCNN_MODEL")->required(),
+      "The name of the mtcnn model to run");
   desc.add_options()(
       "facenet_model",
-      po::value<string>()->value_name("FACENET_MODEL")->required(),
+      po::value<std::string>()->value_name("FACENET_MODEL")->required(),
       "The name of the facenet model to run");
-  desc.add_options()("camera,c",
-                     po::value<string>()->value_name("CAMERAS")->required(),
-                     "The name of the camera to use, if there are multiple "
-                     "cameras to be used, separate with ,");
+  desc.add_options()(
+      "camera,c", po::value<std::string>()->value_name("CAMERAS")->required(),
+      "The name of the camera to use, if there are multiple "
+      "cameras to be used, separate with ,");
   desc.add_options()("display,d", "Enable display or not");
   desc.add_options()("device", po::value<int>()->default_value(-1),
                      "which device to use, -1 for CPU, > 0 for GPU device");
   desc.add_options()("config_dir,C",
-                     po::value<string>()->value_name("CONFIG_DIR"),
+                     po::value<std::string>()->value_name("CONFIG_DIR"),
                      "The directory to find streamer's configurations");
   desc.add_options()("scale,s", po::value<float>()->default_value(1.0),
                      "scale factor before mtcnn");
@@ -291,16 +292,16 @@ int main(int argc, char* argv[]) {
 
   ///////// Parse arguments
   if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   }
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
   int device_number = vm["device"].as<int>();
   Context::GetContext().SetInt(DEVICE_NUMBER, device_number);
 
-  auto camera_names = SplitString(vm["camera"].as<string>(), ",");
-  auto mtcnn_model = vm["mtcnn_model"].as<string>();
-  auto facenet_model = vm["facenet_model"].as<string>();
+  auto camera_names = SplitString(vm["camera"].as<std::string>(), ",");
+  auto mtcnn_model = vm["mtcnn_model"].as<std::string>();
+  auto facenet_model = vm["facenet_model"].as<std::string>();
   bool display = vm.count("display") != 0;
   float scale = vm["scale"].as<float>();
   float motion_threshold = vm["motion_threshold"].as<float>();

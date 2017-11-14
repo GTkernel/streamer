@@ -5,7 +5,7 @@
 #ifndef STREAMER_PIPELINE_SPL_PARSER_H_
 #define STREAMER_PIPELINE_SPL_PARSER_H_
 
-#include "common/common.h"
+#include "common/types.h"
 
 enum SPLStatementType {
   SPL_STATEMENT_INVALID,
@@ -15,12 +15,12 @@ enum SPLStatementType {
 
 struct SPLStatement {
   SPLStatementType statement_type;
-  string processor_name;
+  std::string processor_name;
   ProcessorType processor_type;
-  string lhs_processor_name;
-  string rhs_processor_name;
-  string lhs_stream_name;
-  string rhs_stream_name;
+  std::string lhs_processor_name;
+  std::string rhs_processor_name;
+  std::string lhs_stream_name;
+  std::string rhs_stream_name;
 
   FactoryParamsType params;
 };
@@ -32,10 +32,10 @@ struct SPLStatement {
 class SPLParser {
  public:
   SPLParser();
-  bool Parse(const string& spl, std::vector<SPLStatement>& statements);
+  bool Parse(const std::string& spl, std::vector<SPLStatement>& statements);
 
  private:
-  bool ValidName(const string& str);
+  bool ValidName(const std::string& str);
 };
 
 #endif  // STREAMER_PIPELINE_SPL_PARSER_H_

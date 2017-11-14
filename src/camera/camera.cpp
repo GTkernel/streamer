@@ -9,7 +9,7 @@
 #include "utils/time_utils.h"
 #include "utils/utils.h"
 
-Camera::Camera(const string& name, const string& video_uri, int width,
+Camera::Camera(const std::string& name, const std::string& video_uri, int width,
                int height)
     : Processor(PROCESSOR_TYPE_CAMERA, {}, {"output"}),
       name_(name),
@@ -20,9 +20,9 @@ Camera::Camera(const string& name, const string& video_uri, int width,
   stream_ = sinks_["output"];
 }
 
-string Camera::GetName() const { return name_; }
+std::string Camera::GetName() const { return name_; }
 
-string Camera::GetVideoURI() const { return video_uri_; }
+std::string Camera::GetVideoURI() const { return video_uri_; }
 
 int Camera::GetWidth() { return width_; }
 int Camera::GetHeight() { return height_; }
@@ -65,7 +65,7 @@ bool Camera::Capture(cv::Mat& image) {
 /**
  * Get the camera parameters information.
  */
-string Camera::GetCameraInfo() {
+std::string Camera::GetCameraInfo() {
   std::ostringstream ss;
   ss << "name: " << GetName() << "\n";
   ss << "record time: " << GetCurrentTimeString("%Y%m%d-%H%M%S") << "\n";

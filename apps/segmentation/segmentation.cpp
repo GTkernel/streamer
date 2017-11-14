@@ -3,8 +3,12 @@
 //
 
 #include <cstdio>
-
-#include "streamer.h"
+#include <opencv2/opencv.hpp>
+#include "camera/camera_manager.h"
+#include "common/types.h"
+#include "model/model_manager.h"
+#include "processor/image_segmenter.h"
+#include "processor/image_transformer.h"
 
 int main(int argc, char* argv[]) {
   // FIXME: Use more standard arg parse routine.
@@ -34,15 +38,15 @@ int main(int argc, char* argv[]) {
   }
 
   // Get options
-  string camera_name = argv[1];
-  string model_name = argv[2];
-  string display_on = argv[3];
+  std::string camera_name = argv[1];
+  std::string model_name = argv[2];
+  std::string display_on = argv[3];
 
   // Check options
-  CHECK(model_manager.HasModel(model_name))
-      << "Model " << model_name << " does not exist";
-  CHECK(camera_manager.HasCamera(camera_name))
-      << "Camera " << camera_name << " does not exist";
+  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
+                                            << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
+                                               << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
 

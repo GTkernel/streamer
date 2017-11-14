@@ -52,13 +52,13 @@ int main(int argc, char* argv[]) {
 
   po::options_description desc("Simple Frame Receiver App for Streamer");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("config_dir,C", po::value<string>(),
+  desc.add_options()("config_dir,C", po::value<std::string>(),
                      "The directory to find streamer's configuration");
   desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
                      "Angle to rotate image; must be 0, 90, 180, or 270");
   desc.add_options()("zoom,z", po::value<float>()->default_value(1.0),
                      "Zoom factor by which to scale image for display");
-  desc.add_options()("listen_url,l", po::value<string>()->required(),
+  desc.add_options()("listen_url,l", po::value<std::string>()->required(),
                      "address:port to listen on (e.g., 0.0.0.0:4444)");
 
   po::variables_map vm;
@@ -80,13 +80,13 @@ int main(int argc, char* argv[]) {
   //// Parse arguments
 
   if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   }
 
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  auto server = vm["listen_url"].as<string>();
+  auto server = vm["listen_url"].as<std::string>();
   auto zoom = vm["zoom"].as<float>();
 
   auto angles = std::set<unsigned int>{0, 90, 180, 270};

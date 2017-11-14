@@ -10,7 +10,6 @@
 
 #include <cv.h>
 
-#include "common/common.h"
 #include "processor/processor.h"
 
 class BaseTracker {

@@ -13,7 +13,7 @@ class FrameReceiver final : public Processor, public Messenger::Service {
   FrameReceiver(const std::string listen_url);
 
   StreamPtr GetSink();
-  StreamPtr GetSink(const string& name) = delete;
+  StreamPtr GetSink(const std::string& name) = delete;
 
   void RunServer(const std::string listen_url);
   grpc::Status SendFrame(grpc::ServerContext* context,

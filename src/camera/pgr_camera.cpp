@@ -15,8 +15,8 @@
     }                                        \
   } while (0)
 
-PGRCamera::PGRCamera(const string& name, const string& video_uri, int width,
-                     int height, CameraModeType mode,
+PGRCamera::PGRCamera(const std::string& name, const std::string& video_uri,
+                     int width, int height, CameraModeType mode,
                      CameraPixelFormatType pixel_format)
     : Camera(name, video_uri, width, height),
       initial_pixel_format_(pixel_format),
@@ -24,7 +24,7 @@ PGRCamera::PGRCamera(const string& name, const string& video_uri, int width,
 
 bool PGRCamera::Init() {
   // Get the camera guid from ip address
-  string protocol, ip;
+  std::string protocol, ip;
   ParseProtocolAndPath(video_uri_, protocol, ip);
 
   FlyCapture2::BusManager bus_manager;

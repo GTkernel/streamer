@@ -19,6 +19,8 @@
 #include <queue>
 #include <thread>
 
+#define STREAMER_NOT_IMPLEMENTED (LOG(FATAL) << "Function not implemented");
+
 inline void STREAMER_SLEEP(int msecs) {
   std::this_thread::sleep_for(std::chrono::milliseconds(msecs));
 }
@@ -52,7 +54,7 @@ class TaskQueue {
 };
 
 //// TOML
-inline toml::Value ParseTomlFromFile(const string& filepath) {
+inline toml::Value ParseTomlFromFile(const std::string& filepath) {
   std::ifstream ifs(filepath);
   CHECK(!ifs.fail()) << "Can't open file " << filepath << " for read";
   toml::ParseResult pr = toml::parse(ifs);

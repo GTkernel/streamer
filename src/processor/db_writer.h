@@ -12,7 +12,6 @@
 #include "client/AthenaClient.h"
 #endif  // USE_ATHENA
 #include "camera/camera.h"
-#include "common/common.h"
 #include "processor.h"
 
 class DbWriter : public Processor {
@@ -29,11 +28,12 @@ class DbWriter : public Processor {
  private:
   void WriteFile(const std::string& camera_id,
                  const std::vector<std::string>& uuids, unsigned long timestamp,
-                 const std::vector<string>& tags,
+                 const std::vector<std::string>& tags,
                  const std::vector<std::vector<double>>& features);
   void WriteAthena(const std::string& camera_id,
                    const std::vector<std::string>& uuids,
-                   unsigned long timestamp, const std::vector<string>& tags,
+                   unsigned long timestamp,
+                   const std::vector<std::string>& tags,
                    const std::vector<std::vector<double>>& features);
 
  private:

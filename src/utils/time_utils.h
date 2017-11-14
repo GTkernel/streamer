@@ -1,21 +1,18 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 11/2/16.
-//
 
 #ifndef STREAMER_UTILS_TIME_UTILS_H_
 #define STREAMER_UTILS_TIME_UTILS_H_
 
 #include <ctime>
-#include "common/common.h"
 
-inline string GetCurrentTimeString(const string& time_format) {
+constexpr unsigned int buf_len = 128;
+inline std::string GetCurrentTimeString(const std::string& time_format) {
   std::time_t t = std::time(nullptr);
-  char timestr[128];
+  char timestr[buf_len];
 
   std::strftime(timestr, sizeof(timestr), time_format.c_str(),
                 std::localtime(&t));
 
-  return string(timestr);
+  return std::string(timestr);
 }
 
 #endif  // STREAMER_UTILS_TIME_UTILS_H_

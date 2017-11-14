@@ -6,7 +6,7 @@
 #include "pipeline/spl_parser.h"
 
 TEST(SPL_PARSER_TEST, TEST_PARSE) {
-  string pipeline_desc = R"pipeline(
+  std::string pipeline_desc = R"pipeline(
 classifier = processor(ImageClassifier, model=AlexNet)
 ip_cam = camera(GST_TEST)
 transformer = processor(ImageTransformer, height=227, width=227)
@@ -39,7 +39,7 @@ classifier[input] = transformer[output]
 }
 
 TEST(SPL_PARSER_TEST, TEST_COMMENT) {
-  string pipeline_desc = R"pipeline(
+  std::string pipeline_desc = R"pipeline(
 # classifier = processor(ImageClassifier, model=AlexNet)
 ip_cam = camera(GST_TEST)
 transformer = processor(ImageTransformer, height=227, width=227)

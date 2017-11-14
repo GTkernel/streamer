@@ -29,10 +29,10 @@ class Pipeline {
   static std::shared_ptr<Pipeline> ConstructPipeline(nlohmann::json json);
 
   // Returns the Processor with the specified name.
-  std::shared_ptr<Processor> GetProcessor(const string& name);
+  std::shared_ptr<Processor> GetProcessor(const std::string& name);
 
   // Returns all of the Processors in this Pipeline.
-  std::unordered_map<string, std::shared_ptr<Processor>> GetProcessors();
+  std::unordered_map<std::string, std::shared_ptr<Processor>> GetProcessors();
 
   // Starts executing the pipeline. Returns true if successful, or false if a
   // Processor failed to start.

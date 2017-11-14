@@ -5,9 +5,11 @@
 #ifndef STREAMER_MODEL_MODEL_H_
 #define STREAMER_MODEL_MODEL_H_
 
+#include <string>
 #include <unordered_map>
+#include <vector>
+#include "common/types.h"
 
-#include "common/common.h"
 #include "model.h"
 
 /**
@@ -17,9 +19,10 @@
 class ModelDesc {
  public:
   ModelDesc() {}
-  ModelDesc(const string& name, const ModelType& type,
-            const string& model_desc_path, const string& model_params_path,
-            int input_width, int input_height, std::string default_input_layer,
+  ModelDesc(const std::string& name, const ModelType& type,
+            const std::string& model_desc_path,
+            const std::string& model_params_path, int input_width,
+            int input_height, std::string default_input_layer,
             std::string default_output_layer)
       : name_(name),
         type_(type),
@@ -31,10 +34,10 @@ class ModelDesc {
         default_output_layer_(default_output_layer),
         input_scale_(1.0) {}
 
-  const string& GetName() const { return name_; }
+  const std::string& GetName() const { return name_; }
   const ModelType& GetModelType() const { return type_; }
-  const string& GetModelDescPath() const { return model_desc_path_; }
-  const string& GetModelParamsPath() const { return model_params_path_; }
+  const std::string& GetModelDescPath() const { return model_desc_path_; }
+  const std::string& GetModelParamsPath() const { return model_params_path_; }
   int GetInputWidth() const { return input_width_; }
   int GetInputHeight() const { return input_height_; }
   const std::string& GetDefaultInputLayer() const {
@@ -43,29 +46,29 @@ class ModelDesc {
   const std::string& GetDefaultOutputLayer() const {
     return default_output_layer_;
   }
-  void SetLabelFilePath(const string& file_path) {
+  void SetLabelFilePath(const std::string& file_path) {
     label_file_path_ = file_path;
   }
-  const string& GetLabelFilePath() const { return label_file_path_; }
-  void SetVocConfigPath(const string& file_path) {
+  const std::string& GetLabelFilePath() const { return label_file_path_; }
+  void SetVocConfigPath(const std::string& file_path) {
     voc_config_path_ = file_path;
   }
-  const string& GetVocConfigPath() const { return voc_config_path_; }
+  const std::string& GetVocConfigPath() const { return voc_config_path_; }
   void SetInputScale(const double& input_scale) { input_scale_ = input_scale; }
   const double& GetInputScale() const { return input_scale_; }
 
  private:
-  string name_;
+  std::string name_;
   ModelType type_;
-  string model_desc_path_;
-  string model_params_path_;
+  std::string model_desc_path_;
+  std::string model_params_path_;
   int input_width_;
   int input_height_;
   std::string default_input_layer_;
   std::string default_output_layer_;
   // Optional attributes
-  string label_file_path_;
-  string voc_config_path_;
+  std::string label_file_path_;
+  std::string voc_config_path_;
   double input_scale_;
 };
 

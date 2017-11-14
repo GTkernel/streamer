@@ -5,6 +5,7 @@
 #ifndef STREAMER_COMMON_TYPES_H_
 #define STREAMER_COMMON_TYPES_H_
 
+#include <glog/logging.h>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -13,7 +14,6 @@
 #include <boost/serialization/access.hpp>
 #include <json/src/json.hpp>
 
-#include "common/common.h"
 #include "common/serialization.h"
 
 /**
@@ -378,6 +378,7 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
   }
 
   LOG(FATAL) << "Unhandled ProcessorType: " << type;
+  return "Unhandled";
 }
 
 #endif  // STREAMER_COMMON_TYPES_H_

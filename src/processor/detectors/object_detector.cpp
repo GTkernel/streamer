@@ -108,7 +108,7 @@ void ObjectDetector::Process() {
 
     auto original_img = frame->GetValue<cv::Mat>("original_image");
     CHECK(!original_img.empty());
-    std::vector<string> tags;
+    std::vector<std::string> tags;
     std::vector<Rect> bboxes;
     std::vector<float> confidences;
     std::vector<FaceLandmark> face_landmarks;

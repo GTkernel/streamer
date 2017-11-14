@@ -34,7 +34,7 @@ class VimbaCamera : public Camera {
   friend class VimbaCameraFrameObserver;
 
  public:
-  VimbaCamera(const string& name, const string& video_uri, int width,
+  VimbaCamera(const std::string& name, const std::string& video_uri, int width,
               int height, CameraModeType mode = CAMERA_MODE_0,
               CameraPixelFormatType pixel_format = CAMERA_PIXEL_FORMAT_RAW12);
   virtual CameraType GetCameraType() const override;
@@ -79,8 +79,8 @@ class VimbaCamera : public Camera {
   void StartCapture();
 
  private:
-  CameraPixelFormatType VimbaPfmt2CameraPfmt(const string& vmb_pfmt);
-  string CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt);
+  CameraPixelFormatType VimbaPfmt2CameraPfmt(const std::string& vmb_pfmt);
+  std::string CameraPfmt2VimbaPfmt(CameraPixelFormatType pfmt);
 
   void ResetDefaultCameraSettings();
 

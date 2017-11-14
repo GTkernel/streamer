@@ -6,7 +6,8 @@
 
 #include <boost/filesystem.hpp>
 
-GigeFileWriter::GigeFileWriter(const string& directory, size_t frames_per_file)
+GigeFileWriter::GigeFileWriter(const std::string& directory,
+                               size_t frames_per_file)
     : Processor(PROCESSOR_TYPE_CUSTOM, {"input"}, {}),
       directory_(directory),
       frames_written_(0),
@@ -40,7 +41,7 @@ void GigeFileWriter::Process() {
     std::ostringstream ss;
     ss << frames_written_ / frames_per_file_ << ".dat";
 
-    string filename = directory_ + "/" + ss.str();
+    std::string filename = directory_ + "/" + ss.str();
 
     if (current_file_.is_open()) current_file_.close();
 

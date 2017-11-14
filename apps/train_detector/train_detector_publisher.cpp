@@ -156,9 +156,8 @@ int main(int argc, char* argv[]) {
   auto fps = args["fps"].as<double>();
   auto fields_to_send = args["fields-to-send"].as<std::vector<std::string>>();
   auto publish_url = args["publish-url"].as<std::string>();
-  Run(camera_name, fps,
-      std::unordered_set<std::string>{fields_to_send.begin(),
-                                      fields_to_send.end()},
+  Run(camera_name, fps, std::unordered_set<std::string>{fields_to_send.begin(),
+                                                        fields_to_send.end()},
       publish_url);
   return 0;
 }

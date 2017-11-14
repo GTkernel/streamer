@@ -5,7 +5,6 @@
 #ifndef STREAMER_CAMERA_CAMERA_H_
 #define STREAMER_CAMERA_CAMERA_H_
 
-#include "common/common.h"
 #include "processor/processor.h"
 #include "stream/stream.h"
 
@@ -17,10 +16,10 @@ class Camera : public Processor {
   friend class CameraManager;
 
  public:
-  Camera(const string& name, const string& video_uri, int width = -1,
+  Camera(const std::string& name, const std::string& video_uri, int width = -1,
          int height = -1);  // Just a nonsense default value
-  string GetName() const;
-  string GetVideoURI() const;
+  std::string GetName() const;
+  std::string GetVideoURI() const;
   std::shared_ptr<Stream> GetStream() const;
   int GetWidth();
   int GetHeight();
@@ -68,7 +67,7 @@ class Camera : public Processor {
   // Update metadata in frame
   virtual void MetadataToFrame(std::unique_ptr<Frame>& frame);
 
-  string GetCameraInfo();
+  std::string GetCameraInfo();
   unsigned long CreateFrameID();
 
  protected:
@@ -77,14 +76,14 @@ class Camera : public Processor {
   virtual void Process() override = 0;
 
  protected:
-  string name_;
-  string video_uri_;
+  std::string name_;
+  std::string video_uri_;
   int width_;
   int height_;
-  string tile_up_command_;
-  string tile_down_command_;
-  string pan_left_command_;
-  string pan_right_command_;
+  std::string tile_up_command_;
+  std::string tile_down_command_;
+  std::string pan_left_command_;
+  std::string pan_right_command_;
   // Camera output stream
   std::shared_ptr<Stream> stream_;
   // Counter to set camera specific frame id
