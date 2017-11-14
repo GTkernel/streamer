@@ -3,7 +3,6 @@
 #define STREAMER_STREAMER_H_
 
 #include "camera/camera_manager.h"
-#include "common/common.h"
 #include "common/context.h"
 #include "model/model_manager.h"
 #include "pipeline/pipeline.h"

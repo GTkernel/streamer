@@ -378,6 +378,7 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
   }
 
   LOG(FATAL) << "Unhandled ProcessorType: " << type;
+  return "Unhandled";
 }
 
 #endif  // STREAMER_COMMON_TYPES_H_

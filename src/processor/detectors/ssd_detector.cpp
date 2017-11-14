@@ -11,8 +11,8 @@
 #include "model/model_manager.h"
 
 namespace ssd {
-Detector::Detector(const string& model_file, const string& weights_file,
-                   const string& mean_file, const string& mean_value) {
+Detector::Detector(const std::string& model_file, const std::string& weights_file,
+                   const std::string& mean_file, const std::string& mean_value) {
   // Set Caffe backend
   int desired_device_number = Context::GetContext().GetInt(DEVICE_NUMBER);
 
@@ -100,7 +100,7 @@ std::vector<std::vector<float> > Detector::Detect(const cv::Mat& img) {
 }
 
 /* Load the mean file in binaryproto format. */
-void Detector::SetMean(const string& mean_file, const string& mean_value) {
+void Detector::SetMean(const std::string& mean_file, const std::string& mean_value) {
   cv::Scalar channel_mean;
   if (!mean_file.empty()) {
     CHECK(mean_value.empty())
@@ -138,7 +138,7 @@ void Detector::SetMean(const string& mean_file, const string& mean_value) {
         << "Cannot specify mean_file and mean_value at the same time";
     std::stringstream ss(mean_value);
     std::vector<float> values;
-    string item;
+    std::string item;
     while (getline(ss, item, ',')) {
       float value = std::atof(item.c_str());
       values.push_back(value);

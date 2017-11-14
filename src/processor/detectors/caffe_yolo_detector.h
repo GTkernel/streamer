@@ -18,7 +18,7 @@
 namespace yolo {
 class Detector {
  public:
-  Detector(const string& model_file, const string& weights_file);
+  Detector(const std::string& model_file, const std::string& weights_file);
 
   std::vector<float> Detect(const cv::Mat& img);
 

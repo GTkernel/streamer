@@ -18,13 +18,13 @@
 namespace ssd {
 class Detector {
  public:
-  Detector(const string& model_file, const string& weights_file,
-           const string& mean_file, const string& mean_value);
+  Detector(const std::string& model_file, const std::string& weights_file,
+           const std::string& mean_file, const std::string& mean_value);
 
   std::vector<std::vector<float> > Detect(const cv::Mat& img);
 
  private:
-  void SetMean(const string& mean_file, const string& mean_value);
+  void SetMean(const std::string& mean_file, const std::string& mean_value);
 
   void WrapInputLayer(std::vector<cv::Mat>* input_channels);
 

@@ -11,9 +11,9 @@ namespace po = boost::program_options;
 // Global arguments
 struct Configurations {
   // The name of the camera to use
-  string camera_name;
+  std::string camera_name;
   // Address of the server to send frames
-  string server;
+  std::string server;
   // How many seconds to send stream
   unsigned int duration;
 } CONFIG;
@@ -52,11 +52,11 @@ int main(int argc, char* argv[]) {
 
   po::options_description desc("Simple Frame Sender App for Streamer");
   desc.add_options()("help,h", "print the help message");
-  desc.add_options()("config_dir,C", po::value<string>(),
+  desc.add_options()("config_dir,C", po::value<std::string>(),
                      "The directory to find streamer's configuration");
-  desc.add_options()("server_url,s", po::value<string>()->required(),
+  desc.add_options()("server_url,s", po::value<std::string>()->required(),
                      "host:port to connect to (e.g., example.com:4444)");
-  desc.add_options()("camera,c", po::value<string>()->required(),
+  desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use");
   desc.add_options()("duration,d", po::value<unsigned int>()->default_value(5),
                      "How long to send stream in seconds");
@@ -79,14 +79,14 @@ int main(int argc, char* argv[]) {
   //// Parse arguments
 
   if (vm.count("config_dir")) {
-    Context::GetContext().SetConfigDir(vm["config_dir"].as<string>());
+    Context::GetContext().SetConfigDir(vm["config_dir"].as<std::string>());
   }
 
   // Init streamer context, this must be called before using streamer.
   Context::GetContext().Init();
 
-  CONFIG.server = vm["server_url"].as<string>();
-  CONFIG.camera_name = vm["camera"].as<string>();
+  CONFIG.server = vm["server_url"].as<std::string>();
+  CONFIG.camera_name = vm["camera"].as<std::string>();
   CONFIG.duration = vm["duration"].as<unsigned int>();
 
   Run();
