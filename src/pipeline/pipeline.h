@@ -42,9 +42,7 @@ class Pipeline {
   // Processor failed to stop.
   bool Stop();
 
-  /**
-   * @brief Get reverse dependency graph in (the pipeline) in GraphViz format
-   */
+  // Get reverse dependency graph (the pipeline) in GraphViz format.
   const std::string GetGraph() const;
 
  private:

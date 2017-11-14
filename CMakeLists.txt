@@ -144,15 +144,6 @@ if (USE_RPC)
   add_definitions("-D USE_RPC")
 endif()
 
-option(USE_GRAPHVIZ "Build GraphViz support." OFF)
-if (USE_GRAPHVIZ)
-  pkg_check_modules(GVC REQUIRED libgvc)
-  include_directories(SYSTEM
-    ${GVC_INCLUDE_DIRS}
-  )
-  add_definitions("-D USE_GRAPHVIZ")
-endif()
-
 # Common include paths
 include_directories(src)
 include_directories(SYSTEM
