@@ -2,7 +2,6 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 9/22/16.
 //
 
-#include <common/common.h>
 #include <gtest/gtest.h>
 #include <tinytoml/include/toml/toml.h>
 

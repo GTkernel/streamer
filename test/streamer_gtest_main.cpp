@@ -6,7 +6,6 @@
 
 #include <gst/gst.h>
 #include <gtest/gtest.h>
-#include "common/common.h"
 #include "common/context.h"
 
 GTEST_API_ int main(int argc, char** argv) {
