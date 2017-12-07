@@ -84,8 +84,8 @@ void Run(const std::vector<std::string>& camera_names,
   CHECK(model_manager.HasModel(facenet_model_name))
       << "Model " << facenet_model_name << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                                 << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name))
+        << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors

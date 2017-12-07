@@ -113,7 +113,7 @@ class FramePrinter : public boost::static_visitor<std::string> {
     int dims = v.dims;
     if (dims <= 2) {
       cv::Mat tmp;
-      v.copyTo(tmp);
+      v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
 
       std::ostringstream mout;
       mout << tmp;

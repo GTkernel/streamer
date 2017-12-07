@@ -75,8 +75,8 @@ bool Processor::Start(size_t buf_size) {
 
   // Check sources are filled
   for (const auto& source : sources_) {
-    CHECK(source.second != nullptr) << "Source \"" << source.first
-                                    << "\" is not set.";
+    CHECK(source.second != nullptr)
+        << "Source \"" << source.first << "\" is not set.";
   }
 
   // Subscribe sources

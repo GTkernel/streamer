@@ -43,10 +43,10 @@ int main(int argc, char* argv[]) {
   std::string display_on = argv[3];
 
   // Check options
-  CHECK(model_manager.HasModel(model_name)) << "Model " << model_name
-                                            << " does not exist";
-  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                               << " does not exist";
+  CHECK(model_manager.HasModel(model_name))
+      << "Model " << model_name << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name))
+      << "Camera " << camera_name << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
 

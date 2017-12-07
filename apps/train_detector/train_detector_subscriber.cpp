@@ -46,7 +46,8 @@ void ProgressTracker(StreamPtr stream) {
 
 void Run(const std::string& publish_url, bool compress,
          std::unordered_set<std::string> fields_to_save,
-         bool save_fields_separately, const std::string& output_dir) {
+         bool save_fields_separately, bool save_original_bytes,
+         const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create FrameSubscriber.
@@ -70,12 +71,14 @@ void Run(const std::string& publish_url, bool compress,
   metadata_writer->SetSource(stream);
   procs.push_back(metadata_writer);
 
-  // Create FrameWriter for writing demosaiced image.
-  auto image_writer = std::make_shared<FrameWriter>(
-      std::unordered_set<std::string>{"original_image"}, output_dir,
-      FrameWriter::FileFormat::BINARY, save_fields_separately, true);
-  image_writer->SetSource(stream);
-  procs.push_back(image_writer);
+  if (save_original_bytes) {
+    // Create FrameWriter for writing demosaiced image.
+    auto image_writer = std::make_shared<FrameWriter>(
+        std::unordered_set<std::string>{"original_image"}, output_dir,
+        FrameWriter::FileFormat::BINARY, save_fields_separately, true);
+    image_writer->SetSource(stream);
+    procs.push_back(image_writer);
+  }
 
   // Create JpegWriter.
   auto jpeg_writer =
@@ -132,6 +135,8 @@ int main(int argc, char* argv[]) {
       "The fields to save.");
   desc.add_options()("save-fields-separately",
                      "Whether to save each frame field in a separate file.");
+  desc.add_options()("save-original-bytes",
+                     "Whether to save the uncompressed, demosaiced image.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      ("The root directory of the image storage database."));
 
@@ -166,12 +171,13 @@ int main(int argc, char* argv[]) {
 
   auto publish_url = args["publish-url"].as<std::string>();
   bool compress = args.count("compress");
-  bool save_fields_separately = args.count("save-fields-separately");
   auto fields_to_save = args["fields-to-save"].as<std::vector<std::string>>();
+  bool save_fields_separately = args.count("save-fields-separately");
+  bool save_original_bytes = args.count("save-original-bytes");
   auto output_dir = args["output-dir"].as<std::string>();
   Run(publish_url, compress,
       std::unordered_set<std::string>{fields_to_save.begin(),
                                       fields_to_save.end()},
-      save_fields_separately, output_dir);
+      save_fields_separately, save_original_bytes, output_dir);
   return 0;
 }

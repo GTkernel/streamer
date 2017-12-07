@@ -203,8 +203,8 @@ void CvMatEqual(cv::Mat lhs, cv::Mat rhs) {
   auto rhs_it = rhs.begin<float>();
   auto rhs_end = rhs.end<float>();
   while (lhs_it != lhs_end && rhs_it != rhs_end) {
-    CHECK(FloatEqual(*lhs_it, *rhs_it)) << "Expects: " << *lhs_it
-                                        << " Found: " << *rhs_it;
+    CHECK(FloatEqual(*lhs_it, *rhs_it))
+        << "Expects: " << *lhs_it << " Found: " << *rhs_it;
     ++lhs_it;
     ++rhs_it;
   }

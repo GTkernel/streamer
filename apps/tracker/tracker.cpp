@@ -80,11 +80,11 @@ void Run(const std::vector<std::string>& camera_names,
   ModelManager& model_manager = ModelManager::GetInstance();
 
   // Check options
-  CHECK(model_manager.HasModel(detector_model)) << "Model " << detector_model
-                                                << " does not exist";
+  CHECK(model_manager.HasModel(detector_model))
+      << "Model " << detector_model << " does not exist";
   for (auto camera_name : camera_names) {
-    CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                                 << " does not exist";
+    CHECK(camera_manager.HasCamera(camera_name))
+        << "Camera " << camera_name << " does not exist";
   }
 
   ////// Start cameras, processors

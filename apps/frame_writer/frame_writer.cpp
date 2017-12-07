@@ -72,10 +72,11 @@ int main(int argc, char* argv[]) {
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
   desc.add_options()(
-      "fields,f", po::value<std::vector<std::string>>()
-                      ->multitoken()
-                      ->composing()
-                      ->default_value(default_fields, default_fields_str.str()),
+      "fields,f",
+      po::value<std::vector<std::string>>()
+          ->multitoken()
+          ->composing()
+          ->default_value(default_fields, default_fields_str.str()),
       "The fields to save.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the frame files.");

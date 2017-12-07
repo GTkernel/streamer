@@ -129,8 +129,8 @@ bool VimbaCamera::Init() {
     VmbAPI::CameraPtrVector cameras;
     CHECK_VIMBA(vimba_system_.GetCameras(cameras));
     decltype(cameras.size()) device_idx = StringToInt(ip);
-    CHECK(device_idx < cameras.size()) << "Invalid camera index: "
-                                       << device_idx;
+    CHECK(device_idx < cameras.size())
+        << "Invalid camera index: " << device_idx;
     camera_ = cameras[device_idx];
     camera_->Open(VmbAccessModeFull);
   }

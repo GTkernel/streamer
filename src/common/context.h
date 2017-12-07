@@ -52,8 +52,8 @@ class Context {
     return double_values_[key];
   }
   std::string GetString(const std::string& key) {
-    CHECK(string_values_.count(key) != 0) << "No std::string value with key "
-                                          << key;
+    CHECK(string_values_.count(key) != 0)
+        << "No std::string value with key " << key;
     return string_values_[key];
   }
   bool GetBool(const std::string& key) {
