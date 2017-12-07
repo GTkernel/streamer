@@ -39,7 +39,7 @@ void TrainDetector::Process() {
       frame->GetValue<cv::Mat>("image");  // original_image
   cv::Mat img_mask;
   // Foreground detection
-  pMOG->cv::BackgroundSubtractor::apply(img_input, img_mask);
+  pMOG->apply(img_input, img_mask);
 
   // Apply RoI mask and count foreground pixels
   int width = img_input.cols / num_divid;
