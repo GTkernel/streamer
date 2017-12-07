@@ -20,8 +20,8 @@ void Run(const std::string& camera_name, std::string& dst_file, int port) {
 
   CameraManager& camera_manager = CameraManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                               << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name))
+      << "Camera " << camera_name << " does not exist";
 
   auto camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();

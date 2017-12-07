@@ -40,8 +40,8 @@ void Run(const std::string& camera_name, const std::string& net_name,
   CameraManager& camera_manager = CameraManager::GetInstance();
   ModelManager& model_manager = ModelManager::GetInstance();
 
-  CHECK(camera_manager.HasCamera(camera_name)) << "Camera " << camera_name
-                                               << " does not exist";
+  CHECK(camera_manager.HasCamera(camera_name))
+      << "Camera " << camera_name << " does not exist";
 
   camera = camera_manager.GetCamera(camera_name);
   camera->SetBlockOnPush(true);
