@@ -2,9 +2,9 @@
 #ifndef STREAMER_PROCESSOR_TRAIN_DETECTOR_H_
 #define STREAMER_PROCESSOR_TRAIN_DETECTOR_H_
 
-#include <opencv2/opencv.hpp>
-
 #include <memory>
+
+#include <opencv2/opencv.hpp>
 
 #include "common/types.h"
 #include "processor/processor.h"
