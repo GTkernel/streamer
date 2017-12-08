@@ -1,15 +1,25 @@
-// subscribe.cpp - Subscribes to frames over ZMQ and displays them.
+// This application attaches to a published frame stream, stores the frames on
+// disk, and displays them.
 
+#include <atomic>
+#include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "camera/camera.h"
-#include "camera/camera_manager.h"
+#include "common/context.h"
+#include "common/types.h"
+#include "processor/compressor.h"
+#include "processor/frame_writer.h"
+#include "processor/jpeg_writer.h"
 #include "processor/pubsub/frame_subscriber.h"
+#include "stream/frame.h"
 #include "stream/stream.h"
 #include "utils/image_utils.h"
 
@@ -17,20 +27,89 @@ namespace po = boost::program_options;
 
 constexpr auto FIELD_TO_DISPLAY = "original_image";
 
-void Run(const std::string& publish_url, float zoom, unsigned int angle) {
+// Whether the pipeline has been stopped.
+std::atomic<bool> stopped(false);
+
+void ProgressTracker(StreamPtr stream) {
+  StreamReader* reader = stream->Subscribe();
+  while (!stopped) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame != nullptr) {
+      std::cout << "\rReceived frame "
+                << frame->GetValue<unsigned long>("frame_id") << " from time: "
+                << frame->GetValue<boost::posix_time::ptime>(
+                       "capture_time_micros");
+      // This is required in order to make the console update as soon as the
+      // above log is printed. Without this, the progress log will not update
+      // smoothly.
+      std::cout.flush();
+    }
+  }
+  reader->UnSubscribe();
+}
+
+void Run(const std::string& publish_url,
+         std::unordered_set<std::string> fields_to_save,
+         bool save_fields_separately, bool save_original_bytes, bool compress,
+         bool save_jpegs, const std::string& output_dir, bool display,
+         unsigned int angle, float zoom) {
+  std::vector<std::shared_ptr<Processor>> procs;
+
   // Create FrameSubscriber.
   auto subscriber = std::make_shared<FrameSubscriber>(publish_url);
+  procs.push_back(subscriber);
+
+  StreamPtr stream = subscriber->GetSink();
+  if (!fields_to_save.empty()) {
+    // Create FrameWriter for frame fields (i.e., metadata).
+    auto frame_writer = std::make_shared<FrameWriter>(
+        fields_to_save, output_dir, FrameWriter::FileFormat::JSON,
+        save_fields_separately, true);
+    frame_writer->SetSource(stream);
+    procs.push_back(frame_writer);
+  }
+
+  if (save_original_bytes) {
+    if (compress) {
+      // Create Compressor.
+      auto compressor =
+          std::make_shared<Compressor>(Compressor::CompressionType::BZIP2);
+      compressor->SetSource(stream);
+      procs.push_back(compressor);
+      stream = compressor->GetSink();
+    }
+
+    // Create FrameWriter for writing original demosaiced image.
+    auto image_writer = std::make_shared<FrameWriter>(
+        std::unordered_set<std::string>{"original_image"}, output_dir,
+        FrameWriter::FileFormat::BINARY, save_fields_separately, true);
+    image_writer->SetSource(stream);
+    procs.push_back(image_writer);
+  }
+
+  if (save_jpegs) {
+    // Create JpegWriter.
+    auto jpeg_writer =
+        std::make_shared<JpegWriter>("original_image", output_dir, true);
+    jpeg_writer->SetSource(stream);
+    procs.push_back(jpeg_writer);
+  }
+
+  std::thread progress_thread =
+      std::thread([stream] { ProgressTracker(stream); });
   StreamReader* reader = subscriber->GetSink()->Subscribe();
 
-  // Set up OpenCV display window.
-  cv::namedWindow(FIELD_TO_DISPLAY);
-  subscriber->Start();
+  // Start the processors in reverse order.
+  for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
+    (*procs_it)->Start();
+  }
 
   std::cout << "Press \"q\" to stop." << std::endl;
 
   while (true) {
+    // Pop frames and display them.
     auto frame = reader->PopFrame();
-    if (frame != nullptr) {
+    if (display && (frame != nullptr)) {
       // Extract image and display it.
       const cv::Mat& img = frame->GetValue<cv::Mat>(FIELD_TO_DISPLAY);
       cv::Mat img_resized;
@@ -41,23 +120,48 @@ void Run(const std::string& publish_url, float zoom, unsigned int angle) {
       if (cv::waitKey(10) == 'q') break;
     }
   }
-
   reader->UnSubscribe();
-  subscriber->Stop();
-  cv::destroyAllWindows();
+
+  // Stop the processors in forward order.
+  for (const auto& proc : procs) {
+    proc->Stop();
+  }
+
+  // Signal the progress thread to stop.
+  stopped = true;
+  progress_thread.join();
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Simple frame subscriber  example app");
-  desc.add_options()("help,h", "Print the help message");
+  po::options_description desc("Subscribes to, saves, and displays a stream");
+  desc.add_options()("help,h", "Print the help message.");
   desc.add_options()("config-dir,C", po::value<std::string>(),
                      "The directory containing Streamer's config files.");
-  desc.add_options()("publish-url,p",
+  desc.add_options()("publish-url,u",
                      po::value<std::string>()->default_value("127.0.0.1:5536"),
                      "The URL (host:port) on which the frame stream is being "
                      "published.");
+  desc.add_options()("fields-to-save",
+                     po::value<std::vector<std::string>>()
+                         ->multitoken()
+                         ->composing()
+                         ->default_value({}, "None"),
+                     "The fields to save.");
+  desc.add_options()("save-fields-separately",
+                     "Whether to save each frame field in a separate file.");
+  desc.add_options()("save-original-bytes",
+                     "Whether to save the uncompressed, demosaiced image.");
+  desc.add_options()("compress,c",
+                     "Whether to compress the \"original_bytes\" field.");
+  desc.add_options()("save-jpegs",
+                     "Whether to save a JPEG of the "
+                     "\"original_image\" field.");
+  desc.add_options()("output-dir,o", po::value<std::string>()->required(),
+                     ("The root directory of the image storage database."));
+  desc.add_options()("display,d", "Whether to display the frames.");
   desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
-                     "Angle to rotate image; Must be 0, 90, 180, or 270.");
+                     "Angle to rotate image for display; Must be 0, 90, 180, "
+                     "or 270.");
   desc.add_options()("zoom,z", po::value<float>()->default_value(1.0),
                      "Zoom factor by which to scale image for display.");
 
@@ -90,8 +194,15 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  std::string publish_url = args["publish-url"].as<std::string>();
-  float zoom = args["zoom"].as<float>();
+  auto publish_url = args["publish-url"].as<std::string>();
+  auto fields_to_save = args["fields-to-save"].as<std::vector<std::string>>();
+  bool save_fields_separately = args.count("save-fields-separately");
+  bool save_original_bytes = args.count("save-original-bytes");
+  bool compress = args.count("compress");
+  bool save_jpegs = args.count("save-jpegs");
+  auto output_dir = args["output-dir"].as<std::string>();
+  bool display = args.count("display");
+
   std::set<unsigned int> angles = std::set<unsigned int>{0, 90, 180, 270};
   unsigned int angle = args["rotate"].as<unsigned int>();
   if (angles.find(angle) == angles.end()) {
@@ -101,5 +212,12 @@ int main(int argc, char* argv[]) {
     std::cout << desc << std::endl;
     return 1;
   }
-  Run(publish_url, zoom, angle);
+  float zoom = args["zoom"].as<float>();
+
+  Run(publish_url,
+      std::unordered_set<std::string>{fields_to_save.begin(),
+                                      fields_to_save.end()},
+      save_fields_separately, save_original_bytes, compress, save_jpegs,
+      output_dir, display, angle, zoom);
+  return 0;
 }
