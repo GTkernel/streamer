@@ -47,6 +47,16 @@ void Run(const std::string& camera_name) {
       CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
+  // Create Throttler (decrease camera FPS to desired (high) FPS, in case the
+  // camera is capturing faster than the train detection algorithm can handle).
+  // Connect to Camera.
+
+  // Create TrainDetector. Connect to Throttler.
+
+  // Create Buffer. Connect to Throttler.
+
+  // Create FrameWriter. Connect to Buffer.
+
   StreamPtr stream = camera->GetStream();
   std::thread progress_thread =
       std::thread([stream] { ProgressTracker(stream); });
