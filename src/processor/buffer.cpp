@@ -5,7 +5,7 @@ constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
 Buffer::Buffer(unsigned long num_frames)
-    : Processor(PROCESSOR_TYPE_THROTTLER, {SOURCE_NAME}, {SINK_NAME}),
+    : Processor(PROCESSOR_TYPE_BUFFER, {SOURCE_NAME}, {SINK_NAME}),
       buffer_{num_frames} {}
 
 std::shared_ptr<Buffer> Buffer::Create(const FactoryParamsType& params) {

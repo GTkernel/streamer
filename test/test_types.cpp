@@ -58,6 +58,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_BINARY_FILE_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_BINARY_FILE_WRITER)));
+  EXPECT_EQ(PROCESSOR_TYPE_BUFFER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_BUFFER)));
   EXPECT_EQ(PROCESSOR_TYPE_CAMERA,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CAMERA)));

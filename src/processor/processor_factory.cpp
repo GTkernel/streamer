@@ -3,6 +3,7 @@
 
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
+#include "processor/buffer.h"
 #ifdef USE_CAFFE
 #include "processor/caffe_facenet.h"
 #include "processor/imagematch/imagematch.h"
@@ -43,6 +44,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
   switch (type) {
     case PROCESSOR_TYPE_BINARY_FILE_WRITER:
       return BinaryFileWriter::Create(params);
+    case PROCESSOR_TYPE_BUFFER:
+      return Buffer::Create(params);
     case PROCESSOR_TYPE_CAMERA:
       return CameraManager::GetInstance().GetCamera(params.at("camera_name"));
     case PROCESSOR_TYPE_COMPRESSOR:
