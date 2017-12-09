@@ -234,6 +234,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_STRIDER,
   PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR,
   PROCESSOR_TYPE_THROTTLER,
+  PROCESSOR_TYPE_TRAIN_DETECTOR,
   PROCESSOR_TYPE_INVALID
 };
 // Returns the ProcessorType enum value corresponding to the string.
@@ -304,6 +305,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR;
   } else if (type == "Throttler") {
     return PROCESSOR_TYPE_THROTTLER;
+  } else if (type == "TrainDetector") {
+    return PROCESSOR_TYPE_TRAIN_DETECTOR;
   } else {
     return PROCESSOR_TYPE_INVALID;
   }
@@ -378,6 +381,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "TemporalRegionSelector";
     case PROCESSOR_TYPE_THROTTLER:
       return "Throttler";
+    case PROCESSOR_TYPE_TRAIN_DETECTOR:
+      return "TrainDetector";
     case PROCESSOR_TYPE_INVALID:
       return "Invalid";
   }

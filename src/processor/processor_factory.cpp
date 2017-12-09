@@ -37,6 +37,7 @@
 #include "processor/strider.h"
 #include "processor/temporal_region_selector.h"
 #include "processor/throttler.h"
+#include "processor/train_detector.h"
 #include "video/gst_video_encoder.h"
 
 std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
@@ -109,6 +110,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return TemporalRegionSelector::Create(params);
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
+    case PROCESSOR_TYPE_TRAIN_DETECTOR:
+      return TrainDetector::Create(params);
     case PROCESSOR_TYPE_INVALID:
       LOG(FATAL) << "Cannot instantiate a Processor of type: "
                  << GetStringForProcessorType(type);
