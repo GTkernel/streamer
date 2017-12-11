@@ -12,7 +12,7 @@
 
 class TrainDetector : public Processor {
  public:
-  TrainDetector(unsigned long num_buffer_frames,
+  TrainDetector(unsigned long num_leading_frames,
                 unsigned long num_trailing_frames);
   static std::shared_ptr<TrainDetector> Create(const FactoryParamsType& params);
 

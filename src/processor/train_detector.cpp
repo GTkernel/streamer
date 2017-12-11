@@ -6,10 +6,10 @@ constexpr auto SINK_NAME = "input";
 constexpr auto ROIMASK_NAME = "PATH_TO_ROI_MASK";
 constexpr auto TRAIN_THRESHOLD = 0.5;
 
-TrainDetector::TrainDetector(unsigned long num_buffer_frames,
+TrainDetector::TrainDetector(unsigned long num_leading_frames,
                              unsigned long num_trailing_frames)
     : Processor(PROCESSOR_TYPE_TRAIN_DETECTOR, {SOURCE_NAME}, {SINK_NAME}),
-      buffer_{num_buffer_frames},
+      buffer_{num_leading_frames},
       num_trailing_frames_(num_trailing_frames),
       num_divid(10),
       display_scalar(1),
