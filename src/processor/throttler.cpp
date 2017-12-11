@@ -15,9 +15,6 @@ Throttler::Throttler(double fps)
 
 std::shared_ptr<Throttler> Throttler::Create(const FactoryParamsType& params) {
   double fps = std::stod(params.at("fps"));
-  if (fps < 0) {
-    throw std::invalid_argument("Fps cannot be negative!");
-  }
   return std::make_shared<Throttler>(fps);
 }
 
@@ -28,7 +25,9 @@ void Throttler::SetSource(StreamPtr stream) {
 StreamPtr Throttler::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 void Throttler::SetFps(double fps) {
-  if (fps == 0) {
+  if (fps < 0) {
+    throw std::invalid_argument("Fps cannot be negative!");
+  } else if (fps == 0) {
     // Turn throttling off.
     delay_ms_ = 0;
   } else {
