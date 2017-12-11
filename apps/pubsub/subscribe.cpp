@@ -203,8 +203,8 @@ int main(int argc, char* argv[]) {
   auto output_dir = args["output-dir"].as<std::string>();
   bool display = args.count("display");
 
-  std::set<unsigned int> angles = std::set<unsigned int>{0, 90, 180, 270};
-  unsigned int angle = args["rotate"].as<unsigned int>();
+  auto angles = std::set<unsigned int>{0, 90, 180, 270};
+  auto angle = args["rotate"].as<unsigned int>();
   if (angles.find(angle) == angles.end()) {
     std::cerr << "Error: \"--rotate\" angle must be 0, 90, 180, or 270."
               << std::endl;
@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
     std::cout << desc << std::endl;
     return 1;
   }
-  float zoom = args["zoom"].as<float>();
+  auto zoom = args["zoom"].as<float>();
 
   Run(publish_url,
       std::unordered_set<std::string>{fields_to_save.begin(),
