@@ -2,23 +2,20 @@
 #include "processor/train_detector.h"
 
 constexpr auto SOURCE_NAME = "input";
-constexpr auto SINK_NAME = "input";
-constexpr auto ROIMASK_NAME = "PATH_TO_ROI_MASK";
-constexpr auto TRAIN_THRESHOLD = 0.5;
+constexpr auto SINK_NAME = "output";
 
 TrainDetector::TrainDetector(unsigned long num_leading_frames,
-                             unsigned long num_trailing_frames)
+                             unsigned long num_trailing_frames,
+                             const std::string& roi_mask_path, double threshold,
+                             unsigned int num_div)
     : Processor(PROCESSOR_TYPE_TRAIN_DETECTOR, {SOURCE_NAME}, {SINK_NAME}),
       buffer_{num_leading_frames},
       num_trailing_frames_(num_trailing_frames),
-      num_divid(10),
-      display_scalar(1),
-      hasTrain(false) {
-  cv::Ptr<cv::BackgroundSubtractor> pMOG =
-      cv::createBackgroundSubtractorMOG2(1000, 16, false);
-  hasTrain = false;
-  RoI_mask = cv::imread(ROIMASK_NAME);
-}
+      roi_mask_(cv::imread(roi_mask_path)),
+      num_div_(num_div),
+      pmog_(cv::createBackgroundSubtractorMOG2(1000, 16, false)),
+      threshold_(threshold),
+      previous_has_train_(false) {}
 
 std::shared_ptr<TrainDetector> TrainDetector::Create(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
@@ -36,14 +33,12 @@ bool TrainDetector::Init() { return true; }
 bool TrainDetector::OnStop() { return true; }
 
 void TrainDetector::Process() {
-  bool previous_has_train = hasTrain;
-
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
   const cv::Mat& image = frame->GetValue<cv::Mat>("image");
   // Run train detection algorithm.
-  hasTrain = HasTrain(image);
+  bool has_train = HasTrain(image);
 
-  if (hasTrain) {
+  if (has_train) {
     // We detected a train, so we should push the current frame and any frames
     // in the buffer.
     PushFrame(SINK_NAME, std::move(frame));
@@ -51,7 +46,7 @@ void TrainDetector::Process() {
       PushFrame(SINK_NAME, std::move(frame));
     }
     buffer_.clear();
-  } else if (previous_has_train) {
+  } else if (previous_has_train_) {
     // A train just disappeared, so we need to send "num_trailing_frames_" more
     // frames.
     if (num_trailing_frames_ > 0) {
@@ -67,20 +62,22 @@ void TrainDetector::Process() {
     // automatically discarded.
     buffer_.push_back(std::move(frame));
   }
+
+  previous_has_train_ = has_train;
 }
 
 bool TrainDetector::HasTrain(const cv::Mat& image) {
   cv::Mat img_mask;
   // Foreground detection
-  pMOG->apply(image, img_mask);
+  pmog_->apply(image, img_mask);
 
   // Apply RoI mask and count foreground pixels
-  int width = image.cols / num_divid;
+  int width = image.cols / num_div_;
   float ratio = 0;
-  for (size_t i = 0; i < num_divid; i++) {
+  for (decltype(num_div_) i = 0; i < num_div_; ++i) {
     cv::Mat stripe_detect, white_mask, white_detect;
     cv::Mat stripe_mask(image.rows, image.cols, CV_8UC1, cv::Scalar(0, 0, 0));
-    cv::Mat stripe_roi = RoI_mask(cv::Rect(width * i, 0, width, image.rows));
+    cv::Mat stripe_roi = roi_mask_(cv::Rect(width * i, 0, width, image.rows));
     stripe_roi.cv::Mat::copyTo(
         stripe_mask(cv::Rect(width * i, 0, width, image.rows)));
     cv::findNonZero(stripe_mask, white_mask);
@@ -89,5 +86,5 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
     ratio = cv::max(ratio, (float)white_detect.rows / white_mask.rows);
   }
 
-  return ratio > TRAIN_THRESHOLD;
+  return ratio > threshold_;
 }

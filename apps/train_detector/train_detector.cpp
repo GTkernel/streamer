@@ -46,6 +46,7 @@ void ProgressTracker(StreamPtr stream) {
 
 void Run(const std::string& camera_name, double fps,
          unsigned long num_leading_frames, unsigned long num_trailing_frames,
+         const std::string& roi_mask_path, double threshold,
          std::unordered_set<std::string> fields_to_save,
          bool save_fields_separately, bool save_original_bytes, bool compress,
          bool save_jpegs, const std::string& output_dir) {
@@ -69,8 +70,8 @@ void Run(const std::string& camera_name, double fps,
   }
 
   // Create TrainDetector. Connect to Throttler.
-  auto detector =
-      std::make_shared<TrainDetector>(num_leading_frames, num_trailing_frames);
+  auto detector = std::make_shared<TrainDetector>(
+      num_leading_frames, num_trailing_frames, roi_mask_path, threshold);
   detector->SetSource(stream);
   procs.push_back(detector);
 
@@ -141,14 +142,18 @@ int main(int argc, char* argv[]) {
                      ("The desired maximum rate of the published stream. The "
                       "actual rate may be less. An fps of 0 disables "
                       "throttling."));
-  desc.add_options()("num-leading-frames,l",
+  desc.add_options()("num-leading-frames",
                      po::value<unsigned long>()->default_value(100),
                      "The number of frames to save from before each train "
                      "appears.");
-  desc.add_options()("num-trailing-frames,l",
+  desc.add_options()("num-trailing-frames",
                      po::value<unsigned long>()->default_value(100),
                      "The number of frames to save from after each train "
                      "appears.");
+  desc.add_options()("roi-mask,m", po::value<std::string>()->required(),
+                     "The path to the ROI mask file.");
+  desc.add_options()("threshold,t", po::value<double>()->default_value(0.5),
+                     "The train detection threshold.");
   desc.add_options()("fields-to-save",
                      po::value<std::vector<std::string>>()
                          ->multitoken()
@@ -159,7 +164,7 @@ int main(int argc, char* argv[]) {
                      "Whether to save each frame field in a separate file.");
   desc.add_options()("save-original-bytes",
                      "Whether to save the uncompressed, demosaiced image.");
-  desc.add_options()("compress,c",
+  desc.add_options()("compress",
                      "Whether to compress the \"original_bytes\" field.");
   desc.add_options()("save-jpegs",
                      "Whether to save a JPEG of the "
@@ -200,6 +205,8 @@ int main(int argc, char* argv[]) {
   auto fps = args["fps"].as<double>();
   auto num_leading_frames = args["num-leading-frames"].as<unsigned long>();
   auto num_trailing_frames = args["num-trailing-frames"].as<unsigned long>();
+  auto roi_mask_path = args["roi-mask"].as<std::string>();
+  auto threshold = args["threshold"].as<double>();
   auto fields_to_save = args["fields-to-save"].as<std::vector<std::string>>();
   bool save_fields_separately = args.count("save-fields-separately");
   bool save_original_bytes = args.count("save-original-bytes");
@@ -207,7 +214,8 @@ int main(int argc, char* argv[]) {
   bool save_jpegs = args.count("save-jpegs");
   auto output_dir = args["output-dir"].as<std::string>();
 
-  Run(camera_name, fps, num_leading_frames, num_trailing_frames,
+  Run(camera_name, fps, num_leading_frames, num_trailing_frames, roi_mask_path,
+      threshold,
       std::unordered_set<std::string>{fields_to_save.begin(),
                                       fields_to_save.end()},
       save_fields_separately, save_original_bytes, compress, save_jpegs,
