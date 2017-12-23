@@ -37,6 +37,7 @@ class TrainDetector : public Processor {
  private:
   // Returns whether the provided image contains a train.
   bool HasTrain(const cv::Mat& image);
+  bool isFalsePositive(const cv::Mat& image);
 
   // Stores recent frames, which will be pushed only if a train is detected.
   // This is important because when a train is detected, we also want a few

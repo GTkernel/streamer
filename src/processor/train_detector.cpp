@@ -50,7 +50,10 @@ void TrainDetector::Process() {
   const cv::Mat& image = frame->GetValue<cv::Mat>("image");
   // Run train detection algorithm.
   bool has_train = HasTrain(image);
-  bool is_FlasePositive = isFlasePositive(buffer_);
+  bool is_FalsePositive = isFalsePositive(image);
+  //TODO: need to intergrate FalsePositive flag of multiple frame to decide
+  // whether to keep buffer or not
+
   if (has_train) {
     // We detected a train, so we should push the current frame and any frames
     // in the buffer.
@@ -96,7 +99,7 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
     if (widths[i] > image.cols-width_start)
         break;
     cv::Mat white_mask;
-    cv::Mat stripe_mask(image.rows, widths[i], CV_8UC1, Scalar(0, 0, 0));
+    cv::Mat stripe_mask(image.rows, widths[i], CV_8UC1, cv::Scalar(0, 0, 0));
 
     stripe_mask = roi_mask_cropped_(cv::Rect( width_start, 0, widths[i], image.rows));
     stripe_masks.push_back(stripe_mask);
@@ -110,10 +113,8 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
   pmog_->apply(image, img_mask);
   
   // Apply RoI mask and count foreground pixels
-  int num_pixel_mask[num_div_];
-  std::vector<cv::Mat> stripe_masks;
   float ratio = 0;
-  int width_start = 0;
+  width_start = 0;
   for (decltype(num_div_) i = 0; i < num_div_; ++i) {
     if (i > 0){
         width_start+= widths[i-1];
@@ -122,8 +123,8 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
         break;
     }
     cv::Mat white_detect; 
-    cv::Mat stripe_detect(frame.rows, widths[i], CV_8UC1, Scalar(0, 0, 0));
-    stripe_detect = img_mask(Mat::Rect(width_start, 0, widths[i], frame.rows));
+    cv::Mat stripe_detect(image.rows, widths[i], CV_8UC1, cv::Scalar(0, 0, 0));
+    stripe_detect = img_mask(cv::Rect(width_start, 0, widths[i], image.rows));
     cv::Mat stripe_detect_masked;
     stripe_detect.Mat::copyTo(stripe_detect_masked, stripe_masks[i]);
     cv::findNonZero	(stripe_detect_masked, white_detect);
@@ -132,20 +133,21 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
   return ratio > threshold_;
 }
 
-bool TrainDetector::isFlasePositive(const cv::Mat& image) {
+bool TrainDetector::isFalsePositive(const cv::Mat& image) {
   cv::Mat flow;
-  UMat  flowUmat, prevgray;
+  cv::UMat  flowUmat, prevgray;
   cv::Mat gray;
   image.Mat::copyTo(gray);
-  cv::cvtColor(gray, gray, COLOR_BGR2GRAY); 
+  cv::cvtColor(gray, gray, cv::COLOR_BGR2GRAY); 
 
   // Skip the first frame
   if (prevgray.empty()) {
     return false; 
   }
   // calculate optical flow 
-  cv::calcOpticalFlowFarneback(prevgray, img, flowUmat, 0.3, 3, 20, 2, 5, 1.1, OPTFLOW_USE_INITIAL_FLOW);
-  flowUmat.Mat::copyTo(flow);
+  cv::calcOpticalFlowFarneback(prevgray, gray, flowUmat, 0.3, 3, 20, 2, 5, 1.1,
+                                 cv::OPTFLOW_USE_INITIAL_FLOW);
+  flowUmat.UMat::copyTo(flow);
 
   std::vector<cv::Mat1f> OF;
   cv::split(flow, OF);
