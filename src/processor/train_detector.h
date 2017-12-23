@@ -15,7 +15,12 @@ class TrainDetector : public Processor {
   TrainDetector(unsigned long num_leading_frames,
                 unsigned long num_trailing_frames,
                 const std::string& roi_mask_path, double threshold = 0.5,
-                unsigned int num_div = 10);
+                unsigned int num_div = 10,
+                double width_init = 0.15, double width_scalar = 0.9,
+                unsigned int roi_mask_offset_X = 0, 
+                unsigned int roi_mask_offset_Y = 688,
+                unsigned int roi_mask_offset_width = 4112, 
+                unsigned int roi_mask_offset_height = 1912);
   static std::shared_ptr<TrainDetector> Create(const FactoryParamsType& params);
 
   void SetSource(StreamPtr stream);
@@ -44,12 +49,23 @@ class TrainDetector : public Processor {
   // A counter that is used to track the number of frames that still need to be
   // sent after that last train disappeared.
   unsigned long num_remaining_frames_;
-  cv::Mat roi_mask_;
+  cv::Mat roi_mask_, roi_mask_cropped_;
   unsigned int num_div_;
   cv::Ptr<cv::BackgroundSubtractor> pmog_;
   // The ratio of pixel change above which the frame is considered to contain a
   // train.
   double threshold_;
+  // Divide the frame into subregions for train detection, set initial width ratio the 
+  // while frame as width_init_, and increase/decrease it by width_scalar_
+  double width_init_;
+  double width_scalar_;
+  // If the frame captured are cropped, set the detector to the same offsets. These 
+  // may be acquired from the system rather than set to input values
+  unsigned int roi_mask_offset_X_;
+  unsigned int roi_mask_offset_Y_;
+  unsigned int roi_mask_offset_width_;
+  unsigned int roi_mask_offset_height_;
+
   bool previous_has_train_;
 };
 
