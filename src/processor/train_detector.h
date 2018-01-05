@@ -56,12 +56,13 @@ class TrainDetector : public Processor {
   // The ratio of pixel change above which the frame is considered to contain a
   // train.
   double threshold_;
-  // Divide the frame into subregions for train detection, set initial width ratio the 
-  // while frame as width_init_, and increase/decrease it by width_scalar_
+  // Divide the frame into subregions for train detection, 
+  // set initial width ratio to the frame as width_init_, 
+  // then scale it by width_scalar_
   double width_init_;
   double width_scalar_;
-  // If the frame captured are cropped, set the detector to the same offsets. These 
-  // may be acquired from the system rather than set to input values
+  // If the frame captured are cropped, set the detector to the same offsets. 
+  // These may be acquired from the system rather than set to input values
   unsigned int roi_mask_offset_X_;
   unsigned int roi_mask_offset_Y_;
   unsigned int roi_mask_offset_width_;

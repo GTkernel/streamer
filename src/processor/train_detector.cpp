@@ -51,7 +51,7 @@ void TrainDetector::Process() {
   // Run train detection algorithm.
   bool has_train = HasTrain(image);
   bool is_FalsePositive = isFalsePositive(image);
-  //TODO: need to intergrate FalsePositive flag of multiple frame to decide
+  // TODO: need to intergrate is_FalsePositive flag of multiple frames to decide
   // whether to keep buffer or not
 
   if (has_train) {
@@ -83,13 +83,15 @@ void TrainDetector::Process() {
 }
 
 bool TrainDetector::HasTrain(const cv::Mat& image) {
-  // Prepare ROI masks, should not be here and run for each frame.
-  // This code segment may be moved to intialzation. 
-  roi_mask_cropped_ = roi_mask_(cv::Rect( roi_mask_offset_X_, roi_mask_offset_Y_, 
-                        roi_mask_offset_width_, roi_mask_offset_height_));
-  int widths[num_div_];
+  // Prepare ROI masks for stripes of sub-region
+  // This code segment may be moved to intialzation, rather than here and run 
+  // for every frame 
+  roi_mask_cropped_ = roi_mask_(cv::Rect( roi_mask_offset_X_, 
+                                roi_mask_offset_Y_, roi_mask_offset_width_, 
+                                roi_mask_offset_height_));
+  int widths[num_div_]; // width of each stripe
   int width_start = 0;
-  int num_pixel_mask[num_div_];
+  int num_pixel_mask[num_div_]; // num of foreground pixels in mask
   std::vector<cv::Mat> stripe_masks;
   for (decltype(num_div_) i = 0; i < num_div_; ++i){
     if (i > 0){
@@ -101,18 +103,18 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
     cv::Mat white_mask;
     cv::Mat stripe_mask(image.rows, widths[i], CV_8UC1, cv::Scalar(0, 0, 0));
 
-    stripe_mask = roi_mask_cropped_(cv::Rect( width_start, 0, widths[i], image.rows));
+    stripe_mask = roi_mask_cropped_(cv::Rect( width_start, 0, widths[i], 
+                                    image.rows));
     stripe_masks.push_back(stripe_mask);
     cv::findNonZero	(stripe_mask, white_mask);
     num_pixel_mask[i] = white_mask.rows;
   }
 
-
   cv::Mat img_mask;
   // Foreground detection
   pmog_->apply(image, img_mask);
   
-  // Apply RoI mask and count foreground pixels
+  // Apply RoI masks on foreground detection
   float ratio = 0;
   width_start = 0;
   for (decltype(num_div_) i = 0; i < num_div_; ++i) {
@@ -128,6 +130,7 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
     cv::Mat stripe_detect_masked;
     stripe_detect.Mat::copyTo(stripe_detect_masked, stripe_masks[i]);
     cv::findNonZero	(stripe_detect_masked, white_detect);
+    // Get ratio of detected foreground pixels to that of the mask
     ratio = cv::max(ratio, (float)white_detect.rows/num_pixel_mask[i]);
   }
   return ratio > threshold_;
@@ -135,7 +138,7 @@ bool TrainDetector::HasTrain(const cv::Mat& image) {
 
 bool TrainDetector::isFalsePositive(const cv::Mat& image) {
   cv::Mat flow;
-  cv::UMat  flowUmat, prevgray;
+  cv::UMat flowUmat, prevgray; // UMat uses GPU to bring potential speed-up
   cv::Mat gray;
   image.Mat::copyTo(gray);
   cv::cvtColor(gray, gray, cv::COLOR_BGR2GRAY); 
@@ -144,19 +147,18 @@ bool TrainDetector::isFalsePositive(const cv::Mat& image) {
   if (prevgray.empty()) {
     return false; 
   }
-  // calculate optical flow 
+  // Calculate optical flow 
   cv::calcOpticalFlowFarneback(prevgray, gray, flowUmat, 0.3, 3, 20, 2, 5, 1.1,
                                  cv::OPTFLOW_USE_INITIAL_FLOW);
   flowUmat.UMat::copyTo(flow);
-
   std::vector<cv::Mat1f> OF;
   cv::split(flow, OF);
   cv::Mat magnitude, angle;
   cv::cartToPolar	(OF[0], OF[1], magnitude, angle, true );
 
-  int hbins = 18; // need not to be fixed
+  int hbins = 18; // number of bins in histogram
   int idx_channel=0;
-  float range[] = { 0, 360 } ; //the upper boundary is exclusive
+  float range[] = { 0, 360 } ; // the upper boundary is exclusive
   const float* histRange = { range };
   cv::Mat angle_hist;
   cv::calcHist( &angle, 1, &idx_channel, roi_mask_cropped_,
@@ -164,8 +166,9 @@ bool TrainDetector::isFalsePositive(const cv::Mat& image) {
     true, // the histogram is uniform
     false );           
   gray.Mat::copyTo(prevgray);
-  
-  // TODO: compare Chi-squared distance between HOF from adjacent frames
 
-  return false;   
+  // TODO: compare distance between HOF from adjacent frames
+  // Return false if distance < threshold, true otherwise
+
+  return false;
 }
