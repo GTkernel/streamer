@@ -22,7 +22,7 @@ class KeyframeBuffer {
  public:
   // "sel" is a selectivity in the range (0, 1] and "buf_len" is the buffer
   // length at which keyframe detection will be triggered.
-  KeyframeBuffer(float sel, size_t buf_len);
+  KeyframeBuffer(float sel, size_t buf_len, size_t level);
   // A KeyframeBuffer object contains unique pointers to Frames, so it cannot be
   // copied.
   KeyframeBuffer(const KeyframeBuffer&) = delete;
@@ -54,6 +54,7 @@ class KeyframeBuffer {
 
   float sel_;
   size_t target_buf_len_;
+  size_t level_;
   // True if the current frame buffer is the first frame buffer (i.e. keyframe
   // detection has never been run). This is a special case, since the target
   // buffer length will be one less than normal. This is because in steady-state
