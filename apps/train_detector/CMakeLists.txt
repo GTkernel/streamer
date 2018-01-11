@@ -12,8 +12,8 @@ ENDMACRO()
 
 # Generate stubs for litesql database library
 set(framesdb_sources
-  "${CMAKE_CURRENT_BINARY_DIR}/framesdatabase.cpp"
-  "${CMAKE_CURRENT_BINARY_DIR}/framesdatabase.hpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/framesdb.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/framesdb.hpp"
   )
 
 add_custom_command(
@@ -28,8 +28,8 @@ set_source_files_properties(${framesdb_sources}
 
 add_executable(train_detector EXCLUDE_FROM_ALL
   train_detector.cpp
-  db_filewriter.cpp
-  db_filewriter.h
+  litesql_writer.cpp
+  litesql_writer.h
   ${framesdb_sources})
 
 BUILD_ONE(train_detector)
