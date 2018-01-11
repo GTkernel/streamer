@@ -3,11 +3,15 @@
 
 #include <cmath>
 #include <sstream>
+#include <stdexcept>
 
 #include <opencv2/opencv.hpp>
 
-KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len)
-    : target_buf_len_(buf_len), on_first_buf_(true), last_frame_processed_(0) {
+KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len, size_t level)
+    : level_(level), on_first_buf_(true), last_frame_processed_(0) {
+  CHECK(buf_len > 0) << "Buffer length must be greater than 0!";
+  target_buf_len_ = buf_len;
+
   SetSelectivity(sel);
   // Allocate extra space for the last keyframe from the previous buffer.
   buf_.reserve(buf_len + 1);
@@ -39,8 +43,9 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
   buf_.push_back(std::move(frame));
 
   idx_t target_buf_len_actual = target_buf_len_;
-  // If we're on the first buffer, then we're targeting a buffer length of
-  // one less than the total size of the buffer.
+  // If we are not on the first buffer, then we're targeting a buffer length of
+  // one more than the expected size of the buffer (to allow for the previous
+  // keyframe from the last iteration).
   if (!on_first_buf_) {
     ++target_buf_len_actual;
   }
@@ -69,7 +74,6 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
       // discard it.
       ++idxs_it;
     }
-
     for (; idxs_it != keyframe_idxs.end(); ++idxs_it) {
       std::unique_ptr<Frame> keyframe = std::move(buf_.at(*idxs_it));
       if (log_.is_open()) {
@@ -82,6 +86,29 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     // will be the first frame in the next buffer's run of the algorithm.
     buf_.clear();
     buf_.push_back(std::make_unique<Frame>(keyframes.back()));
+
+    auto num_keyframes = keyframes.size();
+    if (num_keyframes) {
+      // Print a message listing the detected keyframes.
+      std::ostringstream msg;
+      msg << "Keyframe detector level " << level_ << " found " << num_keyframes
+          << " keyframes: { ";
+      for (auto& keyframe : keyframes) {
+        msg << keyframe->GetValue<unsigned long>("frame_id") << " ";
+      }
+      msg << "}";
+      LOG(INFO) << msg.str();
+
+      // Check whether the correct number of keyframes were found.
+      auto expected_num_keyframes = ceil(sel_ * target_buf_len_);
+      if (num_keyframes != expected_num_keyframes) {
+        std::ostringstream msg;
+        msg << "KeyframeBuffer found " << num_keyframes
+            << " keyframes when it should have found " << expected_num_keyframes
+            << "!";
+        throw std::runtime_error(msg.str());
+      }
+    }
   }
   return keyframes;
 }
@@ -96,8 +123,9 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
     // We are trying to select more keyframes than there are frames in our
     // frame buffer. This should never happen, because "sel_" is in the range
     // (0, 1].
-    LOG(FATAL) << "Selectivity must be in the range (0, 1], but it is: "
-               << sel_;
+    std::ostringstream msg;
+    msg << "Selectivity must be in the range (0, 1], but it is: " << sel_;
+    throw std::runtime_error(msg.str());
   } else if (sel_ == 1) {
     // We are trying to find as many keyframes as there are frames in our
     // frame buffer, so we'll return all of the frames' indices.
@@ -113,6 +141,12 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
   // traditional longest (or shorted) paths algorithm.
 
   idx_t num_frames = buf_.size();
+  if (!on_first_buf_) {
+    // To find the true number of frames in the buffer, we subtract out the last
+    // keyframe from the previous iteration.
+    --num_frames;
+  }
+
   idx_t num_frames_in_path = (idx_t)ceil(sel_ * num_frames);
   if (on_first_buf_) {
     if (num_frames_in_path == 1) {

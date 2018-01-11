@@ -86,20 +86,11 @@ void KeyframeDetector::Process() {
       }
     }
 
-    std::ostringstream msg;
-    msg << "Keyframe detector level " << i << " found " << keyframes.size()
-        << " keyframes: { ";
     // Push all of the new keyframes from this level to the appropriate sink.
     for (auto& keyframe : keyframes) {
-      msg << keyframe->GetValue<unsigned long>("frame_id") << " ";
       // We need to copy the frame because we still need to keep a copy in
       // "keyframes".
       PushFrame(GetSinkName(i), std::make_unique<Frame>(keyframe));
-    }
-    msg << "}";
-    if (keyframes.size()) {
-      // If we detected any keyframes, then print their ids.
-      LOG(INFO) << msg.str();
     }
 
     // In the next iteration, all of the keyframes from this level will be
@@ -115,7 +106,7 @@ void KeyframeDetector::Setup(std::vector<std::pair<float, size_t>> buf_params) {
     std::pair<float, size_t> params = buf_params.at(i);
     float sel = params.first;
     size_t buf_len = params.second;
-    bufs_.push_back(std::make_unique<KeyframeBuffer>(sel, buf_len));
+    bufs_.push_back(std::make_unique<KeyframeBuffer>(sel, buf_len, i));
     sinks_.insert({GetSinkName(i), StreamPtr(new Stream())});
   }
 }
