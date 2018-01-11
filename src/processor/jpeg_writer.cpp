@@ -10,6 +10,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "stream/frame.h"
+#include "utils/time_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
 
@@ -44,8 +45,7 @@ void JpegWriter::Process() {
       frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
   std::ostringstream filepath;
   filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
-           << boost::posix_time::to_iso_extended_string(capture_time_micros)
-           << "_" << field_ << ".jpg";
+           << GetDateTimeString(capture_time_micros) << "_" << field_ << ".jpg";
   std::string filepath_s = filepath.str();
 
   cv::Mat img;

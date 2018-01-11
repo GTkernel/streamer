@@ -7,7 +7,6 @@
 
 #include "common/types.h"
 #include "utils/time_utils.h"
-#include "utils/utils.h"
 
 Camera::Camera(const std::string& name, const std::string& video_uri, int width,
                int height)
@@ -68,7 +67,7 @@ bool Camera::Capture(cv::Mat& image) {
 std::string Camera::GetCameraInfo() {
   std::ostringstream ss;
   ss << "name: " << GetName() << "\n";
-  ss << "record time: " << GetCurrentTimeString("%Y%m%d-%H%M%S") << "\n";
+  ss << "record time: " << GetCurrentDateTimeString() << "\n";
   ss << "image size: " << GetImageSize().width << "x" << GetImageSize().height
      << "\n";
   ss << "pixel format: " << GetCameraPixelFormatString(GetPixelFormat())

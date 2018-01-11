@@ -9,9 +9,9 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/filesystem.hpp>
 
 #include "stream/frame.h"
+#include "utils/time_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
 
@@ -69,8 +69,7 @@ void FrameWriter::Process() {
       frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
   std::ostringstream base_filepath;
   base_filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
-                << boost::posix_time::to_iso_extended_string(
-                       capture_time_micros);
+                << GetDateTimeString(capture_time_micros);
 
   if (save_fields_separately_) {
     // Create a separate file for each field.

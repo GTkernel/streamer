@@ -9,6 +9,8 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "utils/time_utils.h"
+
 constexpr auto SOURCE_NAME = "input";
 
 BinaryFileWriter::BinaryFileWriter(const std::string& field,
@@ -44,8 +46,7 @@ void BinaryFileWriter::Process() {
       frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
   std::ostringstream filepath;
   filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
-           << boost::posix_time::to_iso_extended_string(capture_time_micros)
-           << "_" << field_ << ".bin";
+           << GetDateTimeString(capture_time_micros) << "_" << field_ << ".bin";
   std::string filepath_s = filepath.str();
   std::ofstream file(filepath_s, std::ios::binary | std::ios::out);
   if (!file.is_open()) {
