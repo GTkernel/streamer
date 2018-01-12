@@ -15,6 +15,9 @@
 
 constexpr auto SOURCE_NAME = "input";
 
+const char* JpegWriter::kPathKey = "JpegWriter.path";
+const char* JpegWriter::kFieldKey = "JpegWriter.field";
+
 JpegWriter::JpegWriter(const std::string& field, const std::string& output_dir,
                        bool organize_by_time, unsigned long frames_per_dir)
     : Processor(PROCESSOR_TYPE_JPEG_WRITER, {SOURCE_NAME}, {}),
@@ -64,4 +67,7 @@ void JpegWriter::Process() {
     LOG(FATAL) << "Unable to write JPEG file \"" << filepath_s
                << "\": " << e.what();
   }
+
+  frame->SetValue(kPathKey, filepath_s);
+  frame->SetValue(kFieldKey, field_);
 };

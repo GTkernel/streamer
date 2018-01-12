@@ -13,7 +13,7 @@
 // the default JPEG compression settings. Therefore, the specified field must
 // represent an image stored as a cv::Mat. The resulting files are named using
 // the frame's "capture_time_micros" field and the name of the field that is
-// being written.
+// being written. The path to the resulting JPEG file is stored in the frame.
 class JpegWriter : public Processor {
  public:
   // "field" denotes which field to encode, "output_dir" denotes the directory
@@ -28,6 +28,9 @@ class JpegWriter : public Processor {
 
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
+
+  static const char* kPathKey;
+  static const char* kFieldKey;
 
  protected:
   virtual bool Init() override;
