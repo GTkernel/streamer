@@ -9,6 +9,7 @@
 #include <boost/variant/get.hpp>
 #include <opencv2/opencv.hpp>
 
+#include "camera/camera.h"
 #include "stream/frame.h"
 #include "utils/time_utils.h"
 
@@ -42,7 +43,7 @@ void JpegWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
 
   auto capture_time_micros =
-      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+      frame->GetValue<boost::posix_time::ptime>(Camera::kCaptureTimeMicrosKey);
   std::ostringstream filepath;
   filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
            << GetDateTimeString(capture_time_micros) << "_" << field_ << ".jpg";

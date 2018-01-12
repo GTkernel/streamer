@@ -3,10 +3,13 @@
 //
 
 #include "camera.h"
+
 #include <stdexcept>
 
 #include "common/types.h"
 #include "utils/time_utils.h"
+
+const char* Camera::kCaptureTimeMicrosKey = "capture_time_micros";
 
 Camera::Camera(const std::string& name, const std::string& video_uri, int width,
                int height)
@@ -79,7 +82,7 @@ std::string Camera::GetCameraInfo() {
 
 void Camera::MetadataToFrame(std::unique_ptr<Frame>& frame) {
   frame->SetValue("frame_id", CreateFrameID());
-  frame->SetValue("capture_time_micros",
+  frame->SetValue(kCaptureTimeMicrosKey,
                   boost::posix_time::microsec_clock::local_time());
   frame->SetValue("CameraSettings.Exposure", GetExposure());
   frame->SetValue("CameraSettings.Sharpness", GetSharpness());

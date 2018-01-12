@@ -13,6 +13,7 @@
 #include <boost/program_options.hpp>
 #include <opencv2/opencv.hpp>
 
+#include "camera/camera.h"
 #include "common/context.h"
 #include "common/types.h"
 #include "processor/compressor.h"
@@ -38,7 +39,7 @@ void ProgressTracker(StreamPtr stream) {
       std::cout << "\rReceived frame "
                 << frame->GetValue<unsigned long>("frame_id") << " from time: "
                 << frame->GetValue<boost::posix_time::ptime>(
-                       "capture_time_micros");
+                       Camera::kCaptureTimeMicrosKey);
       // This is required in order to make the console update as soon as the
       // above log is printed. Without this, the progress log will not update
       // smoothly.

@@ -34,7 +34,7 @@ void ProgressTracker(StreamPtr stream) {
       std::cout << "\rSent frame " << frame->GetValue<unsigned long>("frame_id")
                 << " from time: "
                 << frame->GetValue<boost::posix_time::ptime>(
-                       "capture_time_micros");
+                       Camera::kCaptureTimeMicrosKey);
       // This is required in order to make the console update as soon as the
       // above log is printed. Without this, the progress log will not update
       // smoothly.
@@ -91,7 +91,8 @@ void Run(const std::string& camera_name, double fps,
 }
 
 int main(int argc, char* argv[]) {
-  std::vector<std::string> default_fields = {"frame_id", "capture_time_micros",
+  std::vector<std::string> default_fields = {"frame_id",
+                                             Camera::kCaptureTimeMicrosKey,
                                              "start_time_ms", "original_image"};
   std::ostringstream default_fields_str;
   default_fields_str << "{ ";

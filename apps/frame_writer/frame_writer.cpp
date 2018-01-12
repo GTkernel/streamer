@@ -56,7 +56,8 @@ void Run(const std::string& camera_name,
 }
 
 int main(int argc, char* argv[]) {
-  std::vector<std::string> default_fields = {"capture_time_micros", "frame_id"};
+  std::vector<std::string> default_fields = {Camera::kCaptureTimeMicrosKey,
+                                             "frame_id"};
   std::ostringstream default_fields_str;
   default_fields_str << "{ ";
   for (const auto& field : default_fields) {

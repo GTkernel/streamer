@@ -9,6 +9,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "camera/camera.h"
 #include "utils/time_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
@@ -43,7 +44,7 @@ void BinaryFileWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
 
   auto capture_time_micros =
-      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+      frame->GetValue<boost::posix_time::ptime>(Camera::kCaptureTimeMicrosKey);
   std::ostringstream filepath;
   filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
            << GetDateTimeString(capture_time_micros) << "_" << field_ << ".bin";

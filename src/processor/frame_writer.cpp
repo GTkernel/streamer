@@ -10,6 +10,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "camera/camera.h"
 #include "stream/frame.h"
 #include "utils/time_utils.h"
 
@@ -66,7 +67,7 @@ void FrameWriter::Process() {
   auto frame_to_write = std::make_unique<Frame>(frame, fields_);
 
   auto capture_time_micros =
-      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+      frame->GetValue<boost::posix_time::ptime>(Camera::kCaptureTimeMicrosKey);
   std::ostringstream base_filepath;
   base_filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
                 << GetDateTimeString(capture_time_micros);

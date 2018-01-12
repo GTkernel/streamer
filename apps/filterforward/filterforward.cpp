@@ -104,8 +104,8 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         double fps = reader->GetHistoricalFps();
 
         long latency_micros =
-            (current_time -
-             frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
+            (current_time - frame->GetValue<boost::posix_time::ptime>(
+                                Camera::kCaptureTimeMicrosKey))
                 .total_microseconds();
 
         // Assemble log message;
