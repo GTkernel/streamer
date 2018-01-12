@@ -29,6 +29,9 @@ class JpegWriter : public Processor {
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
 
+  StreamPtr GetSink();
+  using Processor::GetSink;
+
   static const char* kPathKey;
   static const char* kFieldKey;
 

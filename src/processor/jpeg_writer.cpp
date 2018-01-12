@@ -14,6 +14,7 @@
 #include "utils/time_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
 
 const char* JpegWriter::kPathKey = "JpegWriter.path";
 const char* JpegWriter::kFieldKey = "JpegWriter.field";
@@ -37,6 +38,8 @@ std::shared_ptr<JpegWriter> JpegWriter::Create(
 void JpegWriter::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }
+
+StreamPtr JpegWriter::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 bool JpegWriter::Init() { return true; }
 
@@ -70,4 +73,5 @@ void JpegWriter::Process() {
 
   frame->SetValue(kPathKey, filepath_s);
   frame->SetValue(kFieldKey, field_);
+  PushFrame(SINK_NAME, std::move(frame));
 };
