@@ -15,12 +15,13 @@
 #include "utils/time_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
 
 FrameWriter::FrameWriter(const std::unordered_set<std::string> fields,
                          const std::string& output_dir, const FileFormat format,
                          bool save_fields_separately, bool organize_by_time,
                          unsigned long frames_per_dir)
-    : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {}),
+    : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {SINK_NAME}),
       fields_(fields),
       format_(format),
       save_fields_separately_(save_fields_separately),
@@ -57,6 +58,8 @@ std::shared_ptr<FrameWriter> FrameWriter::Create(
 void FrameWriter::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }
+
+StreamPtr FrameWriter::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 bool FrameWriter::Init() { return true; }
 
@@ -152,6 +155,8 @@ void FrameWriter::Process() {
                  << "\".";
     }
   }
+
+  PushFrame(SINK_NAME, std::move(frame));
 }
 
 std::string FrameWriter::GetExtension() {

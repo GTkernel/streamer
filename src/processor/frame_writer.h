@@ -38,6 +38,9 @@ class FrameWriter : public Processor {
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
 
+  StreamPtr GetSink();
+  using Processor::GetSink;
+
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
