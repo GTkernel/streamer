@@ -12,7 +12,7 @@
 
 #include "camera/camera.h"
 #include "camera/camera_manager.h"
-#include "common/context.h"
+#include "litesql_writer.h"
 #include "processor/compressor.h"
 #include "processor/frame_writer.h"
 #include "processor/jpeg_writer.h"
@@ -34,7 +34,7 @@ void ProgressTracker(StreamPtr stream) {
       std::cout << "\rReceived frame "
                 << frame->GetValue<unsigned long>("frame_id") << " from time: "
                 << frame->GetValue<boost::posix_time::ptime>(
-                       "capture_time_micros");
+                       Camera::kCaptureTimeMicrosKey);
       // This is required in order to make the console update as soon as the
       // above log is printed. Without this, the progress log will not update
       // smoothly.
@@ -58,6 +58,11 @@ void Run(const std::string& camera_name, double fps,
   procs.push_back(camera);
 
   StreamPtr camera_stream = camera->GetStream();
+  // This will be a linear pipeline because the LiteSqlWriter requires the
+  // guarantee that for a given frame, all save operations (metadata, demosaiced
+  // image, jpeg, etc.) must have finished before it executes. "stream" refers
+  // to the current endpoint of the pipeline while it is being constructed, and
+  // will be reset as new processors are added.
   StreamPtr stream = camera_stream;
   if (fps != 0) {
     // Create Throttler to decrease camera FPS to desired (high) FPS, in case
@@ -74,9 +79,10 @@ void Run(const std::string& camera_name, double fps,
       num_leading_frames, num_trailing_frames, roi_mask_path, threshold);
   detector->SetSource(stream);
   procs.push_back(detector);
+  stream = detector->GetSink();
 
   if (!fields_to_save.empty()) {
-    // Create FrameWriter for frame fields (i.e., metadata).
+    // Create FrameWriter for frame fields (I.e., metadata).
     auto frame_writer = std::make_shared<FrameWriter>(
         fields_to_save, output_dir, FrameWriter::FileFormat::JSON,
         save_fields_separately, true);
@@ -100,6 +106,7 @@ void Run(const std::string& camera_name, double fps,
         FrameWriter::FileFormat::BINARY, save_fields_separately, true);
     image_writer->SetSource(stream);
     procs.push_back(image_writer);
+    stream = image_writer->GetSink();
   }
 
   if (save_jpegs) {
@@ -108,7 +115,13 @@ void Run(const std::string& camera_name, double fps,
         std::make_shared<JpegWriter>("original_image", output_dir, true);
     jpeg_writer->SetSource(stream);
     procs.push_back(jpeg_writer);
+    stream = jpeg_writer->GetSink();
   }
+
+  // Create LiteSqlWriter.
+  auto litesql_writer = std::make_shared<LiteSqlWriter>(output_dir);
+  litesql_writer->SetSource(stream);
+  procs.push_back(litesql_writer);
 
   std::thread progress_thread =
       std::thread([camera_stream] { ProgressTracker(camera_stream); });
@@ -171,6 +184,7 @@ int main(int argc, char* argv[]) {
                      "\"original_image\" field.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      ("The root directory of the image storage database."));
+  // TODO: Integrate remaining TrainDetector parameters.
 
   // Parse the command line arguments.
   po::variables_map args;
