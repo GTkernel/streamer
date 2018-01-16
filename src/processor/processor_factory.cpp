@@ -9,6 +9,7 @@
 #endif  // USE_CAFFE
 #include "processor/compressor.h"
 #include "processor/db_writer.h"
+#include "processor/diff_detector.h"
 #include "processor/display.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
@@ -52,6 +53,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return nullptr;
     case PROCESSOR_TYPE_DB_WRITER:
       return DbWriter::Create(params);
+    case PROCESSOR_TYPE_DIFF_DETECTOR:
+      return DiffDetector::Create(params);
     case PROCESSOR_TYPE_DISPLAY:
       return Display::Create(params);
     case PROCESSOR_TYPE_ENCODER:

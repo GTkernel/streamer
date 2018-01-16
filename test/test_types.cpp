@@ -70,6 +70,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_DB_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_DB_WRITER)));
+  EXPECT_EQ(PROCESSOR_TYPE_DIFF_DETECTOR,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_DIFF_DETECTOR)));
   EXPECT_EQ(PROCESSOR_TYPE_DISPLAY,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_DISPLAY)));
