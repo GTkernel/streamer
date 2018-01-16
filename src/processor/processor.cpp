@@ -218,7 +218,9 @@ void Processor::SetBlockOnPush(bool block) { block_on_push_ = block; }
 
 void Processor::PushFrame(const std::string& sink_name,
                           std::unique_ptr<Frame> frame) {
-  CHECK(sinks_.count(sink_name) != 0);
+  CHECK(sinks_.count(sink_name) != 0)
+      << GetStringForProcessorType(GetType())
+      << " does not have a sink named \"" << sink_name << "\"!";
   if (frame->IsStopFrame()) {
     found_last_frame_ = true;
   }

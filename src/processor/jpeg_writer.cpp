@@ -21,7 +21,7 @@ const char* JpegWriter::kFieldKey = "JpegWriter.field";
 
 JpegWriter::JpegWriter(const std::string& field, const std::string& output_dir,
                        bool organize_by_time, unsigned long frames_per_dir)
-    : Processor(PROCESSOR_TYPE_JPEG_WRITER, {SOURCE_NAME}, {}),
+    : Processor(PROCESSOR_TYPE_JPEG_WRITER, {SOURCE_NAME}, {SINK_NAME}),
       field_(field),
       tracker_{output_dir, organize_by_time, frames_per_dir} {}
 
