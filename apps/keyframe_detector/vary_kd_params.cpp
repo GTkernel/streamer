@@ -23,6 +23,7 @@
 #include "processor/processor.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
+#include "utils/utils.h"
 
 namespace po = boost::program_options;
 
@@ -176,9 +177,11 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 
 void RunKeyframeDetector(
     std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
-    size_t queue_size, bool block, float sel,
+    size_t queue_size, bool block, float sel, size_t buf_len, size_t levels,
+    bool generate_fake_vishashes, const std::string& output_dir) {
+  CHECK(frames->size() > 0) << "Evaluating using zero frames!";
+  auto fv_len = frames->at(0)->GetValue<cv::Mat>("activations").total();
 
-    size_t buf_len, size_t levels, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
   StreamPtr frame_stream = std::make_shared<Stream>();
 
@@ -210,7 +213,11 @@ void RunKeyframeDetector(
   // Create a log file for the running time of the keyframe detection algorithm.
   std::ostringstream micros_filepath;
   micros_filepath << output_dir << "/keyframe_detector_" << sel << "_"
-                  << buf_len << "_" << levels << "_micros.txt";
+                  << buf_len << "_" << levels;
+  if (generate_fake_vishashes) {
+    micros_filepath << "_" << fv_len;
+  }
+  micros_filepath << "_micros.txt";
   std::ofstream micros_log(micros_filepath.str());
 
   while (true) {
@@ -243,39 +250,57 @@ void RunKeyframeDetector(
 }
 
 void Run(size_t queue_size, bool block, unsigned long num_frames,
-         bool generate_fake_vishashes, size_t fake_vishash_length,
-         const std::string& camera_name, const std::string& model,
-         const std::string& layer, size_t nne_batch_size,
-         std::vector<float> sels, std::vector<size_t> buf_lens,
-         std::vector<size_t> nums_levels, const std::string& output_dir) {
-  std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames =
-      GenerateVishashes(queue_size, block, num_frames, generate_fake_vishashes,
-                        fake_vishash_length, camera_name, model, layer,
-                        nne_batch_size);
-
+         bool generate_fake_vishashes, const std::string& camera_name,
+         const std::string& model, const std::string& layer,
+         size_t nne_batch_size, std::vector<float> sels,
+         std::vector<size_t> buf_lens, std::vector<size_t> nums_levels,
+         std::vector<size_t> fv_lens, const std::string& output_dir) {
   std::cout << "Running keyframe detector experiments..." << std::endl;
 
-  double total_steps = sels.size() * buf_lens.size() * nums_levels.size();
   double current_step = 0;
-  for (auto sel : sels) {
-    for (auto buf_len : buf_lens) {
-      for (auto levels : nums_levels) {
-        // Log progress.
-        std::ostringstream msg;
-        msg << "Current experiment: Selectivity: " << sel
-            << " , Buffer Length: " << buf_len << " , Levels: " << levels;
-        UpdateProgressBar(++current_step, total_steps, msg.str());
+  double total_steps = sels.size() * buf_lens.size() * nums_levels.size();
+  if (generate_fake_vishashes) {
+    total_steps *= fv_lens.size();
+  } else {
+    // Clear "fv_lens" and insert a dummy value just to make the "fv_lens" loop
+    // execute once. This value will be ignored, so it can be anything.
+    fv_lens.clear();
+    fv_lens.push_back(0);
+  }
 
-        // Create a subdirectory for this experiment's results.
-        std::ostringstream output_subdir;
-        output_subdir << output_dir << "/" << sel << "_" << buf_len << "_"
-                      << levels;
-        std::string output_subdir_str = output_subdir.str();
-        boost::filesystem::path output_subdir_path(output_subdir_str);
-        boost::filesystem::create_directory(output_subdir_path);
+  for (auto fv_len : fv_lens) {
+    // If "generate_fake_vishashes" is false, then "fv_len" will be ignored.
+    std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames =
+        GenerateVishashes(queue_size, block, num_frames,
+                          generate_fake_vishashes, fv_len, camera_name, model,
+                          layer, nne_batch_size);
 
-        RunKeyframeDetector(frames, queue_size, block, sel, buf_len, levels,
-                            output_subdir_str);
+    for (auto sel : sels) {
+      for (auto buf_len : buf_lens) {
+        for (auto levels : nums_levels) {
+          // Log progress.
+          std::ostringstream msg;
+          msg << "Current experiment: Selectivity: " << sel
+              << " , Buffer Length: " << buf_len << " , Levels: " << levels;
+          if (generate_fake_vishashes) {
+            msg << " , FV Length: " << fv_len;
+          }
+          UpdateProgressBar(++current_step, total_steps, msg.str());
+
+          // Create a subdirectory for this experiment's results.
+          std::ostringstream output_subdir;
+          output_subdir << output_dir << "/" << sel << "_" << buf_len << "_"
+                        << levels;
+          if (generate_fake_vishashes) {
+            output_subdir << "_" << fv_len;
+          }
+          std::string output_subdir_str = output_subdir.str();
+          boost::filesystem::path output_subdir_path(output_subdir_str);
+          boost::filesystem::create_directory(output_subdir_path);
+
+          RunKeyframeDetector(frames, queue_size, block, sel, buf_len, levels,
+                              generate_fake_vishashes, output_subdir_str);
+        }
       }
     }
   }
@@ -301,11 +326,6 @@ int main(int argc, char* argv[]) {
   desc.add_options()("fake-vishashes",
                      "Generate fake vishashes. Must be used in conjunction "
                      "with \"--fake-vishash-length\".");
-  desc.add_options()("fake-vishash-length",
-                     po::value<size_t>()->default_value(1024),
-                     "The number of values in the fake vishashes that will be "
-                     "generated. Should be used in conjunction with "
-                     "\"--fake-vishashes\".");
   desc.add_options()("camera", po::value<std::string>(),
                      "The name of the camera to use.");
   desc.add_options()("model", po::value<std::string>(),
@@ -327,6 +347,11 @@ int main(int argc, char* argv[]) {
       "levels",
       po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
       "The numbers of levels to use. Designed to be specified multiple times.");
+  desc.add_options()(
+      "fv-lens",
+      po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
+      "The feature vector lengths to use. Designed to be specified multiple "
+      "times. Ignored if \"--fake-vishashes\" is not present.");
   desc.add_options()("output-dir", po::value<std::string>()->required(),
                      "The directory in which to store output log files.");
 
@@ -362,7 +387,6 @@ int main(int argc, char* argv[]) {
   bool block = args.count("block");
   unsigned long num_frames = args["num-frames"].as<unsigned long>();
   bool generate_fake_vishashes = args.count("fake-vishashes");
-  size_t fake_vishash_length = args["fake-vishash-length"].as<size_t>();
   std::string camera = "";
   if (args.count("camera")) {
     camera = args["camera"].as<std::string>();
@@ -379,6 +403,7 @@ int main(int argc, char* argv[]) {
   std::vector<float> sels = args["sels"].as<std::vector<float>>();
   std::vector<size_t> buf_lens = args["buf-lens"].as<std::vector<size_t>>();
   std::vector<size_t> nums_levels = args["levels"].as<std::vector<size_t>>();
+  std::vector<size_t> fv_lens = args["fv-lens"].as<std::vector<size_t>>();
   std::string output_dir = args["output-dir"].as<std::string>();
   if (generate_fake_vishashes) {
     if (camera != "") {
@@ -405,8 +430,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  Run(queue_size, block, num_frames, generate_fake_vishashes,
-      fake_vishash_length, camera, model, layer, nne_batch_size, sels, buf_lens,
-      nums_levels, output_dir);
+  Run(queue_size, block, num_frames, generate_fake_vishashes, camera, model,
+      layer, nne_batch_size, sels, buf_lens, nums_levels, fv_lens, output_dir);
   return 0;
 }
