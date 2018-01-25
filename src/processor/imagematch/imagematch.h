@@ -4,7 +4,7 @@
 
 #include <mutex>
 
-#include <caffe/caffe.hpp>
+#include <tensorflow/core/public/session.h>
 
 #include <Eigen/Dense>
 
@@ -19,9 +19,12 @@ typedef struct query_t {
   // in queries_.
   float threshold;
   std::unique_ptr<Eigen::VectorXf> matches;
-#ifdef USE_CAFFE
+#ifndef USE_TENSORFLOW
   std::unique_ptr<caffe::Net<float>> classifier;
-#endif  // USE_CAFFE
+#endif
+#ifdef USE_TENSORFLOW
+  std::unique_ptr<tensorflow::Session> classifier;
+#endif
 } query_t;
 
 class ImageMatch : public Processor {
@@ -31,8 +34,7 @@ class ImageMatch : public Processor {
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
   // Add real query with Micro Classifier
-  void AddQuery(const std::string& model_path, const std::string& params_path,
-                float threshold = 0.125);
+  void AddQuery(const std::string& model_path, float threshold = 0.125);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;
   void SetSource(StreamPtr stream);
@@ -48,8 +50,7 @@ class ImageMatch : public Processor {
  private:
   // SetClassifier is a helper function to add/replace a Micro Classifier for
   // an existing query
-  void SetClassifier(query_t* current_query, const std::string& model_path,
-                     const std::string& params_path);
+  void SetClassifier(query_t* current_query, const std::string& model_path);
   // vishash_size_ should hold the number of elements (floats) in the vishash
   unsigned int vishash_size_;
   // Batch size should be above 0

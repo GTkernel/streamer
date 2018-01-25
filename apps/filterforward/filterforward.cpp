@@ -33,6 +33,8 @@
 #include "stream/stream.h"
 #include "utils/string_utils.h"
 
+constexpr auto MC_QUERY_PATH = "/home/tskim/src/models/microclassifier.pb";
+constexpr auto MC_THRESHOLD = 0.125;
 namespace po = boost::program_options;
 
 // Used to signal all threads that the pipeline should stop.
@@ -306,8 +308,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   im_0->SetBlockOnPush(block);
   // im_0->SetQueryMatrix(first_im_num_queries);
   for (int i = 0; i < first_im_num_queries; ++i) {
-    im_0->AddQuery("/home/tskim/models/simple_classifier.prototxt",
-                   "/home/tskim/models/_iter_1000.caffemodel");
+    im_0->AddQuery(MC_QUERY_PATH, MC_THRESHOLD);
   }
   procs.push_back(im_0);
 
@@ -344,8 +345,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     additional_im->SetSource(kd->GetSink(kd->GetSinkName(0)));
     additional_im->SetBlockOnPush(block);
     for (int j = 0; j < nums_queries.at(i); ++j) {
-      additional_im->AddQuery("/home/tskim/models/simple_classifier.prototxt",
-                              "/home/tskim/models/_iter_1000.caffemodel");
+      additional_im->AddQuery(MC_QUERY_PATH, MC_THRESHOLD);
     }
     procs.push_back(additional_im);
 

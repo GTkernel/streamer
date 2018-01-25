@@ -210,8 +210,8 @@ enum ProcessorType {
   PROCESSOR_TYPE_FACE_TRACKER,
 #ifdef USE_CAFFE
   PROCESSOR_TYPE_FACENET,
-  PROCESSOR_TYPE_IMAGEMATCH,
 #endif  // USE_CAFFE
+  PROCESSOR_TYPE_IMAGEMATCH,
   PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
   PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
 #ifdef USE_RPC
@@ -259,9 +259,9 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
 #ifdef USE_CAFFE
   } else if (type == "Facenet") {
     return PROCESSOR_TYPE_FACENET;
+#endif  // USE_CAFFE
   } else if (type == "ImageMatch") {
     return PROCESSOR_TYPE_IMAGEMATCH;
-#endif  // USE_CAFFE
   } else if (type == "FlowControlEntrance") {
     return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
   } else if (type == "FlowControlExit") {
@@ -333,9 +333,9 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return "Facenet";
+#endif  // USE_CAFFE
     case PROCESSOR_TYPE_IMAGEMATCH:
       return "ImageMatch";
-#endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return "FlowControlEntrance";
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:

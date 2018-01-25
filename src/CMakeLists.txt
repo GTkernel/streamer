@@ -151,7 +151,7 @@ if (USE_RPC)
 endif ()
 
 # Build ImageMatch
-if (USE_CAFFE)
+if (USE_TENSORFLOW)
   list(APPEND STREAMER_SOURCE_FILES ${IMAGEMATCH_SOURCE_FILES})
 endif()
 
