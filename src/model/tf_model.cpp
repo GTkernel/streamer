@@ -88,7 +88,6 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     // clear whether C++ API exports tf.transpose(). Perhaps this will need to
     // be done using Eigen.
     for (decltype(input_vec.size()) i = 0; i < input_vec.size(); i++) {
-      LOG(INFO) << channel << " x " << height << " x " << width;
       std::copy_n(
           (float*)input_vec[i].data, channel * height * width,
           input_tensor.flat<float>().data() + i * channel * height * width);

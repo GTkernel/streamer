@@ -138,14 +138,12 @@ void NeuralNetEvaluator::Process() {
       if (layer_outputs.size() == 1) {
         frame_copy = std::move(cur_batch_frames_.at(batch_idx++));
       } else {
-        LOG(INFO) << __FILE__ << " line: " << __LINE__ << " make_unique";
         frame_copy = std::make_unique<Frame>(cur_batch_frames_.at(batch_idx++));
       }
       frame_copy->SetValue("activations", activations);
       frame_copy->SetValue("activations_layer_name", layer_name);
       frame_copy->SetValue("neural_net_evaluator.inference_time_micros",
                            time_elapsed);
-      LOG(INFO) << __FILE__ << " frame_id: " << frame_copy->GetValue<unsigned long>("frame_id");
       PushFrame(layer_name, std::move(frame_copy));
     }
   }
