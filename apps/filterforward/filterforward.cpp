@@ -33,6 +33,7 @@
 #include "stream/stream.h"
 #include "utils/string_utils.h"
 
+// TODO remove hardcoded path
 constexpr auto MC_QUERY_PATH = "/home/tskim/src/models/microclassifier.pb";
 constexpr auto MC_THRESHOLD = 0.125;
 namespace po = boost::program_options;
@@ -330,7 +331,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   StreamPtr kd_input_stream = nne_stream;
   int count = 0;
   for(auto& param : buf_params) {
-    LOG(INFO) << "Buf params[" << count++ << "] " << param.first << " " << param.second;
+    LOG(INFO) << "Creating KeyframeDetector level " << count++ << " with parameters: " << param.first << " " << param.second;
   }
   for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
     // Create a keyframe detector.

@@ -11,7 +11,7 @@
 
 class FVGen: public Processor {
  public:
-  FVGen(const Shape& crop_shape, int x, int y);
+  FVGen(int xmin, int xmax, int ymin, int ymax);
   ~FVGen();
 
   static std::shared_ptr<FVGen> Create(
@@ -28,8 +28,6 @@ class FVGen: public Processor {
   virtual void Process() override;
 
  private:
-  int x_;
-  int y_;
   cv::Rect crop_roi_;
 };
 

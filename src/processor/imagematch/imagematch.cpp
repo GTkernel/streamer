@@ -105,11 +105,11 @@ void ImageMatch::Process() {
     std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
     inputs.push_back({MC_INPUT_NAME, input_tensor});
     tensorflow::Status status = query.second.classifier->Run(inputs, {MC_OUTPUT_NAME}, {}, &outputs);
-   if (!status.ok()) {
-      LOG(FATAL) << "Session::Run() completed with errors: "
-                 << status.error_message();
-  } 
-  CHECK(outputs.size() == 1) << "Outputs should be of size 1, got " << outputs.size();;
+    if (!status.ok()) {
+        LOG(FATAL) << "Session::Run() completed with errors: "
+                   << status.error_message();
+    } 
+    CHECK(outputs.size() == 1) << "Outputs should be of size 1, got " << outputs.size();;
   }
 
   auto matrix_end_time = boost::posix_time::microsec_clock::local_time();

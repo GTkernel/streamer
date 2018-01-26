@@ -4,16 +4,13 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
-FVGen::FVGen(const Shape& crop_shape, int x, int y)
+FVGen::FVGen(int xmin, int xmax, int ymin, int ymax)
     : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}),
-      x_(x),
-      y_(y),
-      crop_roi_(x, y, crop_shape.width, crop_shape.height) {
-  // Create sinks.
+      crop_roi_(x, y, xmax - xmin, ymax - ymin) {
+    CHECK(xmin < xmax && ymin < ymax) << "Cannot have negative dimensions on crop window";
 }
 
-FVGen::~FVGen() {
-}
+FVGen::~FVGen() {}
 
 std::shared_ptr<FVGen> FVGen::Create(
     const FactoryParamsType& params) {

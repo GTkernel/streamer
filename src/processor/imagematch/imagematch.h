@@ -19,9 +19,6 @@ typedef struct query_t {
   // in queries_.
   float threshold;
   std::unique_ptr<Eigen::VectorXf> matches;
-#ifndef USE_TENSORFLOW
-  std::unique_ptr<caffe::Net<float>> classifier;
-#endif
 #ifdef USE_TENSORFLOW
   std::unique_ptr<tensorflow::Session> classifier;
 #endif

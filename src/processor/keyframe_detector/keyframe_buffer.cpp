@@ -41,7 +41,6 @@ void KeyframeBuffer::EnableLog(std::string output_dir,
 
 std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     std::unique_ptr<Frame> frame) {
-  LOG(INFO) << "COUNT: " << count_++;
   buf_.push_back(std::move(frame));
 
   idx_t target_buf_len_actual = target_buf_len_;
@@ -64,7 +63,6 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     last_frame_processed_ = buf_.back()->GetValue<unsigned long>("frame_id");
     LOG(INFO) << "Keyframe detection running over frame range: {"
               << start_frame_id << ", " << last_frame_processed_ << "}";
-    //LOG(FATAL) << "HUGE VIOLENT ERROR MESSAGE";
 
     std::vector<idx_t> keyframe_idxs = GetKeyframeIdxs();
     auto idxs_it = keyframe_idxs.begin();
@@ -88,12 +86,6 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     // Reset the frame buffer. Push the last keyframe onto the frame buffer. It
     // will be the first frame in the next buffer's run of the algorithm.
     buf_.clear();
-    for(int i = 0; i < keyframe_idxs.size(); ++i) {
-      LOG(INFO) << "keyframe idx: " << keyframe_idxs.at(i);
-    }
-    CHECK(keyframes.size() != 0) << "keyframe_buffer.cpp line: " << __LINE__;
-    CHECK(keyframes.back() != nullptr) << "keyframe_buffer.cpp line: " << __LINE__;
-    LOG(INFO) << __FILE__ << " line: " << __LINE__ << " make_unique";
     buf_.push_back(std::make_unique<Frame>(keyframes.back()));
 
     auto num_keyframes = keyframes.size();
