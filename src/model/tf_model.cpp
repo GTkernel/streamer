@@ -88,6 +88,7 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     // clear whether C++ API exports tf.transpose(). Perhaps this will need to
     // be done using Eigen.
     for (decltype(input_vec.size()) i = 0; i < input_vec.size(); i++) {
+      LOG(INFO) << channel << " x " << height << " x " << width;
       std::copy_n(
           (float*)input_vec[i].data, channel * height * width,
           input_tensor.flat<float>().data() + i * channel * height * width);
@@ -118,13 +119,19 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     std::vector<int> mat_size;
     size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
-      mat_size.push_back((*it).size);
-      vishash_size *= (*it).size;
+      // Filthy dirty hack
+      int real_size = (*it).size == 0 ? 1 : (*it).size;
+      mat_size.push_back(real_size);
+      LOG(INFO) << real_size;
+      vishash_size *= real_size;
     }
     for (decltype(batch_size) i = 0; i < batch_size; ++i) {
       cv::Mat temp(mat_size, CV_32F);
+      LOG(INFO) << "MEMCPY";
+      LOG(INFO) << "TOTAL BYTES: " << output_tensor.TotalBytes();
       std::copy_n(output_tensor.flat<float>().data() + (i * vishash_size),
                   vishash_size, (float*)temp.data);
+      LOG(INFO) << "MEMCPYFINISH";
       return_vector.push_back(temp);
     }
 

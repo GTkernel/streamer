@@ -63,6 +63,7 @@ bool FrameWriter::OnStop() { return true; }
 
 void FrameWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
+  LOG(INFO) << __FILE__ << " line: " << __LINE__ << " make_unique";
   auto frame_to_write = std::make_unique<Frame>(frame, fields_);
 
   auto capture_time_micros =

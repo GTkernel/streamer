@@ -328,6 +328,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
   StreamPtr kd_input_stream = nne_stream;
+  int count = 0;
+  for(auto& param : buf_params) {
+    LOG(INFO) << "Buf params[" << count++ << "] " << param.first << " " << param.second;
+  }
   for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
     // Create a keyframe detector.
     std::pair<float, size_t> kd_buf_params = buf_params.at(i);

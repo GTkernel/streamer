@@ -67,6 +67,7 @@ class KeyframeBuffer {
   // If this stream is open, then the keyframe selection results will be written
   // to it.
   std::ofstream log_;
+  unsigned long count_;
 };
 
 #endif  // STREAMER_PROCESSOR_KEYFRAME_DETECTOR_KEYFRAME_BUFFER_H_

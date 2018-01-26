@@ -382,12 +382,19 @@ class FrameSize : public boost::static_visitor<unsigned long> {
 
 Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
 
-Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
+Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame) {
+  CHECK(frame != nullptr) << "frame.cpp line: " << __LINE__;
+}
 
 Frame::Frame(const Frame& frame) : Frame(frame, {}) {}
 
 Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
+  CHECK(&frame != nullptr);
+  LOG(INFO) << "Frame number: " << frame.GetValue<unsigned long>("frame_id");
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
   flow_control_entrance_ = frame.flow_control_entrance_;
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
   frame_data_ = frame.frame_data_;
 
   bool inherit_all_fields = fields.empty();
@@ -400,18 +407,25 @@ Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
       }
     }
   }
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
 
   // If either we are inheriting all fields or we are explicitly inheriting
   // "original_bytes", and "original_bytes" is a valid field in "frame", then
   // we need to inherit the "original_bytes" field. Doing so requires a deep
   // copy.
   auto other_it = frame.frame_data_.find("original_bytes");
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
   auto field_it = std::find(fields.begin(), fields.end(), "original_bytes");
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
   if ((inherit_all_fields || (field_it != fields.end())) &&
       (other_it != frame.frame_data_.end())) {
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
+    CHECK(frame_data_.count("original_bytes") >= 1);
     frame_data_["original_bytes"] =
         boost::get<std::vector<char>>(other_it->second);
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
   }
+  LOG(INFO) << "frame.cpp line: " << __LINE__;
 }
 
 void Frame::SetFlowControlEntrance(FlowControlEntrance* flow_control_entrance) {

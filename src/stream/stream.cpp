@@ -46,6 +46,7 @@ void Stream::PushFrame(std::unique_ptr<Frame> frame, bool block) {
   } else {
     // If there is more than one reader, then we need to copy the frame.
     for (const auto& reader : readers) {
+      LOG(INFO) << __FILE__ << " line: " << __LINE__ << " make_unique";
       reader->PushFrame(std::make_unique<Frame>(frame), block);
     }
   }

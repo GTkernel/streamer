@@ -152,6 +152,7 @@ void Processor::ProcessorLoop() {
         // This frame is signaling the pipeline to stop. We need to forward
         // it to our sinks, then not process it or any future frames.
         for (const auto& p : sinks_) {
+          LOG(INFO) << __FILE__ << " line: " << __LINE__ << " make_unique";
           PushFrame(p.first, std::make_unique<Frame>(frame));
         }
         return;

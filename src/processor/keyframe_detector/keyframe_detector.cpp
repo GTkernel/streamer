@@ -90,11 +90,14 @@ void KeyframeDetector::Process() {
     for (auto& keyframe : keyframes) {
       // We need to copy the frame because we still need to keep a copy in
       // "keyframes".
+      LOG(INFO) << __FILE__ << " line: " << __LINE__ << " make_unique";
       PushFrame(GetSinkName(i), std::make_unique<Frame>(keyframe));
     }
 
     // In the next iteration, all of the keyframes from this level will be
     // pushed to the next level.
+    LOG(INFO) << __FILE__ << " line: " << __LINE__ << " copy constructor";
+    LOG(INFO) << "Num Keyframes: " << keyframes.size();
     frames = std::move(keyframes);
   }
 }

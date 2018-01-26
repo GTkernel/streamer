@@ -54,6 +54,7 @@ void TemporalRegionSelector::Process() {
     }
     return;
   } else if (frame_id > end_id_) {
+    LOG(INFO) << __FILE__ << " line: " << __LINE__ << " make_unique";
     auto stop_frame = std::make_unique<Frame>();
     stop_frame->SetStopFrame(true);
     PushFrame(SINK_NAME, std::move(stop_frame));
