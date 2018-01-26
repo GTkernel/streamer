@@ -31,7 +31,6 @@ void ImageMatch::AddQuery(const std::string& model_path, float threshold) {
   std::lock_guard<std::mutex> guard(query_guard_);
   int query_id = query_data_.size();
   query_t* current_query = &query_data_[query_id];
-  current_query->matches = std::make_unique<Eigen::VectorXf>(batch_size_);
   current_query->query_id = query_id;
   current_query->threshold = threshold;
   SetClassifier(current_query, model_path);
@@ -110,7 +109,11 @@ void ImageMatch::Process() {
                    << status.error_message();
     } 
     CHECK(outputs.size() == 1) << "Outputs should be of size 1, got " << outputs.size();;
-    LOG(INFO) << *(outputs.at(0).shape().begin()).size;
+    const auto& output_tensor = outputs.at(0);
+    for (auto it = output_tensor.shape().begin(); it != output_tensor.shape().end(); ++it) {
+      int cur_dim = (*it).size;
+      LOG(INFO) << cur_dim;
+    }
   }
 
   auto matrix_end_time = boost::posix_time::microsec_clock::local_time();

@@ -18,7 +18,7 @@ typedef struct query_t {
   // hold a binary coefficient matrix used to take a linear combination of rows
   // in queries_.
   float threshold;
-  std::unique_ptr<Eigen::VectorXf> matches;
+  std::vector<int> matches;
 #ifdef USE_TENSORFLOW
   std::unique_ptr<tensorflow::Session> classifier;
 #endif
