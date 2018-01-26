@@ -16,6 +16,7 @@ constexpr auto MC_OUTPUT_NAME = "probabilities:0";
 
 
 #define HACK
+//#undef HACK
 
 ImageMatch::ImageMatch(unsigned int vishash_size, unsigned int batch_size)
     : Processor(PROCESSOR_TYPE_IMAGEMATCH, {SOURCE_NAME}, {SINK_NAME}),
@@ -110,9 +111,15 @@ void ImageMatch::Process() {
     } 
     CHECK(outputs.size() == 1) << "Outputs should be of size 1, got " << outputs.size();;
     const auto& output_tensor = outputs.at(0);
-    for (auto it = output_tensor.shape().begin(); it != output_tensor.shape().end(); ++it) {
-      int cur_dim = (*it).size;
-      LOG(INFO) << cur_dim;
+    int cur_dim = (*output_tensor.shape().begin()).size;
+    for(int i = 0; i < cur_dim; ++i) {
+      float prob_match = output_tensor.flat<float>().data()[i];
+      float prob_nomatch = output_tensor.flat<float>().data()[i + 1];
+      if(prob_match > query.second.threshold) {
+        query.second.matches.push_back(1);
+      } else {
+        query.second.matches.push_back(0);
+      }
     }
   }
 
@@ -120,15 +127,14 @@ void ImageMatch::Process() {
   for (decltype(frames_batch_.size()) batch_idx = 0;
        batch_idx < frames_batch_.size(); ++batch_idx) {
     std::vector<int> image_match_matches;
-    /*for (auto& query : query_data_) {
+    for (auto& query : query_data_) {
     // TODO fix this block
-      if ((*(query.second.matches))(batch_idx) == 1) {
+      if (query.second.matches.at(batch_idx) == 1) {
         image_match_matches.push_back(query.second.query_id);
       }
     }
     frames_batch_.at(batch_idx)->SetValue("imagematch.matches",
                                           image_match_matches);
-  */
     frames_batch_.at(batch_idx)->SetValue("imagematch.matches",
                                           image_match_matches);
     auto end_time = boost::posix_time::microsec_clock::local_time();
