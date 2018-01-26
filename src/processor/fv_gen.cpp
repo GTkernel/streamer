@@ -6,7 +6,7 @@ constexpr auto SINK_NAME = "output";
 
 FVGen::FVGen(int xmin, int xmax, int ymin, int ymax)
     : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}),
-      crop_roi_(x, y, xmax - xmin, ymax - ymin) {
+      crop_roi_(xmin, ymin, xmax - xmin, ymax - ymin) {
     CHECK(xmin < xmax && ymin < ymax) << "Cannot have negative dimensions on crop window";
 }
 

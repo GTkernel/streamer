@@ -110,6 +110,7 @@ void ImageMatch::Process() {
                    << status.error_message();
     } 
     CHECK(outputs.size() == 1) << "Outputs should be of size 1, got " << outputs.size();;
+    LOG(INFO) << *(outputs.at(0).shape().begin()).size;
   }
 
   auto matrix_end_time = boost::posix_time::microsec_clock::local_time();
