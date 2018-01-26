@@ -119,19 +119,15 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     std::vector<int> mat_size;
     size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
-      // Filthy dirty hack
-      int real_size = (*it).size == 0 ? 1 : (*it).size;
-      mat_size.push_back(real_size);
-      LOG(INFO) << real_size;
-      vishash_size *= real_size;
+      int cur_dim = (*it).size;
+      CHECK(cur_dim > 0) << "Error: Tensor of size 0 returned from Session::Run()";
+      mat_size.push_back(cur_dim);
+      vishash_size *= cur_dim;
     }
     for (decltype(batch_size) i = 0; i < batch_size; ++i) {
       cv::Mat temp(mat_size, CV_32F);
-      LOG(INFO) << "MEMCPY";
-      LOG(INFO) << "TOTAL BYTES: " << output_tensor.TotalBytes();
       std::copy_n(output_tensor.flat<float>().data() + (i * vishash_size),
                   vishash_size, (float*)temp.data);
-      LOG(INFO) << "MEMCPYFINISH";
       return_vector.push_back(temp);
     }
 
