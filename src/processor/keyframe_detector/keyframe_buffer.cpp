@@ -183,20 +183,21 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
   std::vector<std::vector<double>> direct_lens(num_frames,
                                                std::vector<double>(num_frames));
 
-  // auto start_id = buf_.front()->GetValue<unsigned long>("frame_id");
-  // auto end_id = buf_.back()->GetValue<unsigned long>("frame_id");
-  // auto span = (end_id - start_id) / 4;
-
-  // TODO: This should be optimized.
   for (idx_t i = 0; i < num_frames; ++i) {
     const cv::Mat& src_f = buf_.at(i)->GetValue<cv::Mat>("activations");
-    // auto i_id = buf_.at(i)->GetValue<unsigned long>("frame_id");
-
     for (idx_t j = i + 1; j < num_frames; ++j) {
       const cv::Mat& dst_f = buf_.at(j)->GetValue<cv::Mat>("activations");
-      // auto j_id = buf_.at(j)->GetValue<unsigned long>("frame_id");
-
-      direct_lens[i][j] = cv::norm(dst_f - src_f);  // / (span + j_id - i_id);
+      double dist = cv::norm(dst_f - src_f);
+      if (!dist) {
+        // If "dist" is zero, then these two frames are the same. That is not
+        // supposed to happen.
+        std::ostringstream msg;
+        msg << "Frames " << buf_.at(i)->GetValue<unsigned long>("frame_id")
+            << " and " << buf_.at(j)->GetValue<unsigned long>("frame_id")
+            << " are the same!";
+        throw std::runtime_error(msg.str());
+      }
+      direct_lens[i][j] = dist;
     }
   }
 
