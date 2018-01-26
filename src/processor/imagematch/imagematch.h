@@ -26,7 +26,7 @@ typedef struct query_t {
 
 class ImageMatch : public Processor {
  public:
-  ImageMatch(unsigned int vishash_size = 1024, unsigned int batch_size = 1);
+  ImageMatch(unsigned int batch_size = 1);
 
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
@@ -48,8 +48,6 @@ class ImageMatch : public Processor {
   // SetClassifier is a helper function to add/replace a Micro Classifier for
   // an existing query
   void SetClassifier(query_t* current_query, const std::string& model_path);
-  // vishash_size_ should hold the number of elements (floats) in the vishash
-  unsigned int vishash_size_;
   // Batch size should be above 0
   unsigned int batch_size_;
   // cur_batch_frames holds the actual frames in the batch
