@@ -35,7 +35,7 @@ class ExposureControl;
 class VimbaCamera : public Camera {
   friend class VimbaCameraFrameObserver;
   friend class ExposureControl;
-  
+
  public:
   VimbaCamera(const std::string& name, const std::string& video_uri, int width,
               int height, CameraModeType mode = CAMERA_MODE_0,
@@ -73,10 +73,7 @@ class VimbaCamera : public Camera {
   virtual int GetROIOffsetY() override;
   virtual Shape GetROIOffsetShape() override;
 
-  enum VimbaCameraMode {
-    ASYNCHRONOUS_MODE = 0,
-    SYNCHRONOUS_MODE
-  };
+  enum VimbaCameraMode { ASYNCHRONOUS_MODE = 0, SYNCHRONOUS_MODE };
 
  protected:
   virtual bool Init() override;
