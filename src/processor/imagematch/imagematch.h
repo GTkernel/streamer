@@ -11,6 +11,8 @@
 #include "common/types.h"
 #include "processor/processor.h"
 
+#include "processor/fv_gen.h"
+
 typedef struct query_t {
   int query_id;
   // indices holds a mask of which images this query uses in the queries_
@@ -22,6 +24,8 @@ typedef struct query_t {
 #ifdef USE_TENSORFLOW
   std::unique_ptr<tensorflow::Session> classifier;
 #endif
+  std::string unique_identifier;
+  FvSpec fv_spec;
 } query_t;
 
 class ImageMatch : public Processor {
@@ -31,7 +35,7 @@ class ImageMatch : public Processor {
   static std::shared_ptr<ImageMatch> Create(const FactoryParamsType& params);
 
   // Add real query with Micro Classifier
-  void AddQuery(const std::string& model_path, float threshold = 0.125);
+  void AddQuery(const std::string& model_path, std::string layer_name, int xmin, int ymin, int xmax, int ymax, bool flat = true, float threshold = 0.125);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;
   void SetSource(StreamPtr stream);

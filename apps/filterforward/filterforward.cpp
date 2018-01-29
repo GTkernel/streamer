@@ -204,7 +204,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          size_t queue_size, const std::string& camera_name,
          unsigned int file_fps, int throttled_fps, unsigned int tokens,
-         const std::string& model, const std::string& layer,
+         const std::string& model, std::vector<std::string> layers,
          size_t nne_batch_size, std::vector<std::string> fields,
          const std::string& output_dir, bool display) {
   boost::posix_time::ptime log_time =
@@ -294,14 +294,16 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   procs.push_back(transformer);
 
   // Create a NeuralNetEvaluator.
-  std::vector<std::string> output_layer_names = {layer};
+  std::vector<std::string> output_layer_names = layers;
   auto nne = std::make_shared<NeuralNetEvaluator>(
       model_desc, input_shape, nne_batch_size, output_layer_names);
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
-  StreamPtr nne_stream = nne->GetSink(layer);
-
+  StreamPtr nne_stream = nne->GetSink(layers.at(0));
+  
+  //auto fv_gen_kd = std::make_shared<FVGen>(
+  
   // TODO: Add FVGen processor to the pipeline
 
   // Create ImageMatch level 0. Use the same batch size as the
@@ -479,6 +481,6 @@ int main(int argc, char* argv[]) {
   std::string output_dir = args["output-dir"].as<std::string>();
   bool display = args.count("display");
   Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
-      tokens, model, layer, nne_batch_size, fields, output_dir, display);
+      tokens, model, {layer}, nne_batch_size, fields, output_dir, display);
   return 0;
 }

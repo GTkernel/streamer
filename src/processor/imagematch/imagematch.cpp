@@ -26,12 +26,13 @@ std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
   return nullptr;
 }
 
-void ImageMatch::AddQuery(const std::string& model_path, float threshold) {
+void ImageMatch::AddQuery(const std::string& model_path, std::string layer_name, int xmin, int ymin, int xmax, int ymax, bool flat, float threshold) {
   std::lock_guard<std::mutex> guard(query_guard_);
   int query_id = query_data_.size();
   query_t* current_query = &query_data_[query_id];
   current_query->query_id = query_id;
   current_query->threshold = threshold;
+  current_query->fv_spec = FvSpec(layer_name, xmin, ymin, xmax, ymax, flat);
   SetClassifier(current_query, model_path);
 }
 
@@ -65,9 +66,6 @@ void ImageMatch::Process() {
     PushFrame(SINK_NAME, std::move(frame));
     return;
   }
-#ifndef HACK
-  cv::Mat feature_vector = frame->GetValue<cv::Mat>("feature_vector");
-#endif
   frames_batch_.push_back(std::move(frame));
   if (frames_batch_.size() < batch_size_) {
     return;
@@ -75,31 +73,22 @@ void ImageMatch::Process() {
 
   // Calculate similarity using Micro Classifiers
   auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
-
-#ifndef HACK
-  int height = feature_vector.rows;
-  int width = feature_vector.cols;
-  int channel = feature_vector.channels();
-#endif
-#ifdef HACK
-  int height = 1;
-  int width = 1;
-  int channel = 9216;
-#endif
-  tensorflow::Tensor input_tensor(
-      tensorflow::DT_FLOAT,
-      tensorflow::TensorShape(
-          {static_cast<long long>(batch_size_), height, width, channel}));
-  int count = 0;
-  for (const auto& frame : frames_batch_) {
-#ifndef HACK
-    std::copy_n(
-        (float*)frame->GetValue<cv::Mat>("feature_vector").data,
-        height * width * channel,
-        input_tensor.flat<float>().data() + count++ * channel * height * width);
-#endif
-  }
   for (auto& query : query_data_) {
+    int cur_batch_idx = 0;
+    cv::Mat fv = frames_batch_.at(0)->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
+    int height = fv.rows;
+    int width = fv.cols;
+    int channel = fv.channels();
+    tensorflow::Tensor input_tensor(
+          tensorflow::DT_FLOAT,
+          tensorflow::TensorShape({static_cast<long long>(batch_size_),
+                                  height, width, channel}));
+    for (const auto& frame : frames_batch_) {
+      cv::Mat fv = frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
+      std::copy_n((float*)fv.data,
+                  height * width * channel,
+                  input_tensor.flat<float>().data() + cur_batch_idx++ * channel * height * width);
+    }
     std::vector<tensorflow::Tensor> outputs;
     std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
     inputs.push_back({MC_INPUT_NAME, input_tensor});
@@ -114,10 +103,11 @@ void ImageMatch::Process() {
     ;
     const auto& output_tensor = outputs.at(0);
     int cur_dim = (*output_tensor.shape().begin()).size;
-    for (int i = 0; i < cur_dim; ++i) {
+    for(int i = 0; i < cur_dim; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
       float prob_nomatch = output_tensor.flat<float>().data()[i + 1];
-      if (prob_match > query.second.threshold) {
+      (void) prob_nomatch;
+      if(prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {
         query.second.matches.push_back(0);
@@ -130,13 +120,10 @@ void ImageMatch::Process() {
        batch_idx < frames_batch_.size(); ++batch_idx) {
     std::vector<int> image_match_matches;
     for (auto& query : query_data_) {
-      // TODO fix this block
       if (query.second.matches.at(batch_idx) == 1) {
         image_match_matches.push_back(query.second.query_id);
       }
     }
-    frames_batch_.at(batch_idx)->SetValue("imagematch.matches",
-                                          image_match_matches);
     frames_batch_.at(batch_idx)->SetValue("imagematch.matches",
                                           image_match_matches);
     auto end_time = boost::posix_time::microsec_clock::local_time();
