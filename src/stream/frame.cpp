@@ -382,8 +382,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
 
 Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
 
-Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame) {
-}
+Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame) {}
 
 Frame::Frame(const Frame& frame) : Frame(frame, {}) {}
 

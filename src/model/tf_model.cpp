@@ -119,7 +119,8 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
       int cur_dim = (*it).size;
-      CHECK(cur_dim > 0) << "Error: Tensor of size 0 returned from Session::Run()";
+      CHECK(cur_dim > 0)
+          << "Error: Tensor of size 0 returned from Session::Run()";
       mat_size.push_back(cur_dim);
       vishash_size *= cur_dim;
     }

@@ -14,7 +14,6 @@ constexpr auto SINK_NAME = "output";
 constexpr auto MC_INPUT_NAME = "Placeholder";
 constexpr auto MC_OUTPUT_NAME = "probabilities:0";
 
-
 #define HACK
 //#undef HACK
 
@@ -88,33 +87,37 @@ void ImageMatch::Process() {
   int channel = 9216;
 #endif
   tensorflow::Tensor input_tensor(
-        tensorflow::DT_FLOAT,
-        tensorflow::TensorShape({static_cast<long long>(batch_size_),
-                                height, width, channel}));
+      tensorflow::DT_FLOAT,
+      tensorflow::TensorShape(
+          {static_cast<long long>(batch_size_), height, width, channel}));
   int count = 0;
   for (const auto& frame : frames_batch_) {
 #ifndef HACK
-    std::copy_n((float*)frame->GetValue<cv::Mat>("feature_vector").data,
-                height * width * channel,
-                input_tensor.flat<float>().data() + count++ * channel * height * width);
+    std::copy_n(
+        (float*)frame->GetValue<cv::Mat>("feature_vector").data,
+        height * width * channel,
+        input_tensor.flat<float>().data() + count++ * channel * height * width);
 #endif
   }
   for (auto& query : query_data_) {
     std::vector<tensorflow::Tensor> outputs;
     std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
     inputs.push_back({MC_INPUT_NAME, input_tensor});
-    tensorflow::Status status = query.second.classifier->Run(inputs, {MC_OUTPUT_NAME}, {}, &outputs);
+    tensorflow::Status status =
+        query.second.classifier->Run(inputs, {MC_OUTPUT_NAME}, {}, &outputs);
     if (!status.ok()) {
-        LOG(FATAL) << "Session::Run() completed with errors: "
-                   << status.error_message();
-    } 
-    CHECK(outputs.size() == 1) << "Outputs should be of size 1, got " << outputs.size();;
+      LOG(FATAL) << "Session::Run() completed with errors: "
+                 << status.error_message();
+    }
+    CHECK(outputs.size() == 1)
+        << "Outputs should be of size 1, got " << outputs.size();
+    ;
     const auto& output_tensor = outputs.at(0);
     int cur_dim = (*output_tensor.shape().begin()).size;
-    for(int i = 0; i < cur_dim; ++i) {
+    for (int i = 0; i < cur_dim; ++i) {
       float prob_match = output_tensor.flat<float>().data()[i];
       float prob_nomatch = output_tensor.flat<float>().data()[i + 1];
-      if(prob_match > query.second.threshold) {
+      if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {
         query.second.matches.push_back(0);
@@ -127,7 +130,7 @@ void ImageMatch::Process() {
        batch_idx < frames_batch_.size(); ++batch_idx) {
     std::vector<int> image_match_matches;
     for (auto& query : query_data_) {
-    // TODO fix this block
+      // TODO fix this block
       if (query.second.matches.at(batch_idx) == 1) {
         image_match_matches.push_back(query.second.query_id);
       }
@@ -152,13 +155,14 @@ void ImageMatch::Process() {
 void ImageMatch::SetClassifier(query_t* current_query,
                                const std::string& model_path) {
   tensorflow::GraphDef graph_def;
-  tensorflow::Status status = ReadBinaryProto(
-      tensorflow::Env::Default(), model_path, &graph_def);
+  tensorflow::Status status =
+      ReadBinaryProto(tensorflow::Env::Default(), model_path, &graph_def);
   if (!status.ok()) {
     LOG(FATAL) << "Failed to load TensorFlow graph: " << status.error_message();
   }
 
-  current_query->classifier.reset(tensorflow::NewSession(tensorflow::SessionOptions()));
+  current_query->classifier.reset(
+      tensorflow::NewSession(tensorflow::SessionOptions()));
   status = current_query->classifier->Create(graph_def);
   if (!status.ok()) {
     LOG(FATAL) << "Failed to create TensorFlow Session: "

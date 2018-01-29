@@ -301,7 +301,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
   StreamPtr nne_stream = nne->GetSink(layer);
-  
+
   // TODO: Add FVGen processor to the pipeline
 
   // Create ImageMatch level 0. Use the same batch size as the
@@ -332,8 +332,9 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
   StreamPtr kd_input_stream = nne_stream;
   int count = 0;
-  for(auto& param : buf_params) {
-    LOG(INFO) << "Creating KeyframeDetector level " << count++ << " with parameters: " << param.first << " " << param.second;
+  for (auto& param : buf_params) {
+    LOG(INFO) << "Creating KeyframeDetector level " << count++
+              << " with parameters: " << param.first << " " << param.second;
   }
   for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
     // Create a keyframe detector.

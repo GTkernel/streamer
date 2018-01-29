@@ -9,13 +9,12 @@
 #include "processor/processor.h"
 #include "stream/frame.h"
 
-class FVGen: public Processor {
+class FVGen : public Processor {
  public:
   FVGen(int xmin, int xmax, int ymin, int ymax);
   ~FVGen();
 
-  static std::shared_ptr<FVGen> Create(
-      const FactoryParamsType& params);
+  static std::shared_ptr<FVGen> Create(const FactoryParamsType& params);
 
   // Hides Processor::SetSource(const std::string&, StreamPtr)
   void SetSource(const std::string& name, StreamPtr stream);
