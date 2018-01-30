@@ -183,7 +183,7 @@ void RunKeyframeDetector(
     size_t buf_len, size_t levels, bool generate_fake_vishashes,
     const std::string& output_dir) {
   CHECK(frames->size() > 0) << "Evaluating using zero frames!";
-  auto fv_len = frames->at(0)->GetValue<cv::Mat>("activations").total();
+  auto fv_len = frames->at(0)->GetValue<cv::Mat>(fv_key).total();
 
   std::vector<std::shared_ptr<Processor>> procs;
   StreamPtr frame_stream = std::make_shared<Stream>();
