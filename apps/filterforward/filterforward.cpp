@@ -244,8 +244,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     float sel = std::stof(args.at(0));
     unsigned long buf_len = std::stoul(args.at(1));
     kd_layer_name = args.at(2);
-    for(decltype(args.size()) i = 3; i < args.size();) {
-      CHECK(i+8 < args.size()) << "Malformed configuration file";
+    for (decltype(args.size()) i = 3; i < args.size();) {
+      CHECK(i + 8 < args.size()) << "Malformed configuration file";
       the_map[level_counter].push_back(query_spec_t());
       query_spec_t* cur_query_spec = &(the_map[level_counter].back());
       cur_query_spec->num = atoi(args.at(i++).c_str());
@@ -321,9 +321,9 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
-  
-  //auto fv_gen_kd = std::make_shared<FVGen>(
-  
+
+  // auto fv_gen_kd = std::make_shared<FVGen>(
+
   auto fv_gen = std::make_shared<FvGen>();
   fv_gen->SetSource(nne->GetSink());
   fv_gen->SetBlockOnPush(block);
@@ -337,13 +337,15 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   im_0->SetBlockOnPush(block);
 
   auto& specs_vector = the_map[0];
-  for(decltype(specs_vector.size()) i = 0; i < specs_vector.size(); ++i) {
+  for (decltype(specs_vector.size()) i = 0; i < specs_vector.size(); ++i) {
     auto& cur_spec = specs_vector.at(i);
-    for(int j = 0; j < cur_spec.num; ++j) {
-      im_0->AddQuery(cur_spec.path, cur_spec.layer, cur_spec.threshold, cur_spec.xmin, cur_spec.ymin,
-                     cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+    for (int j = 0; j < cur_spec.num; ++j) {
+      im_0->AddQuery(cur_spec.path, cur_spec.layer, cur_spec.threshold,
+                     cur_spec.xmin, cur_spec.ymin, cur_spec.xmax, cur_spec.ymax,
+                     cur_spec.flat);
       nne->PublishLayer(cur_spec.layer);
-      fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin, cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+      fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin, cur_spec.xmax,
+                    cur_spec.ymax, cur_spec.flat);
     }
   }
   procs.push_back(im_0);
@@ -375,7 +377,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     std::vector<std::pair<float, size_t>> kd_buf_params_vec = {kd_buf_params};
     fv_gen->AddFv(kd_layer_name);
     nne->PublishLayer(kd_layer_name);
-    auto kd = std::make_shared<KeyframeDetector>(kd_layer_name, kd_buf_params_vec);
+    auto kd =
+        std::make_shared<KeyframeDetector>(kd_layer_name, kd_buf_params_vec);
     kd->SetSource(kd_input_stream);
     kd->SetBlockOnPush(block);
     procs.push_back(kd);
@@ -389,13 +392,15 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     additional_im->SetBlockOnPush(block);
     // PUT CODE HERE
     auto& specs_vector = the_map[i];
-    for(decltype(specs_vector.size()) j = 0; j < specs_vector.size(); ++j) {
+    for (decltype(specs_vector.size()) j = 0; j < specs_vector.size(); ++j) {
       auto& cur_spec = specs_vector.at(j);
-      for(int k = 0; k < cur_spec.num; ++k) {
-        additional_im->AddQuery(cur_spec.path, cur_spec.layer, cur_spec.threshold, cur_spec.xmin, cur_spec.ymin,
-                       cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+      for (int k = 0; k < cur_spec.num; ++k) {
+        additional_im->AddQuery(
+            cur_spec.path, cur_spec.layer, cur_spec.threshold, cur_spec.xmin,
+            cur_spec.ymin, cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
         nne->PublishLayer(cur_spec.layer);
-        fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin, cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+        fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin,
+                      cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
       }
     }
     procs.push_back(additional_im);

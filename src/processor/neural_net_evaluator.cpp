@@ -10,7 +10,8 @@ constexpr auto SINK_NAME = "output";
 NeuralNetEvaluator::NeuralNetEvaluator(
     const ModelDesc& model_desc, const Shape& input_shape, size_t batch_size,
     const std::vector<std::string>& output_layer_names)
-    : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME}, {SINK_NAME}),
+    : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME},
+                {SINK_NAME}),
       input_shape_(input_shape),
       batch_size_(batch_size) {
   // Load model.
@@ -47,7 +48,8 @@ NeuralNetEvaluator::~NeuralNetEvaluator() {
 }
 
 void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
-  if (std::find(output_layer_names_.begin(), output_layer_names_.end(), layer_name) == output_layer_names_.end()) {
+  if (std::find(output_layer_names_.begin(), output_layer_names_.end(),
+                layer_name) == output_layer_names_.end()) {
     output_layer_names_.push_back(layer_name);
     LOG(INFO) << "Layer \"" << layer_name << "\" will be published.";
   } else {
@@ -93,7 +95,9 @@ void NeuralNetEvaluator::SetSource(StreamPtr stream,
   SetSource(SOURCE_NAME, stream, layername);
 }
 
-StreamPtr NeuralNetEvaluator::GetSink() { return Processor::GetSink(SINK_NAME); }
+StreamPtr NeuralNetEvaluator::GetSink() {
+  return Processor::GetSink(SINK_NAME);
+}
 
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
@@ -120,7 +124,8 @@ void NeuralNetEvaluator::Process() {
           .total_microseconds();
 
   // Push the activations for each published layer to their respective sink.
-  for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size(); ++i) {
+  for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size();
+       ++i) {
     std::unique_ptr<Frame> ret_frame = std::move(cur_batch_frames_.at(i));
     for (const auto& layer_pair : layer_outputs) {
       auto activation_vector = layer_pair.second;
@@ -128,7 +133,7 @@ void NeuralNetEvaluator::Process() {
       cv::Mat activations = activation_vector.at(i);
       ret_frame->SetValue(layer_name, activations);
       ret_frame->SetValue("neural_net_evaluator.inference_time_micros",
-                           time_elapsed);
+                          time_elapsed);
     }
     PushFrame(SINK_NAME, std::move(ret_frame));
   }

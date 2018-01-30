@@ -7,8 +7,12 @@
 
 #include <opencv2/opencv.hpp>
 
-KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len, size_t level, const std::string& layer_name)
-    : level_(level), on_first_buf_(true), last_frame_processed_(0), spec_(layer_name)  {
+KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len, size_t level,
+                               const std::string& layer_name)
+    : level_(level),
+      on_first_buf_(true),
+      last_frame_processed_(0),
+      spec_(layer_name) {
   CHECK(buf_len > 0) << "Buffer length must be greater than 0!";
   target_buf_len_ = buf_len;
   count_ = 0;
@@ -176,9 +180,11 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
                                                std::vector<double>(num_frames));
 
   for (idx_t i = 0; i < num_frames; ++i) {
-    const cv::Mat& src_f = buf_.at(i)->GetValue<cv::Mat>(FvSpec::GetUniqueID(spec_));
+    const cv::Mat& src_f =
+        buf_.at(i)->GetValue<cv::Mat>(FvSpec::GetUniqueID(spec_));
     for (idx_t j = i + 1; j < num_frames; ++j) {
-      const cv::Mat& dst_f = buf_.at(j)->GetValue<cv::Mat>(FvSpec::GetUniqueID(spec_));
+      const cv::Mat& dst_f =
+          buf_.at(j)->GetValue<cv::Mat>(FvSpec::GetUniqueID(spec_));
       double dist = cv::norm(dst_f - src_f);
       if (!dist) {
         // If "dist" is zero, then these two frames are the same. That is not

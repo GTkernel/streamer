@@ -26,7 +26,9 @@ std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
   return nullptr;
 }
 
-void ImageMatch::AddQuery(const std::string& model_path, std::string layer_name, float threshold, int xmin, int ymin, int xmax, int ymax, bool flat) {
+void ImageMatch::AddQuery(const std::string& model_path, std::string layer_name,
+                          float threshold, int xmin, int ymin, int xmax,
+                          int ymax, bool flat) {
   std::lock_guard<std::mutex> guard(query_guard_);
   int query_id = query_data_.size();
   query_t* current_query = &query_data_[query_id];
@@ -75,19 +77,21 @@ void ImageMatch::Process() {
   auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
   for (auto& query : query_data_) {
     int cur_batch_idx = 0;
-    cv::Mat fv = frames_batch_.at(0)->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
+    cv::Mat fv = frames_batch_.at(0)->GetValue<cv::Mat>(
+        FvSpec::GetUniqueID(query.second.fv_spec));
     int height = fv.rows;
     int width = fv.cols;
     int channel = fv.channels();
     tensorflow::Tensor input_tensor(
-          tensorflow::DT_FLOAT,
-          tensorflow::TensorShape({static_cast<long long>(batch_size_),
-                                  height, width, channel}));
+        tensorflow::DT_FLOAT,
+        tensorflow::TensorShape(
+            {static_cast<long long>(batch_size_), height, width, channel}));
     for (const auto& frame : frames_batch_) {
-      cv::Mat fv = frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
-      std::copy_n((float*)fv.data,
-                  height * width * channel,
-                  input_tensor.flat<float>().data() + cur_batch_idx++ * channel * height * width);
+      cv::Mat fv =
+          frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
+      std::copy_n((float*)fv.data, height * width * channel,
+                  input_tensor.flat<float>().data() +
+                      cur_batch_idx++ * channel * height * width);
     }
     std::vector<tensorflow::Tensor> outputs;
     std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
@@ -103,11 +107,11 @@ void ImageMatch::Process() {
     ;
     const auto& output_tensor = outputs.at(0);
     int cur_dim = (*output_tensor.shape().begin()).size;
-    for(int i = 0; i < cur_dim; i += 2) {
+    for (int i = 0; i < cur_dim; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
       float prob_nomatch = output_tensor.flat<float>().data()[i + 1];
-      (void) prob_nomatch;
-      if(prob_match > query.second.threshold) {
+      (void)prob_nomatch;
+      if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {
         query.second.matches.push_back(0);

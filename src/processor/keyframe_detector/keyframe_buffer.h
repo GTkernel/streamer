@@ -24,7 +24,8 @@ class KeyframeBuffer {
  public:
   // "sel" is a selectivity in the range (0, 1] and "buf_len" is the buffer
   // length at which keyframe detection will be triggered.
-  KeyframeBuffer(float sel, size_t buf_len, size_t level, const std::string& layer_name);
+  KeyframeBuffer(float sel, size_t buf_len, size_t level,
+                 const std::string& layer_name);
   // A KeyframeBuffer object contains unique pointers to Frames, so it cannot be
   // copied.
   KeyframeBuffer(const KeyframeBuffer&) = delete;
