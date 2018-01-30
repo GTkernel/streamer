@@ -82,9 +82,9 @@ void Feeder(std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
 // DNN.
 std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
     size_t queue_size, bool block, unsigned long num_frames,
-    bool generate_fake_vishashes, size_t fake_vishash_length, const std::string& fv_key,
-    const std::string& camera_name, const std::string& model,
-    const std::string& layer, size_t nne_batch_size) {
+    bool generate_fake_vishashes, size_t fake_vishash_length,
+    const std::string& fv_key, const std::string& camera_name,
+    const std::string& model, const std::string& layer, size_t nne_batch_size) {
   auto frames = std::make_shared<std::vector<std::unique_ptr<Frame>>>();
 
   if (generate_fake_vishashes) {
@@ -178,9 +178,10 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 }
 
 void RunKeyframeDetector(
-                         std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames, const std::string& fv_key,
-    size_t queue_size, bool block, float sel, size_t buf_len, size_t levels,
-    bool generate_fake_vishashes, const std::string& output_dir) {
+    std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
+    const std::string& fv_key, size_t queue_size, bool block, float sel,
+    size_t buf_len, size_t levels, bool generate_fake_vishashes,
+    const std::string& output_dir) {
   CHECK(frames->size() > 0) << "Evaluating using zero frames!";
   auto fv_len = frames->at(0)->GetValue<cv::Mat>("activations").total();
 
@@ -280,8 +281,8 @@ void Run(size_t queue_size, bool block, unsigned long num_frames,
     // If "generate_fake_vishashes" is false, then "fv_len" will be ignored.
     std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames =
         GenerateVishashes(queue_size, block, num_frames,
-                          generate_fake_vishashes, fv_len, fv_key, camera_name, model,
-                          layer, nne_batch_size);
+                          generate_fake_vishashes, fv_len, fv_key, camera_name,
+                          model, layer, nne_batch_size);
 
     for (auto sel : sels) {
       for (auto buf_len : buf_lens) {
@@ -306,8 +307,9 @@ void Run(size_t queue_size, bool block, unsigned long num_frames,
           boost::filesystem::path output_subdir_path(output_subdir_str);
           boost::filesystem::create_directory(output_subdir_path);
 
-          RunKeyframeDetector(frames, fv_key, queue_size, block, sel, buf_len, levels,
-                              generate_fake_vishashes, output_subdir_str);
+          RunKeyframeDetector(frames, fv_key, queue_size, block, sel, buf_len,
+                              levels, generate_fake_vishashes,
+                              output_subdir_str);
         }
       }
     }

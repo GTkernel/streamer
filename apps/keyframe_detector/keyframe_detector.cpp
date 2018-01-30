@@ -48,8 +48,8 @@ void WarnUnused(std::string param) {
 }
 
 // This function feeds fake vishashes to the specified stream.
-void Feeder(size_t fake_vishash_length, const std::string& fv_key, unsigned long num_frames,
-            StreamPtr vishash_stream) {
+void Feeder(size_t fake_vishash_length, const std::string& fv_key,
+            unsigned long num_frames, StreamPtr vishash_stream) {
   while (!started) {
     LOG(INFO) << "Waiting to start...";
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -135,9 +135,10 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
     // detector's performance because it eliminates the overhead of running a
     // DNN.
     vishash_stream = StreamPtr(new Stream());
-    feeder = std::thread([fake_vishash_length, fv_key, num_frames, vishash_stream] {
-        Feeder(fake_vishash_length, fv_key, num_frames, vishash_stream);
-    });
+    feeder =
+        std::thread([fake_vishash_length, fv_key, num_frames, vishash_stream] {
+          Feeder(fake_vishash_length, fv_key, num_frames, vishash_stream);
+        });
   } else {
     fv_key = layer;
 
