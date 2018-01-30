@@ -32,6 +32,7 @@ namespace po = boost::program_options;
 
 constexpr unsigned long MIN_START_ID = 0;
 constexpr unsigned long MAX_END_ID = ULONG_MAX;
+constexpr auto FAKE_FV_KEY = "fv";
 
 // Set to true when the pipeline has been started. Used to signal the feeder
 // thread to start, if it exists.
@@ -47,7 +48,7 @@ void WarnUnused(std::string param) {
 }
 
 // This function feeds fake vishashes to the specified stream.
-void Feeder(size_t fake_vishash_length, unsigned long num_frames,
+void Feeder(size_t fake_vishash_length, const std::string& fv_key, unsigned long num_frames,
             StreamPtr vishash_stream) {
   while (!started) {
     LOG(INFO) << "Waiting to start...";
@@ -61,7 +62,7 @@ void Feeder(size_t fake_vishash_length, unsigned long num_frames,
 
     cv::Mat vishash(fake_vishash_length, 1, CV_32FC1);
     vishash.at<float>(0, 0) = (float)frame_id;
-    frame->SetValue("activations", vishash);
+    frame->SetValue(fv_key, vishash);
 
     vishash_stream->PushFrame(std::move(frame), true);
   }
@@ -125,17 +126,21 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
   // to do so.
   std::thread feeder;
 
+  std::string fv_key;
   if (generate_fake_vishashes) {
     LOG(INFO) << "Generating fake vishashes";
+    fv_key = FAKE_FV_KEY;
     // Instead of reading frames from a camera or a file, we will generate fake
     // layer activations. This enables rapid evaluation of the keyframe
     // detector's performance because it eliminates the overhead of running a
     // DNN.
     vishash_stream = StreamPtr(new Stream());
-    feeder = std::thread([fake_vishash_length, num_frames, vishash_stream] {
-      Feeder(fake_vishash_length, num_frames, vishash_stream);
+    feeder = std::thread([fake_vishash_length, fv_key, num_frames, vishash_stream] {
+        Feeder(fake_vishash_length, fv_key, num_frames, vishash_stream);
     });
   } else {
+    fv_key = layer;
+
     // Create Camera.
     auto camera = CameraManager::GetInstance().GetCamera(camera_name);
     camera->SetBlockOnPush(block);
@@ -176,7 +181,7 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
   }
 
   // Create KeyframeDetector.
-  auto kd = std::make_shared<KeyframeDetector>(buf_params);
+  auto kd = std::make_shared<KeyframeDetector>(fv_key, buf_params);
   kd->SetSource(vishash_stream);
   kd->SetBlockOnPush(block);
   kd->EnableLog(output_dir);

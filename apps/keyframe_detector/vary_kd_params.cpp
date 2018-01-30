@@ -27,6 +27,8 @@
 
 namespace po = boost::program_options;
 
+constexpr auto FAKE_FV_KEY = "fv";
+
 // Set to true when the pipeline has been started. Used to signal the feeder
 // thread to start, if it exists.
 std::atomic<bool> started(false);
@@ -80,7 +82,7 @@ void Feeder(std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
 // DNN.
 std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
     size_t queue_size, bool block, unsigned long num_frames,
-    bool generate_fake_vishashes, size_t fake_vishash_length,
+    bool generate_fake_vishashes, size_t fake_vishash_length, const std::string& fv_key,
     const std::string& camera_name, const std::string& model,
     const std::string& layer, size_t nne_batch_size) {
   auto frames = std::make_shared<std::vector<std::unique_ptr<Frame>>>();
@@ -94,7 +96,7 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 
       cv::Mat vishash(fake_vishash_length, 1, CV_32FC1);
       cv::randu(vishash, 0, 1);
-      frame->SetValue("activations", vishash);
+      frame->SetValue(fv_key, vishash);
 
       frames->push_back(std::move(frame));
     }
@@ -176,7 +178,7 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 }
 
 void RunKeyframeDetector(
-    std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
+                         std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames, const std::string& fv_key,
     size_t queue_size, bool block, float sel, size_t buf_len, size_t levels,
     bool generate_fake_vishashes, const std::string& output_dir) {
   CHECK(frames->size() > 0) << "Evaluating using zero frames!";
@@ -192,7 +194,7 @@ void RunKeyframeDetector(
   // Create KeyframeDetector. Each buffer has the same selectivity and length.
   std::vector<std::pair<float, size_t>> buf_params(
       levels, std::pair<float, size_t>{sel, buf_len});
-  auto kd = std::make_shared<KeyframeDetector>(buf_params);
+  auto kd = std::make_shared<KeyframeDetector>(fv_key, buf_params);
   kd->SetSource(frame_stream);
   kd->SetBlockOnPush(block);
   kd->EnableLog(output_dir);
@@ -268,11 +270,17 @@ void Run(size_t queue_size, bool block, unsigned long num_frames,
     fv_lens.push_back(0);
   }
 
+  std::string fv_key;
+  if (generate_fake_vishashes) {
+    fv_key = FAKE_FV_KEY;
+  } else {
+    fv_key = layer;
+  }
   for (auto fv_len : fv_lens) {
     // If "generate_fake_vishashes" is false, then "fv_len" will be ignored.
     std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames =
         GenerateVishashes(queue_size, block, num_frames,
-                          generate_fake_vishashes, fv_len, camera_name, model,
+                          generate_fake_vishashes, fv_len, fv_key, camera_name, model,
                           layer, nne_batch_size);
 
     for (auto sel : sels) {
@@ -298,7 +306,7 @@ void Run(size_t queue_size, bool block, unsigned long num_frames,
           boost::filesystem::path output_subdir_path(output_subdir_str);
           boost::filesystem::create_directory(output_subdir_path);
 
-          RunKeyframeDetector(frames, queue_size, block, sel, buf_len, levels,
+          RunKeyframeDetector(frames, fv_key, queue_size, block, sel, buf_len, levels,
                               generate_fake_vishashes, output_subdir_str);
         }
       }

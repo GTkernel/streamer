@@ -27,6 +27,9 @@ class NeuralNetEvaluator : public Processor {
   // Adds layer_name to the list of the layers whose activations will be
   // published.
   void PublishLayer(std::string layer_name);
+  // Returns a vector of the names of this NeuralNetEvaluator's sinks, which are
+  // the names of the layers that it is publishing.
+  const std::vector<std::string> GetSinkNames() const;
 
   static std::shared_ptr<NeuralNetEvaluator> Create(
       const FactoryParamsType& params);

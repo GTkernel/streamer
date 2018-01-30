@@ -57,6 +57,14 @@ void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
   }
 }
 
+const std::vector<std::string> NeuralNetEvaluator::GetSinkNames() const {
+  std::vector<std::string> sink_names;
+  for (const auto& sink_pair : sinks_) {
+    sink_names.push_back(sink_pair.first);
+  }
+  return sink_names;
+}
+
 std::shared_ptr<NeuralNetEvaluator> NeuralNetEvaluator::Create(
     const FactoryParamsType& params) {
   ModelManager& model_manager = ModelManager::GetInstance();
