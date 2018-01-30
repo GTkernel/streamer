@@ -26,7 +26,7 @@ std::shared_ptr<ImageMatch> ImageMatch::Create(const FactoryParamsType&) {
   return nullptr;
 }
 
-void ImageMatch::AddQuery(const std::string& model_path, std::string layer_name, int xmin, int ymin, int xmax, int ymax, bool flat, float threshold) {
+void ImageMatch::AddQuery(const std::string& model_path, std::string layer_name, float threshold, int xmin, int ymin, int xmax, int ymax, bool flat) {
   std::lock_guard<std::mutex> guard(query_guard_);
   int query_id = query_data_.size();
   query_t* current_query = &query_data_[query_id];

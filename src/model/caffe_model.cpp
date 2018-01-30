@@ -188,14 +188,34 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   // mat_size is used to construct the cv::Mat
   std::vector<int> mat_size;
   decltype(src->shape(0)) total_size = 1;
-  for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
-    mat_size.push_back(src->shape(i));
-    total_size *= src->shape(i);
-  }
+  //for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
+    //mat_size.push_back(src->shape(i));
+    //total_size *= src->shape(i);
+  //}
+  //mat_size.push_back(src->shape(0));
+  mat_size.push_back(src->shape(2));
+  mat_size.push_back(src->shape(3));
+  mat_size.push_back(src->shape(1));
   float* data = src->mutable_cpu_data();
-  cv::Mat ret_mat(mat_size, CV_32F);
-  memcpy(ret_mat.data, data + total_size * batch_idx,
-         total_size * sizeof(float));
+  // Bandaid fix for caffe nchw
+  cv::Mat ret_mat(mat_size.at(0), mat_size.at(1), CV_32FC(mat_size.at(2)));
+  //cv::Mat ret_mat(mat_size, CV_32F);
+  LOG(INFO) << ret_mat.channels();
+  LOG(INFO) << src->shape_string();
+  LOG(INFO) << ret_mat.rows << " " << ret_mat.cols << " " << ret_mat.channels();
+  //ret_mat.at<float>(1, 1, 1) = 0;
+  for(int c = 0; c < ret_mat.channels(); ++c) {
+    for(int h = 0; h < ret_mat.rows; ++h) {
+      for(int w = 0; w < ret_mat.cols; ++w) {
+        //ret_mat.at<float>(h, w, c) = src->data_at(0, c, h, w);
+        ((float*)ret_mat.data)[h * (w * c) + w * c + c] = src->data_at(0, c, h, w);
+      
+      }
+    }
+  }
+  LOG(INFO) << "COPY COMPLETE";
+  //memcpy(ret_mat.data, data + total_size * batch_idx,
+         //total_size * sizeof(float));
   return ret_mat;
 }
 

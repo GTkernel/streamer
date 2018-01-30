@@ -9,6 +9,8 @@
 
 #include "stream/frame.h"
 
+#include "processor/fv_gen.h"
+
 // This class encapsulates the logic for selecting keyframes from incoming
 // frames. New frames are registered using the "Push()" function. When the
 // the internal buffer has filled to its user-defined threshold, "Push()" will
@@ -22,7 +24,7 @@ class KeyframeBuffer {
  public:
   // "sel" is a selectivity in the range (0, 1] and "buf_len" is the buffer
   // length at which keyframe detection will be triggered.
-  KeyframeBuffer(float sel, size_t buf_len, size_t level);
+  KeyframeBuffer(float sel, size_t buf_len, size_t level, const std::string& layer_name);
   // A KeyframeBuffer object contains unique pointers to Frames, so it cannot be
   // copied.
   KeyframeBuffer(const KeyframeBuffer&) = delete;
@@ -68,6 +70,7 @@ class KeyframeBuffer {
   // to it.
   std::ofstream log_;
   unsigned long count_;
+  FvSpec spec_;
 };
 
 #endif  // STREAMER_PROCESSOR_KEYFRAME_DETECTOR_KEYFRAME_BUFFER_H_

@@ -33,9 +33,21 @@
 #include "stream/stream.h"
 #include "utils/string_utils.h"
 
-// TODO remove hardcoded path
-constexpr auto MC_QUERY_PATH = "/home/tskim/src/models/microclassifier.pb";
-constexpr auto MC_THRESHOLD = 0.125;
+typedef struct {
+  int num;
+  std::string layer;
+  int xmin;
+  int ymin;
+  int xmax;
+  int ymax;
+  bool flat;
+  std::string path;
+  float threshold;
+} query_spec_t;
+
+std::string kd_layer_name;
+std::unordered_map<int, std::vector<query_spec_t>> the_map;
+
 namespace po = boost::program_options;
 
 // Used to signal all threads that the pipeline should stop.
@@ -215,9 +227,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
   // Parse the ff_conf file.
   bool on_first_line = true;
-  int first_im_num_queries = 0;
   std::vector<std::pair<float, size_t>> buf_params;
-  std::vector<int> nums_queries;
   std::ifstream ff_conf_file(ff_conf);
   std::string line;
   unsigned int level_counter = 0;
@@ -227,25 +237,36 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
       // Ignore comment lines.
       continue;
     }
-    CHECK(args.size() == 3)
-        << "Each line of the ff_conf file must contain three items: "
+    CHECK(args.size() >= 3)
+        << "Each line of the ff_conf file must contain at least three items: "
         << "Selectivity,BufferLength,NumQueries";
 
     float sel = std::stof(args.at(0));
     unsigned long buf_len = std::stoul(args.at(1));
-    int num_queries = std::stoi(args.at(2));
+    kd_layer_name = args.at(2);
+    for(decltype(args.size()) i = 3; i < args.size();) {
+      CHECK(i+8 < args.size()) << "Malformed configuration file";
+      the_map[level_counter].push_back(query_spec_t());
+      query_spec_t* cur_query_spec = &(the_map[level_counter].back());
+      cur_query_spec->num = atoi(args.at(i++).c_str());
+      cur_query_spec->layer = args.at(i++);
+      cur_query_spec->xmin = atoi(args.at(i++).c_str());
+      cur_query_spec->ymin = atoi(args.at(i++).c_str());
+      cur_query_spec->xmax = atoi(args.at(i++).c_str());
+      cur_query_spec->ymax = atoi(args.at(i++).c_str());
+      cur_query_spec->flat = args.at(i++) == "true";
+      cur_query_spec->path = args.at(i++);
+      cur_query_spec->threshold = std::stof(args.at(i++));
+    }
 
     std::ostringstream msg;
     msg << "Level " << level_counter << " - ";
     if (on_first_line) {
-      first_im_num_queries = num_queries;
       on_first_line = false;
     } else {
       buf_params.push_back({sel, (size_t)buf_len});
-      nums_queries.push_back(num_queries);
       msg << "selectivity: " << sel << ", buffer length: " << buf_len << ", ";
     }
-    msg << "number of queries: " << num_queries;
     LOG(INFO) << msg.str();
     ++level_counter;
   }
@@ -300,20 +321,30 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
-  StreamPtr nne_stream = nne->GetSink(layers.at(0));
   
   //auto fv_gen_kd = std::make_shared<FVGen>(
   
-  // TODO: Add FVGen processor to the pipeline
+  auto fv_gen = std::make_shared<FvGen>();
+  fv_gen->SetSource(nne->GetSink());
+  fv_gen->SetBlockOnPush(block);
+  procs.push_back(fv_gen);
+  StreamPtr fvgen_stream = fv_gen->GetSink();
 
   // Create ImageMatch level 0. Use the same batch size as the
   // NeuralNetEvaluator.
   auto im_0 = std::make_shared<ImageMatch>(nne_batch_size);
-  im_0->SetSource(nne_stream);
+  im_0->SetSource(fvgen_stream);
   im_0->SetBlockOnPush(block);
-  // im_0->SetQueryMatrix(first_im_num_queries);
-  for (int i = 0; i < first_im_num_queries; ++i) {
-    im_0->AddQuery(MC_QUERY_PATH, MC_THRESHOLD);
+
+  auto& specs_vector = the_map[0];
+  for(decltype(specs_vector.size()) i = 0; i < specs_vector.size(); ++i) {
+    auto& cur_spec = specs_vector.at(i);
+    for(int j = 0; j < cur_spec.num; ++j) {
+      im_0->AddQuery(cur_spec.path, cur_spec.layer, cur_spec.threshold, cur_spec.xmin, cur_spec.ymin,
+                     cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+      nne->PublishLayer(cur_spec.layer);
+      fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin, cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+    }
   }
   procs.push_back(im_0);
 
@@ -332,17 +363,19 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   }));
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
-  StreamPtr kd_input_stream = nne_stream;
+  StreamPtr kd_input_stream = fvgen_stream;
   int count = 0;
   for (auto& param : buf_params) {
     LOG(INFO) << "Creating KeyframeDetector level " << count++
               << " with parameters: " << param.first << " " << param.second;
   }
-  for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
+  for (decltype(the_map.size()) i = 1; i < the_map.size(); ++i) {
     // Create a keyframe detector.
     std::pair<float, size_t> kd_buf_params = buf_params.at(i);
     std::vector<std::pair<float, size_t>> kd_buf_params_vec = {kd_buf_params};
-    auto kd = std::make_shared<KeyframeDetector>(kd_buf_params_vec);
+    fv_gen->AddFv(kd_layer_name);
+    nne->PublishLayer(kd_layer_name);
+    auto kd = std::make_shared<KeyframeDetector>(kd_layer_name, kd_buf_params_vec);
     kd->SetSource(kd_input_stream);
     kd->SetBlockOnPush(block);
     procs.push_back(kd);
@@ -354,8 +387,16 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     auto additional_im = std::make_shared<ImageMatch>(kd_batch_size);
     additional_im->SetSource(kd->GetSink(kd->GetSinkName(0)));
     additional_im->SetBlockOnPush(block);
-    for (int j = 0; j < nums_queries.at(i); ++j) {
-      additional_im->AddQuery(MC_QUERY_PATH, MC_THRESHOLD);
+    // PUT CODE HERE
+    auto& specs_vector = the_map[i];
+    for(decltype(specs_vector.size()) j = 0; j < specs_vector.size(); ++j) {
+      auto& cur_spec = specs_vector.at(j);
+      for(int k = 0; k < cur_spec.num; ++k) {
+        additional_im->AddQuery(cur_spec.path, cur_spec.layer, cur_spec.threshold, cur_spec.xmin, cur_spec.ymin,
+                       cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+        nne->PublishLayer(cur_spec.layer);
+        fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin, cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
+      }
     }
     procs.push_back(additional_im);
 

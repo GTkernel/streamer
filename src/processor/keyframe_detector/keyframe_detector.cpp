@@ -10,19 +10,18 @@ constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME_PREFIX = "output_";
 
 KeyframeDetector::KeyframeDetector(
-    const ModelDesc& model_desc, const Shape& shape, std::string layer,
+    const ModelDesc& model_desc, const Shape& shape, const std::string& layer,
     std::vector<std::pair<float, size_t>> buf_params)
     : NeuralNetConsumer(PROCESSOR_TYPE_KEYFRAME_DETECTOR, model_desc, shape,
                         {layer}, {SOURCE_NAME}, {}) {
-  std::string nne_sink_name = nne_->GetSinkNames().at(0);
-  Processor::SetSource(SOURCE_NAME, nne_->GetSink(nne_sink_name));
-  Setup(buf_params);
+  Processor::SetSource(SOURCE_NAME, nne_->GetSink());
+  Setup(layer, buf_params);
 }
 
-KeyframeDetector::KeyframeDetector(
+KeyframeDetector::KeyframeDetector(const std::string& layer,
     std::vector<std::pair<float, size_t>> buf_params)
     : NeuralNetConsumer(PROCESSOR_TYPE_KEYFRAME_DETECTOR, {SOURCE_NAME}, {}) {
-  Setup(buf_params);
+  Setup(layer, buf_params);
 }
 
 std::shared_ptr<KeyframeDetector> KeyframeDetector::Create(
@@ -99,14 +98,14 @@ void KeyframeDetector::Process() {
   }
 }
 
-void KeyframeDetector::Setup(std::vector<std::pair<float, size_t>> buf_params) {
+void KeyframeDetector::Setup(const std::string& layer_name, std::vector<std::pair<float, size_t>> buf_params) {
   CHECK(buf_params.size() > 0)
       << "Unable to create a KeyframeDetector with a 0-level hierarchy.";
   for (decltype(buf_params.size()) i = 0; i < buf_params.size(); ++i) {
     std::pair<float, size_t> params = buf_params.at(i);
     float sel = params.first;
     size_t buf_len = params.second;
-    bufs_.push_back(std::make_unique<KeyframeBuffer>(sel, buf_len, i));
+    bufs_.push_back(std::make_unique<KeyframeBuffer>(sel, buf_len, i, layer_name));
     sinks_.insert({GetSinkName(i), StreamPtr(new Stream())});
   }
 }

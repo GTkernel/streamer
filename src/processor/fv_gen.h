@@ -12,7 +12,7 @@
 class FvSpec {
   public:
     FvSpec() {}
-    FvSpec(std::string layer_name, int xmin, int xmax, int ymin, int ymax, bool flat) :
+    FvSpec(std::string layer_name, int xmin = 0, int ymin = 0, int xmax = 0, int ymax = 0, bool flat = true) :
         layer_name_(layer_name),
         roi_(xmin, ymin, xmax - xmin, ymax - ymin),
         xmin_(xmin),
@@ -28,21 +28,23 @@ class FvSpec {
     bool flat_;
 };
 
+// Step 1: construct empty FvGen
+// Step 2: call AddFv
 class FvGen: public Processor {
  public:
-  FvGen(int xmin, int ymin, int xmax, int ymax, bool flat = false);
+  FvGen();
   ~FvGen();
-
   
-  void AddFV(std::string layer_name, int xmin, int ymin, int xmax, int ymax, bool flat = true);
+  void AddFv(std::string layer_name, int xmin = 0, int ymin = 0, int xmax = 0, int ymax = 0, bool flat = true);
 
   static std::shared_ptr<FvGen> Create(
       const FactoryParamsType& params);
 
-  // Hides Processor::SetSource(const std::string&, StreamPtr)
-  void SetSource(const std::string& name, StreamPtr stream) override;
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
+
+  StreamPtr GetSink();
+  using Processor::GetSink;
 
  protected:
   virtual bool Init() override;

@@ -4,14 +4,13 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
-FvGen::FvGen(int xmin, int ymin, int xmax, int ymax, bool flat)
+FvGen::FvGen()
     : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}) {
-    CHECK(xmin < xmax && ymin < ymax) << "Cannot have negative dimensions on crop window";
 }
 
 FvGen::~FvGen() {}
 
-void FvGen::AddFV(std::string layer_name, int xmin, int xmax, int ymin, int ymax, bool flat) {
+void FvGen::AddFv(std::string layer_name, int xmin, int xmax, int ymin, int ymax, bool flat) {
   feature_vector_specs_.push_back(FvSpec(layer_name, xmin, xmax, ymin, ymax, flat));
 
 }
@@ -31,23 +30,30 @@ bool FvGen::Init() { return true; }
 
 bool FvGen::OnStop() { return true; }
 
-void FvGen::SetSource(const std::string& name, StreamPtr stream) {
-  Processor::SetSource(name, stream);
-}
-
 void FvGen::SetSource(StreamPtr stream) {
   SetSource(SOURCE_NAME, stream);
 }
 
+StreamPtr FvGen::GetSink() { return Processor::GetSink(SINK_NAME); }
+
 void FvGen::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
-  cv::Mat input_mat = input_frame->GetValue<cv::Mat>("activations");
   for(auto& spec : feature_vector_specs_) {
-    cv::Mat fv = input_mat(spec.roi_);
-    if(spec.flat_) {
-      fv = fv.reshape(fv.rows * fv.cols * fv.channels());
+    cv::Mat input_mat = input_frame->GetValue<cv::Mat>(spec.layer_name_);
+    cv::Mat fv;
+    cv::Mat new_fv;
+    if(spec.roi_.height != 0 && spec.roi_.width != 0) {
+      fv = cv::Mat(input_mat.rows, input_mat.cols, CV_32FC(input_mat.channels()));
+      fv = input_mat(spec.roi_);
     }
-    input_frame->SetValue(spec.layer_name_, fv);
+    else {
+      fv = input_mat;
+    }
+    if(spec.flat_) {
+      new_fv = cv::Mat(fv.rows * fv.cols * fv.channels(), 1, 1, fv.clone().data);
+      LOG(INFO) << new_fv.rows << " "<< new_fv.cols << " "<< new_fv.channels();
+    }
+    input_frame->SetValue(FvSpec::GetUniqueID(spec), fv);
   }
   PushFrame(SINK_NAME, std::move(input_frame));
 }
