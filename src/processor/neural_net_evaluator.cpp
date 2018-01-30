@@ -3,6 +3,7 @@
 
 #include "model/model_manager.h"
 #include "utils/string_utils.h"
+#include "utils/utils.h"
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
@@ -58,11 +59,8 @@ void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
 }
 
 const std::vector<std::string> NeuralNetEvaluator::GetSinkNames() const {
-  std::vector<std::string> sink_names;
-  for (const auto& sink_pair : sinks_) {
-    sink_names.push_back(sink_pair.first);
-  }
-  return sink_names;
+  STREAMER_NOT_IMPLEMENTED;
+  return {};
 }
 
 std::shared_ptr<NeuralNetEvaluator> NeuralNetEvaluator::Create(
