@@ -193,7 +193,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   if (num_channel > CV_CN_MAX) {
     LOG(WARNING) << "Caffe output channels exceeds CV_CN_MAX (" << num_channel
                  << " > " << CV_CN_MAX << ")";
-    CHECK(height == 1 && width = 1)
+    CHECK(height == 1 && width == 1)
         << "NHWC format must be disable for matrices with more than "
         << CV_CN_MAX << " channels and height/width != 1.";
     cv::Mat ret_mat({num_channel, height, width}, CV_32F);
