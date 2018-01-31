@@ -183,51 +183,44 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src,
 template <typename DType>
 cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
                                        int batch_idx) const {
-  decltype(batch_size_) batch_size = src->shape(0);
+  size_t batch_size = (size_t)src->shape(0);
   CHECK(batch_size == batch_size_) << "Incorrect batch size";
   int num_channel = src->shape(1);
   int height = src->shape(2);
   int width = src->shape(3);
   int total_size = height * width * num_channel;
-  float* data = src->mutable_cpu_data();
+  DType* data = src->mutable_cpu_data();
   if(num_channel > CV_CN_MAX) {
     LOG(WARNING) << "Caffe output channels exceeds CV_CN_MAX (" << num_channel << " > " << CV_CN_MAX << ")";
+    CHECK(height == 1 && width = 1) << "NHWC format must be disable for matrices with more than " << CV_CN_MAX << " channels and height/width != 1.";
     cv::Mat ret_mat({num_channel, height, width}, CV_32F);
     memcpy(ret_mat.data, data + total_size * batch_idx,
-           total_size * sizeof(float));
+           total_size * sizeof(DType));
     return ret_mat;
   }
 
-  #define TRANSPOSE
-  #ifdef TRANSPOSE
   // mat_size holds the axes dimensions of the blob
   // mat_size is used to construct the cv::Mat
   cv::Mat ret_mat({height, width, num_channel}, CV_32F);
   int per_channel_floats = src->shape(2) * src->shape(3);
-  int per_channel_bytes = per_channel_floats * sizeof(float);
+  int per_channel_bytes = per_channel_floats * sizeof(DType);
   std::vector<cv::Mat> channels;
-  for(int i = 0; i < src->shape(1); ++i) {
+  for(int i = 0; i < num_channel; ++i) {
       cv::Mat cur_channel(src->shape(2), src->shape(3), CV_32F);
       memcpy(cur_channel.data, data + per_channel_floats * i, per_channel_bytes);
       channels.push_back(cur_channel);
   }
   cv::merge(channels, ret_mat);
-  #endif
-  #ifndef TRANSPOSE
-    cv::Mat ret_mat({num_channel, height, width}, CV_32F);
-    memcpy(ret_mat.data, data + total_size * batch_idx,
-           total_size * sizeof(float));
-  #endif
 
 #define DOCHECK
 #ifdef DOCHECK
   for(int c = 0; c < num_channel; ++c) {
     for(int h = 0; h < height; ++h) {
       for(int w = 0; w < width; ++w) {
-        if(src->shape(1) <= 512) {
+        if(src->shape(1) <= CV_CN_MAX) {
           //float lhs = ret_mat.at<float>(h, w, c);
-          float lhs = ((float*)ret_mat.data)[h * width * num_channel + w * num_channel + c];
-          float rhs = src->data_at(batch_idx, c, h, w);
+          DType lhs = ((DType*)ret_mat.data)[h * width * num_channel + w * num_channel + c];
+          DType rhs = src->data_at(batch_idx, c, h, w);
           //LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs<< " vs " << lhs;
           CHECK(lhs == rhs)
             << "h: " << h
@@ -239,7 +232,6 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
       }
     }
   }
-  LOG(INFO) << "SUCCESS";
 #endif
 #undef DOCHECK
   return ret_mat;
