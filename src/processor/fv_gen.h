@@ -16,6 +16,8 @@ class FvSpec {
          int ymax = 0, bool flat = true)
       : layer_name_(layer_name),
         roi_(xmin, ymin, xmax - xmin, ymax - ymin),
+        yrange_(ymin, ymax),
+        xrange_(xmin, xmax),
         xmin_(xmin),
         xmax_(xmax),
         ymin_(ymin),
@@ -26,6 +28,8 @@ class FvSpec {
  public:
   std::string layer_name_;
   cv::Rect roi_;
+  cv::Range yrange_;
+  cv::Range xrange_;
   int xmin_, xmax_, ymin_, ymax_;
   bool flat_;
 };

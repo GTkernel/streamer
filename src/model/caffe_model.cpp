@@ -215,19 +215,18 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   }
   cv::merge(channels, ret_mat);
 
-#define DOCHECK
+#undef DOCHECK
 #ifdef DOCHECK
   for (int c = 0; c < num_channel; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
         if (src->shape(1) <= CV_CN_MAX) {
           // float lhs = ret_mat.at<float>(h, w, c);
-          DType lhs =
-              ((DType*)
-                   ret_mat.data)[h * width * num_channel + w * num_channel + c];
+          DType lhs = ret_mat.ptr<DType>(h)[w * num_channel + c];
           DType rhs = src->data_at(batch_idx, c, h, w);
-          // LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ",
-          // " << c << ") " << "Expected vs Actual: " << rhs<< " vs " << lhs;
+#if false
+          LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs << " vs " << lhs;
+#endif
           CHECK(lhs == rhs) << "h: " << h << " w: " << w << " c: " << c
                             << " lhs: " << lhs << " rhs: " << rhs;
         }

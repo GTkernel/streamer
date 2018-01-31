@@ -18,8 +18,7 @@ std::string FvSpec::GetUniqueID(const FvSpec& spec) {
   ss << spec.layer_name_ << spec.xmin_ << spec.ymin_ << spec.xmax_ << spec.ymax_
      << std::boolalpha << spec.flat_;
   return ss.str();
-}
-
+} 
 std::shared_ptr<FvGen> FvGen::Create(const FactoryParamsType& params) {
   (void)params;
   return nullptr;
@@ -40,20 +39,38 @@ void FvGen::Process() {
     cv::Mat fv;
     cv::Mat new_fv;
     if (spec.roi_.height != 0 && spec.roi_.width != 0) {
-      // fv = cv::Mat(input_mat.rows, input_mat.cols,
-      // CV_32FC(input_mat.channels()));
-      fv = cv::Mat(9216, 1, CV_32FC1);
-      // fv = input_mat(spec.roi_);
+      cv::Mat fv = input_mat({spec.yrange_, spec.xrange_});
+#undef DOCHECK
+#ifdef DOCHECK
+      int full_height = input_mat.size[0];
+      int full_width = input_mat.size[1];
+      int roi_height = spec.roi_.height;
+      int roi_width = spec.roi_.width;
+      int channels = input_mat.channels();
+      LOG(INFO) << full_height << " " << full_width << " " << channels;
+      for(int c = 0; c < channels; ++c) {
+        for(int y = spec.ymin_; y < spec.ymax_; ++y) {
+          for(int x = spec.xmin_; x < spec.xmax_; ++x) {
+            int cropped_y = y - spec.ymin_;
+            int cropped_x = x - spec.xmin_;
+            LOG(INFO) << "(" << x << ", " << y << ", " << c << ") " << "(" << cropped_x << ", " << cropped_y << ", " << c << ")";
+            float lhs = fv.ptr<float>(cropped_y)[channels * cropped_x + c];
+            float rhs = input_mat.ptr<float>(y)[channels * x + c];
+            LOG(INFO) << lhs << " " << rhs;
+            CHECK(lhs == rhs);
+          }
+        }
+      }
+#endif
+#undef DOCHECK
     } else {
       fv = input_mat;
     }
     if (spec.flat_) {
-      new_fv =
-          cv::Mat(fv.rows * fv.cols * fv.channels(), 1, 1, fv.clone().data);
-      // LOG(INFO) << new_fv.rows << " "<< new_fv.cols << " "<<
-      // new_fv.channels();
+      new_fv = cv::Mat(spec.roi_.height * spec.roi_.width * input_mat.channels(), 1, CV_32FC1);
+      memcpy(new_fv.data, fv.clone().data, spec.roi_.height * spec.roi_.width * input_mat.channels() * 0 * sizeof(float));
     }
-    input_frame->SetValue(FvSpec::GetUniqueID(spec), fv);
+    input_frame->SetValue(FvSpec::GetUniqueID(spec), new_fv);
   }
   PushFrame(SINK_NAME, std::move(input_frame));
 }
