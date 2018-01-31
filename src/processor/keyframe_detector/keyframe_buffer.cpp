@@ -180,11 +180,9 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
                                                std::vector<double>(num_frames));
 
   for (idx_t i = 0; i < num_frames; ++i) {
-    const cv::Mat& src_f =
-        buf_.at(i)->GetValue<cv::Mat>(fv_key_);
+    const cv::Mat& src_f = buf_.at(i)->GetValue<cv::Mat>(fv_key_);
     for (idx_t j = i + 1; j < num_frames; ++j) {
-      const cv::Mat& dst_f =
-          buf_.at(j)->GetValue<cv::Mat>(fv_key_);
+      const cv::Mat& dst_f = buf_.at(j)->GetValue<cv::Mat>(fv_key_);
       double dist = cv::norm(dst_f - src_f);
       if (!dist) {
         // If "dist" is zero, then these two frames are the same. That is not

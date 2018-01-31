@@ -190,9 +190,12 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   int width = src->shape(3);
   int total_size = height * width * num_channel;
   DType* data = src->mutable_cpu_data();
-  if(num_channel > CV_CN_MAX) {
-    LOG(WARNING) << "Caffe output channels exceeds CV_CN_MAX (" << num_channel << " > " << CV_CN_MAX << ")";
-    CHECK(height == 1 && width = 1) << "NHWC format must be disable for matrices with more than " << CV_CN_MAX << " channels and height/width != 1.";
+  if (num_channel > CV_CN_MAX) {
+    LOG(WARNING) << "Caffe output channels exceeds CV_CN_MAX (" << num_channel
+                 << " > " << CV_CN_MAX << ")";
+    CHECK(height == 1 && width = 1)
+        << "NHWC format must be disable for matrices with more than "
+        << CV_CN_MAX << " channels and height/width != 1.";
     cv::Mat ret_mat({num_channel, height, width}, CV_32F);
     memcpy(ret_mat.data, data + total_size * batch_idx,
            total_size * sizeof(DType));
@@ -205,29 +208,28 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   int per_channel_floats = src->shape(2) * src->shape(3);
   int per_channel_bytes = per_channel_floats * sizeof(DType);
   std::vector<cv::Mat> channels;
-  for(int i = 0; i < num_channel; ++i) {
-      cv::Mat cur_channel(src->shape(2), src->shape(3), CV_32F);
-      memcpy(cur_channel.data, data + per_channel_floats * i, per_channel_bytes);
-      channels.push_back(cur_channel);
+  for (int i = 0; i < num_channel; ++i) {
+    cv::Mat cur_channel(src->shape(2), src->shape(3), CV_32F);
+    memcpy(cur_channel.data, data + per_channel_floats * i, per_channel_bytes);
+    channels.push_back(cur_channel);
   }
   cv::merge(channels, ret_mat);
 
 #define DOCHECK
 #ifdef DOCHECK
-  for(int c = 0; c < num_channel; ++c) {
-    for(int h = 0; h < height; ++h) {
-      for(int w = 0; w < width; ++w) {
-        if(src->shape(1) <= CV_CN_MAX) {
-          //float lhs = ret_mat.at<float>(h, w, c);
-          DType lhs = ((DType*)ret_mat.data)[h * width * num_channel + w * num_channel + c];
+  for (int c = 0; c < num_channel; ++c) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        if (src->shape(1) <= CV_CN_MAX) {
+          // float lhs = ret_mat.at<float>(h, w, c);
+          DType lhs =
+              ((DType*)
+                   ret_mat.data)[h * width * num_channel + w * num_channel + c];
           DType rhs = src->data_at(batch_idx, c, h, w);
-          //LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs<< " vs " << lhs;
-          CHECK(lhs == rhs)
-            << "h: " << h
-            << " w: " << w
-            << " c: " << c
-            << " lhs: " << lhs
-            << " rhs: " << rhs;
+          // LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ",
+          // " << c << ") " << "Expected vs Actual: " << rhs<< " vs " << lhs;
+          CHECK(lhs == rhs) << "h: " << h << " w: " << w << " c: " << c
+                            << " lhs: " << lhs << " rhs: " << rhs;
         }
       }
     }
