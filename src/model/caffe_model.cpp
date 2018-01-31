@@ -198,13 +198,6 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
     return ret_mat;
   }
 
-  // TIMER CODE
-  std::clock_t start;
-  double duration;
-  start = std::clock();
-
-
-
   #define TRANSPOSE
   #ifdef TRANSPOSE
   // mat_size holds the axes dimensions of the blob
@@ -218,8 +211,6 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
       memcpy(cur_channel.data, data + per_channel_floats * i, per_channel_bytes);
       channels.push_back(cur_channel);
   }
-  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-  LOG(INFO) << "Copy took: " << duration << "s";
   cv::merge(channels, ret_mat);
   #endif
   #ifndef TRANSPOSE
@@ -228,11 +219,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
            total_size * sizeof(float));
   #endif
 
-  // TIMER CODE
-  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-  LOG(INFO) << "Merge took: " << duration << "s";
-  
-#undef DOCHECK
+#define DOCHECK
 #ifdef DOCHECK
   for(int c = 0; c < num_channel; ++c) {
     for(int h = 0; h < height; ++h) {
@@ -241,8 +228,8 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
           //float lhs = ret_mat.at<float>(h, w, c);
           float lhs = ((float*)ret_mat.data)[h * width * num_channel + w * num_channel + c];
           float rhs = src->data_at(batch_idx, c, h, w);
-          LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs<< " vs " << lhs;
-          CHECK(lhs - lhs * 0.001 <= rhs && lhs + lhs * 0.001 >= rhs)
+          //LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs<< " vs " << lhs;
+          CHECK(lhs == rhs)
             << "h: " << h
             << " w: " << w
             << " c: " << c

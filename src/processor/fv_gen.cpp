@@ -39,18 +39,17 @@ void FvGen::Process() {
     cv::Mat input_mat = input_frame->GetValue<cv::Mat>(spec.layer_name_);
     cv::Mat fv;
     cv::Mat new_fv;
-    if (spec.roi_.height != 0 && spec.roi_.width != 0) {
-      fv = cv::Mat(input_mat.rows, input_mat.cols,
-                   CV_32FC(input_mat.channels()));
-      fv = input_mat(spec.roi_);
-    } else {
+    if(spec.roi_.height != 0 && spec.roi_.width != 0) {
+      //fv = cv::Mat(input_mat.rows, input_mat.cols, CV_32FC(input_mat.channels()));
+      fv = cv::Mat(9216, 1, CV_32FC1);
+      //fv = input_mat(spec.roi_);
+    }
+    else {
       fv = input_mat;
     }
-    if (spec.flat_) {
-      new_fv =
-          cv::Mat(fv.rows * fv.cols * fv.channels(), 1, 1, fv.clone().data);
-      LOG(INFO) << new_fv.rows << " " << new_fv.cols << " "
-                << new_fv.channels();
+    if(spec.flat_) {
+      new_fv = cv::Mat(fv.rows * fv.cols * fv.channels(), 1, 1, fv.clone().data);
+      //LOG(INFO) << new_fv.rows << " "<< new_fv.cols << " "<< new_fv.channels();
     }
     input_frame->SetValue(FvSpec::GetUniqueID(spec), fv);
   }
