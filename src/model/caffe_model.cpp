@@ -7,6 +7,8 @@
 #include "common/context.h"
 #include "model/model_manager.h"
 
+#include <ctime>
+
 template <typename DType>
 CaffeModel<DType>::CaffeModel(const ModelDesc& model_desc, Shape input_shape,
                               size_t batch_size)
@@ -183,39 +185,76 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
                                        int batch_idx) const {
   decltype(batch_size_) batch_size = src->shape(0);
   CHECK(batch_size == batch_size_) << "Incorrect batch size";
+  int num_channel = src->shape(1);
+  int height = src->shape(2);
+  int width = src->shape(3);
+  int total_size = height * width * num_channel;
+  float* data = src->mutable_cpu_data();
+  if(num_channel > CV_CN_MAX) {
+    LOG(WARNING) << "Caffe output channels exceeds CV_CN_MAX (" << num_channel << " > " << CV_CN_MAX << ")";
+    cv::Mat ret_mat({num_channel, height, width}, CV_32F);
+    memcpy(ret_mat.data, data + total_size * batch_idx,
+           total_size * sizeof(float));
+    return ret_mat;
+  }
 
+  // TIMER CODE
+  std::clock_t start;
+  double duration;
+  start = std::clock();
+
+
+
+  #define TRANSPOSE
+  #ifdef TRANSPOSE
   // mat_size holds the axes dimensions of the blob
   // mat_size is used to construct the cv::Mat
-  std::vector<int> mat_size;
-  decltype(src->shape(0)) total_size = 1;
-  // for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
-  // mat_size.push_back(src->shape(i));
-  // total_size *= src->shape(i);
-  //}
-  // mat_size.push_back(src->shape(0));
-  mat_size.push_back(src->shape(2));
-  mat_size.push_back(src->shape(3));
-  mat_size.push_back(src->shape(1));
-  float* data = src->mutable_cpu_data();
-  // Bandaid fix for caffe nchw
-  cv::Mat ret_mat(mat_size.at(0), mat_size.at(1), CV_32FC(mat_size.at(2)));
-  // cv::Mat ret_mat(mat_size, CV_32F);
-  LOG(INFO) << ret_mat.channels();
-  LOG(INFO) << src->shape_string();
-  LOG(INFO) << ret_mat.rows << " " << ret_mat.cols << " " << ret_mat.channels();
-  // ret_mat.at<float>(1, 1, 1) = 0;
-  for (int c = 0; c < ret_mat.channels(); ++c) {
-    for (int h = 0; h < ret_mat.rows; ++h) {
-      for (int w = 0; w < ret_mat.cols; ++w) {
-        // ret_mat.at<float>(h, w, c) = src->data_at(0, c, h, w);
-        ((float*)ret_mat.data)[h * (w * c) + w * c + c] =
-            src->data_at(0, c, h, w);
+  cv::Mat ret_mat({height, width, num_channel}, CV_32F);
+  int per_channel_floats = src->shape(2) * src->shape(3);
+  int per_channel_bytes = per_channel_floats * sizeof(float);
+  std::vector<cv::Mat> channels;
+  for(int i = 0; i < src->shape(1); ++i) {
+      cv::Mat cur_channel(src->shape(2), src->shape(3), CV_32F);
+      memcpy(cur_channel.data, data + per_channel_floats * i, per_channel_bytes);
+      channels.push_back(cur_channel);
+  }
+  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+  LOG(INFO) << "Copy took: " << duration << "s";
+  cv::merge(channels, ret_mat);
+  #endif
+  #ifndef TRANSPOSE
+    cv::Mat ret_mat({num_channel, height, width}, CV_32F);
+    memcpy(ret_mat.data, data + total_size * batch_idx,
+           total_size * sizeof(float));
+  #endif
+
+  // TIMER CODE
+  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+  LOG(INFO) << "Merge took: " << duration << "s";
+  
+#undef DOCHECK
+#ifdef DOCHECK
+  for(int c = 0; c < num_channel; ++c) {
+    for(int h = 0; h < height; ++h) {
+      for(int w = 0; w < width; ++w) {
+        if(src->shape(1) <= 512) {
+          //float lhs = ret_mat.at<float>(h, w, c);
+          float lhs = ((float*)ret_mat.data)[h * width * num_channel + w * num_channel + c];
+          float rhs = src->data_at(batch_idx, c, h, w);
+          LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs<< " vs " << lhs;
+          CHECK(lhs - lhs * 0.001 <= rhs && lhs + lhs * 0.001 >= rhs)
+            << "h: " << h
+            << " w: " << w
+            << " c: " << c
+            << " lhs: " << lhs
+            << " rhs: " << rhs;
+        }
       }
     }
   }
-  LOG(INFO) << "COPY COMPLETE";
-  // memcpy(ret_mat.data, data + total_size * batch_idx,
-  // total_size * sizeof(float));
+  LOG(INFO) << "SUCCESS";
+#endif
+#undef DOCHECK
   return ret_mat;
 }
 
