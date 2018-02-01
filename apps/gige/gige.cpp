@@ -161,12 +161,12 @@ void Run(const std::string& camera_name, bool display, size_t frames_per_file) {
                   "R:" + std::to_string((int)camera->GetWBRed()) +
                   " B:" + std::to_string((int)camera->GetWBBlue()),
               row_idx++);
-      AddText(
-          image_to_show,
-          std::string() + "[M] Color: " +
-              (camera->GetPixelFormat() != CAMERA_PIXEL_FORMAT_MONO8 ? "YES"
-                                                                     : "MONO"),
-          row_idx++);
+      AddText(image_to_show,
+              std::string() + "[M] Color: " + (camera->GetPixelFormat() !=
+                                                       CAMERA_PIXEL_FORMAT_MONO8
+                                                   ? "YES"
+                                                   : "MONO"),
+              row_idx++);
 
       cv::imshow("Camera", image_to_show);
 

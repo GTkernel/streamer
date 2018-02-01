@@ -77,20 +77,21 @@ void ImageMatch::Process() {
     int height = fv.rows;
     int width = fv.cols;
     int channel = fv.channels();
-    //LOG(INFO) << height << " " << width << " " << channel;
-    //height = 6;
-    //width = 8;
-    //channel = 1024;
+    // LOG(INFO) << height << " " << width << " " << channel;
+    // height = 6;
+    // width = 8;
+    // channel = 1024;
     tensorflow::Tensor input_tensor(
         tensorflow::DT_FLOAT,
         tensorflow::TensorShape(
             {static_cast<long long>(batch_size_), height, width, channel}));
     int cur_batch_idx = 0;
     for (const auto& frame : frames_batch_) {
-      cv::Mat fv = frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
-      for(int row = 0; row < height; ++row) {
+      cv::Mat fv =
+          frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
+      for (int row = 0; row < height; ++row) {
         std::copy_n(fv.ptr<float>(row), width * channel,
-                    input_tensor.flat<float>().data() + 
+                    input_tensor.flat<float>().data() +
                         cur_batch_idx * height * width * channel +
                         row * channel * width);
       }
@@ -112,7 +113,7 @@ void ImageMatch::Process() {
     int cur_dim = (*output_tensor.shape().begin()).size;
     for (int i = 0; i < cur_dim * 2; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
-      //LOG(INFO) << prob_match;
+      // LOG(INFO) << prob_match;
       if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {

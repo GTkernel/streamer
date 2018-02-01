@@ -226,7 +226,9 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
           DType lhs = ret_mat.ptr<DType>(h)[w * num_channel + c];
           DType rhs = src->data_at(batch_idx, c, h, w);
 #if true
-          LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs << " vs " << lhs;
+          LOG(INFO) << "Checking element at: "
+                    << "(" << h << ", " << w << ", " << c << ") "
+                    << "Expected vs Actual: " << rhs << " vs " << lhs;
 #endif
           CHECK(lhs == rhs) << "h: " << h << " w: " << w << " c: " << c
                             << " lhs: " << lhs << " rhs: " << rhs;
