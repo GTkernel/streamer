@@ -59,6 +59,7 @@ class FvGen : public Processor {
 
  private:
   std::vector<FvSpec> feature_vector_specs_;
+  int honesty_level_;
 };
 
 #endif  // STREAMER_PROCESSOR_FV_GEN_H_

@@ -14,9 +14,6 @@ constexpr auto SINK_NAME = "output";
 constexpr auto MC_INPUT_NAME = "Placeholder";
 constexpr auto MC_OUTPUT_NAME = "probabilities:0";
 
-#define HACK
-//#undef HACK
-
 ImageMatch::ImageMatch(unsigned int batch_size)
     : Processor(PROCESSOR_TYPE_IMAGEMATCH, {SOURCE_NAME}, {SINK_NAME}),
       batch_size_(batch_size) {}
@@ -80,6 +77,10 @@ void ImageMatch::Process() {
     int height = fv.rows;
     int width = fv.cols;
     int channel = fv.channels();
+    //LOG(INFO) << height << " " << width << " " << channel;
+    //height = 6;
+    //width = 8;
+    //channel = 1024;
     tensorflow::Tensor input_tensor(
         tensorflow::DT_FLOAT,
         tensorflow::TensorShape(
@@ -111,6 +112,7 @@ void ImageMatch::Process() {
     int cur_dim = (*output_tensor.shape().begin()).size;
     for (int i = 0; i < cur_dim * 2; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
+      //LOG(INFO) << prob_match;
       if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {

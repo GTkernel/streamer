@@ -194,7 +194,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
     LOG(WARNING) << "Caffe output channels exceeds CV_CN_MAX (" << num_channel
                  << " > " << CV_CN_MAX << ")";
     CHECK(height == 1 && width == 1)
-        << "NHWC format must be disable for matrices with more than "
+        << "NHWC format must be disabled for matrices with more than "
         << CV_CN_MAX << " channels and height/width != 1.";
     cv::Mat ret_mat({num_channel, height, width}, CV_32F);
     memcpy(ret_mat.data, data + total_size * batch_idx,
@@ -205,11 +205,11 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   // mat_size holds the axes dimensions of the blob
   // mat_size is used to construct the cv::Mat
   cv::Mat ret_mat({height, width, num_channel}, CV_32F);
-  int per_channel_floats = src->shape(2) * src->shape(3);
+  int per_channel_floats = height * width;
   int per_channel_bytes = per_channel_floats * sizeof(DType);
   std::vector<cv::Mat> channels;
   for (int i = 0; i < num_channel; ++i) {
-    cv::Mat cur_channel(src->shape(2), src->shape(3), CV_32F);
+    cv::Mat cur_channel(height, width, CV_32F);
     memcpy(cur_channel.data, data + per_channel_floats * i, per_channel_bytes);
     channels.push_back(cur_channel);
   }
@@ -217,6 +217,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
 
 #undef DOCHECK
 #ifdef DOCHECK
+  LOG(INFO) << height << " " << width;
   for (int c = 0; c < num_channel; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
@@ -224,7 +225,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
           // float lhs = ret_mat.at<float>(h, w, c);
           DType lhs = ret_mat.ptr<DType>(h)[w * num_channel + c];
           DType rhs = src->data_at(batch_idx, c, h, w);
-#if false
+#if true
           LOG(INFO) << "Checking element at: " << "(" << h << ", " << w << ", " << c << ") " << "Expected vs Actual: " << rhs << " vs " << lhs;
 #endif
           CHECK(lhs == rhs) << "h: " << h << " w: " << w << " c: " << c
