@@ -72,11 +72,9 @@ void ImageMatch::Process() {
   if (frames_batch_.size() < batch_size_) {
     return;
   }
-
   // Calculate similarity using Micro Classifiers
   auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
   for (auto& query : query_data_) {
-    int cur_batch_idx = 0;
     cv::Mat fv = frames_batch_.at(0)->GetValue<cv::Mat>(
         FvSpec::GetUniqueID(query.second.fv_spec));
     int height = fv.rows;
@@ -86,9 +84,9 @@ void ImageMatch::Process() {
         tensorflow::DT_FLOAT,
         tensorflow::TensorShape(
             {static_cast<long long>(batch_size_), height, width, channel}));
+    int cur_batch_idx = 0;
     for (const auto& frame : frames_batch_) {
-      cv::Mat fv =
-          frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
+      cv::Mat fv = frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
       for(int row = 0; row < height; ++row) {
         std::copy_n(fv.ptr<float>(row), width * channel,
                     input_tensor.flat<float>().data() + 
@@ -111,10 +109,8 @@ void ImageMatch::Process() {
     ;
     const auto& output_tensor = outputs.at(0);
     int cur_dim = (*output_tensor.shape().begin()).size;
-    for (int i = 0; i < cur_dim; i += 2) {
+    for (int i = 0; i < cur_dim * 2; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
-      float prob_nomatch = output_tensor.flat<float>().data()[i + 1];
-      (void)prob_nomatch;
       if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {
