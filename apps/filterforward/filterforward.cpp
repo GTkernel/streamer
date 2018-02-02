@@ -134,7 +134,12 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         } else {
           net_bw_bps = 0;
         }
-        msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
+        
+        long it_micros = frame->GetValue<long>("image_transformer.micros");
+        long nne_micros = frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
+        long fug_micros = frame->GetValue<long>("fug.micros");
+        long im_micros = frame->GetValue<long>("imagematch.end_to_end_time_micros");
+        msg << net_bw_bps << "," << fps << "," << latency_micros << "," << it_micros << " " << nne_micros << " " << fug_micros << " " << im_micros;
         if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
@@ -167,7 +172,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           std::stringstream progress_ss;
           // Pad the left with 0s
           // Probably should use C++'s version of snprintf for this
-          for (unsigned long i = 0;
+          /*for (unsigned long i = 0;
                i < 30 - msg.str().substr(0, msg.str().size() - 1).size(); ++i)
             progress_ss << " ";
           progress_ss << "Progress: [";
@@ -195,8 +200,9 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             std::cout << progress_ss.str();
           }
           std::cout << std::endl;
-        }
+        }*/
 
+        std::cout << msg << std::endl;
         log << msg.str();
       }
     }
