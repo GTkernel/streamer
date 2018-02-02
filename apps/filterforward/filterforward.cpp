@@ -32,6 +32,55 @@
 #include "stream/frame.h"
 #include "stream/stream.h"
 #include "utils/string_utils.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "string.h"
+
+bool log_memory;
+int parseLine(char* line){
+    // This assumes that a digit will be found and the line ends in " Kb".
+    int i = strlen(line);
+    const char* p = line;
+    while (*p <'0' || *p > '9') p++;
+    line[i-3] = '\0';
+    i = atoi(p);
+    return i;
+}
+
+int getPhysical(){ //Note: this value is in KB!
+    if(log_memory == false)
+      return 0;
+    FILE* file = fopen("/proc/self/status", "r");
+    int result = -1;
+    char line[128];
+
+    while (fgets(line, 128, file) != NULL){
+        if (strncmp(line, "VmRSS:", 6) == 0){
+            result = parseLine(line);
+            break;
+        }
+    }
+    fclose(file);
+    return result;
+}
+
+int getVirtual(){ //Note: this value is in KB!
+    if(log_memory == false)
+      return 0;
+    FILE* file = fopen("/proc/self/status", "r");
+    int result = -1;
+    char line[128];
+
+    while (fgets(line, 128, file) != NULL){
+        if (strncmp(line, "VmSize:", 7) == 0){
+            result = parseLine(line);
+            break;
+        }
+    }
+    fclose(file);
+    return result;
+}
+
 
 typedef struct {
   int num;
@@ -139,7 +188,9 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         long nne_micros = frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
         long fug_micros = frame->GetValue<long>("fug.micros");
         long im_micros = frame->GetValue<long>("imagematch.end_to_end_time_micros");
-        msg << net_bw_bps << "," << fps << "," << latency_micros << "," << it_micros << "," << nne_micros << "," << fug_micros << "," << im_micros;
+        int physical_kb = getPhysical();
+        int virtual_kb = getVirtual();
+        msg << net_bw_bps << "," << fps << "," << latency_micros << "," << it_micros << "," << nne_micros << "," << fug_micros << "," << im_micros << "," << physical_kb << "," << virtual_kb;
         if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
@@ -167,7 +218,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_filepath << output_dir << "/ff_" << idx << "_"
     << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
   std::ofstream log_file(log_filepath.str());
-  log_file << "# network bandwidth (bps), fps, e2e latency (micros), Transformer micros, NNE micros, FV crop micros, imagematch micros"
+  log_file << "# network bandwidth (bps),fps,e2e latency (micros),Transformer micros,NNE micros,FV crop micros,imagematch micros,physical kb,virtual kb"
     << std::endl
     << log.str();
   log_file.close();
@@ -441,6 +492,7 @@ int main(int argc, char* argv[]) {
                      "The fields to send over the network");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
+  desc.add_options()("memory-usage", "Log memory usage");
   desc.add_options()("display,d", "Enable display.");
 
   // Parse the command line arguments.
@@ -486,6 +538,7 @@ int main(int argc, char* argv[]) {
       args["fields"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
   bool display = args.count("display");
+  log_memory = args.count("memory-usage");
   Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
       tokens, model, {layer}, nne_batch_size, fields, output_dir, display);
   return 0;
