@@ -71,8 +71,8 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // Designed to be run in its own thread. Creates a log file containing
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
-            std::vector<std::string> fields, const std::string& output_dir,
-            const unsigned int num_frames, bool display = false) {
+    std::vector<std::string> fields, const std::string& output_dir,
+    const unsigned int num_frames, bool display = false) {
   cv::Mat current_image;
   cv::Mat last_match = cv::Mat::zeros(640, 480, CV_32F);
   if (display) {
@@ -109,19 +109,19 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
         // Calculate the network bandwidth.
         boost::posix_time::ptime current_time =
-            boost::posix_time::microsec_clock::local_time();
+          boost::posix_time::microsec_clock::local_time();
         // Use total_microseconds() to avoid dividing by zero if less than a
         // second has passed.
         double net_bw_bps = (total_bytes * 8 /
-                             (current_time - start_time).total_microseconds()) *
-                            1000000;
+            (current_time - start_time).total_microseconds()) *
+          1000000;
 
         double fps = reader->GetHistoricalFps();
 
         long latency_micros =
-            (current_time -
-             frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
-                .total_microseconds();
+          (current_time -
+           frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
+          .total_microseconds();
 
         // Assemble log message;
         std::ostringstream msg;
@@ -134,7 +134,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         } else {
           net_bw_bps = 0;
         }
-        
+
         long it_micros = frame->GetValue<long>("image_transformer.micros");
         long nne_micros = frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
         long fug_micros = frame->GetValue<long>("fug.micros");
@@ -155,55 +155,9 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           const int progress_bar_len = 50;
           int string_pos = 0;
 
-          // Calculate current progress
-          unsigned int current_frame_id =
-              frame->GetValue<unsigned long>("frame_id");
-          std::string progress_percent;
-          float progress_fraction = 0;
-          if (num_frames != 0) {
-            progress_fraction = current_frame_id / (float)num_frames;
-            progress_percent = std::to_string(progress_fraction * 100);
-          } else {
-            progress_percent = "???????";
-            string_pos = progress_bar_len;
-          }
-
-          // Progress bar
-          std::stringstream progress_ss;
-          // Pad the left with 0s
-          // Probably should use C++'s version of snprintf for this
-          /*for (unsigned long i = 0;
-               i < 30 - msg.str().substr(0, msg.str().size() - 1).size(); ++i)
-            progress_ss << " ";
-          progress_ss << "Progress: [";
-          progress_ss << progress_percent.substr(0, 4) << "%";
-          string_pos += 5;
-          for (; string_pos < progress_bar_len * progress_fraction;
-               ++string_pos) {
-            progress_ss << "|";
-          }
-          for (; string_pos < progress_bar_len; ++string_pos) {
-            progress_ss << " ";
-          }
-          progress_ss << "] (" << current_frame_id << " / ";
-          if (num_frames != 0) {
-            progress_ss << num_frames << ")";
-          } else {
-            progress_ss << "Unknown"
-                        << ")";
-          }
-
-          // Strip newline and print
-          std::cout << msg.str().substr(0, msg.str().size() - 1);
-
-          if (idx == 0) {
-            std::cout << progress_ss.str();
-          }
-          std::cout << std::endl;
-        }*/
-
-        std::cout << msg << std::endl;
-        log << msg.str();
+          std::cout << msg.str() << std::endl;
+          log << msg.str();
+        }
       }
     }
   }
@@ -211,11 +165,11 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
   std::ostringstream log_filepath;
   log_filepath << output_dir << "/ff_" << idx << "_"
-               << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
+    << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
   std::ofstream log_file(log_filepath.str());
-  log_file << "# network bandwidth (bps), fps, e2e latency (micros)"
-           << std::endl
-           << log.str();
+  log_file << "# network bandwidth (bps), fps, e2e latency (micros), Transformer micros, NNE micros, FV crop micros, imagematch micros"
+    << std::endl
+    << log.str();
   log_file.close();
 }
 
