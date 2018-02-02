@@ -108,6 +108,7 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
   unsigned int count = 0;
   StreamReader* reader = stream->Subscribe();
   while (num_frames == 0 || ++count < num_frames + 1) {
+    LOG(INFO) << count;
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr && frame->IsStopFrame()) {
       break;
@@ -440,6 +441,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   }
 
   // Stop the processors in forward order.
+  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+  exit(0);
   for (const auto& proc : procs) {
     proc->Stop();
   }
