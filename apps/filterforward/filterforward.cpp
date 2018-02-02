@@ -139,7 +139,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         long nne_micros = frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
         long fug_micros = frame->GetValue<long>("fug.micros");
         long im_micros = frame->GetValue<long>("imagematch.end_to_end_time_micros");
-        msg << net_bw_bps << "," << fps << "," << latency_micros << "," << it_micros << " " << nne_micros << " " << fug_micros << " " << im_micros;
+        msg << net_bw_bps << "," << fps << "," << latency_micros << "," << it_micros << "," << nne_micros << "," << fug_micros << "," << im_micros;
         if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
@@ -156,7 +156,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           int string_pos = 0;
 
           std::cout << msg.str() << std::endl;
-          log << msg.str();
+          log << msg.str() << std::endl;
         }
       }
     }
