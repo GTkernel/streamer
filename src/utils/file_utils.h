@@ -12,6 +12,12 @@ inline bool FileExists(const std::string& filename) {
   return f.good();
 }
 
+inline bool DirExists(const std::string& dir) {
+  auto dir_path = boost::filesystem::path(dir);
+  return boost::filesystem::exists(dir_path) &&
+         boost::filesystem::is_directory(dir_path);
+}
+
 /**
  * @brief Get the dir part of a filename
  */
