@@ -201,7 +201,7 @@ void RunNNInferenceExperiment() {
   timer.Start();
   std::unordered_map<std::string, std::vector<cv::Mat>> input_map(
       {{model_desc.GetDefaultInputLayer(), {fake_input}}});
-  model->Evaluate(input_map, output_layers);
+  model->Evaluate(input_map, output_layers, nullptr);
   LOG(INFO) << "Inference time: " << timer.ElapsedMSec() << " ms";
 }
 
