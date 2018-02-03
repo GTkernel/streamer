@@ -228,7 +228,7 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
                           ->GetValue<boost::posix_time::time_duration>(
                               time_key_str)
                           .total_microseconds()
-                   << "\n";
+                   << std::endl;
       }
     }
   }

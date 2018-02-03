@@ -129,7 +129,7 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 
     // Subscribe before starting the processors so that we definitely do not
     // miss any frames.
-    StreamReader* reader = nne->GetSink(layer)->Subscribe();
+    StreamReader* reader = nne->GetSink()->Subscribe();
 
     // Start the Processors in reverse order.
     for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
@@ -264,29 +264,33 @@ void Run(size_t queue_size, bool block, unsigned long num_frames,
          std::vector<size_t> fv_lens, const std::string& output_dir) {
   std::cout << "Running keyframe detector experiments..." << std::endl;
 
-  double current_step = 0;
-  double total_steps = sels.size() * buf_lens.size() * nums_levels.size();
-  if (generate_fake_vishashes) {
-    total_steps *= fv_lens.size();
-  } else {
-    // Clear "fv_lens" and insert a dummy value just to make the "fv_lens" loop
-    // execute once. This value will be ignored, so it can be anything.
-    fv_lens.clear();
-    fv_lens.push_back(0);
-  }
-
   std::string fv_key;
+  std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames;
   if (generate_fake_vishashes) {
     fv_key = FAKE_FV_KEY;
   } else {
     fv_key = layer;
+    // Clear "fv_lens" and insert a dummy value just to make the "fv_lens" loop
+    // execute once. This value will be ignored, so it can be anything.
+    fv_lens.clear();
+    fv_lens.push_back(0);
+
+    // If "generate_fake_vishashes" is false, then "fv_len" will be ignored, so
+    // it can be anything.
+    frames = GenerateVishashes(queue_size, block, num_frames,
+                               generate_fake_vishashes, 0, fv_key, camera_name,
+                               model, layer, nne_batch_size);
   }
+
+  double total_steps =
+      sels.size() * buf_lens.size() * nums_levels.size() * fv_lens.size();
+  double current_step = 0;
   for (auto fv_len : fv_lens) {
-    // If "generate_fake_vishashes" is false, then "fv_len" will be ignored.
-    std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames =
-        GenerateVishashes(queue_size, block, num_frames,
-                          generate_fake_vishashes, fv_len, fv_key, camera_name,
-                          model, layer, nne_batch_size);
+    if (generate_fake_vishashes) {
+      frames = GenerateVishashes(queue_size, block, num_frames,
+                                 generate_fake_vishashes, fv_len, fv_key,
+                                 camera_name, model, layer, nne_batch_size);
+    }
 
     for (auto sel : sels) {
       for (auto buf_len : buf_lens) {
@@ -362,8 +366,7 @@ int main(int argc, char* argv[]) {
       po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
       "The numbers of levels to use. Designed to be specified multiple times.");
   desc.add_options()(
-      "fv-lens",
-      po::value<std::vector<size_t>>()->multitoken()->composing()->required(),
+      "fv-lens", po::value<std::vector<size_t>>()->multitoken()->composing(),
       "The feature vector lengths to use. Designed to be specified multiple "
       "times. Ignored if \"--fake-vishashes\" is not present.");
   desc.add_options()("output-dir", po::value<std::string>()->required(),
@@ -417,7 +420,10 @@ int main(int argc, char* argv[]) {
   std::vector<float> sels = args["sels"].as<std::vector<float>>();
   std::vector<size_t> buf_lens = args["buf-lens"].as<std::vector<size_t>>();
   std::vector<size_t> nums_levels = args["levels"].as<std::vector<size_t>>();
-  std::vector<size_t> fv_lens = args["fv-lens"].as<std::vector<size_t>>();
+  std::vector<size_t> fv_lens;
+  if (args.count("fv-lens")) {
+    fv_lens = args["fv-lens"].as<std::vector<size_t>>();
+  }
   std::string output_dir = args["output-dir"].as<std::string>();
   if (generate_fake_vishashes) {
     if (camera != "") {

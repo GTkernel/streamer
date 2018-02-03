@@ -430,7 +430,9 @@ T Frame::GetValue(std::string key) const {
   if (it != frame_data_.end()) {
     return boost::get<T>(it->second);
   } else {
-    throw std::out_of_range(key);
+    std::ostringstream msg;
+    msg << "Key \"" << key << "\" not in frame!";
+    throw std::runtime_error(msg.str());
   }
 }
 

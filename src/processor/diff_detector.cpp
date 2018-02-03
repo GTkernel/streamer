@@ -171,7 +171,7 @@ void DiffDetector::Process() {
     msg << "Dropping frame " << frame->GetValue<unsigned long>("frame_id")
         << ". Difference from ";
     if (dynamic_ref_) {
-      msg << "reference frame " << ref_id << ".";
+      msg << "reference frame " << ref_id << " ";
     } else {
       msg << "static reference image ";
     }

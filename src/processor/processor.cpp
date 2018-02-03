@@ -2,6 +2,7 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
+#include <sstream>
 #include <stdexcept>
 
 #include "processor.h"
@@ -50,7 +51,10 @@ void Processor::SetSink(const std::string& name, StreamPtr stream) {
 
 StreamPtr Processor::GetSink(const std::string& name) {
   if (sinks_.find(name) == sinks_.end()) {
-    throw std::out_of_range(name);
+    std::ostringstream msg;
+    msg << "\"" << name << "\" is not a valid sink for processor \""
+        << GetStringForProcessorType(GetType()) << "\".";
+    throw std::runtime_error(msg.str());
   }
   return sinks_.at(name);
 }
@@ -226,14 +230,24 @@ void Processor::PushFrame(const std::string& sink_name,
 }
 
 std::unique_ptr<Frame> Processor::GetFrame(const std::string& source_name) {
-  CHECK(source_frame_cache_.count(source_name) != 0);
+  if (source_frame_cache_.find(source_name) == source_frame_cache_.end()) {
+    std::ostringstream msg;
+    msg << "\""
+        << "\" is not a valid source for processor \""
+        << GetStringForProcessorType(GetType()) << "\".";
+    throw std::out_of_range(msg.str());
+  }
   return std::move(source_frame_cache_[source_name]);
 }
 
 std::unique_ptr<Frame> Processor::GetFrameDirect(
     const std::string& source_name) {
   if (readers_.find(source_name) == readers_.end()) {
-    throw std::out_of_range(source_name);
+    std::ostringstream msg;
+    msg << "\""
+        << "\" is not a valid source for processor \""
+        << GetStringForProcessorType(GetType()) << "\".";
+    throw std::out_of_range(msg.str());
   }
   return readers_.at(source_name)->PopFrame();
 }
