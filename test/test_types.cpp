@@ -86,17 +86,18 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_FACENET,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FACENET)));
+#endif  // USE_CAFFE
+#ifdef USE_TENSORFLOW
   EXPECT_EQ(PROCESSOR_TYPE_IMAGEMATCH,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGEMATCH)));
-#endif  // USE_CAFFE
+#endif  // USE_TENSORFLOW
   EXPECT_EQ(PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE)));
   EXPECT_EQ(PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FLOW_CONTROL_EXIT)));
-
 #ifdef USE_RPC
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_RECEIVER,
             GetProcessorTypeByString(
