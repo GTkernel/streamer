@@ -224,7 +224,11 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
       time_key << "kd_level_" << levels << "_micros";
       std::string time_key_str = time_key.str();
       if (frame->Count(time_key_str)) {
-        micros_log << frame->GetValue<long>(time_key_str) << "\n";
+        micros_log << frame
+                          ->GetValue<boost::posix_time::time_duration>(
+                              time_key_str)
+                          .total_microseconds()
+                   << "\n";
       }
     }
   }

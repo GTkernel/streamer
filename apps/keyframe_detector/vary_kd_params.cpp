@@ -234,7 +234,11 @@ void RunKeyframeDetector(
       time_key << "kd_level_0_micros";
       std::string time_key_str = time_key.str();
       if (frame->Count(time_key_str)) {
-        micros_log << frame->GetValue<long>(time_key_str) << std::endl;
+        micros_log << frame
+                          ->GetValue<boost::posix_time::time_duration>(
+                              time_key_str)
+                          .total_microseconds()
+                   << std::endl;
       }
     }
   }

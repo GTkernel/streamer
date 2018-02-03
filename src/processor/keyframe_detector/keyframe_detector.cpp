@@ -68,8 +68,7 @@ void KeyframeDetector::Process() {
       auto start_time_micros = boost::posix_time::microsec_clock::local_time();
       auto new_keyframes = bufs_.at(i)->Push(std::move(frame));
       auto kd_micros =
-          (boost::posix_time::microsec_clock::local_time() - start_time_micros)
-              .total_microseconds();
+          boost::posix_time::microsec_clock::local_time() - start_time_micros;
 
       bool recorded_time = false;
       // Accumulate the keyframes created by adding this frame to the level.
