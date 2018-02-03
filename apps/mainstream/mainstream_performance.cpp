@@ -94,14 +94,13 @@ static const std::string arr_r50[] = {"input_1",
                                       "activation_49/Relu",
                                       "dense_2/Softmax:0"};
 
-std::vector<std::string> layers_iv3(arr_iv3,
-                                    arr_iv3 +
-                                        sizeof(arr_iv3) / sizeof(arr_iv3[0]));
-std::vector<std::string> layers_r50(arr_r50,
-                                    arr_r50 +
-                                        sizeof(arr_r50) / sizeof(arr_r50[0]));
-std::vector<std::string> layers_mnets(
-    arr_mnets, arr_mnets + sizeof(arr_mnets) / sizeof(arr_mnets[0]));
+std::vector<std::string> layers_iv3(arr_iv3, arr_iv3 + sizeof(arr_iv3) /
+                                                           sizeof(arr_iv3[0]));
+std::vector<std::string> layers_r50(arr_r50, arr_r50 + sizeof(arr_r50) /
+                                                           sizeof(arr_r50[0]));
+std::vector<std::string> layers_mnets(arr_mnets,
+                                      arr_mnets + sizeof(arr_mnets) /
+                                                      sizeof(arr_mnets[0]));
 
 void MeasurePerformance(const std::string split_layer, int num_apps,
                         std::string file_prefix) {

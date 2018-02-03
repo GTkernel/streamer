@@ -29,58 +29,55 @@
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
 #include "processor/throttler.h"
+#include "stdio.h"
+#include "stdlib.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
-#include "utils/string_utils.h"
-#include "stdlib.h"
-#include "stdio.h"
 #include "string.h"
+#include "utils/string_utils.h"
 
 bool log_memory;
-int parseLine(char* line){
-    // This assumes that a digit will be found and the line ends in " Kb".
-    int i = strlen(line);
-    const char* p = line;
-    while (*p <'0' || *p > '9') p++;
-    line[i-3] = '\0';
-    i = atoi(p);
-    return i;
+int parseLine(char* line) {
+  // This assumes that a digit will be found and the line ends in " Kb".
+  int i = strlen(line);
+  const char* p = line;
+  while (*p < '0' || *p > '9') p++;
+  line[i - 3] = '\0';
+  i = atoi(p);
+  return i;
 }
 
-int getPhysical(){ //Note: this value is in KB!
-    if(log_memory == false)
-      return 0;
-    FILE* file = fopen("/proc/self/status", "r");
-    int result = -1;
-    char line[128];
+int getPhysical() {  // Note: this value is in KB!
+  if (log_memory == false) return 0;
+  FILE* file = fopen("/proc/self/status", "r");
+  int result = -1;
+  char line[128];
 
-    while (fgets(line, 128, file) != NULL){
-        if (strncmp(line, "VmRSS:", 6) == 0){
-            result = parseLine(line);
-            break;
-        }
+  while (fgets(line, 128, file) != NULL) {
+    if (strncmp(line, "VmRSS:", 6) == 0) {
+      result = parseLine(line);
+      break;
     }
-    fclose(file);
-    return result;
+  }
+  fclose(file);
+  return result;
 }
 
-int getVirtual(){ //Note: this value is in KB!
-    if(log_memory == false)
-      return 0;
-    FILE* file = fopen("/proc/self/status", "r");
-    int result = -1;
-    char line[128];
+int getVirtual() {  // Note: this value is in KB!
+  if (log_memory == false) return 0;
+  FILE* file = fopen("/proc/self/status", "r");
+  int result = -1;
+  char line[128];
 
-    while (fgets(line, 128, file) != NULL){
-        if (strncmp(line, "VmSize:", 7) == 0){
-            result = parseLine(line);
-            break;
-        }
+  while (fgets(line, 128, file) != NULL) {
+    if (strncmp(line, "VmSize:", 7) == 0) {
+      result = parseLine(line);
+      break;
     }
-    fclose(file);
-    return result;
+  }
+  fclose(file);
+  return result;
 }
-
 
 typedef struct {
   int num;
@@ -121,8 +118,8 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // Designed to be run in its own thread. Creates a log file containing
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
-    std::vector<std::string> fields, const std::string& output_dir,
-    const unsigned int num_frames, bool display = false) {
+            std::vector<std::string> fields, const std::string& output_dir,
+            const unsigned int num_frames, bool display = false) {
   cv::Mat current_image;
   cv::Mat last_match = cv::Mat::zeros(640, 480, CV_32F);
   if (display) {
@@ -159,19 +156,19 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
         // Calculate the network bandwidth.
         boost::posix_time::ptime current_time =
-          boost::posix_time::microsec_clock::local_time();
+            boost::posix_time::microsec_clock::local_time();
         // Use total_microseconds() to avoid dividing by zero if less than a
         // second has passed.
         double net_bw_bps = (total_bytes * 8 /
-            (current_time - start_time).total_microseconds()) *
-          1000000;
+                             (current_time - start_time).total_microseconds()) *
+                            1000000;
 
         double fps = reader->GetHistoricalFps();
 
         long latency_micros =
-          (current_time -
-           frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
-          .total_microseconds();
+            (current_time -
+             frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
+                .total_microseconds();
 
         // Assemble log message;
         std::ostringstream msg;
@@ -186,12 +183,16 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         }
 
         long it_micros = frame->GetValue<long>("image_transformer.micros");
-        long nne_micros = frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
+        long nne_micros =
+            frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
         long fug_micros = frame->GetValue<long>("fug.micros");
-        long im_micros = frame->GetValue<long>("imagematch.end_to_end_time_micros");
+        long im_micros =
+            frame->GetValue<long>("imagematch.end_to_end_time_micros");
         int physical_kb = getPhysical();
         int virtual_kb = getVirtual();
-        msg << net_bw_bps << "," << fps << "," << latency_micros << "," << it_micros << "," << nne_micros << "," << fug_micros << "," << im_micros << "," << physical_kb << "," << virtual_kb;
+        msg << net_bw_bps << "," << fps << "," << latency_micros << ","
+            << it_micros << "," << nne_micros << "," << fug_micros << ","
+            << im_micros << "," << physical_kb << "," << virtual_kb;
         if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
@@ -217,11 +218,13 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
   std::ostringstream log_filepath;
   log_filepath << output_dir << "/ff_" << idx << "_"
-    << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
+               << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
   std::ofstream log_file(log_filepath.str());
-  log_file << "# network bandwidth (bps),fps,e2e latency (micros),Transformer micros,NNE micros,FV crop micros,imagematch micros,physical kb,virtual kb"
-    << std::endl
-    << log.str();
+  log_file << "# network bandwidth (bps),fps,e2e latency (micros),Transformer "
+              "micros,NNE micros,FV crop micros,imagematch micros,physical "
+              "kb,virtual kb"
+           << std::endl
+           << log.str();
   log_file.close();
 }
 

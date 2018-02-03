@@ -121,10 +121,10 @@ CaffeModel<DType>::Evaluate(
   }
 
   // Evaluate model on input
-  //auto start_time = boost::posix_time::microsec_clock::local_time();
+  // auto start_time = boost::posix_time::microsec_clock::local_time();
   net_->Forward();
-  //long time_elapsed = (boost::posix_time::microsec_clock::local_time() - start_time).total_microseconds();
-  //LOG(INFO) << time_elapsed;
+  // long time_elapsed = (boost::posix_time::microsec_clock::local_time() -
+  // start_time).total_microseconds(); LOG(INFO) << time_elapsed;
 
   // Grab all the output layers
   std::unordered_map<std::string, std::vector<cv::Mat>> output_layers;

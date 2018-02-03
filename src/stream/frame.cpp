@@ -241,9 +241,9 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
   nlohmann::json operator()(const std::vector<char>& v) const { return v; }
 
   nlohmann::json operator()(const cv::Mat& v) const {
-    cv::FileStorage fs(".json",
-                       cv::FileStorage::WRITE | cv::FileStorage::MEMORY |
-                           cv::FileStorage::FORMAT_JSON);
+    cv::FileStorage fs(".json", cv::FileStorage::WRITE |
+                                    cv::FileStorage::MEMORY |
+                                    cv::FileStorage::FORMAT_JSON);
     fs << "cvMat" << v;
     std::string str = fs.releaseAndGetString();
 
