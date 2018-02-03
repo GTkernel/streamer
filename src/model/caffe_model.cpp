@@ -228,9 +228,10 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   int per_channel_floats = height * width;
   int per_channel_bytes = per_channel_floats * sizeof(DType);
   std::vector<cv::Mat> channels;
+  DType* cur_batch_data = data + (num_channel * per_channel_floats) * batch_idx;
   for (int i = 0; i < num_channel; ++i) {
     cv::Mat cur_channel(height, width, CV_32F);
-    memcpy(cur_channel.data, data + per_channel_floats * i, per_channel_bytes);
+    memcpy(cur_channel.data, cur_batch_data + per_channel_floats * i, per_channel_bytes);
     channels.push_back(cur_channel);
   }
   cv::merge(channels, ret_mat);
