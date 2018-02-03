@@ -237,7 +237,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
 
 #undef DOCHECK
 #ifdef DOCHECK
-  LOG(INFO) << height << " " << width;
+  LOG(INFO) << "Checking output matrix of size: " << height << "x" << width << "x" << num_channel;
   for (int c = 0; c < num_channel; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {

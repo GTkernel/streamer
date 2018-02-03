@@ -395,7 +395,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   }
   for (decltype(the_map.size()) i = 1; i < the_map.size(); ++i) {
     // Create a keyframe detector.
-    std::pair<float, size_t> kd_buf_params = buf_params.at(i);
+    std::pair<float, size_t> kd_buf_params = buf_params.at(i - 1);
     std::vector<std::pair<float, size_t>> kd_buf_params_vec = {kd_buf_params};
     fv_gen->AddFv(kd_layer_name);
     nne->PublishLayer(kd_layer_name);

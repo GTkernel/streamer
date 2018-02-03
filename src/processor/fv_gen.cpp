@@ -45,10 +45,11 @@ void FvGen::Process() {
     if (spec.roi_.height != 0 && spec.roi_.width != 0) {
       // LOG(INFO) << spec.xmin_ << " " << spec.xmax_ << " " << spec.ymin_ << "
       // " << spec.ymax_;
-      // LOG(INFO) << input_mat.rows << " " << input_mat.cols << " " <<
-      // input_mat.channels();
+      // LOG(INFO) << input_mat.rows << " " << input_mat.cols << " " << input_mat.channels();
       // LOG(INFO) << spec.roi_.x << " " << spec.roi_.width << " " <<
       // spec.roi_.y << " " << spec.roi_.height;
+      // LOG(INFO) << spec.yrange_.start << " " << spec.yrange_.end;
+      // LOG(INFO) << spec.xrange_.start << " " << spec.xrange_.end;
       for (int i = 0; i < honesty_level_; ++i) {
         fv = input_mat({spec.yrange_, spec.xrange_});
       }
@@ -83,18 +84,15 @@ void FvGen::Process() {
       fv = input_mat;
     }
     if (spec.flat_) {
+      // Suspected heap corruption occurring somewhere causing possible segfault in this block
       new_fv =
           cv::Mat(spec.roi_.height * spec.roi_.width * input_mat.channels(), 1,
                   CV_32FC1);
       memcpy(new_fv.data, fv.clone().data,
              spec.roi_.height * spec.roi_.width * input_mat.channels() * 0 *
                  sizeof(float));
-    } else {
-      new_fv = fv;
+      fv = new_fv;
     }
-    new_fv = cv::Mat({spec.roi_.height, spec.roi_.width, input_mat.channels()},
-                     CV_32F);
-    // LOG(INFO) << fv.rows << " " << fv.cols << " " << fv.channels();
     input_frame->SetValue(FvSpec::GetUniqueID(spec), fv);
   }
   long time_elapsed =

@@ -22,7 +22,16 @@ class FvSpec {
         xmax_(xmax),
         ymin_(ymin),
         ymax_(ymax),
-        flat_(flat) {}
+        flat_(flat) {
+          if(ymin == 0 && ymax == 0) {
+            LOG(INFO) << "No bounds specified for Feature Vector vertical axis, using full output";
+            yrange_ = cv::Range::all();
+          }
+          if(xmin == 0 && xmax == 0) {
+            LOG(INFO) << "No bounds specified for Feature Vector horizontal axis, using full output";
+            xrange_ = cv::Range::all();
+          }
+        }
   static std::string GetUniqueID(const FvSpec& spec);
 
  public:
@@ -42,7 +51,7 @@ class FvGen : public Processor {
   ~FvGen();
 
   void AddFv(std::string layer_name, int xmin = 0, int ymin = 0, int xmax = 0,
-             int ymax = 0, bool flat = true);
+             int ymax = 0, bool flat = false);
 
   static std::shared_ptr<FvGen> Create(const FactoryParamsType& params);
 
