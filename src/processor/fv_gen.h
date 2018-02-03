@@ -23,15 +23,17 @@ class FvSpec {
         ymin_(ymin),
         ymax_(ymax),
         flat_(flat) {
-          if(ymin == 0 && ymax == 0) {
-            LOG(INFO) << "No bounds specified for Feature Vector vertical axis, using full output";
-            yrange_ = cv::Range::all();
-          }
-          if(xmin == 0 && xmax == 0) {
-            LOG(INFO) << "No bounds specified for Feature Vector horizontal axis, using full output";
-            xrange_ = cv::Range::all();
-          }
-        }
+    if (ymin == 0 && ymax == 0) {
+      LOG(INFO) << "No bounds specified for Feature Vector vertical axis, "
+                   "using full output";
+      yrange_ = cv::Range::all();
+    }
+    if (xmin == 0 && xmax == 0) {
+      LOG(INFO) << "No bounds specified for Feature Vector horizontal axis, "
+                   "using full output";
+      xrange_ = cv::Range::all();
+    }
+  }
   static std::string GetUniqueID(const FvSpec& spec);
 
  public:
