@@ -1,3 +1,7 @@
+if (NOT USE_TENSORFLOW)
+  return ()
+endif ()
+
 MACRO(BUILD_ONE app)
   if (JEMALLOC_FOUND)
     target_link_libraries(${app} ${JAMALLOC_LIBRARIES})
