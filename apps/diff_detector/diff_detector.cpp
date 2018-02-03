@@ -14,12 +14,14 @@
 #include "processor/diff_detector.h"
 #include "processor/image_transformer.h"
 #include "processor/processor.h"
+#include "utils/file_utils.h"
 
 namespace po = boost::program_options;
 
 void Run(const std::string& camera_name, int dim, double threshold,
          bool blocked, int block_size, const std::string& weights_path,
-         bool dynamic_ref, long t_diff_frames, const std::string& ref_path) {
+         bool dynamic_ref, long t_diff_frames, const std::string& ref_path,
+         const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -53,13 +55,29 @@ void Run(const std::string& camera_name, int dim, double threshold,
   diffd->SetSource(transformer->GetSink());
   procs.push_back(diffd);
 
+  // Subscribe before starting the processors so that we definitely do not miss
+  // any frames.
+  StreamReader* reader = diffd->GetSink()->Subscribe();
+
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start();
   }
 
-  std::cout << "Press \"Enter\" to stop." << std::endl;
-  getchar();
+  std::ofstream micros_log(output_dir + "/diff_micros.txt");
+  while (true) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame != nullptr) {
+      if (frame->IsStopFrame()) {
+        break;
+      }
+
+      if (frame->Count("DiffDetector.diff_micros")) {
+        micros_log << frame->GetValue<long>("DiffDetector.diff_micros") << "\n";
+      }
+    }
+  }
+  micros_log.close();
 
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
@@ -77,7 +95,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("dim,x", po::value<int>()->required(),
                      "The square size to which the incoming frames will be "
                      "resized.");
-  desc.add_options()("threshold,h", po::value<double>()->required(),
+  desc.add_options()("threshold", po::value<double>()->required(),
                      "The difference threshold.");
   desc.add_options()("blocked,b", "Whether to use the blocked MSE algorithm.");
   desc.add_options()("block-size,s", po::value<int>(),
@@ -87,9 +105,11 @@ int main(int argc, char* argv[]) {
   desc.add_options()("dynamic-ref,d", "Use a dynamic reference image.");
   desc.add_options()("t-diff-frames,t", po::value<unsigned long>(),
                      "Time delta (in frames) to use with \"--dynamic-ref\".");
-  desc.add_options()(
-      "ref,r", po::value<std::string>(),
-      "Path to the static reference image if not using \"--dynamic-ref\".");
+  desc.add_options()("ref,r", po::value<std::string>(),
+                     "Path to the static reference image if not using "
+                     "\"--dynamic-ref\".");
+  desc.add_options()("output-dir,o", po::value<std::string>()->required(),
+                     "THe directory in which to store the results files.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -155,7 +175,10 @@ int main(int argc, char* argv[]) {
   } else {
     ref_path = args["ref"].as<std::string>();
   }
+  auto output_dir = args["output-dir"].as<std::string>();
+  CHECK(DirExists(output_dir))
+      << "\"" << output_dir << "\" is not a directory!";
 
   Run(camera_name, dim, threshold, blocked, block_size, weights_path,
-      dynamic_ref, t_diff_frames, ref_path);
+      dynamic_ref, t_diff_frames, ref_path, output_dir);
 }

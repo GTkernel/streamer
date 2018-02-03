@@ -5,10 +5,10 @@
 #include "processor/binary_file_writer.h"
 #ifdef USE_CAFFE
 #include "processor/caffe_facenet.h"
+#endif  // USE_CAFFE
 #ifdef USE_TENSORFLOW
 #include "processor/imagematch/imagematch.h"
 #endif  // USE_TENSORFLOW
-#endif  // USE_CAFFE
 #include "processor/compressor.h"
 #include "processor/db_writer.h"
 #include "processor/diff_detector.h"
@@ -64,11 +64,11 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return Facenet::Create(params);
+#endif  // USE_CAFFE
 #ifdef USE_TENSORFLOW
     case PROCESSOR_TYPE_IMAGEMATCH:
       return ImageMatch::Create(params);
 #endif  // USE_TENSORFLOW
-#endif  // USE_CAFFE
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return FlowControlEntrance::Create(params);
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
