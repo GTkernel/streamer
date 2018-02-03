@@ -80,7 +80,8 @@ template <typename DType>
 std::unordered_map<std::string, std::vector<cv::Mat>>
 CaffeModel<DType>::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
-    const std::vector<std::string>& output_layer_names, std::vector<long>* timing_data) {
+    const std::vector<std::string>& output_layer_names,
+    std::vector<long>* timing_data) {
   CHECK_EQ(input_map.size(), 1)
       << "For Caffe models, exactly one input must be provided.";
   // There is only one value in the input map, and the second entry in the pair
@@ -113,7 +114,7 @@ CaffeModel<DType>::Evaluate(
     // until the call to cv::split(). output_channels points to the correct
     // offsets in the Caffe input blob
     std::vector<cv::Mat> output_channels;
-    
+
     for (decltype(input_shape_.channel) j = 0; j < input_shape_.channel; ++j) {
       cv::Mat channel(input_shape_.height, input_shape_.width, CV_32F, data);
       output_channels.push_back(channel);
@@ -144,7 +145,7 @@ CaffeModel<DType>::Evaluate(
   long blob_copy_time =
       (boost::posix_time::microsec_clock::local_time() - start_time)
           .total_microseconds();
-  if(timing_data != nullptr) {
+  if (timing_data != nullptr) {
     timing_data->clear();
     timing_data->push_back(setup_time);
     timing_data->push_back(inference_time);

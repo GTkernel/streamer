@@ -189,10 +189,17 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             frame->GetValue<long>("imagematch.end_to_end_time_micros");
         int physical_kb = getPhysical();
         int virtual_kb = getVirtual();
-        long caffe_setup_micros = frame->GetValue<long>("caffe.setup_time_micros");
-        long caffe_inference_micros = frame->GetValue<long>("caffe.inference_time_micros");
-        long caffe_blob_micros = frame->GetValue<long>("caffe.blob_copy_time_micros");
-        msg << net_bw_bps << "," << fps << "," << latency_micros << "," << it_micros << "," << nne_micros << "," << fug_micros << "," << im_micros << "," << physical_kb << "," << virtual_kb << "," << caffe_setup_micros << "," << caffe_inference_micros << "," << caffe_blob_micros;
+        long caffe_setup_micros =
+            frame->GetValue<long>("caffe.setup_time_micros");
+        long caffe_inference_micros =
+            frame->GetValue<long>("caffe.inference_time_micros");
+        long caffe_blob_micros =
+            frame->GetValue<long>("caffe.blob_copy_time_micros");
+        msg << net_bw_bps << "," << fps << "," << latency_micros << ","
+            << it_micros << "," << nne_micros << "," << fug_micros << ","
+            << im_micros << "," << physical_kb << "," << virtual_kb << ","
+            << caffe_setup_micros << "," << caffe_inference_micros << ","
+            << caffe_blob_micros;
         if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
@@ -220,7 +227,11 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_filepath << output_dir << "/ff_" << idx << "_"
                << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
   std::ofstream log_file(log_filepath.str());
-  log_file << "# network bandwidth (bps),fps,e2e latency (micros),Transformer micros,NNE micros,FV crop micros,imagematch micros,physical kb,virtual kb,caffe setup, caffe inference, caffe blob" << std::endl << log.str();
+  log_file << "# network bandwidth (bps),fps,e2e latency (micros),Transformer "
+              "micros,NNE micros,FV crop micros,imagematch micros,physical "
+              "kb,virtual kb,caffe setup, caffe inference, caffe blob"
+           << std::endl
+           << log.str();
   log_file.close();
 }
 

@@ -88,7 +88,8 @@ class Model {
   // network
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
       const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
-      const std::vector<std::string>& output_layer_names, std::vector<long>* timing_data) = 0;
+      const std::vector<std::string>& output_layer_names,
+      std::vector<long>* timing_data) = 0;
 
  protected:
   ModelDesc model_desc_;

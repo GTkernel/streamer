@@ -124,8 +124,8 @@ void NeuralNetEvaluator::Process() {
 
   auto start_time = boost::posix_time::microsec_clock::local_time();
   std::vector<long> timing_data;
-  auto layer_outputs =
-      model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names_, &timing_data);
+  auto layer_outputs = model_->Evaluate({{input_layer_name_, cur_batch_}},
+                                        output_layer_names_, &timing_data);
   long time_elapsed =
       (boost::posix_time::microsec_clock::local_time() - start_time)
           .total_microseconds();
