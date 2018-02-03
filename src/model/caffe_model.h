@@ -16,6 +16,7 @@
  * @brief BVLC Caffe model. This model is compatible with Caffe V1
  * interfaces. It could be built on both CPU and GPU.
  */
+
 template <typename DType>
 class CaffeModel : public Model {
  public:
@@ -24,7 +25,7 @@ class CaffeModel : public Model {
   virtual void Load() override;
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
       const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
-      const std::vector<std::string>& output_layer_names) override;
+      const std::vector<std::string>& output_layer_names, std::vector<long>* timing_data) override;
 
  private:
   std::unique_ptr<caffe::Net<DType>> net_;

@@ -123,8 +123,9 @@ void NeuralNetEvaluator::Process() {
   }
 
   auto start_time = boost::posix_time::microsec_clock::local_time();
+  std::vector<long> timing_data;
   auto layer_outputs =
-      model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names_);
+      model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names_, &timing_data);
   long time_elapsed =
       (boost::posix_time::microsec_clock::local_time() - start_time)
           .total_microseconds();
@@ -140,6 +141,9 @@ void NeuralNetEvaluator::Process() {
       ret_frame->SetValue(layer_name, activations);
       ret_frame->SetValue("neural_net_evaluator.inference_time_micros",
                           time_elapsed);
+      ret_frame->SetValue("caffe.setup_time_micros", timing_data.at(0));
+      ret_frame->SetValue("caffe.inference_time_micros", timing_data.at(1));
+      ret_frame->SetValue("caffe.blob_copy_time_micros", timing_data.at(2));
     }
     PushFrame(SINK_NAME, std::move(ret_frame));
   }

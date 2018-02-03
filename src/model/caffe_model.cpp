@@ -80,7 +80,7 @@ template <typename DType>
 std::unordered_map<std::string, std::vector<cv::Mat>>
 CaffeModel<DType>::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
-    const std::vector<std::string>& output_layer_names) {
+    const std::vector<std::string>& output_layer_names, std::vector<long>* timing_data) {
   CHECK_EQ(input_map.size(), 1)
       << "For Caffe models, exactly one input must be provided.";
   // There is only one value in the input map, and the second entry in the pair
@@ -100,6 +100,7 @@ CaffeModel<DType>::Evaluate(
   cv::Scalar mean_colors = ModelManager::GetInstance().GetMeanColors();
   cv::Mat mean_image = cv::Mat(
       cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
+  auto start_time = boost::posix_time::microsec_clock::local_time();
   for (const auto& input : input_map.begin()->second) {
     // Subtract the mean image
     cv::Mat input_normalized;
@@ -112,6 +113,7 @@ CaffeModel<DType>::Evaluate(
     // until the call to cv::split(). output_channels points to the correct
     // offsets in the Caffe input blob
     std::vector<cv::Mat> output_channels;
+    
     for (decltype(input_shape_.channel) j = 0; j < input_shape_.channel; ++j) {
       cv::Mat channel(input_shape_.height, input_shape_.width, CV_32F, data);
       output_channels.push_back(channel);
@@ -119,20 +121,37 @@ CaffeModel<DType>::Evaluate(
     }
     cv::split(input_normalized, output_channels);
   }
+  long setup_time =
+      (boost::posix_time::microsec_clock::local_time() - start_time)
+          .total_microseconds();
 
   // Evaluate model on input
   //auto start_time = boost::posix_time::microsec_clock::local_time();
+  start_time = boost::posix_time::microsec_clock::local_time();
   net_->Forward();
+  long inference_time =
+      (boost::posix_time::microsec_clock::local_time() - start_time)
+          .total_microseconds();
   //long time_elapsed = (boost::posix_time::microsec_clock::local_time() - start_time).total_microseconds();
   //LOG(INFO) << time_elapsed;
 
   // Grab all the output layers
   std::unordered_map<std::string, std::vector<cv::Mat>> output_layers;
+  start_time = boost::posix_time::microsec_clock::local_time();
   for (const auto& layer : output_layer_names) {
     for (decltype(batch_size_) batch_idx = 0; batch_idx < batch_size_;
          ++batch_idx) {
       output_layers[layer].push_back(GetLayerOutput(layer, batch_idx));
     }
+  }
+  long blob_copy_time =
+      (boost::posix_time::microsec_clock::local_time() - start_time)
+          .total_microseconds();
+  if(timing_data != nullptr) {
+    timing_data->clear();
+    timing_data->push_back(setup_time);
+    timing_data->push_back(inference_time);
+    timing_data->push_back(blob_copy_time);
   }
   return output_layers;
 }

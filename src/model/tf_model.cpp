@@ -45,7 +45,7 @@ void TFModel::Load() {
 
 std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
-    const std::vector<std::string>& output_layer_names) {
+    const std::vector<std::string>& output_layer_names, std::vector<long>* timing_data) {
   CHECK_EQ(input_map.size(), 1)
       << "Specifying multiple input layers is not supported.";
 
