@@ -30,6 +30,12 @@ class DiffDetector : public Processor {
   StreamPtr GetSink();
   using Processor::GetSink;
 
+  // Signals the DiffDetector to begin logging the "frame_id" field of each
+  // approved frame to a file. The file will be written to the directory
+  // "output_dir" and will be named
+  // "diff_detector_<global/blocked>_<static/dynamic>_<threshold>.log".
+  void EnableLog(std::string output_dir);
+
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
@@ -52,10 +58,14 @@ class DiffDetector : public Processor {
   // updated dynamically).
   bool dynamic_ref_;
   // The first element in each pair is the frame id, and the second element is
-  // the image data. The frame id is included simple for debugging purposes.
+  // the image data. The frame id is included simply for debugging purposes.
   boost::circular_buffer<std::pair<unsigned long, cv::Mat>> buffer_;
   // Used when reading a static reference image from disk.
   cv::Mat ref_img_;
+
+  // If this stream is open, then the frame selection results will be written to
+  // it.
+  std::ofstream log_;
 };
 
 #endif  // STREAMER_PROCESSOR_DIFFERENCE_DETECTOR_H_

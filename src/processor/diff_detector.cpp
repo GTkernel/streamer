@@ -75,6 +75,27 @@ void DiffDetector::SetSource(StreamPtr stream) {
 
 StreamPtr DiffDetector::GetSink() { return Processor::GetSink(SINK_NAME); }
 
+void DiffDetector::EnableLog(std::string output_dir) {
+  std::string mode;
+  if (blocked_) {
+    mode = "blocked";
+  } else {
+    mode = "global";
+  }
+
+  std::string ref_type;
+  if (dynamic_ref_) {
+    ref_type = "dynamic";
+  } else {
+    ref_type = "static";
+  }
+
+  std::ostringstream filepath;
+  filepath << output_dir << "/diff_detector_" << mode << "_" << ref_type << "_"
+           << threshold_ << ".log";
+  log_.open(filepath.str());
+}
+
 bool DiffDetector::Init() { return true; }
 
 bool DiffDetector::OnStop() { return true; }
@@ -141,16 +162,20 @@ void DiffDetector::Process() {
   frame->SetValue("DiffDetector.diff_micros", diff_micros);
 
   if (diff > threshold_) {
+    if (log_.is_open()) {
+      log_ << frame->GetValue<unsigned long>("frame_id") << std::endl;
+    }
     PushFrame(SINK_NAME, std::move(frame));
   } else {
     std::ostringstream msg;
     msg << "Dropping frame " << frame->GetValue<unsigned long>("frame_id")
-        << " due to lack of significant difference (" << diff << ") from ";
+        << ". Difference from ";
     if (dynamic_ref_) {
       msg << "reference frame " << ref_id << ".";
     } else {
-      msg << "static reference image.";
+      msg << "static reference image ";
     }
+    msg << "below threshold (" << diff << " < " << threshold_ << ").";
     LOG(INFO) << msg.str();
   }
 }

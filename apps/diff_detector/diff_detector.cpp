@@ -54,6 +54,7 @@ void Run(const std::string& camera_name, int dim, double threshold,
     }
   }
   diffd->SetSource(transformer->GetSink());
+  diffd->EnableLog(output_dir);
   procs.push_back(diffd);
 
   // Subscribe before starting the processors so that we definitely do not miss
@@ -66,7 +67,6 @@ void Run(const std::string& camera_name, int dim, double threshold,
   }
 
   std::ofstream micros_log(output_dir + "/diff_micros.txt");
-  int count = 0;
   while (true) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr) {
@@ -77,12 +77,7 @@ void Run(const std::string& camera_name, int dim, double threshold,
       if (frame->Count("DiffDetector.diff_micros")) {
         auto diff_micros = frame->GetValue<boost::posix_time::time_duration>(
             "DiffDetector.diff_micros");
-        micros_log << diff_micros.total_microseconds() << "\n";
-
-        if (count % 20 == 0) {
-          LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id")
-                    << " - diff_micros: " << diff_micros;
-        }
+        micros_log << diff_micros.total_microseconds() << std::endl;
       }
     }
   }
