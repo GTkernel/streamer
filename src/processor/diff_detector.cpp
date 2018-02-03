@@ -137,8 +137,7 @@ void DiffDetector::Process() {
     diff = GlobalMse(img, ref_img);
   }
   auto diff_micros =
-      (boost::posix_time::microsec_clock::local_time() - start_time_micros)
-          .total_microseconds();
+      boost::posix_time::microsec_clock::local_time() - start_time_micros;
   frame->SetValue("DiffDetector.diff_micros", diff_micros);
 
   if (diff > threshold_) {

@@ -65,6 +65,7 @@ void Run(const std::string& camera_name, int dim, double threshold,
   }
 
   std::ofstream micros_log(output_dir + "/diff_micros.txt");
+  int count = 0;
   while (true) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr) {
@@ -73,7 +74,14 @@ void Run(const std::string& camera_name, int dim, double threshold,
       }
 
       if (frame->Count("DiffDetector.diff_micros")) {
-        micros_log << frame->GetValue<long>("DiffDetector.diff_micros") << "\n";
+        auto diff_micros = frame->GetValue<boost::posix_time::time_duration>(
+            "DiffDetector.diff_micros");
+        micros_log << diff_micros.total_microseconds() << "\n";
+
+        if (count % 20 == 0) {
+          LOG(INFO) << "Frame " << frame->GetValue<std::string>("frame_id")
+                    << " - diff_micros: " << diff_micros;
+        }
       }
     }
   }
