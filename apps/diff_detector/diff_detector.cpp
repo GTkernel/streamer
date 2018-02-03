@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 
 #include "camera/camera.h"
@@ -79,7 +80,7 @@ void Run(const std::string& camera_name, int dim, double threshold,
         micros_log << diff_micros.total_microseconds() << "\n";
 
         if (count % 20 == 0) {
-          LOG(INFO) << "Frame " << frame->GetValue<std::string>("frame_id")
+          LOG(INFO) << "Frame " << frame->GetValue<unsigned long>("frame_id")
                     << " - diff_micros: " << diff_micros;
         }
       }
