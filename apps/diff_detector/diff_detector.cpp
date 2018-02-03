@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("dim,x", po::value<int>()->required(),
                      "The square size to which the incoming frames will be "
                      "resized.");
-  desc.add_options()("threshold,h", po::value<double>()->required(),
+  desc.add_options()("threshold", po::value<double>()->required(),
                      "The difference threshold.");
   desc.add_options()("blocked,b", "Whether to use the blocked MSE algorithm.");
   desc.add_options()("block-size,s", po::value<int>(),
