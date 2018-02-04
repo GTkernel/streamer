@@ -39,6 +39,7 @@ DiffDetector::DiffDetector(double threshold, int block_size,
       block_size_(block_size),
       weights_(LoadWeights(weights_path)),
       dynamic_ref_(true),
+      t_diff_frames_(t_diff_frames),
       buffer_{t_diff_frames} {
   LOG(INFO)
       << "DiffDetector configured with blocking and dynamic reference images.";
@@ -59,6 +60,7 @@ DiffDetector::DiffDetector(double threshold, unsigned long t_diff_frames)
       threshold_(threshold),
       blocked_(false),
       dynamic_ref_(true),
+      t_diff_frames_(t_diff_frames),
       buffer_{t_diff_frames} {
   LOG(INFO) << "DiffDetector configured with global scope and dynamic "
                "reference images.";
@@ -91,8 +93,11 @@ void DiffDetector::EnableLog(std::string output_dir) {
   }
 
   std::ostringstream filepath;
-  filepath << output_dir << "/diff_detector_" << mode << "_" << ref_type << "_"
-           << threshold_ << ".log";
+  filepath << output_dir << "/diff_detector_" << mode << "_" << ref_type << "_";
+  if (dynamic_ref_) {
+    filepath << t_diff_frames_ << "_";
+  }
+  filepath << threshold_ << ".log";
   log_.open(filepath.str());
 }
 
@@ -167,6 +172,7 @@ void DiffDetector::Process() {
     }
     PushFrame(SINK_NAME, std::move(frame));
   } else {
+    /*
     std::ostringstream msg;
     msg << "Dropping frame " << frame->GetValue<unsigned long>("frame_id")
         << ". Difference from ";
@@ -177,6 +183,7 @@ void DiffDetector::Process() {
     }
     msg << "below threshold (" << diff << " < " << threshold_ << ").";
     LOG(INFO) << msg.str();
+    */
   }
 }
 

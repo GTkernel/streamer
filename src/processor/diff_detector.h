@@ -57,6 +57,7 @@ class DiffDetector : public Processor {
   // Indicates whether the reference image is a previous frame (and therefore
   // updated dynamically).
   bool dynamic_ref_;
+  unsigned long t_diff_frames_;
   // The first element in each pair is the frame id, and the second element is
   // the image data. The frame id is included simply for debugging purposes.
   boost::circular_buffer<std::pair<unsigned long, cv::Mat>> buffer_;
