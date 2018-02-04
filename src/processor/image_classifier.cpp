@@ -13,7 +13,7 @@ ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {
   std::string nne_sink_name = model_desc.GetDefaultOutputLayer();
-  StreamPtr stream = nne_->GetSink(nne_sink_name);
+  StreamPtr stream = nne_->GetSink("output");
   // Call Processor::SetSource() because NeuralNetConsumer::SetSource() would
   // set the NeuralNetEvaluator's source (because the NeuralNetEvaluator is
   // private).
@@ -55,7 +55,7 @@ void ImageClassifier::Process() {
 
   // Assign labels.
   std::vector<Prediction> predictions;
-  const cv::Mat& output = frame->GetValue<cv::Mat>("activations");
+  const cv::Mat& output = frame->GetValue<cv::Mat>("prob");
   float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
