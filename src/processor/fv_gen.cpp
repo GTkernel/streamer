@@ -5,8 +5,7 @@ constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
 FvGen::FvGen()
-    : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}),
-      honesty_level_(0) {}
+    : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}) {}
 
 FvGen::~FvGen() {}
 
@@ -14,7 +13,6 @@ void FvGen::AddFv(std::string layer_name, int xmin, int xmax, int ymin,
                   int ymax, bool flat) {
   feature_vector_specs_.push_back(
       FvSpec(layer_name, xmin, xmax, ymin, ymax, flat));
-  honesty_level_ += 1;
 }
 std::string FvSpec::GetUniqueID(const FvSpec& spec) {
   std::ostringstream ss;
@@ -50,9 +48,7 @@ void FvGen::Process() {
       // spec.roi_.width << " " << spec.roi_.y << " " << spec.roi_.height;
       // LOG(INFO) << spec.yrange_.start << " " << spec.yrange_.end;
       // LOG(INFO) << spec.xrange_.start << " " << spec.xrange_.end;
-      for (int i = 0; i < honesty_level_; ++i) {
-        fv = input_mat({spec.yrange_, spec.xrange_});
-      }
+      fv = input_mat({spec.yrange_, spec.xrange_});
       // LOG(INFO) << fv.rows << " " << fv.cols << " " << fv.channels();
       std::vector<cv::Mat> channels;
 #undef DOCHECK

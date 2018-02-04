@@ -77,7 +77,6 @@ void ImageMatch::Process() {
     int height = fv.rows;
     int width = fv.cols;
     int channel = fv.channels();
-    // LOG(INFO) << height << " " << width << " " << channel;
     // height = 6;
     // width = 8;
     // channel = 1024;

@@ -452,16 +452,16 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
   // Stop the processors in forward order.
   std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+  stopper_thread.join();
+  for (auto& t : logger_threads) {
+    t.join();
+  }
   exit(0);
   for (const auto& proc : procs) {
     proc->Stop();
   }
 
   // Join all of our helper threads.
-  stopper_thread.join();
-  for (auto& t : logger_threads) {
-    t.join();
-  }
 }
 
 int main(int argc, char* argv[]) {
@@ -482,7 +482,7 @@ int main(int argc, char* argv[]) {
                      "The size of the queues between processors.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
-  desc.add_options()("file-fps", po::value<unsigned int>()->default_value(30),
+  desc.add_options()("file-fps", po::value<unsigned int>()->default_value(0),
                      "Rate at which to read a file source (no effect if not "
                      "file source).");
   desc.add_options()("throttled-fps,i", po::value<int>()->default_value(0),

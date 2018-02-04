@@ -387,7 +387,6 @@ Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame) {}
 Frame::Frame(const Frame& frame) : Frame(frame, {}) {}
 
 Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
-  CHECK(&frame != nullptr);
   flow_control_entrance_ = frame.flow_control_entrance_;
   frame_data_ = frame.frame_data_;
 
@@ -438,6 +437,9 @@ T Frame::GetValue(std::string key) const {
 
 template <typename T>
 void Frame::SetValue(std::string key, const T& val) {
+  /*if(frame_data_.count(key) > 0) {
+    LOG(INFO) << "Warning: overwriting " << key << " in Frame";
+  }*/
   frame_data_[key] = val;
 }
 
