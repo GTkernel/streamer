@@ -169,6 +169,16 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
     ++num_frames_in_path;
   }
 
+  if (num_frames_in_path == buf_.size()) {
+    // We are trying to find as many keyframes as there are frames in our
+    // frame buffer, so we'll return all of the frames' indices.
+    std::vector<idx_t> keyframe_idxs;
+    for (idx_t i = 0; i < buf_.size(); ++i) {
+      keyframe_idxs.push_back(i);
+    }
+    return keyframe_idxs;
+  }
+
   // The number of graph edges that must be traversed by our path is one less
   // than the number of nodes in the path.
   idx_t num_steps = num_frames_in_path - 1;
