@@ -120,7 +120,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
     }*/
 
     std::cerr << num_classifiers << "," << getVirtual() << "," << getPhysical() << std::endl;
-    if(descount troy_counter++ == 10) {
+    if(destroy_counter == 20) {
       exit(0);
     }
   }
