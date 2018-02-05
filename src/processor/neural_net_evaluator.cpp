@@ -107,7 +107,7 @@ StreamPtr NeuralNetEvaluator::GetSink() {
 
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
-  auto enter_time = boost::posix_time::microsec_clock::local_time();
+  auto enter_time = boost::posix_time::microsec_clock::local_time();                                     
   cv::Mat input_mat;
   cur_batch_frames_.push_back(std::move(input_frame));
   if (cur_batch_frames_.size() < batch_size_) {
@@ -146,9 +146,9 @@ void NeuralNetEvaluator::Process() {
       ret_frame->SetValue("caffe.inference_time_micros", timing_data.at(1));
       ret_frame->SetValue("caffe.blob_copy_time_micros", timing_data.at(2));
     }
-    auto end_time = boost::posix_time::microsec_clock::local_time();
-    ret_frame->SetValue("neural_net_evaluator.enter_time", enter_time);
-    ret_frame->SetValue("neural_net_evaluator.exit_time", end_time);
+    auto end_time = boost::posix_time::microsec_clock::local_time();                                       
+    ret_frame->SetValue("neural_net_evaluator.enter_time", enter_time);                                                  
+    ret_frame->SetValue("neural_net_evaluator.exit_time", end_time);                                                     
     PushFrame(SINK_NAME, std::move(ret_frame));
   }
   cur_batch_frames_.clear();
