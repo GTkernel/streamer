@@ -54,9 +54,7 @@ void Run(const std::string& camera_name, int dim, double threshold,
     }
   }
   diffd->SetSource(transformer->GetSink());
-  if (record_perf) {
-    diffd->EnableLog(output_dir);
-  }
+  diffd->EnableLog(output_dir);
   procs.push_back(diffd);
 
   // Subscribe before starting the processors so that we definitely do not miss
@@ -68,7 +66,11 @@ void Run(const std::string& camera_name, int dim, double threshold,
     (*procs_it)->Start();
   }
 
-  std::ofstream micros_log(output_dir + "/diff_micros.txt");
+  std::ofstream micros_log;
+  if (record_perf) {
+    micros_log = std::ofstream(output_dir + "/diff_micros.txt");
+  }
+
   while (true) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr) {
@@ -83,7 +85,10 @@ void Run(const std::string& camera_name, int dim, double threshold,
       }
     }
   }
-  micros_log.close();
+
+  if (record_perf) {
+    micros_log.close();
+  }
 
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
