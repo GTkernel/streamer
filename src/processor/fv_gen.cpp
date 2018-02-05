@@ -35,6 +35,7 @@ StreamPtr FvGen::GetSink() { return Processor::GetSink(SINK_NAME); }
 void FvGen::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
   auto start_time = boost::posix_time::microsec_clock::local_time();
+
   for (auto& spec : feature_vector_specs_) {
     cv::Mat input_mat = input_frame->GetValue<cv::Mat>(spec.layer_name_);
     cv::Mat fv;
@@ -95,5 +96,8 @@ void FvGen::Process() {
       (boost::posix_time::microsec_clock::local_time() - start_time)
           .total_microseconds();
   input_frame->SetValue<long>("fug.micros", time_elapsed);
+  auto end_time = boost::posix_time::microsec_clock::local_time();                                       
+  input_frame->SetValue("fv_gen.enter_time", start_time);                                                  
+  input_frame->SetValue("fv_gen.exit_time", end_time);                                                     
   PushFrame(SINK_NAME, std::move(input_frame));
 }

@@ -42,6 +42,7 @@ bool Throttler::OnStop() { return true; }
 
 void Throttler::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
+  auto start_time = boost::posix_time::microsec_clock::local_time();
 
   if (timer_.ElapsedMSec() < delay_ms_) {
     // Drop frame.
@@ -62,6 +63,9 @@ void Throttler::Process() {
   } else {
     // Restart timer
     timer_.Start();
+    auto end_time = boost::posix_time::microsec_clock::local_time();
+    frame->SetValue("throttler.enter_time", start_time);
+    frame->SetValue("throttler.exit_time", end_time);
     PushFrame(SINK_NAME, std::move(frame));
   }
 }

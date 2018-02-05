@@ -42,11 +42,9 @@ void ImageTransformer::SetSource(StreamPtr stream) {
 StreamPtr ImageTransformer::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 void ImageTransformer::Process() {
-  Timer timer;
   auto frame = GetFrame(SOURCE_NAME);
   auto start_time = boost::posix_time::microsec_clock::local_time();
   const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
-  timer.Start();
 
   int num_channel = target_shape_.channel;
   int width = target_shape_.width;
@@ -103,12 +101,13 @@ void ImageTransformer::Process() {
   } else {
     sample_float = sample_resized;
   }
-  long time_elapsed =
-      (boost::posix_time::microsec_clock::local_time() - start_time)
-          .total_microseconds();
+  auto end_time = boost::posix_time::microsec_clock::local_time();
+  long time_elapsed = (end_time - start_time).total_microseconds();
 
   frame->SetValue("image", sample_float);
   frame->SetValue("image_transformer.micros", time_elapsed);
+  frame->SetValue("image_transformer.enter_time", start_time);
+  frame->SetValue("image_transformer.exit_time", end_time);
   PushFrame(SINK_NAME, std::move(frame));
 }
 

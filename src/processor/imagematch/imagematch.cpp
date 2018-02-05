@@ -51,9 +51,8 @@ bool ImageMatch::OnStop() { return true; }
 
 void ImageMatch::Process() {
   // Start time for benchmarking purposes
-  auto start_time = boost::posix_time::microsec_clock::local_time();
-
   auto frame = GetFrame("input");
+  auto start_time = boost::posix_time::microsec_clock::local_time();
   CHECK(frame != nullptr);
   // If no queries, Send frame with empty imagematch fields
   std::lock_guard<std::mutex> guard(query_guard_);
@@ -139,6 +138,8 @@ void ImageMatch::Process() {
     frames_batch_.at(batch_idx)->SetValue(
         "imagematch.matrix_multiply_time_micros",
         (matrix_end_time - overhead_end_time).total_microseconds());
+    frames_batch_.at(batch_idx)->SetValue("imagematch.enter_time", start_time);
+    frames_batch_.at(batch_idx)->SetValue("imagematch.exit_time", end_time);
     PushFrame(SINK_NAME, std::move(frames_batch_.at(batch_idx)));
   }
   frames_batch_.clear();
