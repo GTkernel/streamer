@@ -101,7 +101,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
   int destroy_counter = 0;
   std::cerr << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << std::endl;
   while (true) {
-    auto frame = reader->PopFrame();
+    //auto frame = reader->PopFrame();
 
     // Extract match percentage.
     /*auto probs = frame->GetValue<std::vector<double>>("probabilities");
