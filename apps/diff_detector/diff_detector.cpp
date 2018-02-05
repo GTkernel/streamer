@@ -22,7 +22,7 @@ namespace po = boost::program_options;
 void Run(const std::string& camera_name, int dim, double threshold,
          bool blocked, int block_size, const std::string& weights_path,
          bool dynamic_ref, long t_diff_frames, const std::string& ref_path,
-         const std::string& output_dir) {
+         const std::string& output_dir, bool record_perf) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -54,7 +54,9 @@ void Run(const std::string& camera_name, int dim, double threshold,
     }
   }
   diffd->SetSource(transformer->GetSink());
-  diffd->EnableLog(output_dir);
+  if (record_perf) {
+    diffd->EnableLog(output_dir);
+  }
   procs.push_back(diffd);
 
   // Subscribe before starting the processors so that we definitely do not miss
@@ -74,7 +76,7 @@ void Run(const std::string& camera_name, int dim, double threshold,
         break;
       }
 
-      if (frame->Count("DiffDetector.diff_micros")) {
+      if (record_perf && frame->Count("DiffDetector.diff_micros")) {
         auto diff_micros = frame->GetValue<boost::posix_time::time_duration>(
             "DiffDetector.diff_micros");
         micros_log << diff_micros.total_microseconds() << std::endl;
@@ -113,7 +115,10 @@ int main(int argc, char* argv[]) {
                      "Path to the static reference image if not using "
                      "\"--dynamic-ref\".");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
-                     "THe directory in which to store the results files.");
+                     "The directory in which to store the results files.");
+  desc.add_options()("record-perf",
+                     "Whether to record DiffDetector performance "
+                     "measurements.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -182,7 +187,8 @@ int main(int argc, char* argv[]) {
   auto output_dir = args["output-dir"].as<std::string>();
   CHECK(DirExists(output_dir))
       << "\"" << output_dir << "\" is not a directory!";
+  bool record_perf = args.count("record-perf");
 
   Run(camera_name, dim, threshold, blocked, block_size, weights_path,
-      dynamic_ref, t_diff_frames, ref_path, output_dir);
+      dynamic_ref, t_diff_frames, ref_path, output_dir, record_perf);
 }
