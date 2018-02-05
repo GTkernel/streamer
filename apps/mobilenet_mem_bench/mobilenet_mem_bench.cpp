@@ -98,11 +98,13 @@ void Run(const std::string& camera_name, const std::string& model_name,
   }
 
   auto reader = classifier->GetSink("output")->Subscribe();
+  int destroy_counter = 0;
+  std::cerr << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << std::endl;
   while (true) {
     auto frame = reader->PopFrame();
 
     // Extract match percentage.
-    auto probs = frame->GetValue<std::vector<double>>("probabilities");
+    /*auto probs = frame->GetValue<std::vector<double>>("probabilities");
     auto prob_percent = probs.front() * 100;
 
     // Extract tag.
@@ -115,11 +117,12 @@ void Run(const std::string& camera_name, const std::string& model_name,
       tag_name = tag;
     } else {
       tag_name = results[1];
-    }
+    }*/
 
-    std::cerr << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << std::endl;
     std::cerr << num_classifiers << "," << getVirtual() << "," << getPhysical() << std::endl;
-    exit(0);
+    if(descount troy_counter++ == 10) {
+      exit(0);
+    }
   }
 
   // Stop the processors in forward order.

@@ -55,7 +55,7 @@ void ImageClassifier::Process() {
 
   // Assign labels.
   std::vector<Prediction> predictions;
-  const cv::Mat& output = frame->GetValue<cv::Mat>("prob");
+  /*const cv::Mat& output = frame->GetValue<cv::Mat>("");
   float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
@@ -75,13 +75,13 @@ void ImageClassifier::Process() {
   }
 
   // Create and push a MetadataFrame.
-  std::vector<std::string> tags;
-  std::vector<double> probabilities;
   for (const auto& pred : predictions) {
     tags.push_back(pred.first);
     probabilities.push_back(pred.second);
   }
-
+*/
+  std::vector<std::string> tags;
+  std::vector<double> probabilities;
   frame->SetValue("tags", tags);
   frame->SetValue("probabilities", probabilities);
 
