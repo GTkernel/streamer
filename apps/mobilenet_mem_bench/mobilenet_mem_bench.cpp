@@ -99,7 +99,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
 
   auto reader = classifier->GetSink("output")->Subscribe();
   int destroy_counter = 0;
-  std::cerr << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << std::endl;
+  std::cout << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << std::endl;
   while (true) {
     //auto frame = reader->PopFrame();
 
@@ -119,7 +119,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
       tag_name = results[1];
     }*/
 
-    std::cerr << num_classifiers << "," << getVirtual() << "," << getPhysical() << std::endl;
+    std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical() << std::endl;
     if(destroy_counter == 20) {
       exit(0);
     }
