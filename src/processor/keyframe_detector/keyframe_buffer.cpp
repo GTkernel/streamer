@@ -201,7 +201,7 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
         msg << "Frames " << buf_.at(i)->GetValue<unsigned long>("frame_id")
             << " and " << buf_.at(j)->GetValue<unsigned long>("frame_id")
             << " are the same!";
-        throw std::runtime_error(msg.str());
+        LOG(WARNING) << msg.str();
       }
       direct_lens[i][j] = dist;
     }
