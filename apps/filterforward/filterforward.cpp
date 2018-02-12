@@ -134,7 +134,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
   // Loop until the stopper thread signals that we need to stop.
   while (!stopped) {
-    std::unique_ptr<Frame> frame = reader->PopFrame();
+    std::unique_ptr<Frame> frame = reader->PopFrame(100);
     if (frame == nullptr) {
       continue;
     } else if (frame->IsStopFrame()) {
@@ -197,16 +197,16 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           throttler_enter = (frame->GetValue<boost::posix_time::ptime>("throttler.enter_time") - frame_creation_time).total_microseconds();
           throttler_exit  = (frame->GetValue<boost::posix_time::ptime>("throttler.exit_time")  - frame_creation_time).total_microseconds();
         }
-        long flow_control_entrance_enter = (frame->GetValue<boost::posix_time::ptime>("flow_control_entrance.enter_time") - frame_creation_time).total_microseconds();
-        long flow_control_entrance_exit = (frame->GetValue<boost::posix_time::ptime>("flow_control_entrance.exit_time") - frame_creation_time).total_microseconds();
-        long flow_control_exit_enter = (frame->GetValue<boost::posix_time::ptime>("flow_control_exit.enter_time") - frame_creation_time).total_microseconds();
-        long flow_control_exit_exit = (frame->GetValue<boost::posix_time::ptime>("flow_control_exit.exit_time") - frame_creation_time).total_microseconds();
-        long image_transformer_enter = (frame->GetValue<boost::posix_time::ptime>("image_transformer.enter_time") - frame_creation_time).total_microseconds();
-        long image_transformer_exit = (frame->GetValue<boost::posix_time::ptime>("image_transformer.exit_time") - frame_creation_time).total_microseconds();
-        long neural_net_evaluator_enter = (frame->GetValue<boost::posix_time::ptime>("neural_net_evaluator.enter_time") - frame_creation_time).total_microseconds();
-        long neural_net_evaluator_exit = (frame->GetValue<boost::posix_time::ptime>("neural_net_evaluator.exit_time") - frame_creation_time).total_microseconds();
-        long fv_gen_enter = (frame->GetValue<boost::posix_time::ptime>("fv_gen.enter_time") - frame_creation_time).total_microseconds();
-        long fv_gen_exit = (frame->GetValue<boost::posix_time::ptime>("fv_gen.exit_time") - frame_creation_time).total_microseconds();
+        long flow_control_entrance_enter = 0;//(frame->GetValue<boost::posix_time::ptime>("flow_control_entrance.enter_time") - frame_creation_time).total_microseconds();
+        long flow_control_entrance_exit = 0;//(frame->GetValue<boost::posix_time::ptime>("flow_control_entrance.exit_time") - frame_creation_time).total_microseconds();
+        long flow_control_exit_enter = 0;//(frame->GetValue<boost::posix_time::ptime>("flow_control_exit.enter_time") - frame_creation_time).total_microseconds();
+        long flow_control_exit_exit = 0;//(frame->GetValue<boost::posix_time::ptime>("flow_control_exit.exit_time") - frame_creation_time).total_microseconds();
+        long image_transformer_enter = 0;//(frame->GetValue<boost::posix_time::ptime>("image_transformer.enter_time") - frame_creation_time).total_microseconds();
+        long image_transformer_exit = 0;//(frame->GetValue<boost::posix_time::ptime>("image_transformer.exit_time") - frame_creation_time).total_microseconds();
+        long neural_net_evaluator_enter = 0;//(frame->GetValue<boost::posix_time::ptime>("neural_net_evaluator.enter_time") - frame_creation_time).total_microseconds();
+        long neural_net_evaluator_exit = 0;//(frame->GetValue<boost::posix_time::ptime>("neural_net_evaluator.exit_time") - frame_creation_time).total_microseconds();
+        long fv_gen_enter = 0;//(frame->GetValue<boost::posix_time::ptime>("fv_gen.enter_time") - frame_creation_time).total_microseconds();
+        long fv_gen_exit = 0;//(frame->GetValue<boost::posix_time::ptime>("fv_gen.exit_time") - frame_creation_time).total_microseconds();
         long imagematch_enter = (frame->GetValue<boost::posix_time::ptime>("imagematch.enter_time") - frame_creation_time).total_microseconds();
         long imagematch_exit = (frame->GetValue<boost::posix_time::ptime>("imagematch.exit_time") - frame_creation_time).total_microseconds();
         msg << net_bw_bps << "," << fps << "," << latency_micros << ","
@@ -477,15 +477,15 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   }
 
   // Stop the processors in forward order.
-  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-  stopper_thread.join();
   for (auto& t : logger_threads) {
     t.join();
   }
-  exit(0);
+  std::terminate();
+  stopper_thread.join();
   for (const auto& proc : procs) {
     proc->Stop();
   }
+  exit(0);
 
   // Join all of our helper threads.
 }

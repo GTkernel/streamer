@@ -20,9 +20,13 @@
 #include "processor/image_classifier.h"
 #include "processor/image_transformer.h"
 
+#include "processor/neuralnet_bench.h"
+
 namespace po = boost::program_options;
 
 int num_classifiers;
+int batch_size;
+bool do_mem;
 
 int parseLine(char* line){                         
     // This assumes that a digit will be found and the line ends in " Kb".
@@ -35,6 +39,8 @@ int parseLine(char* line){
 }   
       
 int getPhysical(){ //Note: this value is in KB!
+    if(!do_mem)
+      return 0;
     FILE* file = fopen("/proc/self/status", "r");  
     int result = -1;                               
     char line[128];                                
@@ -50,6 +56,8 @@ int getPhysical(){ //Note: this value is in KB!
 }                                                  
 
 int getVirtual(){ //Note: this value is in KB!     
+    if(!do_mem)
+      return 0;
     FILE* file = fopen("/proc/self/status", "r");  
     int result = -1;
     char line[128];
@@ -80,28 +88,20 @@ void Run(const std::string& camera_name, const std::string& model_name,
   transformer->SetSource("input", camera->GetSink("output"));
   procs.push_back(transformer);
 
-  // ImageClassifier
-  std::shared_ptr<ImageClassifier> classifier;
-  std::vector<std::shared_ptr<Processor>> garbage;
-  for(int i = 0; i < num_classifiers; ++i) {
-    classifier =
-        std::make_shared<ImageClassifier>(model_desc, input_shape, 1);
-    //classifier->SetSource("input", transformer->GetSink("output"));
-    garbage.push_back(classifier);
-  }
-  procs.push_back(classifier);
-  classifier->SetSource("input", transformer->GetSink("output"));
+  std::shared_ptr<NNBench> nn_bench = std::make_shared<NNBench>(model_desc, input_shape, batch_size, num_classifiers, !do_mem);
+  procs.push_back(nn_bench);
+  nn_bench->SetSource("input", transformer->GetSink("output"));
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start();
   }
 
-  auto reader = classifier->GetSink("output")->Subscribe();
+  auto reader = nn_bench->GetSink("output")->Subscribe();
   int destroy_counter = 0;
-  std::cout << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << std::endl;
+  std::cout << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << "," << "Runtime: " << std::endl;
   while (true) {
-    //auto frame = reader->PopFrame();
+    auto frame = reader->PopFrame();
 
     // Extract match percentage.
     /*auto probs = frame->GetValue<std::vector<double>>("probabilities");
@@ -119,9 +119,11 @@ void Run(const std::string& camera_name, const std::string& model_name,
       tag_name = results[1];
     }*/
 
-    std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical() << std::endl;
-    if(destroy_counter == 20) {
-      exit(0);
+    long nnbench_micros = frame->GetValue<long>("thetime");
+    std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical() << "," << nnbench_micros << std::endl;
+    destroy_counter += 1;
+    if(destroy_counter == 500) {
+      std::terminate();
     }
   }
 
@@ -143,6 +145,10 @@ int main(int argc, char* argv[]) {
                      "The name of the model to evaluate.");
   desc.add_options()("num_classifiers,n", po::value<int>()->required(),
                      "Num classifiers");
+  desc.add_options()("batch,b", po::value<int>()->required(),
+                     "Batch size");
+  desc.add_options()("memory,a", po::value<bool>(),
+                     "memory");
   desc.add_options()("display,d", "Enable display or not");
 
   // Parse the command line arguments.
@@ -176,7 +182,10 @@ int main(int argc, char* argv[]) {
   auto camera_name = args["camera"].as<std::string>();
   auto model = args["model"].as<std::string>();
   bool display = args.count("display");
+  do_mem = args.count("memory");
   num_classifiers = args["num_classifiers"].as<int>();
+  batch_size = args["batch"].as<int>();
+  LOG(INFO) << batch_size;
   Run(camera_name, model, display);
   return 0;
 }
