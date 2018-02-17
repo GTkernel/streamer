@@ -83,13 +83,13 @@ void Run(const std::string& camera_name, const std::string& model_name,
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   auto transformer =
       std::make_shared<ImageTransformer>(input_shape, true, true);
-  transformer->SetSource("input", camera->GetSink("output"));
+  transformer->SetSource(camera->GetStream());
   procs.push_back(transformer);
 
   std::shared_ptr<NNBench> nn_bench = std::make_shared<NNBench>(
       model_desc, input_shape, batch_size, num_classifiers, !do_mem);
   procs.push_back(nn_bench);
-  nn_bench->SetSource("input", transformer->GetSink("output"));
+  nn_bench->SetSource(transformer->GetSink());
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
