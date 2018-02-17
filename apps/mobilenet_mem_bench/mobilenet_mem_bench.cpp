@@ -28,49 +28,47 @@ int num_classifiers;
 int batch_size;
 bool do_mem;
 
-int parseLine(char* line){                         
-    // This assumes that a digit will be found and the line ends in " Kb".
-    int i = strlen(line);                          
-    const char* p = line;                          
-    while (*p <'0' || *p > '9') p++;               
-    line[i-3] = '\0';                              
-    i = atoi(p);                                   
-    return i;
-}   
-      
-int getPhysical(){ //Note: this value is in KB!
-    if(!do_mem)
-      return 0;
-    FILE* file = fopen("/proc/self/status", "r");  
-    int result = -1;                               
-    char line[128];                                
-    
-    while (fgets(line, 128, file) != NULL){
-        if (strncmp(line, "VmRSS:", 6) == 0){      
-            result = parseLine(line);              
-            break;                                 
-        }                                          
-    }
-    fclose(file);
-    return result;                                 
-}                                                  
+int parseLine(char* line) {
+  // This assumes that a digit will be found and the line ends in " Kb".
+  int i = strlen(line);
+  const char* p = line;
+  while (*p < '0' || *p > '9') p++;
+  line[i - 3] = '\0';
+  i = atoi(p);
+  return i;
+}
 
-int getVirtual(){ //Note: this value is in KB!     
-    if(!do_mem)
-      return 0;
-    FILE* file = fopen("/proc/self/status", "r");  
-    int result = -1;
-    char line[128];
-    
-    while (fgets(line, 128, file) != NULL){        
-        if (strncmp(line, "VmSize:", 7) == 0){     
-            result = parseLine(line);
-            break; 
-        }   
-    }   
-    fclose(file);
-    return result;                                 
-}                                                  
+int getPhysical() {  // Note: this value is in KB!
+  if (!do_mem) return 0;
+  FILE* file = fopen("/proc/self/status", "r");
+  int result = -1;
+  char line[128];
+
+  while (fgets(line, 128, file) != NULL) {
+    if (strncmp(line, "VmRSS:", 6) == 0) {
+      result = parseLine(line);
+      break;
+    }
+  }
+  fclose(file);
+  return result;
+}
+
+int getVirtual() {  // Note: this value is in KB!
+  if (!do_mem) return 0;
+  FILE* file = fopen("/proc/self/status", "r");
+  int result = -1;
+  char line[128];
+
+  while (fgets(line, 128, file) != NULL) {
+    if (strncmp(line, "VmSize:", 7) == 0) {
+      result = parseLine(line);
+      break;
+    }
+  }
+  fclose(file);
+  return result;
+}
 
 void Run(const std::string& camera_name, const std::string& model_name,
          bool display) {
@@ -88,7 +86,8 @@ void Run(const std::string& camera_name, const std::string& model_name,
   transformer->SetSource("input", camera->GetSink("output"));
   procs.push_back(transformer);
 
-  std::shared_ptr<NNBench> nn_bench = std::make_shared<NNBench>(model_desc, input_shape, batch_size, num_classifiers, !do_mem);
+  std::shared_ptr<NNBench> nn_bench = std::make_shared<NNBench>(
+      model_desc, input_shape, batch_size, num_classifiers, !do_mem);
   procs.push_back(nn_bench);
   nn_bench->SetSource("input", transformer->GetSink("output"));
 
@@ -99,7 +98,13 @@ void Run(const std::string& camera_name, const std::string& model_name,
 
   auto reader = nn_bench->GetSink("output")->Subscribe();
   int destroy_counter = 0;
-  std::cout << "Num Classifiers" << "," << "Virtual Mem (kb)" << "," << "Physical Mem (kb)" << "," << "Runtime: " << std::endl;
+  std::cout << "Num Classifiers"
+            << ","
+            << "Virtual Mem (kb)"
+            << ","
+            << "Physical Mem (kb)"
+            << ","
+            << "Runtime: " << std::endl;
   while (true) {
     auto frame = reader->PopFrame();
 
@@ -120,9 +125,10 @@ void Run(const std::string& camera_name, const std::string& model_name,
     }*/
 
     long nnbench_micros = frame->GetValue<long>("thetime");
-    std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical() << "," << nnbench_micros << std::endl;
+    std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical()
+              << "," << nnbench_micros << std::endl;
     destroy_counter += 1;
-    if(destroy_counter == 500) {
+    if (destroy_counter == 500) {
       std::terminate();
     }
   }
@@ -145,10 +151,8 @@ int main(int argc, char* argv[]) {
                      "The name of the model to evaluate.");
   desc.add_options()("num_classifiers,n", po::value<int>()->required(),
                      "Num classifiers");
-  desc.add_options()("batch,b", po::value<int>()->required(),
-                     "Batch size");
-  desc.add_options()("memory,a", po::value<bool>(),
-                     "memory");
+  desc.add_options()("batch,b", po::value<int>()->required(), "Batch size");
+  desc.add_options()("memory,a", po::value<bool>(), "memory");
   desc.add_options()("display,d", "Enable display or not");
 
   // Parse the command line arguments.

@@ -31,15 +31,15 @@ bool FlowControlExit::OnStop() { return true; }
 
 void FlowControlExit::Process() {
   auto frame = GetFrame(SOURCE_NAME);
-  auto start_time = boost::posix_time::microsec_clock::local_time();                                     
+  auto start_time = boost::posix_time::microsec_clock::local_time();
   auto entrance = frame->GetFlowControlEntrance();
   if (entrance) {
     entrance->ReturnToken(frame->GetValue<unsigned long>("frame_id"));
     // Change the frame's FlowControlEntrance to null so that it does not try to
     // release the token again.
-    auto end_time = boost::posix_time::microsec_clock::local_time();                                       
-    frame->SetValue("flow_control_exit.enter_time", start_time);                                                  
-    frame->SetValue("flow_control_exit.exit_time", end_time);                                                     
+    auto end_time = boost::posix_time::microsec_clock::local_time();
+    frame->SetValue("flow_control_exit.enter_time", start_time);
+    frame->SetValue("flow_control_exit.exit_time", end_time);
     frame->SetFlowControlEntrance(nullptr);
   }
   PushFrame(SINK_NAME, std::move(frame));
