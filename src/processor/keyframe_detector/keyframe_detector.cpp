@@ -105,7 +105,7 @@ void KeyframeDetector::Setup(const std::string& fv_key,
     std::pair<float, size_t> params = buf_params.at(i);
     float sel = params.first;
     size_t buf_len = params.second;
-    bufs_.push_back(std::make_unique<KeyframeBuffer>(sel, buf_len, i, fv_key));
+    bufs_.push_back(std::make_unique<KeyframeBuffer>(fv_key, sel, buf_len, i));
     sinks_.insert({GetSinkName(i), StreamPtr(new Stream())});
   }
 }

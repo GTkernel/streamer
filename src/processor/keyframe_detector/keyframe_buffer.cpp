@@ -7,15 +7,15 @@
 
 #include <opencv2/opencv.hpp>
 
-KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len, size_t level,
-                               const std::string& fv_key)
-    : level_(level),
+KeyframeBuffer::KeyframeBuffer(const std::string& fv_key, float sel,
+                               size_t buf_len, size_t level)
+    : fv_key_(fv_key),
+      level_(level),
       on_first_buf_(true),
-      last_frame_processed_(0),
-      fv_key_(fv_key) {
-  CHECK(buf_len > 0) << "Buffer length must be greater than 0!";
+      last_frame_processed_(0) {
+  CHECK(buf_len > 0) << "Buffer length must be greater than 0, but is: "
+                     << buf_len;
   target_buf_len_ = buf_len;
-  count_ = 0;
 
   SetSelectivity(sel);
   // Allocate extra space for the last keyframe from the previous buffer.
@@ -92,27 +92,30 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     buf_.clear();
     buf_.push_back(std::make_unique<Frame>(keyframes.back()));
 
+    // Print a message listing the detected keyframes.
     auto num_keyframes = keyframes.size();
+    std::ostringstream msg;
+    msg << "Keyframe detector level " << level_ << " found " << num_keyframes
+        << " keyframes";
     if (num_keyframes) {
-      // Print a message listing the detected keyframes.
-      std::ostringstream msg;
-      msg << "Keyframe detector level " << level_ << " found " << num_keyframes
-          << " keyframes: { ";
+      // If we found any keyframes, then print their frame IDs.
+      msg << ": { ";
       for (auto& keyframe : keyframes) {
         msg << keyframe->GetValue<unsigned long>("frame_id") << " ";
       }
       msg << "}";
-      LOG(INFO) << msg.str();
+    }
+    LOG(INFO) << msg.str();
 
-      // Check whether the correct number of keyframes were found.
-      auto expected_num_keyframes = ceil(sel_ * target_buf_len_);
-      if (num_keyframes != expected_num_keyframes) {
-        std::ostringstream msg;
-        msg << "KeyframeBuffer found " << num_keyframes
-            << " keyframes when it should have found " << expected_num_keyframes
-            << "!";
-        throw std::runtime_error(msg.str());
-      }
+    // Check whether the correct number of keyframes were found. Do this last
+    // so that the other log statements are still printed.
+    auto expected_num_keyframes = ceil(sel_ * target_buf_len_);
+    if (num_keyframes != expected_num_keyframes) {
+      std::ostringstream msg;
+      msg << "KeyframeBuffer found " << num_keyframes
+          << " keyframes when it should have found " << expected_num_keyframes
+          << "!";
+      throw std::runtime_error(msg.str());
     }
   }
   return keyframes;
@@ -195,8 +198,8 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
       const cv::Mat& dst_f = buf_.at(j)->GetValue<cv::Mat>(fv_key_);
       double dist = cv::norm(dst_f - src_f);
       if (!dist) {
-        // If "dist" is zero, then these two frames are the same. That is not
-        // supposed to happen.
+        // If "dist" is zero, then these two frames are the same. The odds of
+        // that happening during normal operation are very small.
         std::ostringstream msg;
         msg << "Frames " << buf_.at(i)->GetValue<unsigned long>("frame_id")
             << " and " << buf_.at(j)->GetValue<unsigned long>("frame_id")
