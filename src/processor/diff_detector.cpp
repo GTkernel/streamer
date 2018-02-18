@@ -171,19 +171,6 @@ void DiffDetector::Process() {
       log_ << frame->GetValue<unsigned long>("frame_id") << std::endl;
     }
     PushFrame(SINK_NAME, std::move(frame));
-  } else {
-    /*
-    std::ostringstream msg;
-    msg << "Dropping frame " << frame->GetValue<unsigned long>("frame_id")
-        << ". Difference from ";
-    if (dynamic_ref_) {
-      msg << "reference frame " << ref_id << " ";
-    } else {
-      msg << "static reference image ";
-    }
-    msg << "below threshold (" << diff << " < " << threshold_ << ").";
-    LOG(INFO) << msg.str();
-    */
   }
 }
 
@@ -207,16 +194,11 @@ double DiffDetector::BlockedMse(cv::Mat img, cv::Mat ref_img, cv::Mat weights,
 
   LOG(INFO) << "Running blocked MSE...";
 
-  // cv::Size size = img.size();
-  // int type = img.type();
-
   cv::Mat diff;  // (size, type);
-  // If saturation does what I think, it should be fine
   cv::absdiff(img, ref_img, diff);
   diff.convertTo(diff, CV_32FC3);
   cv::Mat mult;
   cv::multiply(diff, diff, mult);
-  //  diff = diff.mul(diff);
 
   std::vector<cv::Mat> channels;
   cv::split(mult, channels);
@@ -248,6 +230,8 @@ double DiffDetector::BlockedMse(cv::Mat img, cv::Mat ref_img, cv::Mat weights,
       << "The weights matrix has a height of " << weights_height
       << ", but the image is " << num_blocks << " blocks tall!";
 
+  // TODO: Finish debugging this code. There is something terribly wrong with
+  //       we're using cv::Mats.
   double mse = 0;
   for (decltype(num_extracted_channels) i = 0; i < num_extracted_channels;
        ++i) {

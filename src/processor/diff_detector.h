@@ -45,7 +45,9 @@ class DiffDetector : public Processor {
   static double GlobalMse(cv::Mat img, cv::Mat ref_img);
   static double BlockedMse(cv::Mat img, cv::Mat ref_img, cv::Mat weights,
                            int block_size);
+  // Load the weights used in the blocked difference detector.
   static cv::Mat LoadWeights(const std::string& weights_path);
+  // Load the static reference image.
   static cv::Mat ReadRefImg(const std::string& ref_path);
 
   double threshold_;
