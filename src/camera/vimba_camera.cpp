@@ -499,7 +499,6 @@ void VimbaCamera::StartCapture() {
       BUFFER_SIZE,
       VmbAPI::IFrameObserverPtr(new VimbaCameraFrameObserver(this)));
 
-  // camera_->AcquireMultipleImages
   // White balance auto
   VmbAPI::FeaturePtr pFeature;
   VmbErrorType error;

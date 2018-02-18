@@ -26,15 +26,12 @@ namespace VmbAPI = AVT::VmbAPI;
 
 class VimbaCameraFrameObserver;
 
-class ExposureControl;
-
 /**
  * @brief A class for AlliedVision camera, the name Vimba comes from
  * AlliedVision's Vimba SDK.
  */
 class VimbaCamera : public Camera {
   friend class VimbaCameraFrameObserver;
-  friend class ExposureControl;
 
  public:
   VimbaCamera(const std::string& name, const std::string& video_uri, int width,
@@ -73,8 +70,6 @@ class VimbaCamera : public Camera {
   virtual int GetROIOffsetY() override;
   virtual Shape GetROIOffsetShape() override;
 
-  enum VimbaCameraMode { ASYNCHRONOUS_MODE = 0, SYNCHRONOUS_MODE };
-
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
@@ -94,8 +89,6 @@ class VimbaCamera : public Camera {
 
   VmbAPI::VimbaSystem& vimba_system_;
   VmbAPI::CameraPtr camera_;
-
-  ExposureControl* exposure_control_;
 };
 
 #endif  // STREAMER_CAMERA_VIMBA_CAMERA_H_
