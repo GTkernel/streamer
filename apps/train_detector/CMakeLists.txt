@@ -27,9 +27,9 @@ set_source_files_properties(${framesdb_sources}
   PROPERTIES COMPILE_FLAGS -Wno-implicit-fallthrough)
 
 add_executable(train_detector EXCLUDE_FROM_ALL
-  train_detector.cpp
+  # train_detector.cpp
   litesql_writer.cpp
   litesql_writer.h
   ${framesdb_sources})
 
-BUILD_ONE(train_detector)
+# BUILD_ONE(train_detector)
