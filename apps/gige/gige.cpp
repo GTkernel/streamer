@@ -12,6 +12,7 @@
 
 #include "gige_file_writer.h"
 #include "streamer.h"
+#include "utils/time_utils.h"
 
 namespace po = boost::program_options;
 
@@ -234,8 +235,8 @@ void Run(const std::string& camera_name, bool display, size_t frames_per_file) {
         } else if (k == 'M') {
           camera->SetPixelFormat(CAMERA_PIXEL_FORMAT_RAW12);
         } else if (k == 'R') {
-          std::string output_directory = GetCurrentTimeString(
-              camera->GetName() + "-streamer-%Y%m%d-%H%M%S");
+          std::string output_directory =
+              camera->GetName() + "-streamer-" + GetCurrentDateTimeString();
           file_writer->SetDirectory(output_directory);
           file_writer->Start();
           WriteCameraInfo(camera, output_directory);

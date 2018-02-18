@@ -12,26 +12,24 @@ ENDMACRO()
 
 # Generate stubs for litesql database library
 set(framesdb_sources
-  "${CMAKE_CURRENT_BINARY_DIR}/framesdatabase.cpp"
-  "${CMAKE_CURRENT_BINARY_DIR}/framesdatabase.hpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/framesdb.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/framesdb.hpp"
   )
 
 add_custom_command(
   OUTPUT ${framesdb_sources}
-  COMMAND litesql-gen -t c++ --output-dir=${CMAKE_CURRENT_BINARY_DIR} framesdb.xml
+  COMMAND litesql-gen -t c++
+    --output-dir=${CMAKE_CURRENT_BINARY_DIR} framesdb.xml
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set_source_files_properties(${framesdb_sources} PROPERTIES COMPILE_FLAGS -Wno-implicit-fallthrough)
+set_source_files_properties(${framesdb_sources}
+  PROPERTIES COMPILE_FLAGS -Wno-implicit-fallthrough)
 
-add_executable(train_detector_publisher EXCLUDE_FROM_ALL
-  train_detector_publisher.cpp)
-
-add_executable(train_detector_subscriber EXCLUDE_FROM_ALL
-  train_detector_subscriber.cpp
-  db_filewriter.cpp
-  db_filewriter.h
+add_executable(train_detector EXCLUDE_FROM_ALL
+  train_detector.cpp
+  litesql_writer.cpp
+  litesql_writer.h
   ${framesdb_sources})
 
-BUILD_ONE(train_detector_publisher)
-BUILD_ONE(train_detector_subscriber)
+BUILD_ONE(train_detector)

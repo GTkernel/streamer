@@ -3,6 +3,7 @@
 
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
+#include "processor/buffer.h"
 #ifdef USE_CAFFE
 #include "processor/caffe_facenet.h"
 #endif  // USE_CAFFE
@@ -39,6 +40,7 @@
 #include "processor/strider.h"
 #include "processor/temporal_region_selector.h"
 #include "processor/throttler.h"
+#include "processor/train_detector.h"
 #include "video/gst_video_encoder.h"
 
 std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
@@ -46,6 +48,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
   switch (type) {
     case PROCESSOR_TYPE_BINARY_FILE_WRITER:
       return BinaryFileWriter::Create(params);
+    case PROCESSOR_TYPE_BUFFER:
+      return Buffer::Create(params);
     case PROCESSOR_TYPE_CAMERA:
       return CameraManager::GetInstance().GetCamera(params.at("camera_name"));
     case PROCESSOR_TYPE_COMPRESSOR:
@@ -113,6 +117,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return TemporalRegionSelector::Create(params);
     case PROCESSOR_TYPE_THROTTLER:
       return Throttler::Create(params);
+    case PROCESSOR_TYPE_TRAIN_DETECTOR:
+      return TrainDetector::Create(params);
     case PROCESSOR_TYPE_INVALID:
       LOG(FATAL) << "Cannot instantiate a Processor of type: "
                  << GetStringForProcessorType(type);

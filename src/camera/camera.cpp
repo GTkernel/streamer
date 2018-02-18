@@ -3,11 +3,13 @@
 //
 
 #include "camera.h"
+
 #include <stdexcept>
 
 #include "common/types.h"
 #include "utils/time_utils.h"
-#include "utils/utils.h"
+
+const char* Camera::kCaptureTimeMicrosKey = "capture_time_micros";
 
 Camera::Camera(const std::string& name, const std::string& video_uri, int width,
                int height)
@@ -68,7 +70,7 @@ bool Camera::Capture(cv::Mat& image) {
 std::string Camera::GetCameraInfo() {
   std::ostringstream ss;
   ss << "name: " << GetName() << "\n";
-  ss << "record time: " << GetCurrentTimeString("%Y%m%d-%H%M%S") << "\n";
+  ss << "record time: " << GetCurrentDateTimeString() << "\n";
   ss << "image size: " << GetImageSize().width << "x" << GetImageSize().height
      << "\n";
   ss << "pixel format: " << GetCameraPixelFormatString(GetPixelFormat())
@@ -80,7 +82,7 @@ std::string Camera::GetCameraInfo() {
 
 void Camera::MetadataToFrame(std::unique_ptr<Frame>& frame) {
   frame->SetValue("frame_id", CreateFrameID());
-  frame->SetValue("capture_time_micros",
+  frame->SetValue(kCaptureTimeMicrosKey,
                   boost::posix_time::microsec_clock::local_time());
   frame->SetValue("CameraSettings.Exposure", GetExposure());
   frame->SetValue("CameraSettings.Sharpness", GetSharpness());

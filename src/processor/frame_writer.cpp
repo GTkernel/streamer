@@ -9,17 +9,19 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/filesystem.hpp>
 
+#include "camera/camera.h"
 #include "stream/frame.h"
+#include "utils/time_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
 
 FrameWriter::FrameWriter(const std::unordered_set<std::string> fields,
                          const std::string& output_dir, const FileFormat format,
                          bool save_fields_separately, bool organize_by_time,
                          unsigned long frames_per_dir)
-    : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {}),
+    : Processor(PROCESSOR_TYPE_FRAME_WRITER, {SOURCE_NAME}, {SINK_NAME}),
       fields_(fields),
       format_(format),
       save_fields_separately_(save_fields_separately),
@@ -57,6 +59,8 @@ void FrameWriter::SetSource(StreamPtr stream) {
   Processor::SetSource(SOURCE_NAME, stream);
 }
 
+StreamPtr FrameWriter::GetSink() { return Processor::GetSink(SINK_NAME); }
+
 bool FrameWriter::Init() { return true; }
 
 bool FrameWriter::OnStop() { return true; }
@@ -67,11 +71,10 @@ void FrameWriter::Process() {
   auto frame_to_write = std::make_unique<Frame>(frame, fields_);
 
   auto capture_time_micros =
-      frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
+      frame->GetValue<boost::posix_time::ptime>(Camera::kCaptureTimeMicrosKey);
   std::ostringstream base_filepath;
   base_filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
-                << boost::posix_time::to_iso_extended_string(
-                       capture_time_micros);
+                << GetDateTimeString(capture_time_micros);
 
   if (save_fields_separately_) {
     // Create a separate file for each field.
@@ -153,6 +156,8 @@ void FrameWriter::Process() {
                  << "\".";
     }
   }
+
+  PushFrame(SINK_NAME, std::move(frame));
 }
 
 std::string FrameWriter::GetExtension() {

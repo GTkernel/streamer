@@ -1,32 +1,27 @@
-// This application attaches to a published frame stream, stores the frames on
-// disk, and displays them.
+// This application stores frames that contain trains.
 
 #include <atomic>
 #include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
-#include <opencv2/opencv.hpp>
 
 #include "camera/camera.h"
-#include "common/context.h"
-#include "common/types.h"
+#include "camera/camera_manager.h"
+#include "litesql_writer.h"
 #include "processor/compressor.h"
 #include "processor/frame_writer.h"
 #include "processor/jpeg_writer.h"
-#include "processor/pubsub/frame_subscriber.h"
+#include "processor/throttler.h"
+#include "processor/train_detector.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
-#include "utils/image_utils.h"
 
 namespace po = boost::program_options;
-
-constexpr auto FIELD_TO_DISPLAY = "original_image";
 
 // Whether the pipeline has been stopped.
 std::atomic<bool> stopped(false);
@@ -49,20 +44,45 @@ void ProgressTracker(StreamPtr stream) {
   reader->UnSubscribe();
 }
 
-void Run(const std::string& publish_url,
+void Run(const std::string& camera_name, double fps,
+         unsigned long num_leading_frames, unsigned long num_trailing_frames,
+         const std::string& roi_mask_path, double threshold,
          std::unordered_set<std::string> fields_to_save,
          bool save_fields_separately, bool save_original_bytes, bool compress,
-         bool save_jpegs, const std::string& output_dir, bool display,
-         unsigned int angle, float zoom) {
+         bool save_jpegs, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
-  // Create FrameSubscriber.
-  auto subscriber = std::make_shared<FrameSubscriber>(publish_url);
-  procs.push_back(subscriber);
+  // Create Camera.
+  std::shared_ptr<Camera> camera =
+      CameraManager::GetInstance().GetCamera(camera_name);
+  procs.push_back(camera);
 
-  StreamPtr stream = subscriber->GetSink();
+  StreamPtr camera_stream = camera->GetStream();
+  // This will be a linear pipeline because the LiteSqlWriter requires the
+  // guarantee that for a given frame, all save operations (metadata, demosaiced
+  // image, jpeg, etc.) must have finished before it executes. "stream" refers
+  // to the current endpoint of the pipeline while it is being constructed, and
+  // will be reset as new processors are added.
+  StreamPtr stream = camera_stream;
+  if (fps != 0) {
+    // Create Throttler to decrease camera FPS to desired (high) FPS, in case
+    // the camera is capturing faster than the train detection algorithm can
+    // handle).
+    auto throttler = std::make_shared<Throttler>(fps);
+    throttler->SetSource(stream);
+    procs.push_back(throttler);
+    stream = throttler->GetSink();
+  }
+
+  // Create TrainDetector. Connect to Throttler.
+  auto detector = std::make_shared<TrainDetector>(
+      num_leading_frames, num_trailing_frames, roi_mask_path, threshold);
+  detector->SetSource(stream);
+  procs.push_back(detector);
+  stream = detector->GetSink();
+
   if (!fields_to_save.empty()) {
-    // Create FrameWriter for frame fields (i.e., metadata).
+    // Create FrameWriter for frame fields (I.e., metadata).
     auto frame_writer = std::make_shared<FrameWriter>(
         fields_to_save, output_dir, FrameWriter::FileFormat::JSON,
         save_fields_separately, true);
@@ -86,6 +106,7 @@ void Run(const std::string& publish_url,
         FrameWriter::FileFormat::BINARY, save_fields_separately, true);
     image_writer->SetSource(stream);
     procs.push_back(image_writer);
+    stream = image_writer->GetSink();
   }
 
   if (save_jpegs) {
@@ -94,34 +115,24 @@ void Run(const std::string& publish_url,
         std::make_shared<JpegWriter>("original_image", output_dir, true);
     jpeg_writer->SetSource(stream);
     procs.push_back(jpeg_writer);
+    stream = jpeg_writer->GetSink();
   }
 
+  // Create LiteSqlWriter.
+  auto litesql_writer = std::make_shared<LiteSqlWriter>(output_dir);
+  litesql_writer->SetSource(stream);
+  procs.push_back(litesql_writer);
+
   std::thread progress_thread =
-      std::thread([stream] { ProgressTracker(stream); });
-  StreamReader* reader = subscriber->GetSink()->Subscribe();
+      std::thread([camera_stream] { ProgressTracker(camera_stream); });
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start();
   }
 
-  std::cout << "Press \"q\" to stop." << std::endl;
-
-  while (true) {
-    // Pop frames and display them.
-    auto frame = reader->PopFrame();
-    if (display && (frame != nullptr)) {
-      // Extract image and display it.
-      const cv::Mat& img = frame->GetValue<cv::Mat>(FIELD_TO_DISPLAY);
-      cv::Mat img_resized;
-      cv::resize(img, img_resized, cv::Size(), zoom, zoom);
-      RotateImage(img_resized, angle);
-      cv::imshow(FIELD_TO_DISPLAY, img_resized);
-
-      if (cv::waitKey(10) == 'q') break;
-    }
-  }
-  reader->UnSubscribe();
+  std::cout << "Press \"Enter\" to stop." << std::endl;
+  getchar();
 
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
@@ -134,14 +145,28 @@ void Run(const std::string& publish_url,
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Subscribes to, saves, and displays a stream");
+  po::options_description desc("Saves frames containing trains");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()("config-dir,C", po::value<std::string>(),
                      "The directory containing Streamer's config files.");
-  desc.add_options()("publish-url,u",
-                     po::value<std::string>()->default_value("127.0.0.1:5536"),
-                     "The URL (host:port) on which the frame stream is being "
-                     "published.");
+  desc.add_options()("camera,c", po::value<std::string>()->required(),
+                     "The name of the camera to use.");
+  desc.add_options()("fps,f", po::value<double>()->default_value(0),
+                     ("The desired maximum rate of the published stream. The "
+                      "actual rate may be less. An fps of 0 disables "
+                      "throttling."));
+  desc.add_options()("num-leading-frames",
+                     po::value<unsigned long>()->default_value(100),
+                     "The number of frames to save from before each train "
+                     "appears.");
+  desc.add_options()("num-trailing-frames",
+                     po::value<unsigned long>()->default_value(100),
+                     "The number of frames to save from after each train "
+                     "appears.");
+  desc.add_options()("roi-mask,m", po::value<std::string>()->required(),
+                     "The path to the ROI mask file.");
+  desc.add_options()("threshold,t", po::value<double>()->default_value(0.5),
+                     "The train detection threshold.");
   desc.add_options()("fields-to-save",
                      po::value<std::vector<std::string>>()
                          ->multitoken()
@@ -152,19 +177,14 @@ int main(int argc, char* argv[]) {
                      "Whether to save each frame field in a separate file.");
   desc.add_options()("save-original-bytes",
                      "Whether to save the uncompressed, demosaiced image.");
-  desc.add_options()("compress,c",
+  desc.add_options()("compress",
                      "Whether to compress the \"original_bytes\" field.");
   desc.add_options()("save-jpegs",
                      "Whether to save a JPEG of the "
                      "\"original_image\" field.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      ("The root directory of the image storage database."));
-  desc.add_options()("display,d", "Whether to display the frames.");
-  desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
-                     "Angle to rotate image for display; Must be 0, 90, 180, "
-                     "or 270.");
-  desc.add_options()("zoom,z", po::value<float>()->default_value(1.0),
-                     "Zoom factor by which to scale image for display.");
+  // TODO: Integrate remaining TrainDetector parameters.
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -195,30 +215,24 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  auto publish_url = args["publish-url"].as<std::string>();
+  auto camera_name = args["camera"].as<std::string>();
+  auto fps = args["fps"].as<double>();
+  auto num_leading_frames = args["num-leading-frames"].as<unsigned long>();
+  auto num_trailing_frames = args["num-trailing-frames"].as<unsigned long>();
+  auto roi_mask_path = args["roi-mask"].as<std::string>();
+  auto threshold = args["threshold"].as<double>();
   auto fields_to_save = args["fields-to-save"].as<std::vector<std::string>>();
   bool save_fields_separately = args.count("save-fields-separately");
   bool save_original_bytes = args.count("save-original-bytes");
   bool compress = args.count("compress");
   bool save_jpegs = args.count("save-jpegs");
   auto output_dir = args["output-dir"].as<std::string>();
-  bool display = args.count("display");
 
-  auto angles = std::set<unsigned int>{0, 90, 180, 270};
-  auto angle = args["rotate"].as<unsigned int>();
-  if (angles.find(angle) == angles.end()) {
-    std::cerr << "Error: \"--rotate\" angle must be 0, 90, 180, or 270."
-              << std::endl;
-    std::cerr << std::endl;
-    std::cout << desc << std::endl;
-    return 1;
-  }
-  auto zoom = args["zoom"].as<float>();
-
-  Run(publish_url,
+  Run(camera_name, fps, num_leading_frames, num_trailing_frames, roi_mask_path,
+      threshold,
       std::unordered_set<std::string>{fields_to_save.begin(),
                                       fields_to_save.end()},
       save_fields_separately, save_original_bytes, compress, save_jpegs,
-      output_dir, display, angle, zoom);
+      output_dir);
   return 0;
 }
