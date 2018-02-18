@@ -178,7 +178,7 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
     nne->SetSource(transformer->GetSink("output"));
     nne->SetBlockOnPush(block);
     procs.push_back(nne);
-    vishash_stream = nne->GetSink(layer);
+    vishash_stream = nne->GetSink();
   }
 
   // Create KeyframeDetector.

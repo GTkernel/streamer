@@ -179,11 +179,10 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
 
 void RunKeyframeDetector(
     std::shared_ptr<std::vector<std::unique_ptr<Frame>>> frames,
-    const std::string& fv_key, size_t queue_size, bool block, float sel,
-    size_t buf_len, size_t levels, bool generate_fake_vishashes,
+    const std::string& fv_key, size_t queue_size, bool block, size_t fv_len,
+    float sel, size_t buf_len, size_t levels, bool generate_fake_vishashes,
     const std::string& output_dir) {
   CHECK(frames->size() > 0) << "Evaluating using zero frames!";
-  auto fv_len = frames->at(0)->GetValue<cv::Mat>(fv_key).total();
 
   std::vector<std::shared_ptr<Processor>> procs;
   StreamPtr frame_stream = std::make_shared<Stream>();
@@ -218,6 +217,8 @@ void RunKeyframeDetector(
   micros_filepath << output_dir << "/keyframe_detector_" << sel << "_"
                   << buf_len << "_" << levels;
   if (generate_fake_vishashes) {
+    // If we're generating fake vishashes, then we know the length of the
+    // feature vectors we're using.
     micros_filepath << "_" << fv_len;
   }
   micros_filepath << "_micros.txt";
@@ -285,7 +286,7 @@ void Run(size_t queue_size, bool block, unsigned long num_frames,
   double total_steps =
       sels.size() * buf_lens.size() * nums_levels.size() * fv_lens.size();
   double current_step = 0;
-  for (auto fv_len : fv_lens) {
+  for (const auto fv_len : fv_lens) {
     if (generate_fake_vishashes) {
       frames = GenerateVishashes(queue_size, block, num_frames,
                                  generate_fake_vishashes, fv_len, fv_key,
@@ -315,8 +316,8 @@ void Run(size_t queue_size, bool block, unsigned long num_frames,
           boost::filesystem::path output_subdir_path(output_subdir_str);
           boost::filesystem::create_directory(output_subdir_path);
 
-          RunKeyframeDetector(frames, fv_key, queue_size, block, sel, buf_len,
-                              levels, generate_fake_vishashes,
+          RunKeyframeDetector(frames, fv_key, queue_size, block, sel, fv_len,
+                              buf_len, levels, generate_fake_vishashes,
                               output_subdir_str);
         }
       }
