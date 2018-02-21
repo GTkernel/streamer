@@ -82,11 +82,10 @@ void NNBench::Process() {
   std::vector<std::thread> threads;
   std::map<std::string, std::vector<cv::Mat>> input_map;
   input_map[input_layer_name_] = cur_batch_;
-    CHECK(models_.size() == classifiers_);
-    for(int i = 0; i < models_.size(); ++i) {
-      models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}},
-                                            {LAYER}, nullptr);
-    }
+  CHECK(models_.size() == classifiers_);
+  for(int i = 0; i < models_.size(); ++i) {
+    models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}},
+                                          {LAYER}, nullptr);
   }
   long time_elapsed =
       (boost::posix_time::microsec_clock::local_time() - start_time)
