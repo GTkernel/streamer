@@ -12,6 +12,7 @@
 
 #include <glog/logging.h>
 #include <gst/gst.h>
+#include <boost/asio.hpp>
 #include <boost/date_time.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -306,12 +307,53 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_file.close();
 }
 
+void Slack(StreamPtr stream) {
+  boost::asio::ip::tcp::iostream slack_stream;
+  std::string url =
+      "https://hooks.slack.com/services/T2PN4MBJM/B9C2KMBA4/"
+      "rv1AtWczBTBOXveei5fStm68";
+  slack_stream.connect(url, "http");
+
+  StreamReader* reader = stream->Subscribe();
+  while (!stopped) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame == nullptr) {
+      continue;
+    } else if (frame->IsStopFrame()) {
+      // We still need to check for stop frames, even though the stopper thread
+      // is watching for stop frames at the highest level.
+      break;
+    } else {
+      if (frame->Count("imagematch.matches")) {
+        if (frame->GetValue<std::vector<int>>("imagematch.matches").size()) {
+          std::string msg =
+              "{\"text\":\"This is a test of the new *train webhook*.\nThe "
+              "image: <http://imgs.xkcd.com/comics/regex_golf.png|frame>\"}";
+
+          // Post on slack.
+          slack_stream << "POST /title/ HTTP/1.0 \r\n";
+          slack_stream << "Host: " << url << " \r\n";
+          slack_stream << "User-Agent: C/1.0";
+          slack_stream << "Content-Type: application/json \r\n";
+          slack_stream << "Accept: */* \r\n";
+          slack_stream << "Content-Length: " << msg.length() << " \r\n";
+          slack_stream << "Connection: close \r\n\r\n";
+          slack_stream << msg;
+          slack_stream.flush();
+        }
+      }
+    }
+  }
+
+  reader->UnSubscribe();
+}
+
 void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          size_t queue_size, const std::string& camera_name,
          unsigned int file_fps, int throttled_fps, unsigned int tokens,
          const std::string& model, std::vector<std::string> layers,
          size_t nne_batch_size, std::vector<std::string> fields,
-         const std::string& output_dir, bool display) {
+         const std::string& output_dir, bool display, bool slack) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -512,6 +554,12 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   std::thread stopper_thread(
       [fc_exit_sink, num_frames] { Stopper(fc_exit_sink, num_frames); });
 
+  // Launch Slack thread
+  std::thread slack_thread;
+  if (slack) {
+    slack_thread = std::thread([fc_exit_sink] { Slack(fc_exit_sink); });
+  }
+
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start(queue_size);
@@ -522,17 +570,18 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   }
 
   // Stop the processors in forward order.
-  for (auto& t : logger_threads) {
-    t.join();
-  }
-  std::terminate();
-  stopper_thread.join();
   for (const auto& proc : procs) {
     proc->Stop();
   }
-  exit(0);
 
   // Join all of our helper threads.
+  for (auto& t : logger_threads) {
+    t.join();
+  }
+  stopper_thread.join();
+  if (slack_thread.joinable()) {
+    slack_thread.join();
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -578,6 +627,7 @@ int main(int argc, char* argv[]) {
                      "The directory in which to write output files.");
   desc.add_options()("memory-usage", "Log memory usage");
   desc.add_options()("display,d", "Enable display.");
+  desc.add_options()("slack", "Enable Slack notifications for matched frames.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -621,9 +671,11 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> fields =
       args["fields"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  bool display = args.count("display");
   log_memory = args.count("memory-usage");
+  bool display = args.count("display");
+  bool slack = args.count("slack");
   Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
-      tokens, model, {layer}, nne_batch_size, fields, output_dir, display);
+      tokens, model, {layer}, nne_batch_size, fields, output_dir, display,
+      slack);
   return 0;
 }
