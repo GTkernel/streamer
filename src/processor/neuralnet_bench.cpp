@@ -7,8 +7,8 @@
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
-//#define LAYER "dense_2/Sigmoid:0"
-#define LAYER "prob"
+#define LAYER "dense_2/Sigmoid:0"
+//#define LAYER "prob"
 
 NNBench::NNBench(const ModelDesc& model_desc, const Shape& input_shape,
                  size_t batch_size, int num_classifiers, bool run)
@@ -20,7 +20,7 @@ NNBench::NNBench(const ModelDesc& model_desc, const Shape& input_shape,
       run_(run) {
   // Load model.
   auto& manager = ModelManager::GetInstance();
-  for (int i = 0; i < num_classifiers; ++i) {
+  for(int i = 0; i < num_classifiers; ++i) {
     auto model = manager.CreateModel(model_desc, input_shape_, batch_size_);
     model->Load();
     models_.push_back(std::move(model));
@@ -82,12 +82,10 @@ void NNBench::Process() {
   std::vector<std::thread> threads;
   std::map<std::string, std::vector<cv::Mat>> input_map;
   input_map[input_layer_name_] = cur_batch_;
-  std::vector<std::string> oln = {LAYER};
-  if (true) {
     CHECK(models_.size() == classifiers_);
-    for (int i = 0; i < models_.size(); ++i) {
-      models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}}, {LAYER},
-                              nullptr);
+    for(int i = 0; i < models_.size(); ++i) {
+      models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}},
+                                            {LAYER}, nullptr);
     }
   }
   long time_elapsed =
