@@ -20,8 +20,11 @@ NNBench::NNBench(const ModelDesc& model_desc, const Shape& input_shape,
       run_(run) {
   // Load model.
   auto& manager = ModelManager::GetInstance();
-  model_ = manager.CreateModel(model_desc, input_shape_, batch_size_);
-  model_->Load();
+  for(int i = 0; i < num_classifiers; ++i) {
+    auto model = manager.CreateModel(model_desc, input_shape_, batch_size_);
+    model->Load();
+    models_.push_back(std::move(model));
+  }
 }
 
 NNBench::~NNBench() {}
@@ -42,7 +45,7 @@ bool NNBench::OnStop() { return true; }
 void NNBench::SetSource(const std::string& name, StreamPtr stream,
                         const std::string& layername) {
   if (layername == "") {
-    input_layer_name_ = model_->GetModelDesc().GetDefaultInputLayer();
+    input_layer_name_ = models_.at(0)->GetModelDesc().GetDefaultInputLayer();
   } else {
     input_layer_name_ = layername;
   }
@@ -80,9 +83,11 @@ void NNBench::Process() {
   std::map<std::string, std::vector<cv::Mat>> input_map;
   input_map[input_layer_name_] = cur_batch_;
   std::vector<std::string> oln = {LAYER};
-  if (run_) {
-    for (int i = 0; i < classifiers_; ++i) {
-      model_->Evaluate({{input_layer_name_, cur_batch_}}, {LAYER}, nullptr);
+  if(run_) {
+    CHECK(models_.size() == classifiers_);
+    for(int i = 0; i < models_.size(); ++i) {
+      models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}},
+                                            {LAYER}, nullptr);
     }
   }
   long time_elapsed =
