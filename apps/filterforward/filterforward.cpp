@@ -10,9 +10,10 @@
 #include <utility>
 #include <vector>
 
+#include <curl/curl.h>
 #include <glog/logging.h>
 #include <gst/gst.h>
-#include <boost/asio.hpp>
+// #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -308,11 +309,16 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 }
 
 void Slack(StreamPtr stream) {
-  boost::asio::ip::tcp::iostream slack_stream;
+  // boost::asio::ip::tcp::iostream slack_stream;
   std::string url =
       "https://hooks.slack.com/services/T2PN4MBJM/B9C2KMBA4/"
       "rv1AtWczBTBOXveei5fStm68";
-  slack_stream.connect(url, "http");
+  // slack_stream.connect(url, "http");
+
+  CURL* curl;
+  CURLcode res;
+
+  curl_global_init(CURL_GLOBAL_ALL);
 
   StreamReader* reader = stream->Subscribe();
   while (!stopped) {
@@ -331,20 +337,30 @@ void Slack(StreamPtr stream) {
               "image: <http://imgs.xkcd.com/comics/regex_golf.png|frame>\"}";
 
           // Post on slack.
-          slack_stream << "POST /title/ HTTP/1.0 \r\n";
-          slack_stream << "Host: " << url << " \r\n";
-          slack_stream << "User-Agent: C/1.0";
-          slack_stream << "Content-Type: application/json \r\n";
-          slack_stream << "Accept: */* \r\n";
-          slack_stream << "Content-Length: " << msg.length() << " \r\n";
-          slack_stream << "Connection: close \r\n\r\n";
-          slack_stream << msg;
-          slack_stream.flush();
+          // slack_stream << "POST /title/ HTTP/1.0 \r\n";
+          // slack_stream << "Host: " << url << " \r\n";
+          // slack_stream << "User-Agent: C/1.0";
+          // slack_stream << "Content-Type: application/json \r\n";
+          // slack_stream << "Accept: */* \r\n";
+          // slack_stream << "Content-Length: " << msg.length() << " \r\n";
+          // slack_stream << "Connection: close \r\n\r\n";
+          // slack_stream << msg;
+          // slack_stream.flush();
+
+          curl = curl_easy_init();
+          if (curl) {
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg.c_str());
+            res = curl_easy_perform(curl);
+            if (res != CURLE_OK) {
+              LOG(INFO) << "Curl failed: " << curl_easy_strerror(res);
+            }
+          }
         }
       }
     }
   }
-
+  curl_global_cleanup();
   reader->UnSubscribe();
 }
 
