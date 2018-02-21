@@ -83,7 +83,7 @@ void NNBench::Process() {
   std::map<std::string, std::vector<cv::Mat>> input_map;
   input_map[input_layer_name_] = cur_batch_;
   std::vector<std::string> oln = {LAYER};
-  if(run_) {
+  if(true) {
     CHECK(models_.size() == classifiers_);
     for(int i = 0; i < models_.size(); ++i) {
       models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}},
