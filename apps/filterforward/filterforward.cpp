@@ -7,13 +7,13 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include <curl/curl.h>
 #include <glog/logging.h>
 #include <gst/gst.h>
-// #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -25,8 +25,10 @@
 #include "model/model_manager.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
+#include "processor/frame_writer.h"
 #include "processor/image_transformer.h"
 #include "processor/imagematch/imagematch.h"
+#include "processor/jpeg_writer.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
@@ -38,48 +40,14 @@
 #include "string.h"
 #include "utils/string_utils.h"
 
-bool log_memory;
-int parseLine(char* line) {
-  // This assumes that a digit will be found and the line ends in " Kb".
-  int i = strlen(line);
-  const char* p = line;
-  while (*p < '0' || *p > '9') p++;
-  line[i - 3] = '\0';
-  i = atoi(p);
-  return i;
-}
+namespace po = boost::program_options;
 
-int getPhysical() {  // Note: this value is in KB!
-  if (log_memory == false) return 0;
-  FILE* file = fopen("/proc/self/status", "r");
-  int result = -1;
-  char line[128];
+constexpr auto JPEG_WRITER_FIELD = "original_image";
+std::unordered_set<std::string> FRAME_WRITER_FIELDS({"frame_id",
+                                                     "capture_time_micros"});
 
-  while (fgets(line, 128, file) != NULL) {
-    if (strncmp(line, "VmRSS:", 6) == 0) {
-      result = parseLine(line);
-      break;
-    }
-  }
-  fclose(file);
-  return result;
-}
-
-int getVirtual() {  // Note: this value is in KB!
-  if (log_memory == false) return 0;
-  FILE* file = fopen("/proc/self/status", "r");
-  int result = -1;
-  char line[128];
-
-  while (fgets(line, 128, file) != NULL) {
-    if (strncmp(line, "VmSize:", 7) == 0) {
-      result = parseLine(line);
-      break;
-    }
-  }
-  fclose(file);
-  return result;
-}
+// Used to signal all threads that the pipeline should stop.
+std::atomic<bool> stopped(false);
 
 typedef struct {
   int num;
@@ -93,13 +61,37 @@ typedef struct {
   float threshold;
 } query_spec_t;
 
-std::string kd_layer_name;
 std::unordered_map<int, std::vector<query_spec_t>> the_map;
 
-namespace po = boost::program_options;
+int ParseMemInfoLine(char* line) {
+  // This assumes that a digit will be found and the line ends in " Kb".
+  int i = strlen(line);
+  const char* p = line;
+  while (*p < '0' || *p > '9') p++;
+  line[i - 3] = '\0';
+  i = atoi(p);
+  return i;
+}
 
-// Used to signal all threads that the pipeline should stop.
-std::atomic<bool> stopped(false);
+int GetMemoryInfoKB(std::string key) {
+  FILE* file = fopen("/proc/self/status", "r");
+  int result = -1;
+  char line[128];
+
+  std::string full_key = key + ":";
+  while (fgets(line, 128, file) != NULL) {
+    if (strncmp(line, full_key.c_str(), full_key.length()) == 0) {
+      result = ParseMemInfoLine(line);
+      break;
+    }
+  }
+  fclose(file);
+  return result;
+}
+
+int GetPhysicalKB() { return GetMemoryInfoKB("VmRSS"); }
+
+int GetVirtualKB() { return GetMemoryInfoKB("VmSize"); }
 
 // Designed to be run in its own thread. Sets "stopped" to true after num_frames
 // have been processed or after a stop frame has been detected.
@@ -120,7 +112,8 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             std::vector<std::string> fields, const std::string& output_dir,
-            const unsigned int num_frames, bool display = false) {
+            const unsigned int num_frames, bool log_memory,
+            bool display = false) {
   cv::Mat current_image;
   cv::Mat last_match = cv::Mat::zeros(640, 480, CV_32F);
   if (display) {
@@ -189,8 +182,14 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         long fug_micros = frame->GetValue<long>("fug.micros");
         long im_micros =
             frame->GetValue<long>("imagematch.end_to_end_time_micros");
-        int physical_kb = getPhysical();
-        int virtual_kb = getVirtual();
+
+        int physical_kb = 0;
+        int virtual_kb = 0;
+        if (log_memory) {
+          physical_kb = GetPhysicalKB();
+          virtual_kb = GetVirtualKB();
+        }
+
         long caffe_setup_micros =
             frame->GetValue<long>("caffe.setup_time_micros");
         long caffe_inference_micros =
@@ -355,7 +354,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          unsigned int file_fps, int throttled_fps, unsigned int tokens,
          const std::string& model, std::vector<std::string> layers,
          size_t nne_batch_size, std::vector<std::string> fields,
-         const std::string& output_dir, bool display, bool slack) {
+         const std::string& output_dir, bool save_matches, bool log_memory,
+         bool display, bool slack) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -364,6 +364,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
   // Parse the ff_conf file.
   bool on_first_line = true;
+  std::vector<std::string> kd_fv_keys;
   std::vector<std::pair<float, size_t>> buf_params;
   std::ifstream ff_conf_file(ff_conf);
   std::string line;
@@ -380,7 +381,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
     float sel = std::stof(args.at(0));
     unsigned long buf_len = std::stoul(args.at(1));
-    kd_layer_name = args.at(2);
+    std::string kd_fv_key = args.at(2);
     for (decltype(args.size()) i = 3; i < args.size();) {
       CHECK(i + 8 < args.size()) << "Malformed configuration file";
       the_map[level_counter].push_back(query_spec_t());
@@ -401,6 +402,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     if (on_first_line) {
       on_first_line = false;
     } else {
+      kd_fv_keys.push_back(kd_fv_key);
       buf_params.push_back({sel, (size_t)buf_len});
       msg << "selectivity: " << sel << ", buffer length: " << buf_len << ", ";
     }
@@ -494,12 +496,29 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   procs.push_back(fc_exit);
 
   // Create a logger thread to calculate statistics about the first ImageMatch
-  // level's output stream.
+  // level's output stream. This Logger also might display the frames.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
-  logger_threads.push_back(std::thread([fc_exit_sink, log_time, fields,
-                                        output_dir, num_frames, display] {
-    Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames, display);
-  }));
+  logger_threads.push_back(
+      std::thread([fc_exit_sink, log_time, fields, output_dir, num_frames,
+                   log_memory, display] {
+        Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames,
+               log_memory, display);
+      }));
+
+  if (save_matches) {
+    // Create JpegWriter.
+    auto jpeg_writer =
+        std::make_shared<JpegWriter>(JPEG_WRITER_FIELD, output_dir, true);
+    jpeg_writer->SetSource(fc_exit_sink);
+    procs.push_back(jpeg_writer);
+
+    // Create FrameWriter.
+    auto frame_writer = std::make_shared<FrameWriter>(
+        FRAME_WRITER_FIELDS, output_dir, FrameWriter::FileFormat::JSON, false,
+        true);
+    frame_writer->SetSource(fc_exit_sink);
+    procs.push_back(frame_writer);
+  }
 
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
   StreamPtr kd_input_stream = fvgen_stream;
@@ -510,12 +529,12 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   }
   for (decltype(the_map.size()) i = 1; i < the_map.size(); ++i) {
     // Create a keyframe detector.
+    std::string kd_fv_key = kd_fv_keys.at(i - 1);
     std::pair<float, size_t> kd_buf_params = buf_params.at(i - 1);
     std::vector<std::pair<float, size_t>> kd_buf_params_vec = {kd_buf_params};
-    fv_gen->AddFv(kd_layer_name);
-    nne->PublishLayer(kd_layer_name);
-    auto kd =
-        std::make_shared<KeyframeDetector>(kd_layer_name, kd_buf_params_vec);
+    fv_gen->AddFv(kd_fv_key);
+    nne->PublishLayer(kd_fv_key);
+    auto kd = std::make_shared<KeyframeDetector>(kd_fv_key, kd_buf_params_vec);
     kd->SetSource(kd_input_stream);
     kd->SetBlockOnPush(block);
     procs.push_back(kd);
@@ -545,10 +564,11 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     // Create a logger thread to calculate statistics about ImageMatch's output
     // stream.
     StreamPtr additional_im_sink = additional_im->GetSink();
-    logger_threads.push_back(std::thread(
-        [i, additional_im_sink, log_time, fields, output_dir, num_frames] {
+    logger_threads.push_back(
+        std::thread([i, additional_im_sink, log_time, fields, output_dir,
+                     num_frames, log_memory] {
           Logger(i + 1, additional_im_sink, log_time, fields, output_dir,
-                 num_frames);
+                 num_frames, log_memory);
         }));
   }
 
@@ -627,7 +647,10 @@ int main(int argc, char* argv[]) {
                      "The fields to send over the network");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
-  desc.add_options()("memory-usage", "Log memory usage");
+  desc.add_options()(
+      "save-matches",
+      "Save JPEGs of frames matched by the first level of the hierarchy.");
+  desc.add_options()("memory-usage", "Log memory usage.");
   desc.add_options()("display,d", "Enable display.");
   desc.add_options()("slack", "Enable Slack notifications for matched frames.");
 
@@ -673,11 +696,12 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> fields =
       args["fields"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
-  log_memory = args.count("memory-usage");
+  bool save_matches = args.count("save-matches");
+  bool log_memory = args.count("memory-usage");
   bool display = args.count("display");
   bool slack = args.count("slack");
   Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
-      tokens, model, {layer}, nne_batch_size, fields, output_dir, display,
-      slack);
+      tokens, model, {layer}, nne_batch_size, fields, output_dir, save_matches,
+      log_memory, display, slack);
   return 0;
 }
