@@ -63,8 +63,9 @@ typedef struct {
 
 std::unordered_map<int, std::vector<query_spec_t>> the_map;
 
+// Extracts a numeric digit from the line, assuming that a digit exists and the
+// line ends in " kB".
 int ParseMemInfoLine(char* line) {
-  // This assumes that a digit will be found and the line ends in " Kb".
   int i = strlen(line);
   const char* p = line;
   while (*p < '0' || *p > '9') p++;
@@ -73,14 +74,14 @@ int ParseMemInfoLine(char* line) {
   return i;
 }
 
+// Returns the value of a memory-related key from "/proc/self/status" (in KB).
 int GetMemoryInfoKB(std::string key) {
   FILE* file = fopen("/proc/self/status", "r");
   int result = -1;
   char line[128];
 
-  std::string full_key = key + ":";
   while (fgets(line, 128, file) != NULL) {
-    if (strncmp(line, full_key.c_str(), full_key.length()) == 0) {
+    if (strncmp(line, key.c_str(), key.length()) == 0) {
       result = ParseMemInfoLine(line);
       break;
     }
@@ -89,8 +90,10 @@ int GetMemoryInfoKB(std::string key) {
   return result;
 }
 
+// Returns the physical memory usage (in KB) of the current process.
 int GetPhysicalKB() { return GetMemoryInfoKB("VmRSS"); }
 
+// Returns the virtual memory usage (in KB) of the current process.
 int GetVirtualKB() { return GetMemoryInfoKB("VmSize"); }
 
 // Designed to be run in its own thread. Sets "stopped" to true after num_frames
