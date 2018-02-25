@@ -60,8 +60,6 @@ void BinaryFileWriter::Process() {
   } catch (boost::bad_get& e) {
     LOG(FATAL) << "Unable to get field \"" << field_
                << "\" as an std::vector<char>: " << e.what();
-  } catch (std::out_of_range& e) {
-    LOG(FATAL) << "Field \"" << field_ << "\" not in frame.";
   }
   try {
     file.write((char*)bytes.data(), bytes.size());

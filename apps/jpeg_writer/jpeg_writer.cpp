@@ -43,6 +43,8 @@ void Run(const std::string& camera_name, bool resize, int x_dim, int y_dim,
 
   std::string field_to_save;
   if (resize) {
+    // The ImageTransformer is hardcorded to store the resized image at the key
+    // "image".
     field_to_save = "image";
   } else {
     field_to_save = field;

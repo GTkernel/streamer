@@ -48,22 +48,20 @@ bool JpegWriter::OnStop() { return true; }
 void JpegWriter::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
 
-  auto capture_time_micros =
-      frame->GetValue<boost::posix_time::ptime>(Camera::kCaptureTimeMicrosKey);
-  std::ostringstream filepath;
-  filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
-           << GetDateTimeString(capture_time_micros) << "_" << field_ << ".jpg";
-  std::string filepath_s = filepath.str();
-
   cv::Mat img;
   try {
     img = frame->GetValue<cv::Mat>(field_);
   } catch (boost::bad_get& e) {
     LOG(FATAL) << "Unable to get field \"" << field_
                << "\" as a cv::Mat: " << e.what();
-  } catch (std::out_of_range& e) {
-    LOG(FATAL) << "Field \"" << field_ << "\" not in frame.";
   }
+
+  auto capture_time_micros =
+      frame->GetValue<boost::posix_time::ptime>(Camera::kCaptureTimeMicrosKey);
+  std::ostringstream filepath;
+  filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
+           << GetDateTimeString(capture_time_micros) << "_" << field_ << ".jpg";
+  std::string filepath_s = filepath.str();
   try {
     cv::imwrite(filepath_s, img);
   } catch (cv::Exception& e) {
