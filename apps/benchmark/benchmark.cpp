@@ -103,10 +103,8 @@ void RunEndToEndExperiment() {
       std::string output_filename = CONFIG.camera_names.at(i) + ".mp4";
 
       std::shared_ptr<GstVideoEncoder> encoder(
-          new GstVideoEncoder(cameras.at(i)->GetWidth(),
-                              cameras.at(i)->GetHeight(), output_filename));
-      encoder->SetSource("input",
-                         classifier->GetSink("output" + std::to_string(0)));
+          new GstVideoEncoder("original_image", output_filename));
+      encoder->SetSource(classifier->GetSink("output" + std::to_string(0)));
       encoders.push_back(encoder);
     }
   }

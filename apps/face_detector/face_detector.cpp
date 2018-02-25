@@ -147,8 +147,8 @@ void Run(const std::vector<std::string>& camera_names,
     // encoders, encode each camera stream
     std::string output_filename = camera_names[i] + ".mp4";
 
-    std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-        cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
+    std::shared_ptr<GstVideoEncoder> encoder(
+        new GstVideoEncoder("original_image", output_filename));
     encoder->SetSource("input", tracker->GetSink("output"));
     encoders.push_back(encoder);
   }

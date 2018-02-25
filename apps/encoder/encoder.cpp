@@ -34,12 +34,12 @@ void Run(const std::string& camera_name, std::string& dst_file, int port) {
   if (dst_file != "") {
     cout << "Store video to: " << dst_file << endl;
     encoder = std::shared_ptr<Processor>(
-        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), dst_file));
+        new GstVideoEncoder("original_image", dst_file));
     encoder->SetSource("input", camera_stream);
   } else if (port != -1) {
     cout << "Stream video on port: " << port << endl;
-    encoder = std::shared_ptr<Processor>(new GstVideoEncoder(
-        camera->GetWidth(), camera->GetHeight(), port, false));
+    encoder = std::shared_ptr<Processor>(
+        new GstVideoEncoder("original_image", port, false));
     encoder->SetSource("input", camera_stream);
     // Receive pipeline
     // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
