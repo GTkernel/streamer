@@ -14,7 +14,16 @@ ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {SOURCE_NAME}, {SINK_NAME}),
       target_shape_(target_shape),
       crop_(crop),
-      convert_(convert) {}
+      convert_(convert) {
+  if (crop_) {
+    LOG(WARNING) << "`crop` parameter is unsupported...disabling.";
+    crop_ = false;
+  }
+  if (convert_) {
+    LOG(WARNING) << "`convert` parameter is unsupported...disabling.";
+    convert_ = false;
+  }
+}
 
 std::shared_ptr<ImageTransformer> ImageTransformer::Create(
     const FactoryParamsType& params) {
