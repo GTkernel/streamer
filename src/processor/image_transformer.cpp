@@ -5,22 +5,24 @@
 #include "image_transformer.h"
 
 #include "model/model_manager.h"
+#include "utils/image_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
 ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
-                                   bool convert)
+                                   bool convert, unsigned int angle)
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {SOURCE_NAME}, {SINK_NAME}),
       target_shape_(target_shape),
       crop_(crop),
-      convert_(convert) {
+      convert_(convert),
+      angle_(angle) {
   if (crop_) {
-    LOG(WARNING) << "`crop` parameter is unsupported...disabling.";
+    LOG(WARNING) << "`crop' parameter is unsupported...disabling.";
     crop_ = false;
   }
   if (convert_) {
-    LOG(WARNING) << "`convert` parameter is unsupported...disabling.";
+    LOG(WARNING) << "`convert' parameter is unsupported...disabling.";
     convert_ = false;
   }
 }
@@ -98,6 +100,11 @@ void ImageTransformer::Process() {
     cv::resize(sample_cropped, sample_resized, input_geometry);
   } else {
     sample_resized = sample_cropped;
+  }
+
+  // Rotate
+  if (angle_ != 0) {
+    RotateImage(sample_resized, angle_);
   }
 
   // Convert to float

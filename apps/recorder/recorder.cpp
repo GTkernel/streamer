@@ -21,8 +21,9 @@
 
 namespace po = boost::program_options;
 
-void Run(const std::string& camera_name, bool resize, int x_dim, int y_dim,
-         const std::string& field, const std::string& output_dir) {
+void Run(const std::string& camera_name, unsigned int angle, bool resize,
+         int x_dim, int y_dim, const std::string& field,
+         const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -33,8 +34,8 @@ void Run(const std::string& camera_name, bool resize, int x_dim, int y_dim,
   StreamPtr stream = camera->GetStream();
   if (resize) {
     // Create ImageTransformer.
-    auto transformer =
-        std::make_shared<ImageTransformer>(Shape(3, x_dim, y_dim), true, true);
+    auto transformer = std::make_shared<ImageTransformer>(
+        Shape(3, x_dim, y_dim), true, true, angle);
     transformer->SetSource(camera->GetStream());
     procs.push_back(transformer);
     stream = transformer->GetSink();
@@ -83,6 +84,8 @@ int main(int argc, char* argv[]) {
                      "The directory containing streamer's config files.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
+  desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
+                     "Angle to rotate image; must be 0, 90, 180, or 270");
   desc.add_options()("resize,r",
                      "Whether to resize the incoming frames. "
                      "Forces the \"original_image\" field to be saved.");
@@ -130,6 +133,15 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   auto camera = args["camera"].as<std::string>();
+  auto angles = std::set<unsigned int>{0, 90, 180, 270};
+  auto angle = args["rotate"].as<unsigned int>();
+  if (!angles.count(angle)) {
+    std::ostringstream msg;
+    msg << "--rotate angle must be 0, 90, 180, or 270" << std::endl;
+    msg << std::endl;
+    msg << desc << std::endl;
+    throw std::invalid_argument(msg.str());
+  }
   int x_dim = 0;
   int y_dim = 0;
   bool resize = args.count("resize");
@@ -145,6 +157,6 @@ int main(int argc, char* argv[]) {
   }
   auto field = args["field"].as<std::string>();
   auto output_dir = args["output-dir"].as<std::string>();
-  Run(camera, resize, x_dim, y_dim, field, output_dir);
+  Run(camera, angle, resize, x_dim, y_dim, field, output_dir);
   return 0;
 }
