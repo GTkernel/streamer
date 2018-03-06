@@ -67,8 +67,7 @@ void Run(bool block, const std::string& camera_name,
   // Create ImageTransformer.
   ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model_name);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource(camera_stream);
   transformer->SetBlockOnPush(block);
   procs.push_back(transformer);

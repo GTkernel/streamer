@@ -165,8 +165,7 @@ void Run(const std::string& kd_conf, size_t queue_size, bool block,
     ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model);
     Shape input_shape(3, model_desc.GetInputWidth(),
                       model_desc.GetInputHeight());
-    auto transformer =
-        std::make_shared<ImageTransformer>(input_shape, true);
+    auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
     transformer->SetSource("input", stream_to_transform);
     transformer->SetBlockOnPush(block);
     procs.push_back(transformer);

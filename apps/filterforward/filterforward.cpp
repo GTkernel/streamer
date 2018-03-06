@@ -161,10 +161,10 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
         double fps = reader->GetHistoricalFps();
 
-        long latency_micros = (current_time -
-                               frame->GetValue<boost::posix_time::ptime>(
-                                   Camera::kCaptureTimeMicrosKey))
-                                  .total_microseconds();
+        long latency_micros =
+            (current_time - frame->GetValue<boost::posix_time::ptime>(
+                                Camera::kCaptureTimeMicrosKey))
+                .total_microseconds();
 
         // Assemble log message;
         std::ostringstream msg;
@@ -366,8 +366,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create an ImageTransformer.
   ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource(fc_entrance->GetSink());
   transformer->SetBlockOnPush(block);
   procs.push_back(transformer);

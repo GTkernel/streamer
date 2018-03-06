@@ -16,6 +16,4 @@ Model::~Model() {}
 
 ModelDesc Model::GetModelDesc() const { return model_desc_; }
 
-cv::Mat Model::ConvertAndNormalize(cv::Mat img) {
-  return img;
-}
+cv::Mat Model::ConvertAndNormalize(cv::Mat img) { return img; }
