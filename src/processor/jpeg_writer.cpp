@@ -63,15 +63,7 @@ void JpegWriter::Process() {
            << GetDateTimeString(capture_time_micros) << "_" << field_ << ".jpg";
   std::string filepath_s = filepath.str();
   try {
-    // OpenCV expects float images to be normalized between 0 and 1,
-    // and 8-bit pixel format to be 0-255.
-    cv::Mat img_normalized;
-    if (img.type() != CV_8UC3) {
-      cv::normalize(img, img_normalized, 0, 1, cv::NORM_MINMAX);
-    } else {
-      img_normalized = img;
-    }
-    cv::imwrite(filepath_s, img_normalized);
+    cv::imwrite(filepath_s, img);
   } catch (cv::Exception& e) {
     LOG(FATAL) << "Unable to write JPEG file \"" << filepath_s
                << "\": " << e.what();
