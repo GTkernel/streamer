@@ -115,8 +115,7 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             std::vector<std::string> fields, const std::string& output_dir,
-            const unsigned int num_frames, bool log_memory,
-            bool display = false) {
+            bool log_memory, bool display = false) {
   cv::Mat current_image;
   cv::Mat last_match = cv::Mat::zeros(640, 480, CV_32F);
   if (display) {
@@ -162,10 +161,10 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
         double fps = reader->GetHistoricalFps();
 
-        long latency_micros =
-            (current_time - frame->GetValue<boost::posix_time::ptime>(
-                                Camera::kCaptureTimeMicrosKey))
-                .total_microseconds();
+        long latency_micros = (current_time -
+                               frame->GetValue<boost::posix_time::ptime>(
+                                   Camera::kCaptureTimeMicrosKey))
+                                  .total_microseconds();
 
         // Assemble log message;
         std::ostringstream msg;
@@ -183,8 +182,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         long nne_micros =
             frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
         long fug_micros = frame->GetValue<long>("fv_gen.micros");
-        long im_micros =
-            frame->GetValue<long>("imagematch.micros");
+        long im_micros = frame->GetValue<long>("imagematch.micros");
 
         int physical_kb = 0;
         int virtual_kb = 0;
@@ -193,8 +191,6 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           virtual_kb = GetVirtualKB();
         }
 
-        boost::posix_time::ptime frame_creation_time =
-            frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
         msg << net_bw_bps << "," << fps << "," << latency_micros << ","
             << it_micros << "," << nne_micros << "," << fug_micros << ","
             << im_micros << "," << physical_kb << "," << virtual_kb;
@@ -208,10 +204,6 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           // Every two seconds, log a frame's metrics to the console so that the
           // user can verify that the program is making progress.
           previous_time = current_time;
-
-          // State variables for progress bar
-          const int progress_bar_len = 50;
-          int string_pos = 0;
 
           std::cout << msg.str() << std::endl;
           log << msg.str() << std::endl;
@@ -425,12 +417,11 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create a logger thread to calculate statistics about the first ImageMatch
   // level's output stream. This Logger also might display the frames.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
-  logger_threads.push_back(
-      std::thread([fc_exit_sink, log_time, fields, output_dir, num_frames,
-                   log_memory, display] {
-        Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames,
-               log_memory, display);
-      }));
+  logger_threads.push_back(std::thread([fc_exit_sink, log_time, fields,
+                                        output_dir, num_frames, log_memory,
+                                        display] {
+    Logger(0, fc_exit_sink, log_time, fields, output_dir, log_memory, display);
+  }));
 
   if (save_matches) {
     // Create JpegWriter.
@@ -495,7 +486,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
         std::thread([i, additional_im_sink, log_time, fields, output_dir,
                      num_frames, log_memory] {
           Logger(i + 1, additional_im_sink, log_time, fields, output_dir,
-                 num_frames, log_memory);
+                 log_memory);
         }));
   }
 

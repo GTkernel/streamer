@@ -34,8 +34,8 @@ class ImageMatch : public Processor {
 
   // Add real query with Micro Classifier
   void AddQuery(const std::string& model_path, std::string layer_name,
-                float threshold = 0.5, int xmin = 0, int ymin = 0,
-                int xmax = 0, int ymax = 0, bool flat = true);
+                float threshold = 0.5, int xmin = 0, int ymin = 0, int xmax = 0,
+                int ymax = 0, bool flat = true);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;
   void SetSource(StreamPtr stream);

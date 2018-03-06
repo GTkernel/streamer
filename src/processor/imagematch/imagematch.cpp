@@ -130,8 +130,7 @@ void ImageMatch::Process() {
                                           image_match_matches);
     auto end_time = boost::posix_time::microsec_clock::local_time();
     frames_batch_.at(batch_idx)->SetValue(
-        "imagematch.micros",
-        (end_time - start_time).total_microseconds());
+        "imagematch.micros", (end_time - start_time).total_microseconds());
     PushFrame(SINK_NAME, std::move(frames_batch_.at(batch_idx)));
   }
   frames_batch_.clear();

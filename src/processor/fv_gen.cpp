@@ -73,7 +73,7 @@ void FvGen::Process() {
           }
         }
       }
-#endif // MODE_VERIFY
+#endif  // MODE_VERIFY
     } else {
       fv = input_mat;
     }

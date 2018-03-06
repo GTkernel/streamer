@@ -100,7 +100,8 @@ CaffeModel<DType>::Evaluate(
       cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
   for (const auto& input : input_map.begin()->second) {
     // Subtract the mean image
-    cv::Mat input_normalized;
+    cv::Mat input_normalized(cv::Size(input_shape_.width, input_shape_.height),
+                             format);
     cv::subtract(input, mean_image, input_normalized);
     input_normalized *= model_desc_.GetInputScale();
 
@@ -226,13 +227,14 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
         if (src->shape(1) <= CV_CN_MAX) {
           DType lhs = ret_mat.ptr<DType>(h)[w * num_channel + c];
           DType rhs = src->data_at(batch_idx, c, h, w);
-          CHECK(lhs == rhs) << "At index <h: " << h << " w: " << w << " c: " << c
-                            << "> found: " << lhs << " expected: " << rhs;
+          CHECK(lhs == rhs)
+              << "At index <h: " << h << " w: " << w << " c: " << c
+              << "> found: " << lhs << " expected: " << rhs;
         }
       }
     }
   }
-#endif // MODE_VERIFY
+#endif  // MODE_VERIFY
   return ret_mat;
 }
 
