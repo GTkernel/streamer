@@ -22,8 +22,7 @@
 namespace po = boost::program_options;
 
 void Run(const std::string& camera_name, unsigned int angle, bool resize,
-         int x_dim, int y_dim, const std::string& field,
-         const std::string& output_dir) {
+         int x_dim, int y_dim, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -41,20 +40,19 @@ void Run(const std::string& camera_name, unsigned int angle, bool resize,
     stream = transformer->GetSink();
   }
 
-  std::string field_to_save;
+  std::string field;
   if (resize) {
     // The ImageTransformer is hardcorded to store the resized image at the key
     // "image".
-    field_to_save = "image";
+    field = "image";
   } else {
-    field_to_save = field;
+    field = "original_image";
   }
 
   // Create GstVideoEncoder.
   std::ostringstream filepath;
-  filepath << output_dir << "/" << camera_name << "_" << field << ".mp4";
-  auto encoder =
-      std::make_shared<GstVideoEncoder>(field_to_save, filepath.str());
+  filepath << output_dir << "/" << camera_name << ".mp4";
+  auto encoder = std::make_shared<GstVideoEncoder>(field, filepath.str());
   encoder->SetSource(stream);
   procs.push_back(encoder);
 
@@ -73,7 +71,7 @@ void Run(const std::string& camera_name, unsigned int angle, bool resize,
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Stores frames as JPEG images");
+  po::options_description desc("Stores a camera stream as an MP4 file.");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()("config-dir,C", po::value<std::string>(),
                      "The directory containing streamer's config files.");
@@ -85,10 +83,6 @@ int main(int argc, char* argv[]) {
                      "The width to which to resize the frames.");
   desc.add_options()("y-dim,y", po::value<int>(),
                      "The height to which to resize the frames.");
-  desc.add_options()("field,f",
-                     po::value<std::string>()->default_value("original_image"),
-                     "The field to save as a JPEG. Assumed to be "
-                     "\"original_image\" when using \"--resize\".");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the frame JPEGs.");
 
@@ -138,22 +132,29 @@ int main(int argc, char* argv[]) {
     x_dim = args["x-dim"].as<int>();
     if (x_dim < 1) {
       std::ostringstream msg;
-      msg << "Value for \"--x-dim\ must be greater than 0, but is: " << x_dim;
+      msg << "Value for \"--x-dim\" must be greater than 0, but is: " << x_dim;
       throw std::invalid_argument(msg.str());
     }
   }
   int y_dim = 0;
   if (args.count("y-dim")) {
-    resize = true;
     y_dim = args["y-dim"].as<int>();
     if (y_dim < 1) {
       std::ostringstream msg;
-      msg << "Value for \"--y-dim\ must be greater than 0, but is: " << y_dim;
+      msg << "Value for \"--y-dim\" must be greater than 0, but is: " << y_dim;
       throw std::invalid_argument(msg.str());
     }
+    if (!resize) {
+      throw std::invalid_argument(
+          "\"--x-dim\" and \"--y-dim\" must be used together.");
+    }
+    resize = true;
+  } else if (resize) {
+    throw std::invalid_argument(
+        "\"--x-dim\" and \"--y-dim\" must be used together.");
   }
-  auto field = args["field"].as<std::string>();
+
   auto output_dir = args["output-dir"].as<std::string>();
-  Run(camera, angle, resize, x_dim, y_dim, field, output_dir);
+  Run(camera, angle, resize, x_dim, y_dim, output_dir);
   return 0;
 }
