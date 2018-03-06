@@ -53,13 +53,8 @@ void Run(const std::string& camera_name, unsigned int angle, bool resize,
   // Create GstVideoEncoder.
   std::ostringstream filepath;
   filepath << output_dir << "/" << camera_name << "_" << field << ".mp4";
-  std::string filepath_s = filepath.str();
-  if (FileExists(filepath_s)) {
-    std::ostringstream msg;
-    msg << "File already exists: " << filepath_s;
-    throw std::runtime_error(msg.str());
-  }
-  auto encoder = std::make_shared<GstVideoEncoder>(field_to_save, filepath_s);
+  auto encoder =
+      std::make_shared<GstVideoEncoder>(field_to_save, filepath.str());
   encoder->SetSource(stream);
   procs.push_back(encoder);
 
@@ -85,16 +80,11 @@ int main(int argc, char* argv[]) {
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
   desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
-                     "Angle to rotate image; must be 0, 90, 180, or 270");
-  desc.add_options()("resize,r",
-                     "Whether to resize the incoming frames. "
-                     "Forces the \"original_image\" field to be saved.");
+                     "The angle to rotate frames; must be 0, 90, 180, or 270.");
   desc.add_options()("x-dim,x", po::value<int>(),
-                     "The width to which to resize the frames. Required when "
-                     "using \"--resize\".");
+                     "The width to which to resize the frames.");
   desc.add_options()("y-dim,y", po::value<int>(),
-                     "The height to which to resize the frames. Required when "
-                     "using \"--resize\".");
+                     "The height to which to resize the frames.");
   desc.add_options()("field,f",
                      po::value<std::string>()->default_value("original_image"),
                      "The field to save as a JPEG. Assumed to be "
@@ -137,21 +127,28 @@ int main(int argc, char* argv[]) {
   auto angle = args["rotate"].as<unsigned int>();
   if (!angles.count(angle)) {
     std::ostringstream msg;
-    msg << "--rotate angle must be 0, 90, 180, or 270" << std::endl;
-    msg << std::endl;
-    msg << desc << std::endl;
+    msg << "Value for \"--rotate\" must be 0, 90, 180, or 270, but is: "
+        << angle;
     throw std::invalid_argument(msg.str());
   }
+  bool resize = false;
   int x_dim = 0;
-  int y_dim = 0;
-  bool resize = args.count("resize");
-  if (resize) {
+  if (args.count("x-dim")) {
+    resize = true;
     x_dim = args["x-dim"].as<int>();
-    y_dim = args["y-dim"].as<int>();
-    if (x_dim < 1 || y_dim < 1) {
+    if (x_dim < 1) {
       std::ostringstream msg;
-      msg << "Valuex for \"--x-dim\" (" << x_dim << ") and \"--y-dim\" ("
-          << y_dim << ") must be greater than 0.";
+      msg << "Value for \"--x-dim\ must be greater than 0, but is: " << x_dim;
+      throw std::invalid_argument(msg.str());
+    }
+  }
+  int y_dim = 0;
+  if (args.count("y-dim")) {
+    resize = true;
+    y_dim = args["y-dim"].as<int>();
+    if (y_dim < 1) {
+      std::ostringstream msg;
+      msg << "Value for \"--y-dim\ must be greater than 0, but is: " << y_dim;
       throw std::invalid_argument(msg.str());
     }
   }
