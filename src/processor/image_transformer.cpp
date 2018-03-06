@@ -33,7 +33,7 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
       << ") must not be negative.";
 
   return std::make_shared<ImageTransformer>(Shape(num_channels, width, height),
-                                            true, true);
+                                            true);
 }
 
 void ImageTransformer::SetSource(StreamPtr stream) {
