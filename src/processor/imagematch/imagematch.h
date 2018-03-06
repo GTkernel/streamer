@@ -21,9 +21,7 @@ typedef struct query_t {
   // in queries_.
   float threshold;
   std::vector<int> matches;
-#ifdef USE_TENSORFLOW
   std::unique_ptr<tensorflow::Session> classifier;
-#endif
   std::string unique_identifier;
   FvSpec fv_spec;
 } query_t;
@@ -36,7 +34,7 @@ class ImageMatch : public Processor {
 
   // Add real query with Micro Classifier
   void AddQuery(const std::string& model_path, std::string layer_name,
-                float threshold = 0.125, int xmin = 0, int ymin = 0,
+                float threshold = 0.5, int xmin = 0, int ymin = 0,
                 int xmax = 0, int ymax = 0, bool flat = true);
   void SetSink(StreamPtr stream);
   using Processor::SetSink;

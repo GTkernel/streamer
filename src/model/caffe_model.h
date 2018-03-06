@@ -25,8 +25,7 @@ class CaffeModel : public Model {
   virtual void Load() override;
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
       const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
-      const std::vector<std::string>& output_layer_names,
-      std::vector<long>* timing_data) override;
+      const std::vector<std::string>& output_layer_names) override;
 
  private:
   std::unique_ptr<caffe::Net<DType>> net_;

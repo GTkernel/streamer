@@ -95,9 +95,6 @@ void FvGen::Process() {
   long time_elapsed =
       (boost::posix_time::microsec_clock::local_time() - start_time)
           .total_microseconds();
-  input_frame->SetValue<long>("fug.micros", time_elapsed);
-  auto end_time = boost::posix_time::microsec_clock::local_time();
-  input_frame->SetValue("fv_gen.enter_time", start_time);
-  input_frame->SetValue("fv_gen.exit_time", end_time);
+  input_frame->SetValue<long>("fv_gen.micros", time_elapsed);
   PushFrame(SINK_NAME, std::move(input_frame));
 }

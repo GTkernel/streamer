@@ -59,8 +59,7 @@ void ImageMatch::Process() {
   if (query_data_.empty()) {
     std::vector<int> image_match_matches;
     frame->SetValue("imagematch.matches", image_match_matches);
-    frame->SetValue("imagematch.end_to_end_time_micros", 0);
-    frame->SetValue("imagematch.matrix_multiply_time_micros", 0);
+    frame->SetValue("imagematch.micros", -1);
     PushFrame(SINK_NAME, std::move(frame));
     return;
   }
@@ -69,7 +68,6 @@ void ImageMatch::Process() {
     return;
   }
   // Calculate similarity using Micro Classifiers
-  auto overhead_end_time = boost::posix_time::microsec_clock::local_time();
   for (auto& query : query_data_) {
     cv::Mat fv = frames_batch_.at(0)->GetValue<cv::Mat>(
         FvSpec::GetUniqueID(query.second.fv_spec));
@@ -120,7 +118,6 @@ void ImageMatch::Process() {
     }
   }
 
-  auto matrix_end_time = boost::posix_time::microsec_clock::local_time();
   for (decltype(frames_batch_.size()) batch_idx = 0;
        batch_idx < frames_batch_.size(); ++batch_idx) {
     std::vector<int> image_match_matches;
@@ -133,13 +130,8 @@ void ImageMatch::Process() {
                                           image_match_matches);
     auto end_time = boost::posix_time::microsec_clock::local_time();
     frames_batch_.at(batch_idx)->SetValue(
-        "imagematch.end_to_end_time_micros",
+        "imagematch.micros",
         (end_time - start_time).total_microseconds());
-    frames_batch_.at(batch_idx)->SetValue(
-        "imagematch.matrix_multiply_time_micros",
-        (matrix_end_time - overhead_end_time).total_microseconds());
-    frames_batch_.at(batch_idx)->SetValue("imagematch.enter_time", start_time);
-    frames_batch_.at(batch_idx)->SetValue("imagematch.exit_time", end_time);
     PushFrame(SINK_NAME, std::move(frames_batch_.at(batch_idx)));
   }
   frames_batch_.clear();

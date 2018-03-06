@@ -36,7 +36,6 @@ bool FlowControlEntrance::OnStop() { return true; }
 
 void FlowControlEntrance::Process() {
   auto frame = GetFrame(SOURCE_NAME);
-  auto start_time = boost::posix_time::microsec_clock::local_time();
   unsigned long id = frame->GetValue<unsigned long>("frame_id");
   if (frame->GetFlowControlEntrance()) {
     throw std::runtime_error("Frame " + std::to_string(id) +
@@ -56,9 +55,6 @@ void FlowControlEntrance::Process() {
 
   if (push) {
     frame->SetFlowControlEntrance(this);
-    auto end_time = boost::posix_time::microsec_clock::local_time();
-    frame->SetValue("flow_control_entrance.enter_time", start_time);
-    frame->SetValue("flow_control_entrance.exit_time", end_time);
     PushFrame(SINK_NAME, std::move(frame));
   } else {
     LOG(WARNING) << "Insufficient flow control tokens. Dropping frame: " << id;

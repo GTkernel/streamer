@@ -122,8 +122,6 @@ void ImageTransformer::Process() {
 
   frame->SetValue("image", sample_float);
   frame->SetValue("image_transformer.micros", time_elapsed);
-  frame->SetValue("image_transformer.enter_time", start_time);
-  frame->SetValue("image_transformer.exit_time", end_time);
   PushFrame(SINK_NAME, std::move(frame));
 }
 

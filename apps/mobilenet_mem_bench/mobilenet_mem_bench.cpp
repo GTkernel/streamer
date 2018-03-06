@@ -124,7 +124,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
       tag_name = results[1];
     }*/
 
-    long nnbench_micros = frame->GetValue<long>("thetime");
+    long nnbench_micros = frame->GetValue<long>("neuralnet_bench.micros");
     std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical()
               << "," << nnbench_micros << std::endl;
     destroy_counter += 1;

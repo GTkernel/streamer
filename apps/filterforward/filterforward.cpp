@@ -182,9 +182,9 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         long it_micros = frame->GetValue<long>("image_transformer.micros");
         long nne_micros =
             frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
-        long fug_micros = frame->GetValue<long>("fug.micros");
+        long fug_micros = frame->GetValue<long>("fv_gen.micros");
         long im_micros =
-            frame->GetValue<long>("imagematch.end_to_end_time_micros");
+            frame->GetValue<long>("imagematch.micros");
 
         int physical_kb = 0;
         int virtual_kb = 0;
@@ -193,76 +193,11 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           virtual_kb = GetVirtualKB();
         }
 
-        long caffe_setup_micros =
-            frame->GetValue<long>("caffe.setup_time_micros");
-        long caffe_inference_micros =
-            frame->GetValue<long>("caffe.inference_time_micros");
-        long caffe_blob_micros =
-            frame->GetValue<long>("caffe.blob_copy_time_micros");
         boost::posix_time::ptime frame_creation_time =
             frame->GetValue<boost::posix_time::ptime>("capture_time_micros");
-        long throttler_enter = 0;
-        long throttler_exit = 0;
-        if (frame->Count("throttler.enter_time")) {
-          throttler_enter = (frame->GetValue<boost::posix_time::ptime>(
-                                 "throttler.enter_time") -
-                             frame_creation_time)
-                                .total_microseconds();
-          throttler_exit = (frame->GetValue<boost::posix_time::ptime>(
-                                "throttler.exit_time") -
-                            frame_creation_time)
-                               .total_microseconds();
-        }
-        long flow_control_entrance_enter =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("flow_control_entrance.enter_time")
-                //- frame_creation_time).total_microseconds();
-        long flow_control_entrance_exit =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("flow_control_entrance.exit_time")
-                //- frame_creation_time).total_microseconds();
-        long flow_control_exit_enter =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("flow_control_exit.enter_time")
-                //- frame_creation_time).total_microseconds();
-        long flow_control_exit_exit =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("flow_control_exit.exit_time")
-                //- frame_creation_time).total_microseconds();
-        long image_transformer_enter =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("image_transformer.enter_time")
-                //- frame_creation_time).total_microseconds();
-        long image_transformer_exit =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("image_transformer.exit_time")
-                //- frame_creation_time).total_microseconds();
-        long neural_net_evaluator_enter =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("neural_net_evaluator.enter_time")
-                //- frame_creation_time).total_microseconds();
-        long neural_net_evaluator_exit =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("neural_net_evaluator.exit_time")
-                //- frame_creation_time).total_microseconds();
-        long fv_gen_enter =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("fv_gen.enter_time")
-                //- frame_creation_time).total_microseconds();
-        long fv_gen_exit =
-            0;  //(frame->GetValue<boost::posix_time::ptime>("fv_gen.exit_time")
-                //- frame_creation_time).total_microseconds();
-        long imagematch_enter = (frame->GetValue<boost::posix_time::ptime>(
-                                     "imagematch.enter_time") -
-                                 frame_creation_time)
-                                    .total_microseconds();
-        long imagematch_exit =
-            (frame->GetValue<boost::posix_time::ptime>("imagematch.exit_time") -
-             frame_creation_time)
-                .total_microseconds();
         msg << net_bw_bps << "," << fps << "," << latency_micros << ","
             << it_micros << "," << nne_micros << "," << fug_micros << ","
-            << im_micros << "," << physical_kb << "," << virtual_kb << ","
-            << caffe_setup_micros << "," << caffe_inference_micros << ","
-            << caffe_blob_micros << "," << throttler_enter << ","
-            << throttler_exit << "," << flow_control_entrance_enter << ","
-            << flow_control_entrance_exit << "," << flow_control_exit_enter
-            << "," << flow_control_exit_exit << "," << image_transformer_enter
-            << "," << image_transformer_exit << ","
-            << neural_net_evaluator_enter << "," << neural_net_evaluator_exit
-            << "," << fv_gen_enter << "," << fv_gen_exit << ","
-            << imagematch_enter << "," << imagematch_exit;
+            << im_micros << "," << physical_kb << "," << virtual_kb;
         if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
@@ -293,18 +228,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_file << "# network bandwidth (bps),fps,e2e latency (micros),"
               "Transformer micros,NNE micros,FV crop micros,"
               "imagematch micros,physical kb,virtual kb,"
-              "caffe setup,caffe inference,caffe blob,"
-              "throttler_enter,throttler_exit,"
-              "flow_control_entrance_enter,"
-              "flow_control_entrance_exit,"
-              "flow_control_exit_enter,"
-              "flow_control_exit_exit,"
-              "image_transformer_enter,"
-              "image_transformer_exit,"
-              "neural_net_evaluator_enter,"
-              "neural_net_evaluator_exit,"
-              "fv_gen_enter,fv_gen_exit,"
-              "imagematch_enter,imagematch_exit"
+              "caffe setup,caffe inference,caffe blob"
            << std::endl
            << log.str();
   log_file.close();

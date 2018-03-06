@@ -107,7 +107,6 @@ StreamPtr NeuralNetEvaluator::GetSink() {
 
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
-  auto enter_time = boost::posix_time::microsec_clock::local_time();
   cv::Mat input_mat;
   cur_batch_frames_.push_back(std::move(input_frame));
   if (cur_batch_frames_.size() < batch_size_) {
@@ -115,18 +114,16 @@ void NeuralNetEvaluator::Process() {
   }
   std::vector<cv::Mat> cur_batch_;
   for (auto& frame : cur_batch_frames_) {
-    // NOTE: this is broken now
-    if (frame->Count("activations") > 0) {
-      cur_batch_.push_back(frame->GetValue<cv::Mat>("activations"));
+    if (frame->Count(input_layer_name_) > 0) {
+      cur_batch_.push_back(frame->GetValue<cv::Mat>(input_layer_name_));
     } else {
       cur_batch_.push_back(frame->GetValue<cv::Mat>("image"));
     }
   }
 
   auto start_time = boost::posix_time::microsec_clock::local_time();
-  std::vector<long> timing_data;
   auto layer_outputs = model_->Evaluate({{input_layer_name_, cur_batch_}},
-                                        output_layer_names_, &timing_data);
+                                        output_layer_names_);
   long time_elapsed =
       (boost::posix_time::microsec_clock::local_time() - start_time)
           .total_microseconds();
@@ -142,13 +139,7 @@ void NeuralNetEvaluator::Process() {
       ret_frame->SetValue(layer_name, activations);
       ret_frame->SetValue("neural_net_evaluator.inference_time_micros",
                           time_elapsed);
-      ret_frame->SetValue("caffe.setup_time_micros", timing_data.at(0));
-      ret_frame->SetValue("caffe.inference_time_micros", timing_data.at(1));
-      ret_frame->SetValue("caffe.blob_copy_time_micros", timing_data.at(2));
     }
-    auto end_time = boost::posix_time::microsec_clock::local_time();
-    ret_frame->SetValue("neural_net_evaluator.enter_time", enter_time);
-    ret_frame->SetValue("neural_net_evaluator.exit_time", end_time);
     PushFrame(SINK_NAME, std::move(ret_frame));
   }
   cur_batch_frames_.clear();

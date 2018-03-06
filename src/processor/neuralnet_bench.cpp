@@ -35,6 +35,7 @@ const std::vector<std::string> NNBench::GetSinkNames() const {
 }
 
 std::shared_ptr<NNBench> NNBench::Create(const FactoryParamsType& params) {
+  (void)params;
   return nullptr;
 }
 
@@ -62,7 +63,6 @@ StreamPtr NNBench::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 void NNBench::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
-  auto enter_time = boost::posix_time::microsec_clock::local_time();
   cv::Mat input_mat;
   cur_batch_frames_.push_back(std::move(input_frame));
   if (cur_batch_frames_.size() < batch_size_) {
@@ -82,10 +82,9 @@ void NNBench::Process() {
   std::vector<std::thread> threads;
   std::map<std::string, std::vector<cv::Mat>> input_map;
   input_map[input_layer_name_] = cur_batch_;
-  CHECK(models_.size() == classifiers_);
-  for (int i = 0; i < models_.size(); ++i) {
-    models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}}, {LAYER},
-                            nullptr);
+  CHECK(models_.size() == (decltype(models_.size()))classifiers_);
+  for (decltype(models_.size()) i = 0; i < models_.size(); ++i) {
+    models_.at(i)->Evaluate({{input_layer_name_, cur_batch_}}, {LAYER});
   }
   long time_elapsed =
       (boost::posix_time::microsec_clock::local_time() - start_time)
@@ -95,7 +94,7 @@ void NNBench::Process() {
   for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size();
        ++i) {
     std::unique_ptr<Frame> ret_frame = std::move(cur_batch_frames_.at(i));
-    ret_frame->SetValue("thetime", time_elapsed);
+    ret_frame->SetValue("neuralnet_bench.micros", time_elapsed);
     PushFrame(SINK_NAME, std::move(ret_frame));
   }
   cur_batch_frames_.clear();

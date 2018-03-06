@@ -62,9 +62,6 @@ void Throttler::Process() {
   } else {
     // Restart timer
     timer_.Start();
-    auto end_time = boost::posix_time::microsec_clock::local_time();
-    frame->SetValue("throttler.enter_time", start_time);
-    frame->SetValue("throttler.exit_time", end_time);
     PushFrame(SINK_NAME, std::move(frame));
   }
 }
