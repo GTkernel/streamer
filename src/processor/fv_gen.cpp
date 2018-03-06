@@ -51,8 +51,7 @@ void FvGen::Process() {
       fv = input_mat({spec.yrange_, spec.xrange_});
       // LOG(INFO) << fv.rows << " " << fv.cols << " " << fv.channels();
       std::vector<cv::Mat> channels;
-#undef DOCHECK
-#ifdef DOCHECK
+#ifdef MODE_VERIFY
       int full_height = input_mat.size[0];
       int full_width = input_mat.size[1];
       int roi_height = spec.roi_.height;
@@ -74,8 +73,7 @@ void FvGen::Process() {
           }
         }
       }
-#endif
-#undef DOCHECK
+#endif // MODE_VERIFY
     } else {
       fv = input_mat;
     }

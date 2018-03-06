@@ -166,6 +166,7 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src,
   decltype(batch_size_) batch_size = src->shape(0);
   CHECK(batch_size == batch_size_) << "Incorrect batch size";
 
+  // mat_size holds the axes dimensions of the blob
   std::vector<int> mat_size;
   decltype(src->shape(0)) total_size = 1;
   for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
@@ -201,8 +202,7 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
     return ret_mat;
   }
 
-  // mat_size holds the axes dimensions of the blob
-  // mat_size is used to construct the cv::Mat
+  // Convert from CHW to HWC
   cv::Mat ret_mat({height, width, num_channel}, CV_32F);
   int per_channel_floats = height * width;
   int per_channel_bytes = per_channel_floats * sizeof(DType);
@@ -216,30 +216,23 @@ cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
   }
   cv::merge(channels, ret_mat);
 
-#undef DOCHECK
-#ifdef DOCHECK
+// Element-wise comparison
+#ifdef MODE_VERIFY
   LOG(INFO) << "Checking output matrix of size: " << height << "x" << width
             << "x" << num_channel;
   for (int c = 0; c < num_channel; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
         if (src->shape(1) <= CV_CN_MAX) {
-          // float lhs = ret_mat.at<float>(h, w, c);
           DType lhs = ret_mat.ptr<DType>(h)[w * num_channel + c];
           DType rhs = src->data_at(batch_idx, c, h, w);
-#if true
-          LOG(INFO) << "Checking element at: "
-                    << "(" << h << ", " << w << ", " << c << ") "
-                    << "Expected vs Actual: " << rhs << " vs " << lhs;
-#endif
-          CHECK(lhs == rhs) << "h: " << h << " w: " << w << " c: " << c
-                            << " lhs: " << lhs << " rhs: " << rhs;
+          CHECK(lhs == rhs) << "At index <h: " << h << " w: " << w << " c: " << c
+                            << "> found: " << lhs << " expected: " << rhs;
         }
       }
     }
   }
-#endif
-#undef DOCHECK
+#endif // MODE_VERIFY
   return ret_mat;
 }
 
