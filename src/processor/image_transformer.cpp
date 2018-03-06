@@ -11,11 +11,10 @@ constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
 ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
-                                   bool convert, unsigned int angle)
+                                   unsigned int angle)
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {SOURCE_NAME}, {SINK_NAME}),
       target_shape_(target_shape),
       crop_(crop),
-      convert_(convert),
       angle_(angle) {}
 
 std::shared_ptr<ImageTransformer> ImageTransformer::Create(
@@ -99,19 +98,10 @@ void ImageTransformer::Process() {
   }
 
   // Convert to float
-  cv::Mat sample_float;
-  if (convert_) {
-    if (num_channel == 3)
-      sample_resized.convertTo(sample_float, CV_32FC3);
-    else
-      sample_resized.convertTo(sample_float, CV_32FC1);
-  } else {
-    sample_float = sample_resized;
-  }
   auto end_time = boost::posix_time::microsec_clock::local_time();
   long time_elapsed = (end_time - start_time).total_microseconds();
 
-  frame->SetValue("image", sample_float);
+  frame->SetValue("image", sample_resized);
   frame->SetValue("image_transformer.micros", time_elapsed);
   PushFrame(SINK_NAME, std::move(frame));
 }

@@ -53,7 +53,7 @@ void Run(const std::string& camera_name, const std::string& net_name,
 
   // Transformer
   Shape input_shape(3, 299, 299);
-  transformer = std::make_shared<ImageTransformer>(input_shape, true, true);
+  transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource("input", camera->GetSink("output"));
   transformer->SetBlockOnPush(true);
 

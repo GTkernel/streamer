@@ -32,7 +32,7 @@ void Run(const std::string& camera_name, int dim, double threshold,
 
   // Create ImageTransformer.
   auto transformer =
-      std::make_shared<ImageTransformer>(Shape(3, dim, dim), true, true);
+      std::make_shared<ImageTransformer>(Shape(3, dim, dim), true);
   transformer->SetSource(camera->GetStream());
   procs.push_back(transformer);
 

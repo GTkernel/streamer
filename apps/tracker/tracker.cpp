@@ -107,7 +107,7 @@ void Run(const std::vector<std::string>& camera_names,
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(
-        new ImageTransformer(input_shape, false, false));
+        new ImageTransformer(input_shape, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));

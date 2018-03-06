@@ -15,3 +15,7 @@ Model::Model(const ModelDesc& model_desc, Shape input_shape, size_t batch_size)
 Model::~Model() {}
 
 ModelDesc Model::GetModelDesc() const { return model_desc_; }
+
+cv::Mat Model::ConvertAndNormalize(cv::Mat img) {
+  return img;
+}

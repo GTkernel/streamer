@@ -11,7 +11,7 @@
 
 class ImageTransformer : public Processor {
  public:
-  ImageTransformer(const Shape& target_shape, bool crop, bool convert,
+  ImageTransformer(const Shape& target_shape, bool crop,
                    unsigned int angle = 0);
 
   static std::shared_ptr<ImageTransformer> Create(

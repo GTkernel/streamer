@@ -114,7 +114,7 @@ std::shared_ptr<std::vector<std::unique_ptr<Frame>>> GenerateVishashes(
     Shape input_shape(3, model_desc.GetInputWidth(),
                       model_desc.GetInputHeight());
     auto transformer =
-        std::make_shared<ImageTransformer>(input_shape, true, true);
+        std::make_shared<ImageTransformer>(input_shape, true);
     transformer->SetSource(camera->GetStream());
     transformer->SetBlockOnPush(block);
     procs.push_back(transformer);

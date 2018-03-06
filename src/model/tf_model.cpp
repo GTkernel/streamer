@@ -43,6 +43,12 @@ void TFModel::Load() {
   }
 }
 
+cv::Mat TFModel::ConvertAndNormalize(cv::Mat img) {
+  cv::Mat normalized;
+  cv::normalize(img, normalized, -0.5, 0.5, cv::NORM_MINMAX);
+  return normalized;
+}
+
 std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
@@ -60,8 +66,7 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     // current model.
     for (decltype(input_vec.size()) i = 0; i < input_vec.size(); ++i) {
       cv::Mat input = input_vec.at(i);
-      cv::Mat input_normalized;
-      cv::normalize(input, input_normalized, -0.5, 0.5, cv::NORM_MINMAX);
+      cv::Mat input_normalized = ConvertAndNormalize(input);
       input_vec.at(i) = input_normalized;
     }
 

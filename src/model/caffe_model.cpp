@@ -75,6 +75,29 @@ void CaffeModel<DType>::Load() {
 }
 
 template <typename DType>
+cv::Mat CaffeModel<DType>::ConvertAndNormalize(cv::Mat img) {
+  int format;
+  if (input_shape_.channel == 3) {
+    format = CV_32FC3;
+  } else {
+    format = CV_32FC1;
+  }
+
+  // Convert from CV_8UCX to CV_32FCX
+  cv::Mat input;
+  img.convertTo(input, format);
+  cv::Scalar mean_colors = ModelManager::GetInstance().GetMeanColors();
+  cv::Mat mean_image = cv::Mat(
+      cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
+  // Subtract the mean image
+  cv::Mat input_normalized(cv::Size(input_shape_.width, input_shape_.height),
+                           format);
+  cv::subtract(input, mean_image, input_normalized);
+  input_normalized *= model_desc_.GetInputScale();
+  return input_normalized;
+}
+
+template <typename DType>
 std::unordered_map<std::string, std::vector<cv::Mat>>
 CaffeModel<DType>::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
@@ -89,21 +112,8 @@ CaffeModel<DType>::Evaluate(
 
   caffe::Blob<DType>* input_layer = net_->input_blobs().at(0);
   DType* data = input_layer->mutable_cpu_data();
-  int format;
-  if (input_shape_.channel == 3) {
-    format = CV_32FC3;
-  } else {
-    format = CV_32FC1;
-  }
-  cv::Scalar mean_colors = ModelManager::GetInstance().GetMeanColors();
-  cv::Mat mean_image = cv::Mat(
-      cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
   for (const auto& input : input_map.begin()->second) {
-    // Subtract the mean image
-    cv::Mat input_normalized(cv::Size(input_shape_.width, input_shape_.height),
-                             format);
-    cv::subtract(input, mean_image, input_normalized);
-    input_normalized *= model_desc_.GetInputScale();
+    cv::Mat input_normalized = ConvertAndNormalize(input);
 
     // Format the input data in the way that Caffe expects
     // This loop creates a cv::Mat for each channel that is configured to point

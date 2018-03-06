@@ -82,7 +82,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
   auto model_desc = ModelManager::GetInstance().GetModelDesc(model_name);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
   auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true);
+      std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource(camera->GetStream());
   procs.push_back(transformer);
 

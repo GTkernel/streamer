@@ -81,6 +81,7 @@ class Model {
   virtual ~Model();
   ModelDesc GetModelDesc() const;
   virtual void Load() = 0;
+  virtual cv::Mat ConvertAndNormalize(cv::Mat img);
   // Convenience function to automatically use the default input and output
   // layers.
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(

@@ -35,7 +35,7 @@ void Run(const std::string& camera_name, unsigned int angle, bool resize,
   if (resize) {
     // Create ImageTransformer.
     auto transformer = std::make_shared<ImageTransformer>(
-        Shape(3, x_dim, y_dim), true, true, angle);
+        Shape(3, x_dim, y_dim), true, angle);
     transformer->SetSource(camera->GetStream());
     procs.push_back(transformer);
     stream = transformer->GetSink();
