@@ -170,10 +170,15 @@ void Processor::ProcessorLoop() {
       }
     }
 
-    local_timer.Start();
+    processing_start_micros_ = boost::posix_time::microsec_clock::local_time();
     Process();
+    double processing_latency_ms =
+        (double)(boost::posix_time::microsec_clock::local_time() -
+                 processing_start_micros_)
+            .total_microseconds();
+    processing_start_micros_ = boost::posix_time::not_a_date_time;
+
     ++num_frames_processed_;
-    double processing_latency_ms = local_timer.ElapsedMSec();
 
     // Update average processing latency.
     avg_processing_latency_ms_ =
@@ -231,6 +236,12 @@ void Processor::PushFrame(const std::string& sink_name,
   CHECK(sinks_.count(sink_name) != 0)
       << GetStringForProcessorType(GetType())
       << " does not have a sink named \"" << sink_name << "\"!";
+
+  if (!processing_start_micros_.is_not_a_date_time()) {
+    frame->SetValue(GetName() + ".total_micros",
+                    boost::posix_time::microsec_clock::local_time() -
+                        processing_start_micros_);
+  }
   if (frame->IsStopFrame()) {
     found_last_frame_ = true;
   }

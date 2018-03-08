@@ -41,7 +41,6 @@ bool Throttler::OnStop() { return true; }
 
 void Throttler::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
-  auto start_time = boost::posix_time::microsec_clock::local_time();
 
   if (timer_.ElapsedMSec() < delay_ms_) {
     // Drop frame.

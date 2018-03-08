@@ -10,6 +10,7 @@
 #include <thread>
 #include <unordered_map>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <zmq.hpp>
 
 #include "stream/stream.h"
@@ -165,6 +166,7 @@ class Processor {
   Timer processor_timer_;
   // Whether to block when pushing frames if any output streams are full.
   std::atomic<bool> block_on_push_;
+  boost::posix_time::ptime processing_start_micros_;
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_H_

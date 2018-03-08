@@ -59,8 +59,6 @@ typedef struct {
   float threshold;
 } query_spec_t;
 
-std::unordered_map<int, std::vector<query_spec_t>> the_map;
-
 // Designed to be run in its own thread. Sets "stopped" to true after num_frames
 // have been processed or after a stop frame has been detected.
 void Stopper(StreamPtr stream, unsigned int num_frames) {
@@ -133,7 +131,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
         // Assemble log message;
         std::ostringstream msg;
-        if (frame->GetValue<std::vector<int>>("imagematch.matches").size() >=
+        if (frame->GetValue<std::vector<int>>("ImageMatch.matches").size() >=
             1) {
           if (display) {
             last_match = frame->GetValue<cv::Mat>("original_image");
@@ -143,11 +141,22 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
           net_bw_bps = 0;
         }
 
-        long it_micros = frame->GetValue<long>("image_transformer.micros");
-        long nne_micros =
-            frame->GetValue<long>("neural_net_evaluator.inference_time_micros");
-        long fug_micros = frame->GetValue<long>("fv_gen.micros");
-        long im_micros = frame->GetValue<long>("imagematch.micros");
+        long it_micros = frame
+                             ->GetValue<boost::posix_time::time_duration>(
+                                 "ImageTransformer.total_micros")
+                             .total_microseconds();
+        long nne_micros = frame
+                              ->GetValue<boost::posix_time::time_duration>(
+                                  "NeuralNetEvaluator.total_micros")
+                              .total_microseconds();
+        long fvg_micros = frame
+                              ->GetValue<boost::posix_time::time_duration>(
+                                  "FvGen.total_micros")
+                              .total_microseconds();
+        long im_micros = frame
+                             ->GetValue<boost::posix_time::time_duration>(
+                                 "ImageMatch.total_micros")
+                             .total_microseconds();
 
         int physical_kb = 0;
         int virtual_kb = 0;
@@ -157,7 +166,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         }
 
         msg << net_bw_bps << "," << fps << "," << latency_micros << ","
-            << it_micros << "," << nne_micros << "," << fg_micros << ","
+            << it_micros << "," << nne_micros << "," << fvg_micros << ","
             << im_micros << "," << physical_kb << "," << virtual_kb;
         if (display) {
           cv::imshow("current_image", current_image);
@@ -211,8 +220,8 @@ void Slack(StreamPtr stream) {
       // is watching for stop frames at the highest level.
       break;
     } else {
-      if (frame->Count("imagematch.matches") &&
-          frame->GetValue<std::vector<int>>("imagematch.matches").size()) {
+      if (frame->Count("ImageMatch.matches") &&
+          frame->GetValue<std::vector<int>>("ImageMatch.matches").size()) {
         std::string msg =
             "{\"text\":\"This is a test of the new *train webhook*.\nThe "
             "image: <http://imgs.xkcd.com/comics/regex_golf.png|frame>\"}";
@@ -233,6 +242,22 @@ void Slack(StreamPtr stream) {
   reader->UnSubscribe();
 }
 
+// Submit the provided queries to ImageMatch, and add the required layers to the
+// NNE and crops to the FvGen.
+void AddQueries(std::vector<query_spec_t> queries,
+                std::shared_ptr<NeuralNetEvaluator> nne,
+                std::shared_ptr<FvGen> fv_gen, std::shared_ptr<ImageMatch> im) {
+  for (const auto& query : queries) {
+    for (int k = 0; k < query.num; ++k) {
+      nne->PublishLayer(query.layer);
+      fv_gen->AddFv(query.layer, query.xmin, query.ymin, query.xmax, query.ymax,
+                    query.flat);
+      im->AddQuery(query.path, query.layer, query.threshold, query.xmin,
+                   query.ymin, query.xmax, query.ymax, query.flat);
+    }
+  }
+}
+
 void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          size_t queue_size, const std::string& camera_name,
          unsigned int file_fps, int throttled_fps, unsigned int tokens,
@@ -250,6 +275,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   bool on_first_line = true;
   std::vector<std::string> kd_fv_keys;
   std::vector<std::pair<float, size_t>> buf_params;
+  std::unordered_map<int, std::vector<query_spec_t>> level_to_queries;
   std::ifstream ff_conf_file(ff_conf);
   std::string line;
   unsigned int level_counter = 0;
@@ -268,17 +294,17 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     std::string kd_fv_key = args.at(2);
     for (decltype(args.size()) i = 3; i < args.size();) {
       CHECK(i + 8 < args.size()) << "Malformed configuration file";
-      the_map[level_counter].push_back(query_spec_t());
-      query_spec_t* cur_query_spec = &(the_map[level_counter].back());
-      cur_query_spec->num = atoi(args.at(i++).c_str());
-      cur_query_spec->layer = args.at(i++);
-      cur_query_spec->xmin = atoi(args.at(i++).c_str());
-      cur_query_spec->ymin = atoi(args.at(i++).c_str());
-      cur_query_spec->xmax = atoi(args.at(i++).c_str());
-      cur_query_spec->ymax = atoi(args.at(i++).c_str());
-      cur_query_spec->flat = args.at(i++) == "true";
-      cur_query_spec->path = args.at(i++);
-      cur_query_spec->threshold = std::stof(args.at(i++));
+      query_spec_t cur_query_spec;
+      cur_query_spec.num = std::atoi(args.at(i++).c_str());
+      cur_query_spec.layer = args.at(i++);
+      cur_query_spec.xmin = std::atoi(args.at(i++).c_str());
+      cur_query_spec.ymin = std::atoi(args.at(i++).c_str());
+      cur_query_spec.xmax = std::atoi(args.at(i++).c_str());
+      cur_query_spec.ymax = std::atoi(args.at(i++).c_str());
+      cur_query_spec.flat = args.at(i++) == "true";
+      cur_query_spec.path = args.at(i++);
+      cur_query_spec.threshold = std::stof(args.at(i++));
+      level_to_queries[level_counter].push_back(cur_query_spec);
     }
 
     std::ostringstream msg;
@@ -344,8 +370,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
 
-  // auto fv_gen_kd = std::make_shared<FVGen>(
-
+  // Create an FvGen.
   auto fv_gen = std::make_shared<FvGen>();
   fv_gen->SetSource(nne->GetSink());
   fv_gen->SetBlockOnPush(block);
@@ -357,20 +382,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   auto im_0 = std::make_shared<ImageMatch>(nne_batch_size);
   im_0->SetSource(fvgen_stream);
   im_0->SetBlockOnPush(block);
-
-  auto& specs_vector = the_map[0];
-  for (decltype(specs_vector.size()) i = 0; i < specs_vector.size(); ++i) {
-    auto& cur_spec = specs_vector.at(i);
-    for (int j = 0; j < cur_spec.num; ++j) {
-      im_0->AddQuery(cur_spec.path, cur_spec.layer, cur_spec.threshold,
-                     cur_spec.xmin, cur_spec.ymin, cur_spec.xmax, cur_spec.ymax,
-                     cur_spec.flat);
-      nne->PublishLayer(cur_spec.layer);
-      fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin, cur_spec.xmax,
-                    cur_spec.ymax, cur_spec.flat);
-    }
-  }
   procs.push_back(im_0);
+
+  // Add the level 0 queries.
+  AddQueries(level_to_queries[0], nne, fv_gen, im_0);
 
   // Create a FlowControlExit.
   auto fc_exit = std::make_shared<FlowControlExit>();
@@ -409,7 +424,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     LOG(INFO) << "Creating KeyframeDetector level " << count++
               << " with parameters: " << param.first << " " << param.second;
   }
-  for (decltype(the_map.size()) i = 1; i < the_map.size(); ++i) {
+  for (decltype(level_to_queries.size()) i = 1; i < level_to_queries.size();
+       ++i) {
     // Create a keyframe detector.
     std::string kd_fv_key = kd_fv_keys.at(i - 1);
     std::pair<float, size_t> kd_buf_params = buf_params.at(i - 1);
@@ -428,20 +444,10 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     auto additional_im = std::make_shared<ImageMatch>(kd_batch_size);
     additional_im->SetSource(kd->GetSink(kd->GetSinkName(0)));
     additional_im->SetBlockOnPush(block);
-    // PUT CODE HERE
-    auto& specs_vector = the_map[i];
-    for (decltype(specs_vector.size()) j = 0; j < specs_vector.size(); ++j) {
-      auto& cur_spec = specs_vector.at(j);
-      for (int k = 0; k < cur_spec.num; ++k) {
-        additional_im->AddQuery(
-            cur_spec.path, cur_spec.layer, cur_spec.threshold, cur_spec.xmin,
-            cur_spec.ymin, cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
-        nne->PublishLayer(cur_spec.layer);
-        fv_gen->AddFv(cur_spec.layer, cur_spec.xmin, cur_spec.ymin,
-                      cur_spec.xmax, cur_spec.ymax, cur_spec.flat);
-      }
-    }
     procs.push_back(additional_im);
+
+    // Add the level i queries.
+    AddQueries(level_to_queries[i], nne, fv_gen, additional_im);
 
     // Create a logger thread to calculate statistics about ImageMatch's output
     // stream.

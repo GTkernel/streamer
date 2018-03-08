@@ -52,14 +52,12 @@ bool ImageMatch::OnStop() { return true; }
 void ImageMatch::Process() {
   // Start time for benchmarking purposes
   auto frame = GetFrame("input");
-  auto start_time = boost::posix_time::microsec_clock::local_time();
   CHECK(frame != nullptr);
   // If no queries, Send frame with empty imagematch fields
   std::lock_guard<std::mutex> guard(query_guard_);
   if (query_data_.empty()) {
     std::vector<int> image_match_matches;
-    frame->SetValue("imagematch.matches", image_match_matches);
-    frame->SetValue("imagematch.micros", -1);
+    frame->SetValue("ImageMatch.matches", image_match_matches);
     PushFrame(SINK_NAME, std::move(frame));
     return;
   }
@@ -126,11 +124,8 @@ void ImageMatch::Process() {
         image_match_matches.push_back(query.second.query_id);
       }
     }
-    frames_batch_.at(batch_idx)->SetValue("imagematch.matches",
+    frames_batch_.at(batch_idx)->SetValue("ImageMatch.matches",
                                           image_match_matches);
-    auto end_time = boost::posix_time::microsec_clock::local_time();
-    frames_batch_.at(batch_idx)->SetValue(
-        "imagematch.micros", (end_time - start_time).total_microseconds());
     PushFrame(SINK_NAME, std::move(frames_batch_.at(batch_idx)));
   }
   frames_batch_.clear();
