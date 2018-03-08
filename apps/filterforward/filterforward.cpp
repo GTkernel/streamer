@@ -33,11 +33,9 @@
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
 #include "processor/throttler.h"
-#include "stdio.h"
-#include "stdlib.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
-#include "string.h"
+#include "utils/perf_utils.h"
 #include "utils/string_utils.h"
 
 namespace po = boost::program_options;
@@ -62,39 +60,6 @@ typedef struct {
 } query_spec_t;
 
 std::unordered_map<int, std::vector<query_spec_t>> the_map;
-
-// Extracts a numeric digit from the line, assuming that a digit exists and the
-// line ends in " kB".
-int ParseMemInfoLine(char* line) {
-  int i = strlen(line);
-  const char* p = line;
-  while (*p < '0' || *p > '9') p++;
-  line[i - 3] = '\0';
-  i = atoi(p);
-  return i;
-}
-
-// Returns the value of a memory-related key from "/proc/self/status" (in KB).
-int GetMemoryInfoKB(std::string key) {
-  FILE* file = fopen("/proc/self/status", "r");
-  int result = -1;
-  char line[128];
-
-  while (fgets(line, 128, file) != NULL) {
-    if (strncmp(line, key.c_str(), key.length()) == 0) {
-      result = ParseMemInfoLine(line);
-      break;
-    }
-  }
-  fclose(file);
-  return result;
-}
-
-// Returns the physical memory usage (in KB) of the current process.
-int GetPhysicalKB() { return GetMemoryInfoKB("VmRSS"); }
-
-// Returns the virtual memory usage (in KB) of the current process.
-int GetVirtualKB() { return GetMemoryInfoKB("VmSize"); }
 
 // Designed to be run in its own thread. Sets "stopped" to true after num_frames
 // have been processed or after a stop frame has been detected.
@@ -131,7 +96,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
 
   // Loop until the stopper thread signals that we need to stop.
   while (!stopped) {
-    std::unique_ptr<Frame> frame = reader->PopFrame(100);
+    std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame == nullptr) {
       continue;
     } else if (frame->IsStopFrame()) {
@@ -192,7 +157,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         }
 
         msg << net_bw_bps << "," << fps << "," << latency_micros << ","
-            << it_micros << "," << nne_micros << "," << fug_micros << ","
+            << it_micros << "," << nne_micros << "," << fg_micros << ","
             << im_micros << "," << physical_kb << "," << virtual_kb;
         if (display) {
           cv::imshow("current_image", current_image);

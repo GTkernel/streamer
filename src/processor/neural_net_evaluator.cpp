@@ -137,8 +137,7 @@ void NeuralNetEvaluator::Process() {
       auto layer_name = layer_pair.first;
       cv::Mat activations = activation_vector.at(i);
       ret_frame->SetValue(layer_name, activations);
-      ret_frame->SetValue("neural_net_evaluator.inference_time_micros",
-                          time_elapsed);
+      ret_frame->SetValue("neural_net_evaluator.total_micros", time_elapsed);
     }
     PushFrame(SINK_NAME, std::move(ret_frame));
   }

@@ -31,7 +31,6 @@ class ImageTransformer : public Processor {
  private:
   Shape target_shape_;
   bool crop_;
-  bool convert_;
   unsigned int angle_;
 };
 

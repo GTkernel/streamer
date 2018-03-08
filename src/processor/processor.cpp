@@ -2,10 +2,12 @@
 // Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
 //
 
+#include "processor/processor.h"
+
 #include <sstream>
 #include <stdexcept>
 
-#include "processor.h"
+#include "common/types.h"
 #include "utils/utils.h"
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
@@ -215,6 +217,10 @@ double Processor::GetAvgQueueLatencyMs() const {
 }
 
 ProcessorType Processor::GetType() const { return type_; }
+
+std::string Processor::GetName() const {
+  return GetStringForProcessorType(GetType());
+}
 
 zmq::socket_t* Processor::GetControlSocket() { return control_socket_; };
 

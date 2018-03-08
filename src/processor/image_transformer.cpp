@@ -97,7 +97,6 @@ void ImageTransformer::Process() {
     RotateImage(sample_resized, angle_);
   }
 
-  // Convert to float
   auto end_time = boost::posix_time::microsec_clock::local_time();
   long time_elapsed = (end_time - start_time).total_microseconds();
 

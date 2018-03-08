@@ -28,7 +28,7 @@ class VimbaCameraFrameObserver;
 class Processor {
   friend class Pipeline;
 #ifdef USE_VIMBA
-  friend class VimbaCameeraFrameObserver;
+  friend class VimbaCameraFrameObserver;
 #endif  // USE_VIMBA
  public:
   Processor(ProcessorType type, const std::vector<std::string>& source_names,
@@ -101,6 +101,11 @@ class Processor {
    * @brief Get the type of the processor
    */
   ProcessorType GetType() const;
+
+  /**
+   * @brief Get the name of the processor
+   */
+  std::string GetName() const;
 
   zmq::socket_t* GetControlSocket();
 
