@@ -2,7 +2,10 @@
 #ifndef STREAMER_PROCESSOR_FV_GEN_H_
 #define STREAMER_PROCESSOR_FV_GEN_H_
 
+#include <string>
 #include <unordered_map>
+
+#include <opencv2/opencv.hpp>
 
 #include "common/types.h"
 #include "model/model.h"
@@ -12,28 +15,9 @@
 class FvSpec {
  public:
   FvSpec() {}
-  FvSpec(std::string layer_name, int xmin = 0, int ymin = 0, int xmax = 0,
-         int ymax = 0, bool flat = true)
-      : layer_name_(layer_name),
-        roi_(xmin, ymin, xmax - xmin, ymax - ymin),
-        yrange_(ymin, ymax),
-        xrange_(xmin, xmax),
-        xmin_(xmin),
-        xmax_(xmax),
-        ymin_(ymin),
-        ymax_(ymax),
-        flat_(flat) {
-    if (ymin == 0 && ymax == 0) {
-      LOG(INFO) << "No bounds specified for Feature Vector vertical axis, "
-                   "using full output";
-      yrange_ = cv::Range::all();
-    }
-    if (xmin == 0 && xmax == 0) {
-      LOG(INFO) << "No bounds specified for Feature Vector horizontal axis, "
-                   "using full output";
-      xrange_ = cv::Range::all();
-    }
-  }
+  FvSpec(const std::string& layer_name, int xmin = 0, int ymin = 0,
+         int xmax = 0, int ymax = 0, bool flat = true);
+
   static std::string GetUniqueID(const FvSpec& spec);
 
  public:
@@ -45,17 +29,15 @@ class FvSpec {
   bool flat_;
 };
 
-// Step 1: construct empty FvGen
-// Step 2: call AddFv
 class FvGen : public Processor {
  public:
   FvGen();
   ~FvGen();
 
-  void AddFv(std::string layer_name, int xmin = 0, int ymin = 0, int xmax = 0,
-             int ymax = 0, bool flat = false);
-
   static std::shared_ptr<FvGen> Create(const FactoryParamsType& params);
+
+  void AddFv(const std::string& layer_name, int xmin = 0, int ymin = 0,
+             int xmax = 0, int ymax = 0, bool flat = false);
 
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
