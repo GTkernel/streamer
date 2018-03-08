@@ -13,25 +13,45 @@ namespace serialization {
 // http://stackoverflow.com/a/21444792/1072039
 template <class Archive>
 void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
-  int cols, rows, type;
-  bool continuous;
+  int cols, rows, channels, type;
+  bool weird_mode = false;
 
   if (Archive::is_saving::value) {
-    cols = mat.cols;
     rows = mat.rows;
+    cols = mat.cols;
+    channels = mat.channels();
     type = mat.type();
-    continuous = mat.isContinuous();
+    if(cols < 0 || rows < 0) {
+      rows = mat.size[0];
+      cols = mat.size[1];
+      channels = mat.size[2];
+      weird_mode = true;
+    }
   }
 
-  ar& cols& rows& type& continuous;
+  ar& cols& rows& type& channels;
 
-  if (Archive::is_loading::value) mat.create(rows, cols, type);
+  if (Archive::is_loading::value) {
+    if(weird_mode) {
+      // TODO: make sure type is not a special type that includes channels
+      mat.create({rows, cols, channels}, type);
+    }
+    else {
+      mat.create(rows, cols, type);
+    }
+  }
+  bool continuous = mat.isContinuous();
 
-  if (continuous) {
-    const unsigned int data_size = rows * cols * mat.elemSize();
+  // Too lazy to implement both branches for weird mode
+  // First branch is just a performance optimization anyways
+  if (continuous && !weird_mode) {
+    int data_size = rows * cols * mat.elemSize();
     ar& boost::serialization::make_array(mat.ptr(), data_size);
   } else {
-    const unsigned int row_size = cols * mat.elemSize();
+    int row_size = cols * mat.elemSize();
+    if(weird_mode) {
+      row_size *= channels;
+    }
     for (int i = 0; i < rows; i++) {
       ar& boost::serialization::make_array(mat.ptr(i), row_size);
     }
