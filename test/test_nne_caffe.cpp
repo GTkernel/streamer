@@ -122,10 +122,10 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
   nne.Start();
   stream->PushFrame(std::move(input_frame));
-	auto output_frame = reader->PopFrame();
-	ASSERT_FALSE(output_frame == nullptr) << "Unable to get frame";
-	for(decltype(OUTPUTS.size()) i = 0; i < OUTPUTS.size(); ++i) {
-		std::string filename = OUTPUTS.at(i);
+  auto output_frame = reader->PopFrame();
+  ASSERT_FALSE(output_frame == nullptr) << "Unable to get frame";
+  for (decltype(OUTPUTS.size()) i = 0; i < OUTPUTS.size(); ++i) {
+    std::string filename = OUTPUTS.at(i);
     boost::replace_all(filename, "/", ".");
     filename = "data/mobilenet/caffe_ground_truth/" + filename + ".bin";
     // contains the activations of the output layer

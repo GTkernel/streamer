@@ -113,11 +113,12 @@ class FramePrinter : public boost::static_visitor<std::string> {
     int dims = v.dims;
     if (dims <= 2) {
       std::ostringstream mout;
-      for(int i = 0; i < 4 && i < v.cols * v.rows * v.channels(); ++i) {
+      for (int i = 0; i < 4 && i < v.cols * v.rows * v.channels(); ++i) {
         mout << "0x" << std::hex << (int)(v.ptr()[i]) << ", ";
       }
-      output << "(rows: " << v.rows << " cols: " << v.cols << " channels: " << v.channels()
-             << ") = bytes[" << mout.str() << "...]";
+      output << "(rows: " << v.rows << " cols: " << v.cols
+             << " channels: " << v.channels() << ") = bytes[" << mout.str()
+             << "...]";
     } else {
       output << " = Unable to print because dims (" << dims << ") > 2";
     }
