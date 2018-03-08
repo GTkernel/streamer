@@ -118,6 +118,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FRAME_WRITER)));
+  EXPECT_EQ(PROCESSOR_TYPE_FV_GEN,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FV_GEN)));
   EXPECT_EQ(PROCESSOR_TYPE_IMAGE_CLASSIFIER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGE_CLASSIFIER)));

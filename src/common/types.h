@@ -224,6 +224,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_FRAME_PUBLISHER,
   PROCESSOR_TYPE_FRAME_SUBSCRIBER,
   PROCESSOR_TYPE_FRAME_WRITER,
+  PROCESSOR_TYPE_FV_GEN,
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
@@ -285,6 +286,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_FRAME_SUBSCRIBER;
   } else if (type == "FrameWriter") {
     return PROCESSOR_TYPE_FRAME_WRITER;
+  } else if (type == "FvGen") {
+    return PROCESSOR_TYPE_FV_GEN;
   } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
   } else if (type == "ImageSegmenter") {
@@ -363,6 +366,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "FrameSubscriber";
     case PROCESSOR_TYPE_FRAME_WRITER:
       return "FrameWriter";
+    case PROCESSOR_TYPE_FV_GEN:
+      return "FvGen";
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return "ImageClassifier";
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:

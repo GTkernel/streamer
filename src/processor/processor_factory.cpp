@@ -14,9 +14,11 @@
 #include "processor/db_writer.h"
 #include "processor/diff_detector.h"
 #include "processor/display.h"
+#include "processor/face_tracker.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
 #include "processor/frame_writer.h"
+#include "processor/fv_gen.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
@@ -26,7 +28,6 @@
 #endif  // USE_NCS
 #include "processor/detectors/object_detector.h"
 #include "processor/detectors/opencv_people_detector.h"
-#include "processor/face_tracker.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_motion_detector.h"
@@ -88,6 +89,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return FrameSubscriber::Create(params);
     case PROCESSOR_TYPE_FRAME_WRITER:
       return FrameWriter::Create(params);
+    case PROCESSOR_TYPE_FV_GEN:
+      return FvGen::Create(params);
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return ImageClassifier::Create(params);
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:
