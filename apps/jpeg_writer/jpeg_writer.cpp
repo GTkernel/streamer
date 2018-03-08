@@ -77,15 +77,12 @@ int main(int argc, char* argv[]) {
                      "The directory containing streamer's config files.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
-  desc.add_options()("resize,r",
-                     "Whether to resize the incoming frames. "
-                     "Forces the \"original_image\" field to be saved.");
   desc.add_options()("x-dim,x", po::value<int>(),
-                     "The width to which to resize the frames. Required when "
-                     "using \"--resize\".");
+                     "The width to which to resize the frames. Forces "
+                     "\"--field\" to be \"original_image\".");
   desc.add_options()("y-dim,y", po::value<int>(),
-                     "The height to which to resize the frames. Required when "
-                     "using \"--resize\".");
+                     "The height to which to resize the frames. Forces "
+                     "\"--field\" to be \"original_image\".");
   desc.add_options()("field,f",
                      po::value<std::string>()->default_value("original_image"),
                      "The field to save as a JPEG. Assumed to be "
@@ -129,18 +126,33 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   auto camera = args["camera"].as<std::string>();
+  bool resize = false;
   int x_dim = 0;
-  int y_dim = 0;
-  bool resize = args.count("resize");
-  if (resize) {
+  if (args.count("x-dim")) {
+    resize = true;
     x_dim = args["x-dim"].as<int>();
-    y_dim = args["y-dim"].as<int>();
-    if (x_dim < 1 || y_dim < 1) {
+    if (x_dim < 1) {
       std::ostringstream msg;
-      msg << "Valuex for \"--x-dim\" (" << x_dim << ") and \"--y-dim\" ("
-          << y_dim << ") must be greater than 0.";
+      msg << "Value for \"--x-dim\" must be greater than 0, but is: " << x_dim;
       throw std::invalid_argument(msg.str());
     }
+  }
+  int y_dim = 0;
+  if (args.count("y-dim")) {
+    y_dim = args["y-dim"].as<int>();
+    if (y_dim < 1) {
+      std::ostringstream msg;
+      msg << "Value for \"--y-dim\" must be greater than 0, but is: " << y_dim;
+      throw std::invalid_argument(msg.str());
+    }
+    if (!resize) {
+      throw std::invalid_argument(
+          "\"--x-dim\" and \"--y-dim\" must be used together.");
+    }
+    resize = true;
+  } else if (resize) {
+    throw std::invalid_argument(
+        "\"--x-dim\" and \"--y-dim\" must be used together.");
   }
   auto field = args["field"].as<std::string>();
   auto output_dir = args["output-dir"].as<std::string>();
