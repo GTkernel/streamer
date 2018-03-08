@@ -30,64 +30,18 @@ constexpr auto NETWORK_FILEPATH = "data/mobilenet/mobilenet_deploy.prototxt";
 constexpr auto WEIGHTS_FILEPATH = "/tmp/mobilenet.caffemodel";
 
 const std::vector<std::string> OUTPUTS = {
-  "conv1",
-  "relu1",
-  "conv2_1/dw",
-  "relu2_1/dw",
-  "conv2_1/sep",
-  "relu2_1/sep",
-  "conv2_2/dw",
-  "relu2_2/dw",
-  "conv2_2/sep",
-  "relu2_2/sep",
-  "conv3_1/dw",
-  "relu3_1/dw",
-  "conv3_1/sep",
-  "relu3_1/sep",
-  "conv3_2/dw",
-  "relu3_2/dw",
-  "conv3_2/sep",
-  "relu3_2/sep",
-  "conv4_1/dw",
-  "relu4_1/dw",
-  "conv4_1/sep",
-  "relu4_1/sep",
-  "conv4_2/dw",
-  "relu4_2/dw",
-  "conv4_2/sep",
-  "relu4_2/sep",
-  "conv5_1/dw",
-  "relu5_1/dw",
-  "conv5_1/sep",
-  "relu5_1/sep",
-  "conv5_2/dw",
-  "relu5_2/dw",
-  "conv5_2/sep",
-  "relu5_2/sep",
-  "conv5_3/dw",
-  "relu5_3/dw",
-  "conv5_3/sep",
-  "relu5_3/sep",
-  "conv5_4/dw",
-  "relu5_4/dw",
-  "conv5_4/sep",
-  "relu5_4/sep",
-  "conv5_5/dw",
-  "relu5_5/dw",
-  "conv5_5/sep",
-  "relu5_5/sep",
-  "conv5_6/dw",
-  "relu5_6/dw",
-  "conv5_6/sep",
-  "relu5_6/sep",
-  "conv6/dw",
-  "relu6/dw",
-  "conv6/sep",
-  "relu6/sep",
-  "pool6",
-  "fc7",
-  "prob"
-};
+    "conv1",       "relu1",       "conv2_1/dw",  "relu2_1/dw",  "conv2_1/sep",
+    "relu2_1/sep", "conv2_2/dw",  "relu2_2/dw",  "conv2_2/sep", "relu2_2/sep",
+    "conv3_1/dw",  "relu3_1/dw",  "conv3_1/sep", "relu3_1/sep", "conv3_2/dw",
+    "relu3_2/dw",  "conv3_2/sep", "relu3_2/sep", "conv4_1/dw",  "relu4_1/dw",
+    "conv4_1/sep", "relu4_1/sep", "conv4_2/dw",  "relu4_2/dw",  "conv4_2/sep",
+    "relu4_2/sep", "conv5_1/dw",  "relu5_1/dw",  "conv5_1/sep", "relu5_1/sep",
+    "conv5_2/dw",  "relu5_2/dw",  "conv5_2/sep", "relu5_2/sep", "conv5_3/dw",
+    "relu5_3/dw",  "conv5_3/sep", "relu5_3/sep", "conv5_4/dw",  "relu5_4/dw",
+    "conv5_4/sep", "relu5_4/sep", "conv5_5/dw",  "relu5_5/dw",  "conv5_5/sep",
+    "relu5_5/sep", "conv5_6/dw",  "relu5_6/dw",  "conv5_6/sep", "relu5_6/sep",
+    "conv6/dw",    "relu6/dw",    "conv6/sep",   "relu6/sep",   "pool6",
+    "fc7",         "prob"};
 
 bool FloatEqual(float lhs, float rhs) {
   if (lhs < 0) {
@@ -117,7 +71,7 @@ void CvMatEqual(cv::Mat lhs, cv::Mat rhs) {
 }
 
 cv::Mat Preprocess(const cv::Mat& img) {
-	cv::Size input_geometry_ = cv::Size(WIDTH, HEIGHT);
+  cv::Size input_geometry_ = cv::Size(WIDTH, HEIGHT);
   /* Convert the input image to the input image format of the network. */
   cv::Mat sample = img;
 
@@ -126,16 +80,16 @@ cv::Mat Preprocess(const cv::Mat& img) {
     cv::resize(sample, sample_resized, input_geometry_);
   else
     sample_resized = sample;
-	return sample_resized;
+  return sample_resized;
 }
 
 TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   std::ifstream f(WEIGHTS_FILEPATH);
-  ASSERT_TRUE(f.good())
-      << "The Caffe model file \"" << WEIGHTS_FILEPATH
-      << "\" was not found. Download it by executing: "
-      << "curl -o " << WEIGHTS_FILEPATH
-      << " https://raw.githubusercontent.com/cdwat/MobileNet-Caffe/master/mobilenet.caffemodel";
+  ASSERT_TRUE(f.good()) << "The Caffe model file \"" << WEIGHTS_FILEPATH
+                        << "\" was not found. Download it by executing: "
+                        << "curl -o " << WEIGHTS_FILEPATH
+                        << " https://raw.githubusercontent.com/cdwat/"
+                           "MobileNet-Caffe/master/mobilenet.caffemodel";
   f.close();
 
   // Construct model
@@ -149,7 +103,8 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
   // Read the input
   cv::Mat original_image = cv::imread(INPUT_IMAGE_FILEPATH);
-  ASSERT_FALSE(original_image.empty()) << "Image empty (Did you remember to compile tensorflow as monolithic?)";
+  ASSERT_FALSE(original_image.empty())
+      << "Image empty (Did you remember to compile tensorflow as monolithic?)";
   cv::Mat preprocessed_image = Preprocess(original_image);
 
   // Construct frame with input image in it
@@ -188,21 +143,21 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
     gt_file.close();
 
-		cv::Mat actual_output = output_frame->GetValue<cv::Mat>(OUTPUTS.at(i));
-		int num_channel = actual_output.channels();
-		int height = actual_output.rows;
-		int width = actual_output.cols;
-		float* gt_data_ptr = (float*)expected_output.ptr();
-		int per_channel_floats = height * width;
-		std::vector<cv::Mat> gt_channels;
-		for (int i = 0; i < num_channel; ++i) {
-			cv::Mat cur_channel(HEIGHT, WIDTH, CV_32F);
-			memcpy(cur_channel.data, gt_data_ptr + per_channel_floats * i,
-						 per_channel_floats * sizeof(float));
-			gt_channels.push_back(cur_channel);
-		}
-		cv::Mat expected_output_transposed;
-		cv::merge(gt_channels, expected_output_transposed);
+    cv::Mat actual_output = output_frame->GetValue<cv::Mat>(OUTPUTS.at(i));
+    int num_channel = actual_output.channels();
+    int height = actual_output.rows;
+    int width = actual_output.cols;
+    float* gt_data_ptr = (float*)expected_output.ptr();
+    int per_channel_floats = height * width;
+    std::vector<cv::Mat> gt_channels;
+    for (int i = 0; i < num_channel; ++i) {
+      cv::Mat cur_channel(HEIGHT, WIDTH, CV_32F);
+      memcpy(cur_channel.data, gt_data_ptr + per_channel_floats * i,
+             per_channel_floats * sizeof(float));
+      gt_channels.push_back(cur_channel);
+    }
+    cv::Mat expected_output_transposed;
+    cv::merge(gt_channels, expected_output_transposed);
     CvMatEqual(expected_output_transposed, actual_output);
   }
   nne.Stop();

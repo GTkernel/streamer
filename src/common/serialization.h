@@ -21,7 +21,7 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
     cols = mat.cols;
     channels = mat.channels();
     type = mat.type();
-    if(cols < 0 || rows < 0) {
+    if (cols < 0 || rows < 0) {
       rows = mat.size[0];
       cols = mat.size[1];
       channels = mat.size[2];
@@ -32,11 +32,10 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
   ar& cols& rows& type& channels;
 
   if (Archive::is_loading::value) {
-    if(weird_mode) {
+    if (weird_mode) {
       // TODO: make sure type is not a special type that includes channels
       mat.create({rows, cols, channels}, type);
-    }
-    else {
+    } else {
       mat.create(rows, cols, type);
     }
   }
@@ -49,7 +48,7 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
     ar& boost::serialization::make_array(mat.ptr(), data_size);
   } else {
     int row_size = cols * mat.elemSize();
-    if(weird_mode) {
+    if (weird_mode) {
       row_size *= channels;
     }
     for (int i = 0; i < rows; i++) {

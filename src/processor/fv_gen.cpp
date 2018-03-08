@@ -34,7 +34,7 @@ std::string FvSpec::GetUniqueID(const FvSpec& spec) {
   return ss.str();
 }
 
-FvGen::FvGen() : Processor(PROCESSOR_TYPE_CUSTOM, {SOURCE_NAME}, {SINK_NAME}) {}
+FvGen::FvGen() : Processor(PROCESSOR_TYPE_FV_GEN, {SOURCE_NAME}, {SINK_NAME}) {}
 
 FvGen::~FvGen() {}
 

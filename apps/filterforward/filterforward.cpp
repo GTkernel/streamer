@@ -64,7 +64,7 @@ typedef struct {
 void Stopper(StreamPtr stream, unsigned int num_frames) {
   unsigned int count = 0;
   StreamReader* reader = stream->Subscribe();
-  while (num_frames == 0 || ++count < num_frames + 1) {
+  while (!stopped && (num_frames == 0 || ++count < num_frames + 1)) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr && frame->IsStopFrame()) {
       break;
@@ -246,12 +246,12 @@ void Slack(StreamPtr stream) {
 // NNE and crops to the FvGen.
 void AddQueries(std::vector<query_spec_t> queries,
                 std::shared_ptr<NeuralNetEvaluator> nne,
-                std::shared_ptr<FvGen> fv_gen, std::shared_ptr<ImageMatch> im) {
+                std::shared_ptr<FvGen> fvgen, std::shared_ptr<ImageMatch> im) {
   for (const auto& query : queries) {
     for (int k = 0; k < query.num; ++k) {
       nne->PublishLayer(query.layer);
-      fv_gen->AddFv(query.layer, query.xmin, query.ymin, query.xmax, query.ymax,
-                    query.flat);
+      fvgen->AddFv(query.layer, query.xmin, query.ymin, query.xmax, query.ymax,
+                   query.flat);
       im->AddQuery(query.path, query.layer, query.threshold, query.xmin,
                    query.ymin, query.xmax, query.ymax, query.flat);
     }
@@ -324,10 +324,9 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   std::vector<std::thread> logger_threads;
 
   // Create a Camera.
-
   auto camera = CameraManager::GetInstance().GetCamera(camera_name);
   if (camera->GetCameraType() != CameraType::CAMERA_TYPE_GST) {
-    throw(std::invalid_argument("Must use GST camera"));
+    throw(std::invalid_argument("Must use a GStreamer camera"));
   }
   std::shared_ptr<GSTCamera> gst_camera =
       std::dynamic_pointer_cast<GSTCamera>(camera);
@@ -371,11 +370,11 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   procs.push_back(nne);
 
   // Create an FvGen.
-  auto fv_gen = std::make_shared<FvGen>();
-  fv_gen->SetSource(nne->GetSink());
-  fv_gen->SetBlockOnPush(block);
-  procs.push_back(fv_gen);
-  StreamPtr fvgen_stream = fv_gen->GetSink();
+  auto fvgen = std::make_shared<FvGen>();
+  fvgen->SetSource(nne->GetSink());
+  fvgen->SetBlockOnPush(block);
+  procs.push_back(fvgen);
+  StreamPtr fvgen_stream = fvgen->GetSink();
 
   // Create ImageMatch level 0. Use the same batch size as the
   // NeuralNetEvaluator.
@@ -385,7 +384,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   procs.push_back(im_0);
 
   // Add the level 0 queries.
-  AddQueries(level_to_queries[0], nne, fv_gen, im_0);
+  AddQueries(level_to_queries[0], nne, fvgen, im_0);
 
   // Create a FlowControlExit.
   auto fc_exit = std::make_shared<FlowControlExit>();
@@ -397,8 +396,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // level's output stream. This Logger also might display the frames.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
   logger_threads.push_back(std::thread([fc_exit_sink, log_time, fields,
-                                        output_dir, num_frames, log_memory,
-                                        display] {
+                                        output_dir, log_memory, display] {
     Logger(0, fc_exit_sink, log_time, fields, output_dir, log_memory, display);
   }));
 
@@ -430,7 +428,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     std::string kd_fv_key = kd_fv_keys.at(i - 1);
     std::pair<float, size_t> kd_buf_params = buf_params.at(i - 1);
     std::vector<std::pair<float, size_t>> kd_buf_params_vec = {kd_buf_params};
-    fv_gen->AddFv(kd_fv_key);
+    fvgen->AddFv(kd_fv_key);
     nne->PublishLayer(kd_fv_key);
     auto kd = std::make_shared<KeyframeDetector>(kd_fv_key, kd_buf_params_vec);
     kd->SetSource(kd_input_stream);
@@ -447,14 +445,13 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     procs.push_back(additional_im);
 
     // Add the level i queries.
-    AddQueries(level_to_queries[i], nne, fv_gen, additional_im);
+    AddQueries(level_to_queries[i], nne, fvgen, additional_im);
 
     // Create a logger thread to calculate statistics about ImageMatch's output
     // stream.
     StreamPtr additional_im_sink = additional_im->GetSink();
-    logger_threads.push_back(
-        std::thread([i, additional_im_sink, log_time, fields, output_dir,
-                     num_frames, log_memory] {
+    logger_threads.push_back(std::thread(
+        [i, additional_im_sink, log_time, fields, output_dir, log_memory] {
           Logger(i + 1, additional_im_sink, log_time, fields, output_dir,
                  log_memory);
         }));
@@ -475,8 +472,14 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     (*procs_it)->Start(queue_size);
   }
 
-  while (!stopped) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  if (num_frames > 0) {
+    while (!stopped) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  } else {
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
+    stopped = true;
   }
 
   // Stop the processors in forward order.

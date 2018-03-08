@@ -96,7 +96,7 @@ bool Processor::Start(size_t buf_size) {
 }
 
 bool Processor::Stop() {
-  LOG(INFO) << "Stop called";
+  LOG(INFO) << "Stopping " << GetName() << "...";
   if (stopped_) {
     LOG(WARNING) << "Stop() called on a Processor that was already stopped!";
     return true;
@@ -126,6 +126,7 @@ bool Processor::Stop() {
   // Deallocate the source StreamReaders.
   readers_.clear();
 
+  LOG(INFO) << "Stopped " << GetName();
   return result;
 }
 
@@ -236,7 +237,6 @@ void Processor::PushFrame(const std::string& sink_name,
   CHECK(sinks_.count(sink_name) != 0)
       << GetStringForProcessorType(GetType())
       << " does not have a sink named \"" << sink_name << "\"!";
-
   if (!processing_start_micros_.is_not_a_date_time()) {
     frame->SetValue(GetName() + ".total_micros",
                     boost::posix_time::microsec_clock::local_time() -
