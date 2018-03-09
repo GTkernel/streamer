@@ -32,6 +32,7 @@
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
+#include "processor/pubsub/frame_subscriber.h"
 #include "processor/throttler.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
@@ -259,12 +260,12 @@ void AddQueries(std::vector<query_spec_t> queries,
 }
 
 void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
-         size_t queue_size, const std::string& camera_name,
-         unsigned int file_fps, int throttled_fps, unsigned int tokens,
-         const std::string& model, std::vector<std::string> layers,
-         size_t nne_batch_size, std::vector<std::string> fields,
-         const std::string& output_dir, bool save_matches, bool log_memory,
-         bool display, bool slack) {
+         size_t queue_size, bool use_camera, const std::string& camera_name,
+         const std::string& publish_url, unsigned int file_fps,
+         int throttled_fps, unsigned int tokens, const std::string& model,
+         std::vector<std::string> layers, size_t nne_batch_size,
+         std::vector<std::string> fields, const std::string& output_dir,
+         bool save_matches, bool log_memory, bool display, bool slack) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -323,25 +324,35 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   std::vector<std::shared_ptr<Processor>> procs;
   std::vector<std::thread> logger_threads;
 
-  // Create a Camera.
-  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
-  if (camera->GetCameraType() != CameraType::CAMERA_TYPE_GST) {
-    throw(std::invalid_argument("Must use a GStreamer camera"));
-  }
-  std::shared_ptr<GSTCamera> gst_camera =
-      std::dynamic_pointer_cast<GSTCamera>(camera);
-  gst_camera->SetBlockOnPush(false);
-  gst_camera->SetOutputFilepath(output_dir + "/" + camera_name + ".mp4");
-  gst_camera->SetFileFramerate(file_fps);
-  procs.push_back(gst_camera);
-  StreamPtr camera_stream = gst_camera->GetStream();
+  StreamPtr input_stream;
+  if (use_camera) {
+    // Create Camera.
+    std::shared_ptr<Camera> camera =
+        CameraManager::GetInstance().GetCamera(camera_name);
 
-  StreamPtr correct_fps_stream = camera_stream;
+    if (camera->GetCameraType() != CameraType::CAMERA_TYPE_GST) {
+      throw(std::invalid_argument("Must use a GStreamer camera"));
+    }
+    std::shared_ptr<GSTCamera> gst_camera =
+        std::dynamic_pointer_cast<GSTCamera>(camera);
+    gst_camera->SetBlockOnPush(false);
+    gst_camera->SetOutputFilepath(output_dir + "/" + camera_name + ".mp4");
+    gst_camera->SetFileFramerate(file_fps);
+    procs.push_back(gst_camera);
+    input_stream = gst_camera->GetStream();
+  } else {
+    // Create FrameSubscriber.
+    auto subscriber = std::make_shared<FrameSubscriber>(publish_url);
+    procs.push_back(subscriber);
+    input_stream = subscriber->GetSink();
+  }
+
+  StreamPtr correct_fps_stream = input_stream;
   if (throttled_fps > 0) {
     // If we are supposed to throttler the stream in software, then create a
     // Throttler.
     auto throttler = std::make_shared<Throttler>(throttled_fps);
-    throttler->SetSource(camera_stream);
+    throttler->SetSource(input_stream);
     throttler->SetBlockOnPush(block);
     procs.push_back(throttler);
     correct_fps_stream = throttler->GetSink();
@@ -513,8 +524,12 @@ int main(int argc, char* argv[]) {
                      "Whether processors should block when pushing frames.");
   desc.add_options()("queue-size,q", po::value<size_t>()->default_value(16),
                      "The size of the queues between processors.");
-  desc.add_options()("camera,c", po::value<std::string>()->required(),
-                     "The name of the camera to use.");
+  desc.add_options()("camera,c", po::value<std::string>(),
+                     "The name of the camera to use. Overrides "
+                     "\"--publish-url\".");
+  desc.add_options()("publish-url,u", po::value<std::string>(),
+                     "The URL (host:port) on which the frame stream is being "
+                     "published.");
   desc.add_options()("file-fps", po::value<unsigned int>()->default_value(0),
                      "Rate at which to read a file source (no effect if not "
                      "file source).");
@@ -577,7 +592,18 @@ int main(int argc, char* argv[]) {
   unsigned int num_frames = args["num-frames"].as<unsigned int>();
   bool block = args.count("block");
   size_t queue_size = args["queue-size"].as<size_t>();
-  std::string camera = args["camera"].as<std::string>();
+  std::string camera;
+  bool use_camera = args.count("camera");
+  if (use_camera) {
+    camera = args["camera"].as<std::string>();
+  }
+  std::string publish_url;
+  if (args.count("publish-url")) {
+    publish_url = args["publish-url"].as<std::string>();
+  } else if (!use_camera) {
+    throw std::runtime_error(
+        "Must specify either \"--camera\" or \"--publish-url\".");
+  }
   unsigned int file_fps = args["file-fps"].as<unsigned int>();
   int throttled_fps = args["throttled-fps"].as<int>();
   unsigned int tokens = args["tokens"].as<unsigned int>();
@@ -591,8 +617,8 @@ int main(int argc, char* argv[]) {
   bool log_memory = args.count("memory-usage");
   bool display = args.count("display");
   bool slack = args.count("slack");
-  Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
-      tokens, model, {layer}, nne_batch_size, fields, output_dir, save_matches,
-      log_memory, display, slack);
+  Run(ff_conf, num_frames, block, queue_size, use_camera, camera, publish_url,
+      file_fps, throttled_fps, tokens, model, {layer}, nne_batch_size, fields,
+      output_dir, save_matches, log_memory, display, slack);
   return 0;
 }
