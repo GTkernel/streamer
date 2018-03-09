@@ -23,7 +23,6 @@ GstVideoEncoder::GstVideoEncoder(const std::string& field,
       port_(-1),
       use_tcp_(false),
       pipeline_created_(false),
-
       need_data_(false),
       timestamp_(0) {
   Setup();
@@ -100,17 +99,20 @@ bool GstVideoEncoder::OnStop() {
 
   need_data_ = false;
   VLOG(1) << "Stopping Encoder pipeline.";
-  gst_app_src_end_of_stream(gst_appsrc_);
 
-  const int WAIT_UNTIL_EOS_SENT_MS = 200;
-  std::this_thread::sleep_for(
-      std::chrono::milliseconds(WAIT_UNTIL_EOS_SENT_MS));
+  if (pipeline_created_) {
+    gst_app_src_end_of_stream(gst_appsrc_);
 
-  GstStateChangeReturn ret =
-      gst_element_set_state(GST_ELEMENT(gst_pipeline_), GST_STATE_NULL);
+    const int WAIT_UNTIL_EOS_SENT_MS = 200;
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(WAIT_UNTIL_EOS_SENT_MS));
 
-  if (ret != GST_STATE_CHANGE_SUCCESS) {
-    LOG(ERROR) << "GStreamer failed to stop the Encoder pipeline.";
+    GstStateChangeReturn ret =
+        gst_element_set_state(GST_ELEMENT(gst_pipeline_), GST_STATE_NULL);
+
+    if (ret != GST_STATE_CHANGE_SUCCESS) {
+      LOG(ERROR) << "GStreamer failed to stop the Encoder pipeline.";
+    }
   }
 
   VLOG(1) << "Encoder pipeline stopped.";

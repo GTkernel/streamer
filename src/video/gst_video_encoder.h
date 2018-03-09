@@ -2,6 +2,7 @@
 #ifndef STREAMER_VIDEO_GST_VIDEO_ENCODER_H_
 #define STREAMER_VIDEO_GST_VIDEO_ENCODER_H_
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -65,7 +66,7 @@ class GstVideoEncoder : public Processor {
   bool use_tcp_;
 
   // Whether the GStreamer pipeline has been created yet.
-  bool pipeline_created_;
+  std::atomic<bool> pipeline_created_;
 
   // Gst elements.
   GstBus* gst_bus_;
