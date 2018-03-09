@@ -89,7 +89,7 @@ void EncodeInterval(StreamPtr stream, const std::string& field,
 void Encoder(StreamPtr stream, const std::string& field,
              const std::string& filepath,
              boost::posix_time::time_duration reset_interval_s) {
-  if (reset_interval_s.is_not_a_date_time()) {
+  if (reset_interval_s == boost::posix_time::seconds(-1)) {
     EncodeForever(stream, field, filepath);
   } else {
     EncodeInterval(stream, field, filepath, reset_interval_s);
@@ -258,7 +258,8 @@ int main(int argc, char* argv[]) {
     throw std::invalid_argument(
         "\"--x-dim\" and \"--y-dim\" must be used together.");
   }
-  boost::posix_time::time_duration reset_interval_s;
+  boost::posix_time::time_duration reset_interval_s =
+      boost::posix_time::seconds(-1);
   if (args.count("reset-interval")) {
     reset_interval_s =
         boost::posix_time::seconds(args["reset-interval"].as<long>());
