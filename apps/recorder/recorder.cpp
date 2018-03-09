@@ -16,26 +16,36 @@
 #include "common/types.h"
 #include "processor/image_transformer.h"
 #include "processor/processor.h"
+#include "processor/pubsub/frame_subscriber.h"
 #include "utils/file_utils.h"
 #include "video/gst_video_encoder.h"
 
 namespace po = boost::program_options;
 
-void Run(const std::string& camera_name, unsigned int angle, bool resize,
+void Run(bool use_camera, const std::string& camera_name,
+         const std::string& publish_url, unsigned int angle, bool resize,
          int x_dim, int y_dim, const std::string& output_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
-  // Create Camera.
-  std::shared_ptr<Camera> camera =
-      CameraManager::GetInstance().GetCamera(camera_name);
-  procs.push_back(camera);
+  StreamPtr stream;
+  if (use_camera) {
+    // Create Camera.
+    std::shared_ptr<Camera> camera =
+        CameraManager::GetInstance().GetCamera(camera_name);
+    procs.push_back(camera);
+    stream = camera->GetStream();
+  } else {
+    // Create FrameSubscriber.
+    auto subscriber = std::make_shared<FrameSubscriber>(publish_url);
+    procs.push_back(subscriber);
+    stream = subscriber->GetSink();
+  }
 
-  StreamPtr stream = camera->GetStream();
   if (resize) {
     // Create ImageTransformer.
     auto transformer =
         std::make_shared<ImageTransformer>(Shape(3, x_dim, y_dim), true, angle);
-    transformer->SetSource(camera->GetStream());
+    transformer->SetSource(stream);
     procs.push_back(transformer);
     stream = transformer->GetSink();
   }
@@ -71,12 +81,16 @@ void Run(const std::string& camera_name, unsigned int angle, bool resize,
 }
 
 int main(int argc, char* argv[]) {
-  po::options_description desc("Stores a camera stream as an MP4 file.");
+  po::options_description desc("Stores a stream as an MP4 file.");
   desc.add_options()("help,h", "Print the help message.");
   desc.add_options()("config-dir,C", po::value<std::string>(),
                      "The directory containing streamer's config files.");
-  desc.add_options()("camera,c", po::value<std::string>()->required(),
-                     "The name of the camera to use.");
+  desc.add_options()("camera,c", po::value<std::string>(),
+                     "The name of the camera to use. Overrides "
+                     "\"--publish-url\".");
+  desc.add_options()("publish-url,u", po::value<std::string>(),
+                     "The URL (host:port) on which the frame stream is being "
+                     "published.");
   desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
                      "The angle to rotate frames; must be 0, 90, 180, or 270.");
   desc.add_options()("x-dim,x", po::value<int>(),
@@ -116,7 +130,18 @@ int main(int argc, char* argv[]) {
   // Initialize the streamer context. This must be called before using streamer.
   Context::GetContext().Init();
 
-  auto camera = args["camera"].as<std::string>();
+  std::string camera;
+  bool use_camera = args.count("camera");
+  if (use_camera) {
+    camera = args["use_camera"].as<std::string>();
+  }
+  std::string publish_url;
+  if (args.count("publish-url")) {
+    publish_url = args["publish_url"].as<std::string>();
+  } else if (!use_camera) {
+    throw std::runtime_error(
+        "Must specify either \"--camera\" or \"--publish-url\".");
+  }
   auto angles = std::set<unsigned int>{0, 90, 180, 270};
   auto angle = args["rotate"].as<unsigned int>();
   if (!angles.count(angle)) {
@@ -155,6 +180,6 @@ int main(int argc, char* argv[]) {
   }
 
   auto output_dir = args["output-dir"].as<std::string>();
-  Run(camera, angle, resize, x_dim, y_dim, output_dir);
+  Run(use_camera, camera, publish_url, angle, resize, x_dim, y_dim, output_dir);
   return 0;
 }
