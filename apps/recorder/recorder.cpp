@@ -1,13 +1,16 @@
 
+#include <chrono>
 #include <cstdio>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <glog/logging.h>
 #include <gst/gst.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 
 #include "camera/camera.h"
@@ -22,9 +25,82 @@
 
 namespace po = boost::program_options;
 
+// Used to signal all threads that the pipeline should stop.
+std::atomic<bool> stopped(false);
+
+// Designed to be run by a separate thread. Waits for keyboard input, then
+// notifies the application that it is time to stop.
+void Stopper() {
+  std::cout << "Press \"Enter\" to stop." << std::endl;
+  getchar();
+  stopped = true;
+}
+
+// Encodes the provided stream as a single H264 video.
+void EncodeForever(StreamPtr stream, const std::string& field,
+                   const std::string& filepath) {
+  // Create GstVideoEncoder.
+  auto encoder = std::make_shared<GstVideoEncoder>(field, filepath);
+  encoder->SetSource(stream);
+  encoder->Start();
+
+  while (!stopped) {
+    // Sleep for 1 second to keep overheads low.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  encoder->Stop();
+}
+
+// Encodes the provided stream as a series of H264 videos.
+void EncodeInterval(StreamPtr stream, const std::string& field,
+                    const std::string& filepath,
+                    boost::posix_time::time_duration reset_interval_s) {
+  // Extract filepath components.
+  size_t last_dot = filepath.find_last_of(".");
+  std::string filepath_no_ext = filepath.substr(0, last_dot);
+  std::string filepath_ext = filepath.substr(last_dot + 1, filepath.size());
+
+  int file_count = 1;
+  while (!stopped) {
+    // Create a new filepath with an incremented suffix.
+    std::ostringstream new_filepath;
+    new_filepath << filepath_no_ext << "_" << file_count++ << "."
+                 << filepath_ext;
+
+    // Create GstVideoEncoder.
+    auto encoder = std::make_shared<GstVideoEncoder>(field, new_filepath.str());
+    encoder->SetSource(stream);
+    encoder->Start();
+
+    // Compute end time for this interval.
+    boost::posix_time::ptime next_reset_s =
+        boost::posix_time::second_clock::local_time() + reset_interval_s;
+    while (!stopped &&
+           (boost::posix_time::second_clock::local_time() < next_reset_s)) {
+      // Sleep for 1 second because the granularity of the interval duration is
+      // seconds.
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    encoder->Stop();
+  }
+}
+
+// Designed to be run by a searate thread. Encodes the provided stream.
+void Encoder(StreamPtr stream, const std::string& field,
+             const std::string& filepath,
+             boost::posix_time::time_duration reset_interval_s) {
+  if (reset_interval_s.is_not_a_date_time()) {
+    EncodeForever(stream, field, filepath);
+  } else {
+    EncodeInterval(stream, field, filepath, reset_interval_s);
+  }
+}
+
 void Run(bool use_camera, const std::string& camera_name,
          const std::string& publish_url, unsigned int angle, bool resize,
-         int x_dim, int y_dim, const std::string& output_dir) {
+         int x_dim, int y_dim,
+         boost::posix_time::time_duration reset_interval_s,
+         const std::string& filepath) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   StreamPtr stream;
@@ -59,20 +135,22 @@ void Run(bool use_camera, const std::string& camera_name,
     field = "original_image";
   }
 
-  // Create GstVideoEncoder.
-  std::ostringstream filepath;
-  filepath << output_dir << "/" << camera_name << ".mp4";
-  auto encoder = std::make_shared<GstVideoEncoder>(field, filepath.str());
-  encoder->SetSource(stream);
-  procs.push_back(encoder);
+  // Launch stopper thread.
+  std::thread stopper_thread([] { Stopper(); });
+
+  // Launch the encoder thread. This is where the important logic resides.
+  std::thread encoder_thread([stream, field, filepath, reset_interval_s] {
+    Encoder(stream, field, filepath, reset_interval_s);
+  });
 
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start();
   }
 
-  std::cout << "Press \"Enter\" to stop." << std::endl;
-  getchar();
+  // Wait for the helper threads to finish.
+  encoder_thread.join();
+  stopper_thread.join();
 
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
@@ -97,8 +175,11 @@ int main(int argc, char* argv[]) {
                      "The width to which to resize the frames.");
   desc.add_options()("y-dim,y", po::value<int>(),
                      "The height to which to resize the frames.");
-  desc.add_options()("output-dir,o", po::value<std::string>()->required(),
-                     "The directory in which to store the frame JPEGs.");
+  desc.add_options()("reset-interval,i", po::value<long>(),
+                     "Start a new output file as this interval (in seconds). "
+                     "Leaving this out will create a single output file.");
+  desc.add_options()("output-file,o", po::value<std::string>()->required(),
+                     "The path to the output file.");
 
   // Set up glog.
   google::InitGoogleLogging(argv[0]);
@@ -122,7 +203,6 @@ int main(int argc, char* argv[]) {
 
   // Set up GStreamer.
   gst_init(&argc, &argv);
-
   // Extract the command line arguments.
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
@@ -133,11 +213,11 @@ int main(int argc, char* argv[]) {
   std::string camera;
   bool use_camera = args.count("camera");
   if (use_camera) {
-    camera = args["use_camera"].as<std::string>();
+    camera = args["camera"].as<std::string>();
   }
   std::string publish_url;
   if (args.count("publish-url")) {
-    publish_url = args["publish_url"].as<std::string>();
+    publish_url = args["publish-url"].as<std::string>();
   } else if (!use_camera) {
     throw std::runtime_error(
         "Must specify either \"--camera\" or \"--publish-url\".");
@@ -178,8 +258,19 @@ int main(int argc, char* argv[]) {
     throw std::invalid_argument(
         "\"--x-dim\" and \"--y-dim\" must be used together.");
   }
-
-  auto output_dir = args["output-dir"].as<std::string>();
-  Run(use_camera, camera, publish_url, angle, resize, x_dim, y_dim, output_dir);
+  boost::posix_time::time_duration reset_interval_s;
+  if (args.count("reset-interval")) {
+    reset_interval_s =
+        boost::posix_time::seconds(args["reset-interval"].as<long>());
+    if (reset_interval_s.is_negative()) {
+      std::ostringstream msg;
+      msg << "Value for \"--reset-interval\" cannot be negative, but is: "
+          << reset_interval_s.total_seconds();
+      throw std::invalid_argument(msg.str());
+    }
+  }
+  auto filepath = args["output-file"].as<std::string>();
+  Run(use_camera, camera, publish_url, angle, resize, x_dim, y_dim,
+      reset_interval_s, filepath);
   return 0;
 }
