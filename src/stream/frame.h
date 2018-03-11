@@ -22,6 +22,8 @@
 
 #include "common/context.h"
 
+#include "tensorflow/core/framework/tensor.h"
+
 // Forward declaration to break the cycle:
 //   frame.h -> flow_control_entrance.h -> processor.h -> stream.h -> frame.h
 class FlowControlEntrance;
@@ -50,9 +52,11 @@ class Frame {
   nlohmann::json ToJson() const;
   nlohmann::json GetFieldJson(const std::string& field) const;
   using field_types =
-      boost::variant<int, std::string, float, double, long, unsigned long, bool,
+      boost::variant<std::string, float, double, long, unsigned long, bool,
+					 //int, std::string, float, double, long, unsigned long, bool,
                      boost::posix_time::ptime, boost::posix_time::time_duration,
-                     cv::Mat, std::vector<char>, std::vector<std::string>,
+                     cv::Mat, tensorflow::Tensor, std::vector<char>, std::vector<std::string>,
+                     //cv::Mat, std::vector<char>, std::vector<std::string>,
                      std::vector<double>, std::vector<Rect>,
                      std::vector<FaceLandmark>, std::vector<std::vector<float>>,
                      std::vector<float>, std::vector<std::vector<double>>,

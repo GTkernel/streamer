@@ -6,8 +6,14 @@
 #include <boost/serialization/array.hpp>
 #include <opencv2/opencv.hpp>
 
+#include "tensorflow/core/framework/tensor.h"
+
 namespace boost {
 namespace serialization {
+
+/** TODO Serialization support for Tensor */
+template <class Archive>
+void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {}
 
 /** Serialization support for cv::Mat */
 // http://stackoverflow.com/a/21444792/1072039

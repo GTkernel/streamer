@@ -9,6 +9,7 @@
 #include "processor/processor.h"
 #include "stream/frame.h"
 
+#include "model/tf_model.h"
 // A NeuralNetEvaluator is a Processor that runs deep neural network inference.
 // This Processor has only one source, named "input". On creation, the
 // higher-level code specifies which layers of the DNN should be published. One
@@ -48,11 +49,13 @@ class NeuralNetEvaluator : public Processor {
  private:
   // Executes the neural network and returns a mapping from the name of a layer
   // to that layer's activations.
+  template <typename T> void PassFrame(std::unordered_map<std::string, std::vector<T>> outputs, long time_elapsed); 
   std::unordered_map<std::string, cv::Mat> Evaluate();
 
   Shape input_shape_;
   std::string input_layer_name_;
   std::unique_ptr<Model> model_;
+  std::unique_ptr<TFModel> tf_model_;
   std::vector<std::unique_ptr<Frame>> cur_batch_frames_;
   size_t batch_size_;
 };

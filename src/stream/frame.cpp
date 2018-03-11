@@ -26,13 +26,13 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << v;
     return output.str();
   }
-
+/*  
   std::string operator()(const int& v) const {
     std::ostringstream output;
     output << v;
     return output.str();
   }
-
+*/
   std::string operator()(const long& v) const {
     std::ostringstream output;
     output << v;
@@ -113,7 +113,7 @@ class FramePrinter : public boost::static_visitor<std::string> {
     int dims = v.dims;
     if (dims <= 2) {
       cv::Mat tmp;
-      v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
+      v.copyTo(tmp);
 
       std::ostringstream mout;
       mout << tmp;
@@ -122,6 +122,13 @@ class FramePrinter : public boost::static_visitor<std::string> {
     } else {
       output << " = Unable to print because dims (" << dims << ") > 2";
     }
+    return output.str();
+  }
+
+  std::string operator()(const tensorflow::Tensor& v) const {
+    // TODO Add Tensor print info
+    std::ostringstream output;
+    output << "tensor";
     return output.str();
   }
 
@@ -206,7 +213,7 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
 
   nlohmann::json operator()(const float& v) const { return v; }
 
-  nlohmann::json operator()(const int& v) const { return v; }
+//  nlohmann::json operator()(const int& v) const { return v; }
 
   nlohmann::json operator()(const long& v) const { return v; }
 
@@ -256,6 +263,11 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     return nlohmann::json::parse(str);
   }
 
+  nlohmann::json operator()(const tensorflow::Tensor& v) const {
+    // TODO: Add Tensor to json
+    return nlohmann::json::parse("");
+  }
+
   nlohmann::json operator()(const std::vector<float>& v) const { return v; }
 
   nlohmann::json operator()(const std::vector<FaceLandmark>& v) const {
@@ -297,7 +309,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
 
   unsigned long operator()(const float&) const { return sizeof(float); }
 
-  unsigned long operator()(const int&) const { return sizeof(int); }
+//  unsigned long operator()(const int&) const { return sizeof(int); }
 
   unsigned long operator()(const long&) const { return sizeof(long); }
 
@@ -341,6 +353,11 @@ class FrameSize : public boost::static_visitor<unsigned long> {
 
   unsigned long operator()(const cv::Mat& v) const {
     return v.total() * sizeof(float);
+  }
+
+  unsigned long operator()(const tensorflow::Tensor& v) const {
+    // TODO: count Tensor data size
+    return sizeof(tensorflow::Tensor);
   }
 
   unsigned long operator()(const std::vector<float>& v) const {
@@ -501,7 +518,7 @@ unsigned long Frame::GetRawSizeBytes(
 // Types declared in Field
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
-template void Frame::SetValue(std::string, const int&);
+//template void Frame::SetValue(std::string, const int&);
 template void Frame::SetValue(std::string, const long&);
 template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const bool&);
@@ -514,6 +531,7 @@ template void Frame::SetValue(std::string, const std::vector<double>&);
 template void Frame::SetValue(std::string, const std::vector<Rect>&);
 template void Frame::SetValue(std::string, const std::vector<char>&);
 template void Frame::SetValue(std::string, const cv::Mat&);
+template void Frame::SetValue(std::string, const tensorflow::Tensor&);
 template void Frame::SetValue(std::string, const std::vector<FaceLandmark>&);
 template void Frame::SetValue(std::string,
                               const std::vector<std::vector<float>>&);
@@ -525,7 +543,7 @@ template void Frame::SetValue(std::string, const std::vector<int>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
-template int Frame::GetValue(std::string) const;
+//template int Frame::GetValue(std::string) const;
 template long Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
 template bool Frame::GetValue(std::string) const;
@@ -536,6 +554,7 @@ template std::vector<std::string> Frame::GetValue(std::string) const;
 template std::vector<double> Frame::GetValue(std::string) const;
 template std::vector<Rect> Frame::GetValue(std::string) const;
 template cv::Mat Frame::GetValue(std::string) const;
+template tensorflow::Tensor Frame::GetValue(std::string) const;
 template std::vector<char> Frame::GetValue(std::string) const;
 template std::vector<FaceLandmark> Frame::GetValue(std::string) const;
 template std::vector<std::vector<float>> Frame::GetValue(std::string) const;

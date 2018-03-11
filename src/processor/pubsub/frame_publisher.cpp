@@ -52,7 +52,8 @@ void FramePublisher::Process() {
     boost::archive::binary_oarchive ar(frame_string);
     // Make a copy of the frame, keeping only the fields that we are supposed to
     // send.
-    ar << std::make_unique<Frame>(frame, fields_to_send_);
+    auto copy_frame = std::make_unique<Frame>(frame, fields_to_send_);
+    ar << copy_frame; //std::make_unique<Frame>(frame, fields_to_send_);
   } catch (const boost::archive::archive_exception& e) {
     LOG(INFO) << "Boost serialization error: " << e.what();
   }

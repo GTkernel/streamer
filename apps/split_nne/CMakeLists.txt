@@ -13,3 +13,6 @@ ENDMACRO()
 
 add_executable(split_nne EXCLUDE_FROM_ALL split_nne.cpp)
 BUILD_ONE(split_nne)
+
+add_executable(split_classifier EXCLUDE_FROM_ALL split_classifier.cpp)
+BUILD_ONE(split_classifier)
