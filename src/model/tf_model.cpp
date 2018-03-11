@@ -137,7 +137,6 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Tensor2CV(
         std::vector<int> mat_size;
         size_t vishash_size = 1;
         for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
-          //if (it == tensor_shape.begin()) continue;
           mat_size.push_back((*it).size);
           vishash_size *= (*it).size;
         }
@@ -229,9 +228,6 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     std::vector<int> mat_size;
     size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
-      // Each output mat will be only 1 element of the batch, so ignore the
-      // first dimension (which is batch size)
-      //if (it == tensor_shape.begin()) continue;
       mat_size.push_back((*it).size);
       vishash_size *= (*it).size;
     }
