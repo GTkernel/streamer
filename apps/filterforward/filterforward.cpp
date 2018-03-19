@@ -559,7 +559,9 @@ int main(int argc, char* argv[]) {
       "Save JPEGs of frames matched by the first level of the hierarchy.");
   desc.add_options()("memory-usage", "Log memory usage.");
   desc.add_options()("display,d", "Enable display.");
-  desc.add_options()("slack", "Enable Slack notifications for matched frames.");
+  desc.add_options()("slack", po::value<std::string>(),
+                     "Enable Slack notifications for matched frames, and send "
+                     "notifications to the provided hook url.");
 
   // Parse the command line arguments.
   po::variables_map args;
