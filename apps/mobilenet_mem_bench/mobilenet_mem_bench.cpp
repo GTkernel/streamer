@@ -1,4 +1,4 @@
-// Created by Ran Xian on 3/19/2018
+// This app allows you to profile the memory usage and throughput of different models
 
 #include <cstdio>
 #include <iostream>
