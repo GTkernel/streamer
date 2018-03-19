@@ -1,4 +1,4 @@
-// The classifier app demonstrates how to use an ImageClassifier processor.
+// Created by Ran Xian on 3/19/2018
 
 #include <cstdio>
 #include <iostream>
