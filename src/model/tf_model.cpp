@@ -75,7 +75,6 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     int height = input.rows;
     int width = input.cols;
     if (input.dims == 4) {
-      CHECK(false);
       channel = input.size[3];
       height = input.size[1];
       width = input.size[2];
