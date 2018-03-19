@@ -101,7 +101,7 @@ void ImageTransformer::Process() {
   long time_elapsed = (end_time - start_time).total_microseconds();
 
   frame->SetValue("image", sample_resized);
-  frame->SetValue("image_transformer.micros", time_elapsed);
+  frame->SetValue(GetName() + ".micros", time_elapsed);
   PushFrame(SINK_NAME, std::move(frame));
 }
 
