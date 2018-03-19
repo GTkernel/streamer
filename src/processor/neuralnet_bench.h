@@ -9,12 +9,7 @@
 #include "processor/processor.h"
 #include "stream/frame.h"
 
-// A NNBench is a Processor that runs deep neural network inference.
-// This Processor has only one source, named "input". On creation, the
-// higher-level code specifies which layers of the DNN should be published. One
-// sink is created for each published layer and is named after the layer.
-// At any time, PublishLayer() can be called to expose a previously unpublished
-// layer.
+// A NNBench is a Processor
 class NNBench : public Processor {
  public:
   // If output_layer_names is empty, then by default the last layer is
