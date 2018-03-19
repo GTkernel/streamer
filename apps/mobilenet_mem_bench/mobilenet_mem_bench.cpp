@@ -66,22 +66,6 @@ void Run(const std::string& camera_name, const std::string& model_name,
   while (true) {
     auto frame = reader->PopFrame();
 
-    // Extract match percentage.
-    /*auto probs = frame->GetValue<std::vector<double>>("probabilities");
-    auto prob_percent = probs.front() * 100;
-
-    // Extract tag.
-    auto tags = frame->GetValue<std::vector<std::string>>("tags");
-    auto tag = tags.front();
-    std::regex re(".+? (.+)");
-    std::smatch results;
-    std::string tag_name;
-    if (!std::regex_match(tag, results, re)) {
-      tag_name = tag;
-    } else {
-      tag_name = results[1];
-    }*/
-
     long nnbench_micros = frame->GetValue<long>("neuralnet_bench.micros");
     std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical()
               << "," << nnbench_micros << std::endl;
