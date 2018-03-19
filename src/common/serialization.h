@@ -14,6 +14,9 @@ namespace serialization {
 template <class Archive>
 void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
   int cols, rows, channels, type;
+  // Weird mode is when opencv decides that there are -1 rows and -1 columns.
+  // In most cases, there are more than -1 rows and -1 columns, but
+  // for some reason opencv wants to keep it a secret.
   bool weird_mode = false;
 
   if (Archive::is_saving::value) {
@@ -32,6 +35,7 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
   ar& cols& rows& type& channels;
 
   if (Archive::is_loading::value) {
+    // If opencv doesn't cooperate then force it to work in a different way
     if (weird_mode) {
       // TODO: make sure type is not a special type that includes channels
       mat.create({rows, cols, channels}, type);

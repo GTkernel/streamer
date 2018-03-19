@@ -67,7 +67,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
     auto frame = reader->PopFrame();
 
     long nnbench_micros = frame->GetValue<long>("neuralnet_bench.micros");
-    std::cout << num_classifiers << "," << getVirtual() << "," << getPhysical()
+    std::cout << num_classifiers << "," << GetVirtualKB() << "," << GetPhysicalKB()
               << "," << nnbench_micros << std::endl;
     destroy_counter += 1;
     if (destroy_counter == 500) {
