@@ -32,7 +32,6 @@ class FvSpec {
 class FvGen : public Processor {
  public:
   FvGen();
-  ~FvGen();
 
   static std::shared_ptr<FvGen> Create(const FactoryParamsType& params);
 

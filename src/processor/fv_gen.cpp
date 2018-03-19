@@ -36,8 +36,6 @@ std::string FvSpec::GetUniqueID(const FvSpec& spec) {
 
 FvGen::FvGen() : Processor(PROCESSOR_TYPE_FV_GEN, {SOURCE_NAME}, {SINK_NAME}) {}
 
-FvGen::~FvGen() {}
-
 std::shared_ptr<FvGen> FvGen::Create(const FactoryParamsType&) {
   STREAMER_NOT_IMPLEMENTED;
   return nullptr;
@@ -66,7 +64,7 @@ void FvGen::Process() {
     if (spec.roi_.height != 0 && spec.roi_.width != 0) {
       fv = input_mat({spec.yrange_, spec.xrange_});
 
-#ifdef VERIFY
+#ifdef MODE_VERIFY
       // Keep this code because it is very useful for debugging.
       std::vector<cv::Mat> channels;
       int full_height = input_mat.size[0];
@@ -90,7 +88,7 @@ void FvGen::Process() {
           }
         }
       }
-#endif  // VERIFY
+#endif  // MODE_VERIFY
     } else {
       fv = input_mat;
     }
