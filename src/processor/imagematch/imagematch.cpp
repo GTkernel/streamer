@@ -104,7 +104,6 @@ void ImageMatch::Process() {
     int cur_dim = (*output_tensor.shape().begin()).size;
     for (int i = 0; i < cur_dim * 2; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
-      // LOG(INFO) << prob_match;
       if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {
