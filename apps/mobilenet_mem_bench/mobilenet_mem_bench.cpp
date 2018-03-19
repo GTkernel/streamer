@@ -21,54 +21,13 @@
 #include "processor/image_transformer.h"
 
 #include "processor/neuralnet_bench.h"
+#include "utils/perf_utils.h"
 
 namespace po = boost::program_options;
 
 int num_classifiers;
 int batch_size;
 bool do_mem;
-
-int parseLine(char* line) {
-  // This assumes that a digit will be found and the line ends in " Kb".
-  int i = strlen(line);
-  const char* p = line;
-  while (*p < '0' || *p > '9') p++;
-  line[i - 3] = '\0';
-  i = atoi(p);
-  return i;
-}
-
-int getPhysical() {  // Note: this value is in KB!
-  if (!do_mem) return 0;
-  FILE* file = fopen("/proc/self/status", "r");
-  int result = -1;
-  char line[128];
-
-  while (fgets(line, 128, file) != NULL) {
-    if (strncmp(line, "VmRSS:", 6) == 0) {
-      result = parseLine(line);
-      break;
-    }
-  }
-  fclose(file);
-  return result;
-}
-
-int getVirtual() {  // Note: this value is in KB!
-  if (!do_mem) return 0;
-  FILE* file = fopen("/proc/self/status", "r");
-  int result = -1;
-  char line[128];
-
-  while (fgets(line, 128, file) != NULL) {
-    if (strncmp(line, "VmSize:", 7) == 0) {
-      result = parseLine(line);
-      break;
-    }
-  }
-  fclose(file);
-  return result;
-}
 
 void Run(const std::string& camera_name, const std::string& model_name,
          bool display) {
