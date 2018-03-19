@@ -45,7 +45,7 @@ void Run(const std::string& camera_name, const std::string& model_name) {
   procs.push_back(transformer);
 
   std::shared_ptr<NNBench> nn_bench = std::make_shared<NNBench>(
-      model_desc, input_shape, batch_size, num_classifiers, !do_mem);
+      model_desc, input_shape, batch_size, num_classifiers);
   procs.push_back(nn_bench);
   nn_bench->SetSource(transformer->GetSink());
 
