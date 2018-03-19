@@ -37,7 +37,6 @@ bool ImageSegmenter::OnStop() {
 
 void ImageSegmenter::Process() {
   // Do image segmentation
-  /*
     Timer timer;
     timer.Start();
     auto frame = GetFrame("input");
@@ -100,5 +99,4 @@ void ImageSegmenter::Process() {
     frame->SetValue("image", colored_output);
     PushFrame("output", std::move(frame));
     LOG(INFO) << "Segmentation takes " << timer.ElapsedMSec() << " ms";
-  */
 }
