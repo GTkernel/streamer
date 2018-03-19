@@ -72,9 +72,6 @@ void ImageMatch::Process() {
     int height = fv.rows;
     int width = fv.cols;
     int channel = fv.channels();
-    // height = 6;
-    // width = 8;
-    // channel = 1024;
     tensorflow::Tensor input_tensor(
         tensorflow::DT_FLOAT,
         tensorflow::TensorShape(
