@@ -1,9 +1,10 @@
-// Utilities related to measuring system performance,
+// Utilities related to measuring system performance.
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
+// https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
 // Extracts a numeric digit from the line, assuming that a digit exists and the
 // line ends in " kB".
 int ParseMemInfoLine(char* line) {
