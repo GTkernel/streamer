@@ -437,9 +437,9 @@ T Frame::GetValue(std::string key) const {
 
 template <typename T>
 void Frame::SetValue(std::string key, const T& val) {
-  /*if(frame_data_.count(key) > 0) {
+  if(frame_data_.count(key) > 0) {
     LOG(INFO) << "Warning: overwriting " << key << " in Frame";
-  }*/
+  }
   frame_data_[key] = val;
 }
 
