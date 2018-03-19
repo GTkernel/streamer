@@ -13,7 +13,7 @@ constexpr auto SINK_NAME = "output";
 // #define LAYER "prob"
 
 NNBench::NNBench(const ModelDesc& model_desc, const Shape& input_shape,
-                 size_t batch_size, int num_classifiers, bool run)
+                 size_t batch_size, int num_classifiers)
     : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME},
                 {SINK_NAME}),
       input_shape_(input_shape),

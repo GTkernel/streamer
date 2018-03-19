@@ -15,7 +15,7 @@ class NNBench : public Processor {
   // If output_layer_names is empty, then by default the last layer is
   // published.
   NNBench(const ModelDesc& model_desc, const Shape& input_shape,
-          size_t batch_size = 1, int num_classifiers = 1, bool run = true);
+          size_t batch_size = 1, int num_classifiers = 1);
 
   // Returns a vector of the names of this NNBench's sinks, which are
   // the names of the layers that it is publishing.
