@@ -21,7 +21,6 @@ class NNBench : public Processor {
   // published.
   NNBench(const ModelDesc& model_desc, const Shape& input_shape,
           size_t batch_size = 1, int num_classifiers = 1, bool run = true);
-  ~NNBench();
 
   // Returns a vector of the names of this NNBench's sinks, which are
   // the names of the layers that it is publishing.
@@ -53,7 +52,6 @@ class NNBench : public Processor {
   std::vector<std::unique_ptr<Frame>> cur_batch_frames_;
   size_t batch_size_;
   int classifiers_;
-  bool run_;
 };
 
 #endif  // STREAMER_PROCESSOR_NNBENCH_H_

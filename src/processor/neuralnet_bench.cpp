@@ -8,7 +8,9 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 #define LAYER "dense_2/Sigmoid:0"
-//#define LAYER "prob"
+
+// Change this define statement to use a different model :)
+// #define LAYER "prob"
 
 NNBench::NNBench(const ModelDesc& model_desc, const Shape& input_shape,
                  size_t batch_size, int num_classifiers, bool run)
@@ -16,8 +18,7 @@ NNBench::NNBench(const ModelDesc& model_desc, const Shape& input_shape,
                 {SINK_NAME}),
       input_shape_(input_shape),
       batch_size_(batch_size),
-      classifiers_(num_classifiers),
-      run_(run) {
+      classifiers_(num_classifiers) {
   // Load model.
   auto& manager = ModelManager::GetInstance();
   for (int i = 0; i < num_classifiers; ++i) {
@@ -26,8 +27,6 @@ NNBench::NNBench(const ModelDesc& model_desc, const Shape& input_shape,
     models_.push_back(std::move(model));
   }
 }
-
-NNBench::~NNBench() {}
 
 const std::vector<std::string> NNBench::GetSinkNames() const {
   STREAMER_NOT_IMPLEMENTED;
