@@ -8,7 +8,8 @@ All rights reserved.
 All other contributions:
 Copyright (c) 2014, 2015, the respective contributors
 All rights reserved.
-For the list of contributors go to https://github.com/BVLC/caffe/blob/master/CONTRIBUTORS.md
+For the list of contributors go to
+https://github.com/BVLC/caffe/blob/master/CONTRIBUTORS.md
 
 
 Redistribution and use in source and binary forms, with or without
@@ -48,16 +49,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
-#include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 
 using namespace caffe;  // NOLINT(build/namespaces)
 using std::string;
 
 class Classifier {
  public:
-  Classifier(const string& model_file,
-             const string& trained_file,
+  Classifier(const string& model_file, const string& trained_file,
              const string& engine);
 
   void Classify(const cv::Mat& img);
@@ -67,11 +67,10 @@ class Classifier {
 
   void WrapInputLayer(std::vector<cv::Mat>* input_channels);
 
-  void Preprocess(const cv::Mat& img,
-                  std::vector<cv::Mat>* input_channels);
+  void Preprocess(const cv::Mat& img, std::vector<cv::Mat>* input_channels);
 
  private:
-  shared_ptr<Net<float> > net_;
+  shared_ptr<Net<float>> net_;
   cv::Size input_geometry_;
   int num_channels_;
   cv::Mat mean_;
@@ -102,9 +101,7 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
 }  // namespace serialization
 }  // namespace boost
 
-
-Classifier::Classifier(const string& model_file,
-                       const string& trained_file,
+Classifier::Classifier(const string& model_file, const string& trained_file,
                        const string& engine) {
   // Force CPU mode
   Caffe::set_mode(Caffe::CPU);
@@ -119,7 +116,7 @@ Classifier::Classifier(const string& model_file,
   Blob<float>* input_layer = net_->input_blobs()[0];
   num_channels_ = input_layer->channels();
   CHECK(num_channels_ == 3 || num_channels_ == 1)
-    << "Input layer should have 1 or 3 channels.";
+      << "Input layer should have 1 or 3 channels.";
   input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
 
   /* Load the binaryproto mean file. */
@@ -129,8 +126,8 @@ Classifier::Classifier(const string& model_file,
 /* Return the top N predictions. */
 void Classifier::Classify(const cv::Mat& img) {
   Blob<float>* input_layer = net_->input_blobs()[0];
-  input_layer->Reshape(1, num_channels_,
-                       input_geometry_.height, input_geometry_.width);
+  input_layer->Reshape(1, num_channels_, input_geometry_.height,
+                       input_geometry_.width);
   net_->Reshape();
   std::vector<cv::Mat> input_channels;
   WrapInputLayer(&input_channels);
@@ -138,10 +135,11 @@ void Classifier::Classify(const cv::Mat& img) {
   Preprocess(img, &input_channels);
 
   net_->Forward();
-  std::vector<std::vector<caffe::Blob<float>*>> layer_activations = net_->top_vecs();
+  std::vector<std::vector<caffe::Blob<float>*>> layer_activations =
+      net_->top_vecs();
   std::vector<std::string> layer_names = net_->layer_names();
   CHECK(layer_activations.size() == layer_names.size());
-  for(int i = 1; i < layer_activations.size(); ++i) {
+  for (int i = 1; i < layer_activations.size(); ++i) {
     std::string cur_layer_name = layer_names.at(i);
     caffe::Blob<float>* cur_activations = layer_activations.at(i).at(0);
     int blob_dimensionality = cur_activations->num_axes();
@@ -153,21 +151,25 @@ void Classifier::Classify(const cv::Mat& img) {
     // Convert format
     int per_channel_elems = height * width;
     cv::Mat activations({num_channel, height, width}, CV_32F);
-    memcpy(activations.data, cur_activations->mutable_cpu_data(), num_channel * per_channel_elems * sizeof(float));
-  /*
-    std::vector<cv::Mat> channels;
-    for(int ch = 0; ch < num_channel; ++ch) {
-      cv::Mat cur_channel(height, width, CV_32F);
-      memcpy(cur_channel.data, cur_activations->mutable_cpu_data() + per_channel_elems * ch, per_channel_elems * sizeof(float));
-      channels.push_back(cur_channel);
-    }
-    cv::Mat activations({num_channel, height, width}, CV_32F);
-    cv::merge(channels, activations);
-  */
-    std::cout << cur_layer_name << " <" << height << ", " << width << ", " << num_channel << "> " << std::endl;
+    memcpy(activations.data, cur_activations->mutable_cpu_data(),
+           num_channel * per_channel_elems * sizeof(float));
+    /*
+      std::vector<cv::Mat> channels;
+      for(int ch = 0; ch < num_channel; ++ch) {
+        cv::Mat cur_channel(height, width, CV_32F);
+        memcpy(cur_channel.data, cur_activations->mutable_cpu_data() +
+      per_channel_elems * ch, per_channel_elems * sizeof(float));
+        channels.push_back(cur_channel);
+      }
+      cv::Mat activations({num_channel, height, width}, CV_32F);
+      cv::merge(channels, activations);
+    */
+    std::cout << cur_layer_name << " <" << height << ", " << width << ", "
+              << num_channel << "> " << std::endl;
     std::string filename = cur_layer_name + ".bin";
     std::replace(filename.begin(), filename.end(), '/', '.');
-    std::ofstream of("activations/" + filename, std::ios::binary | std::ios::out);
+    std::ofstream of("activations/" + filename,
+                     std::ios::binary | std::ios::out);
     boost::archive::binary_oarchive ar(of);
     ar << activations;
     of.close();
@@ -182,8 +184,10 @@ void Classifier::Classify(const cv::Mat& img) {
     bool continuous = activations.isContinuous();
     continuous = continuous && loaded_activations.isContinuous();
     CHECK(continuous) << "Not continuous";
-    for(int idx = 0; idx < data_size; ++idx) {
-      CHECK(truth[idx] == loaded[idx]) << cur_layer_name << ": " << idx << ": Expected " << truth[idx] << " found " << loaded[idx];
+    for (int idx = 0; idx < data_size; ++idx) {
+      CHECK(truth[idx] == loaded[idx])
+          << cur_layer_name << ": " << idx << ": Expected " << truth[idx]
+          << " found " << loaded[idx];
     }
   }
 }
@@ -248,24 +252,23 @@ void Classifier::Preprocess(const cv::Mat& img,
    * objects in input_channels. */
   cv::split(sample_normalized, *input_channels);
 
-  CHECK(reinterpret_cast<float*>(input_channels->at(0).data)
-        == net_->input_blobs()[0]->cpu_data())
-    << "Input channels are not wrapping the input layer of the network.";
+  CHECK(reinterpret_cast<float*>(input_channels->at(0).data) ==
+        net_->input_blobs()[0]->cpu_data())
+      << "Input channels are not wrapping the input layer of the network.";
 }
 
 int main(int argc, char** argv) {
   if (argc < 4) {
-    std::cerr << "Usage: " << argv[0]
-              << " deploy.prototxt network.caffemodel"
+    std::cerr << "Usage: " << argv[0] << " deploy.prototxt network.caffemodel"
               << " img.jpg [CAFFE|MKL2017|MKLDNN]" << std::endl;
     return 1;
   }
 
   ::google::InitGoogleLogging(argv[0]);
 
-  string model_file   = argv[1];
+  string model_file = argv[1];
   string trained_file = argv[2];
-  string file         = argv[3];
+  string file = argv[3];
   string engine = "";
   if (argc > 5) {
     engine = argv[5];

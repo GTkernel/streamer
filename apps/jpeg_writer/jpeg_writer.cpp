@@ -32,6 +32,7 @@ void Run(const std::string& camera_name, bool resize, int x_dim, int y_dim,
   procs.push_back(camera);
 
   StreamPtr stream = camera->GetStream();
+  std::string field_to_save;
   if (resize) {
     // Create ImageTransformer.
     auto transformer =
@@ -39,10 +40,7 @@ void Run(const std::string& camera_name, bool resize, int x_dim, int y_dim,
     transformer->SetSource(camera->GetStream());
     procs.push_back(transformer);
     stream = transformer->GetSink();
-  }
 
-  std::string field_to_save;
-  if (resize) {
     // The ImageTransformer is hardcorded to store the resized image at the key
     // "image".
     field_to_save = "image";

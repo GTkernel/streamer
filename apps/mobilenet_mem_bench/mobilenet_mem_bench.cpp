@@ -1,4 +1,5 @@
-// This app allows you to profile the memory usage and throughput of different models
+// This app allows you to profile the memory usage and throughput of different
+// models.
 
 #include <cstdio>
 #include <iostream>
@@ -29,8 +30,7 @@ int num_classifiers;
 int batch_size;
 bool do_mem;
 
-void Run(const std::string& camera_name, const std::string& model_name,
-         bool display) {
+void Run(const std::string& camera_name, const std::string& model_name) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Camera
@@ -67,8 +67,8 @@ void Run(const std::string& camera_name, const std::string& model_name,
     auto frame = reader->PopFrame();
 
     long nnbench_micros = frame->GetValue<long>("neuralnet_bench.micros");
-    std::cout << num_classifiers << "," << GetVirtualKB() << "," << GetPhysicalKB()
-              << "," << nnbench_micros << std::endl;
+    std::cout << num_classifiers << "," << GetVirtualKB() << ","
+              << GetPhysicalKB() << "," << nnbench_micros << std::endl;
     destroy_counter += 1;
     if (destroy_counter == 500) {
       std::terminate();
@@ -95,7 +95,6 @@ int main(int argc, char* argv[]) {
                      "Num classifiers");
   desc.add_options()("batch,b", po::value<int>()->required(), "Batch size");
   desc.add_options()("memory,a", po::value<bool>(), "memory");
-  desc.add_options()("display,d", "Enable display or not");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -127,11 +126,10 @@ int main(int argc, char* argv[]) {
   }
   auto camera_name = args["camera"].as<std::string>();
   auto model = args["model"].as<std::string>();
-  bool display = args.count("display");
   do_mem = args.count("memory");
   num_classifiers = args["num_classifiers"].as<int>();
   batch_size = args["batch"].as<int>();
   LOG(INFO) << batch_size;
-  Run(camera_name, model, display);
+  Run(camera_name, model);
   return 0;
 }

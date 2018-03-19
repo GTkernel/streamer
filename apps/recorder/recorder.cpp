@@ -117,6 +117,7 @@ void Run(bool use_camera, const std::string& camera_name,
     stream = subscriber->GetSink();
   }
 
+  std::string field;
   if (resize) {
     // Create ImageTransformer.
     auto transformer =
@@ -124,10 +125,7 @@ void Run(bool use_camera, const std::string& camera_name,
     transformer->SetSource(stream);
     procs.push_back(transformer);
     stream = transformer->GetSink();
-  }
 
-  std::string field;
-  if (resize) {
     // The ImageTransformer is hardcorded to store the resized image at the key
     // "image".
     field = "image";
@@ -181,11 +179,6 @@ int main(int argc, char* argv[]) {
   desc.add_options()("output-file,o", po::value<std::string>()->required(),
                      "The path to the output file.");
 
-  // Set up glog.
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_alsologtostderr = 1;
-  FLAGS_colorlogtostderr = 1;
-
   // Parse the command line arguments.
   po::variables_map args;
   try {
@@ -203,6 +196,11 @@ int main(int argc, char* argv[]) {
 
   // Set up GStreamer.
   gst_init(&argc, &argv);
+  // Set up glog.
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_alsologtostderr = 1;
+  FLAGS_colorlogtostderr = 1;
+
   // Extract the command line arguments.
   if (args.count("config-dir")) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());

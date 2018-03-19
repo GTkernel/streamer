@@ -1,8 +1,5 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
-//
 
-#include "camera.h"
+#include "camera/camera.h"
 
 #include <stdexcept>
 

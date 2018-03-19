@@ -201,11 +201,7 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_file.close();
 }
 
-void Slack(StreamPtr stream) {
-  std::string url =
-      "https://hooks.slack.com/services/T2PN4MBJM/B9C2KMBA4/"
-      "rv1AtWczBTBOXveei5fStm68";
-
+void Slack(StreamPtr stream, const std::string& slack_url) {
   CURL* curl;
   CURLcode res;
 
@@ -228,7 +224,7 @@ void Slack(StreamPtr stream) {
             "image: <http://imgs.xkcd.com/comics/regex_golf.png|frame>\"}";
         curl = curl_easy_init();
         if (curl) {
-          curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+          curl_easy_setopt(curl, CURLOPT_URL, slack_url.c_str());
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg.c_str());
           res = curl_easy_perform(curl);
           if (res != CURLE_OK) {
@@ -265,7 +261,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          int throttled_fps, unsigned int tokens, const std::string& model,
          std::vector<std::string> layers, size_t nne_batch_size,
          std::vector<std::string> fields, const std::string& output_dir,
-         bool save_matches, bool log_memory, bool display, bool slack) {
+         bool save_matches, bool log_memory, bool display, bool slack,
+         const std::string& slack_url) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -335,6 +332,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     }
     std::shared_ptr<GSTCamera> gst_camera =
         std::dynamic_pointer_cast<GSTCamera>(camera);
+    // Why is this false?
     gst_camera->SetBlockOnPush(false);
     gst_camera->SetOutputFilepath(output_dir + "/" + camera_name + ".mp4");
     gst_camera->SetFileFramerate(file_fps);
@@ -343,6 +341,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   } else {
     // Create FrameSubscriber.
     auto subscriber = std::make_shared<FrameSubscriber>(publish_url);
+    // This is false because the "use_camera" case is false.
+    subscriber->SetBlockOnPush(false);
     procs.push_back(subscriber);
     input_stream = subscriber->GetSink();
   }
@@ -475,7 +475,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Launch Slack thread
   std::thread slack_thread;
   if (slack) {
-    slack_thread = std::thread([fc_exit_sink] { Slack(fc_exit_sink); });
+    slack_thread = std::thread(
+        [fc_exit_sink, slack_url] { Slack(fc_exit_sink, slack_url); });
   }
 
   // Start the processors in reverse order.
@@ -617,8 +618,12 @@ int main(int argc, char* argv[]) {
   bool log_memory = args.count("memory-usage");
   bool display = args.count("display");
   bool slack = args.count("slack");
+  std::string slack_url;
+  if (slack) {
+    slack_url = args["slack"].as<std::string>();
+  }
   Run(ff_conf, num_frames, block, queue_size, use_camera, camera, publish_url,
       file_fps, throttled_fps, tokens, model, {layer}, nne_batch_size, fields,
-      output_dir, save_matches, log_memory, display, slack);
+      output_dir, save_matches, log_memory, display, slack, slack_url);
   return 0;
 }
