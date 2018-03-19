@@ -60,7 +60,7 @@ void GstVideoCapture::CheckBuffer() {
   if (frames_.size() >= max_buf_size_) {
     // If the frame queue is not being drained fast enough, then wait here, thus
     // applying backpressure to the GStreamer pipeline.
-     LOG(INFO)
+    LOG(INFO)
         << "GSTCamera frame queue full. Applying backpressure to GStreamer...";
     gst_cv_.wait(
         lock, [this] { return !connected_ || frames_.size() < max_buf_size_; });

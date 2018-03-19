@@ -72,7 +72,7 @@ void CvMatEqual(cv::Mat lhs, cv::Mat rhs) {
 
 cv::Mat Preprocess(const cv::Mat& img) {
   cv::Size input_geometry_ = cv::Size(WIDTH, HEIGHT);
-  // Convert the input image to the input image format of the network. 
+  // Convert the input image to the input image format of the network.
   cv::Mat sample = img;
 
   cv::Mat sample_resized;
@@ -103,8 +103,9 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
 
   // Read the input
   cv::Mat original_image = cv::imread(INPUT_IMAGE_FILEPATH);
-  ASSERT_FALSE(original_image.empty())
-      << "Image empty. Is a library (i.e. libtensorflow) clobbering libjpeg symbols?";
+  ASSERT_FALSE(original_image.empty()) << "Image empty. Is a library (i.e. "
+                                          "libtensorflow) clobbering libjpeg "
+                                          "symbols?";
   cv::Mat preprocessed_image = Preprocess(original_image);
 
   // Construct frame with input image in it
