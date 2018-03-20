@@ -1,5 +1,5 @@
 
-#include "neural_net_evaluator.h"
+#include "processor/neural_net_evaluator.h"
 
 #include "model/model_manager.h"
 #include "utils/string_utils.h"
@@ -121,12 +121,8 @@ void NeuralNetEvaluator::Process() {
     }
   }
 
-  auto start_time = boost::posix_time::microsec_clock::local_time();
   auto layer_outputs =
       model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names_);
-  long time_elapsed =
-      (boost::posix_time::microsec_clock::local_time() - start_time)
-          .total_microseconds();
 
   // Push the activations for each published layer to their respective sink.
   for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size();
@@ -137,7 +133,6 @@ void NeuralNetEvaluator::Process() {
       auto layer_name = layer_pair.first;
       cv::Mat activations = activation_vector.at(i);
       ret_frame->SetValue(layer_name, activations);
-      ret_frame->SetValue("neural_net_evaluator.total_micros", time_elapsed);
     }
     PushFrame(SINK_NAME, std::move(ret_frame));
   }

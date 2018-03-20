@@ -1,8 +1,5 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
-//
 
-#include "image_transformer.h"
+#include "processor/image_transformer.h"
 
 #include "model/model_manager.h"
 #include "utils/image_utils.h"
@@ -44,7 +41,6 @@ StreamPtr ImageTransformer::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 void ImageTransformer::Process() {
   auto frame = GetFrame(SOURCE_NAME);
-  auto start_time = boost::posix_time::microsec_clock::local_time();
   const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
 
   int num_channel = target_shape_.channel;
@@ -97,11 +93,7 @@ void ImageTransformer::Process() {
     RotateImage(sample_resized, angle_);
   }
 
-  auto end_time = boost::posix_time::microsec_clock::local_time();
-  long time_elapsed = (end_time - start_time).total_microseconds();
-
   frame->SetValue("image", sample_resized);
-  frame->SetValue(GetName() + ".micros", time_elapsed);
   PushFrame(SINK_NAME, std::move(frame));
 }
 
