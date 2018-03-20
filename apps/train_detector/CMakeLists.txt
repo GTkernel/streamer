@@ -27,9 +27,12 @@ set_source_files_properties(${framesdb_sources}
   PROPERTIES COMPILE_FLAGS -Wno-implicit-fallthrough)
 
 add_executable(train_detector EXCLUDE_FROM_ALL
+  # Add back the train_detector.cpp file once it exists.
   # train_detector.cpp
   litesql_writer.cpp
   litesql_writer.h
   ${framesdb_sources})
 
+# Re-enable building the train_detector executable once the train_detector.cpp
+# file exists.
 # BUILD_ONE(train_detector)

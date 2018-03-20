@@ -78,17 +78,17 @@ void Run(bool block, const std::string& camera_name,
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
-  StreamPtr nne_stream = nne->GetSink(layer);
+  StreamPtr nne_stream = nne->GetSink();
 
   // Create FrameWriter.
   auto frame_writer = std::make_shared<FrameWriter>(
-      std::unordered_set<std::string>{"frame_id", "activations"}, output_dir,
+      std::unordered_set<std::string>{"frame_id", layer}, output_dir,
       FrameWriter::FileFormat::JSON, false, false, frames_per_dir);
   frame_writer->SetSource(nne_stream);
   frame_writer->SetBlockOnPush(block);
   procs.push_back(frame_writer);
 
-  auto reader = nne->GetSink(layer)->Subscribe();
+  auto reader = nne->GetSink()->Subscribe();
 
   std::thread progress_thread =
       std::thread([nne_stream] { ProgressTracker(nne_stream); });
