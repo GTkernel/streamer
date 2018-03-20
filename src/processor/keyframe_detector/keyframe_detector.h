@@ -24,11 +24,12 @@ class KeyframeDetector : public NeuralNetConsumer {
   // "buf_params" is a vector of pairs where the first element is a selectivity
   // in the range (0, 1], and the second element is a buffer length.
   KeyframeDetector(const ModelDesc& model_desc, const Shape& shape,
-                   std::string layer,
+                   const std::string& fv_key,
                    std::vector<std::pair<float, size_t>> buf_params);
   // This constructor relies on the calling code to connece this
   // KeyframeDetector's source to a preexisting NeuralNetworkEvaluator's sink.
-  KeyframeDetector(std::vector<std::pair<float, size_t>> buf_params);
+  KeyframeDetector(const std::string& fv_key,
+                   std::vector<std::pair<float, size_t>> buf_params);
 
   static std::shared_ptr<KeyframeDetector> Create(
       const FactoryParamsType& params);
@@ -47,7 +48,8 @@ class KeyframeDetector : public NeuralNetConsumer {
   virtual void Process() override;
 
  private:
-  void Setup(std::vector<std::pair<float, size_t>> buf_params);
+  void Setup(const std::string& fv_key,
+             std::vector<std::pair<float, size_t>> buf_params);
 
   // The entries detect keyframes at progressively coarser granularities.
   std::vector<std::unique_ptr<KeyframeBuffer>> bufs_;

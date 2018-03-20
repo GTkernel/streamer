@@ -6,7 +6,7 @@
  * @param m The OpenCV matrix
  * @param angle The angle to rotate; must be 0, 90, 180, or 270
  */
-void RotateImage(cv::Mat& m, const unsigned int angle) {
+inline void RotateImage(cv::Mat& m, const unsigned int angle) {
   CHECK(angle == 0 || angle == 90 || angle == 180 || angle == 270)
       << "; angle was " << angle;
 

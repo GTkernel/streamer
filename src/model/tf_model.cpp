@@ -43,6 +43,12 @@ void TFModel::Load() {
   }
 }
 
+cv::Mat TFModel::ConvertAndNormalize(cv::Mat img) {
+  cv::Mat normalized;
+  cv::normalize(img, normalized, -0.5, 0.5, cv::NORM_MINMAX);
+  return normalized;
+}
+
 std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
@@ -60,15 +66,14 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     // current model.
     for (decltype(input_vec.size()) i = 0; i < input_vec.size(); ++i) {
       cv::Mat input = input_vec.at(i);
-      cv::Mat input_normalized;
-      cv::normalize(input, input_normalized, -0.5, 0.5, cv::NORM_MINMAX);
+      cv::Mat input_normalized = ConvertAndNormalize(input);
       input_vec.at(i) = input_normalized;
     }
 
     cv::Mat input = input_vec.at(0);
     int channel = input.channels();
-    int height = input.size[0];
-    int width = input.size[1];
+    int height = input.rows;
+    int width = input.cols;
     if (input.dims == 4) {
       channel = input.size[3];
       height = input.size[1];
@@ -117,8 +122,11 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     std::vector<int> mat_size;
     size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
-      mat_size.push_back((*it).size);
-      vishash_size *= (*it).size;
+      int cur_dim = (*it).size;
+      CHECK(cur_dim > 0)
+          << "Error: Tensor of size 0 returned from Session::Run()";
+      mat_size.push_back(cur_dim);
+      vishash_size *= cur_dim;
     }
     for (decltype(batch_size) i = 0; i < batch_size; ++i) {
       cv::Mat temp(mat_size, CV_32F);

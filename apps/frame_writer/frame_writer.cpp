@@ -24,7 +24,7 @@ namespace po = boost::program_options;
 
 void Run(const std::string& camera_name,
          const std::unordered_set<std::string> fields,
-         const std::string& output_dir, FrameWriter::FileFormat format,
+         const std::string& output_dir, bool use_binary,
          bool save_fields_separately, bool organize_by_time,
          unsigned long frames_per_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
@@ -35,6 +35,12 @@ void Run(const std::string& camera_name,
   procs.push_back(camera);
 
   // Create FrameWriter.
+  FrameWriter::FileFormat format;
+  if (use_binary) {
+    format = FrameWriter::FileFormat::BINARY;
+  } else {
+    format = FrameWriter::FileFormat::JSON;
+  }
   auto writer = std::make_shared<FrameWriter>(fields, output_dir, format,
                                               save_fields_separately,
                                               organize_by_time, frames_per_dir);
@@ -56,7 +62,8 @@ void Run(const std::string& camera_name,
 }
 
 int main(int argc, char* argv[]) {
-  std::vector<std::string> default_fields = {"capture_time_micros", "frame_id"};
+  std::vector<std::string> default_fields = {Camera::kCaptureTimeMicrosKey,
+                                             "frame_id"};
   std::ostringstream default_fields_str;
   default_fields_str << "{ ";
   for (const auto& field : default_fields) {
@@ -80,6 +87,9 @@ int main(int argc, char* argv[]) {
       "The fields to save.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the frame files.");
+  desc.add_options()("use-binary",
+                     "Whether to save the frame data as a binary file "
+                     "(default: JSON)");
   desc.add_options()("save-fields-separately,s",
                      "Whether to save each field in a separate file.");
   desc.add_options()("organize-by-time,t",
@@ -121,11 +131,12 @@ int main(int argc, char* argv[]) {
   auto camera = args["camera"].as<std::string>();
   auto fields = args["fields"].as<std::vector<std::string>>();
   auto output_dir = args["output-dir"].as<std::string>();
+  bool use_binary = args.count("use-binary");
   bool save_fields_separately = args.count("save-fields-separately");
   bool organize_by_time = args.count("organize-by-time");
   auto frames_per_dir = args["frames-per-dir"].as<unsigned long>();
   Run(camera, std::unordered_set<std::string>{fields.begin(), fields.end()},
-      output_dir, FrameWriter::FileFormat::JSON, save_fields_separately,
-      organize_by_time, frames_per_dir);
+      output_dir, use_binary, save_fields_separately, organize_by_time,
+      frames_per_dir);
   return 0;
 }

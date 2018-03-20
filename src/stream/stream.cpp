@@ -39,8 +39,8 @@ void Stream::PushFrame(std::unique_ptr<Frame> frame, bool block) {
 
   decltype(readers.size()) num_readers = readers.size();
   if (num_readers == 0) {
-    LOG(WARNING) << "No readers. Dropping frame: "
-                 << frame->GetValue<unsigned long>("frame_id");
+    VLOG(1) << "No readers. Dropping frame: "
+            << frame->GetValue<unsigned long>("frame_id");
   } else if (num_readers == 1) {
     readers.at(0)->PushFrame(std::move(frame), block);
   } else {

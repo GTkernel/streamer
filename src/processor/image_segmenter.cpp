@@ -1,5 +1,7 @@
 
-#include "image_segmenter.h"
+#include "processor/image_segmenter.h"
+
+#include <unordered_map>
 
 #include "model/model_manager.h"
 
@@ -50,7 +52,10 @@ void ImageSegmenter::Process() {
   // Get bytes to feed into the model
   std::vector<cv::Mat> output_channels;
 
-  auto layer_outputs = model_->Evaluate(image);
+  std::unordered_map<std::string, std::vector<cv::Mat>> input_map;
+  input_map[model_desc_.GetDefaultInputLayer()] = {image};
+  auto layer_outputs =
+      model_->Evaluate(input_map, {model_desc_.GetDefaultOutputLayer()});
 
   // Expect only 1 output, being the last layer of a non-batched neural net
   CHECK(layer_outputs.size() == 1);

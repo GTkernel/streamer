@@ -1,15 +1,18 @@
 
-#include "neural_net_evaluator.h"
+#include "processor/neural_net_evaluator.h"
 
 #include "model/model_manager.h"
 #include "utils/string_utils.h"
+#include "utils/utils.h"
 
 constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
 
 NeuralNetEvaluator::NeuralNetEvaluator(
     const ModelDesc& model_desc, const Shape& input_shape, size_t batch_size,
     const std::vector<std::string>& output_layer_names)
-    : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME}, {}),
+    : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME},
+                {SINK_NAME}),
       input_shape_(input_shape),
       batch_size_(batch_size) {
   // Load model.
@@ -46,8 +49,9 @@ NeuralNetEvaluator::~NeuralNetEvaluator() {
 }
 
 void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
-  if (sinks_.find(layer_name) == sinks_.end()) {
-    sinks_.insert({layer_name, std::make_shared<Stream>(layer_name)});
+  if (std::find(output_layer_names_.begin(), output_layer_names_.end(),
+                layer_name) == output_layer_names_.end()) {
+    output_layer_names_.push_back(layer_name);
     LOG(INFO) << "Layer \"" << layer_name << "\" will be published.";
   } else {
     LOG(INFO) << "Layer \"" << layer_name << "\" is already published.";
@@ -55,11 +59,8 @@ void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
 }
 
 const std::vector<std::string> NeuralNetEvaluator::GetSinkNames() const {
-  std::vector<std::string> sink_names;
-  for (const auto& sink_pair : sinks_) {
-    sink_names.push_back(sink_pair.first);
-  }
-  return sink_names;
+  STREAMER_NOT_IMPLEMENTED;
+  return {};
 }
 
 std::shared_ptr<NeuralNetEvaluator> NeuralNetEvaluator::Create(
@@ -100,6 +101,10 @@ void NeuralNetEvaluator::SetSource(StreamPtr stream,
   SetSource(SOURCE_NAME, stream, layername);
 }
 
+StreamPtr NeuralNetEvaluator::GetSink() {
+  return Processor::GetSink(SINK_NAME);
+}
+
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
   cv::Mat input_mat;
@@ -109,43 +114,27 @@ void NeuralNetEvaluator::Process() {
   }
   std::vector<cv::Mat> cur_batch_;
   for (auto& frame : cur_batch_frames_) {
-    if (frame->Count("activations") > 0) {
-      cur_batch_.push_back(frame->GetValue<cv::Mat>("activations"));
+    if (frame->Count(input_layer_name_) > 0) {
+      cur_batch_.push_back(frame->GetValue<cv::Mat>(input_layer_name_));
     } else {
       cur_batch_.push_back(frame->GetValue<cv::Mat>("image"));
     }
   }
 
-  std::vector<std::string> output_layer_names;
-  for (const auto& sink_pair : sinks_) {
-    output_layer_names.push_back(sink_pair.first);
-  }
-
-  auto start_time = boost::posix_time::microsec_clock::local_time();
   auto layer_outputs =
-      model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names);
-  long time_elapsed =
-      (boost::posix_time::microsec_clock::local_time() - start_time)
-          .total_microseconds();
+      model_->Evaluate({{input_layer_name_, cur_batch_}}, output_layer_names_);
 
   // Push the activations for each published layer to their respective sink.
-  for (const auto& layer_pair : layer_outputs) {
-    int batch_idx = 0;
-    auto activation_vector = layer_pair.second;
-    for (const auto& activations : activation_vector) {
+  for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size();
+       ++i) {
+    std::unique_ptr<Frame> ret_frame = std::move(cur_batch_frames_.at(i));
+    for (const auto& layer_pair : layer_outputs) {
+      auto activation_vector = layer_pair.second;
       auto layer_name = layer_pair.first;
-      std::unique_ptr<Frame> frame_copy;
-      if (layer_outputs.size() == 1) {
-        frame_copy = std::move(cur_batch_frames_.at(batch_idx++));
-      } else {
-        frame_copy = std::make_unique<Frame>(cur_batch_frames_.at(batch_idx++));
-      }
-      frame_copy->SetValue("activations", activations);
-      frame_copy->SetValue("activations_layer_name", layer_name);
-      frame_copy->SetValue("neural_net_evaluator.inference_time_micros",
-                           time_elapsed);
-      PushFrame(layer_name, std::move(frame_copy));
+      cv::Mat activations = activation_vector.at(i);
+      ret_frame->SetValue(layer_name, activations);
     }
+    PushFrame(SINK_NAME, std::move(ret_frame));
   }
   cur_batch_frames_.clear();
 }

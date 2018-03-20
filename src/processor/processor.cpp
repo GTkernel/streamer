@@ -1,10 +1,10 @@
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
-//
 
+#include "processor/processor.h"
+
+#include <sstream>
 #include <stdexcept>
 
-#include "processor.h"
+#include "common/types.h"
 #include "utils/utils.h"
 
 static const size_t SLIDING_WINDOW_SIZE = 25;
@@ -50,7 +50,10 @@ void Processor::SetSink(const std::string& name, StreamPtr stream) {
 
 StreamPtr Processor::GetSink(const std::string& name) {
   if (sinks_.find(name) == sinks_.end()) {
-    throw std::out_of_range(name);
+    std::ostringstream msg;
+    msg << "\"" << name << "\" is not a valid sink for processor \""
+        << GetStringForProcessorType(GetType()) << "\".";
+    throw std::runtime_error(msg.str());
   }
   return sinks_.at(name);
 }
@@ -90,7 +93,7 @@ bool Processor::Start(size_t buf_size) {
 }
 
 bool Processor::Stop() {
-  LOG(INFO) << "Stop called";
+  LOG(INFO) << "Stopping " << GetName() << "...";
   if (stopped_) {
     LOG(WARNING) << "Stop() called on a Processor that was already stopped!";
     return true;
@@ -120,6 +123,7 @@ bool Processor::Stop() {
   // Deallocate the source StreamReaders.
   readers_.clear();
 
+  LOG(INFO) << "Stopped " << GetName();
   return result;
 }
 
@@ -164,10 +168,15 @@ void Processor::ProcessorLoop() {
       }
     }
 
-    local_timer.Start();
+    processing_start_micros_ = boost::posix_time::microsec_clock::local_time();
     Process();
+    double processing_latency_ms =
+        (double)(boost::posix_time::microsec_clock::local_time() -
+                 processing_start_micros_)
+            .total_microseconds();
+    processing_start_micros_ = boost::posix_time::not_a_date_time;
+
     ++num_frames_processed_;
-    double processing_latency_ms = local_timer.ElapsedMSec();
 
     // Update average processing latency.
     avg_processing_latency_ms_ =
@@ -212,13 +221,24 @@ double Processor::GetAvgQueueLatencyMs() const {
 
 ProcessorType Processor::GetType() const { return type_; }
 
+std::string Processor::GetName() const {
+  return GetStringForProcessorType(GetType());
+}
+
 zmq::socket_t* Processor::GetControlSocket() { return control_socket_; };
 
 void Processor::SetBlockOnPush(bool block) { block_on_push_ = block; }
 
 void Processor::PushFrame(const std::string& sink_name,
                           std::unique_ptr<Frame> frame) {
-  CHECK(sinks_.count(sink_name) != 0);
+  CHECK(sinks_.count(sink_name) != 0)
+      << GetStringForProcessorType(GetType())
+      << " does not have a sink named \"" << sink_name << "\"!";
+  if (!processing_start_micros_.is_not_a_date_time()) {
+    frame->SetValue(GetName() + ".total_micros",
+                    boost::posix_time::microsec_clock::local_time() -
+                        processing_start_micros_);
+  }
   if (frame->IsStopFrame()) {
     found_last_frame_ = true;
   }
@@ -226,14 +246,24 @@ void Processor::PushFrame(const std::string& sink_name,
 }
 
 std::unique_ptr<Frame> Processor::GetFrame(const std::string& source_name) {
-  CHECK(source_frame_cache_.count(source_name) != 0);
+  if (source_frame_cache_.find(source_name) == source_frame_cache_.end()) {
+    std::ostringstream msg;
+    msg << "\""
+        << "\" is not a valid source for processor \""
+        << GetStringForProcessorType(GetType()) << "\".";
+    throw std::out_of_range(msg.str());
+  }
   return std::move(source_frame_cache_[source_name]);
 }
 
 std::unique_ptr<Frame> Processor::GetFrameDirect(
     const std::string& source_name) {
   if (readers_.find(source_name) == readers_.end()) {
-    throw std::out_of_range(source_name);
+    std::ostringstream msg;
+    msg << "\""
+        << "\" is not a valid source for processor \""
+        << GetStringForProcessorType(GetType()) << "\".";
+    throw std::out_of_range(msg.str());
   }
   return readers_.at(source_name)->PopFrame();
 }

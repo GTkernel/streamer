@@ -7,9 +7,11 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include <curl/curl.h>
 #include <glog/logging.h>
 #include <gst/gst.h>
 #include <boost/date_time.hpp>
@@ -23,27 +25,47 @@
 #include "model/model_manager.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
+#include "processor/frame_writer.h"
 #include "processor/image_transformer.h"
 #include "processor/imagematch/imagematch.h"
+#include "processor/jpeg_writer.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
+#include "processor/pubsub/frame_subscriber.h"
 #include "processor/throttler.h"
 #include "stream/frame.h"
 #include "stream/stream.h"
+#include "utils/perf_utils.h"
 #include "utils/string_utils.h"
 
 namespace po = boost::program_options;
 
+constexpr auto JPEG_WRITER_FIELD = "original_image";
+std::unordered_set<std::string> FRAME_WRITER_FIELDS({"frame_id",
+                                                     "capture_time_micros"});
+
 // Used to signal all threads that the pipeline should stop.
 std::atomic<bool> stopped(false);
+
+typedef struct {
+  int num;
+  std::string layer;
+  int xmin;
+  int ymin;
+  int xmax;
+  int ymax;
+  bool flat;
+  std::string path;
+  float threshold;
+} query_spec_t;
 
 // Designed to be run in its own thread. Sets "stopped" to true after num_frames
 // have been processed or after a stop frame has been detected.
 void Stopper(StreamPtr stream, unsigned int num_frames) {
   unsigned int count = 0;
   StreamReader* reader = stream->Subscribe();
-  while (num_frames == 0 || ++count < num_frames + 1) {
+  while (!stopped && (num_frames == 0 || ++count < num_frames + 1)) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
     if (frame != nullptr && frame->IsStopFrame()) {
       break;
@@ -57,7 +79,7 @@ void Stopper(StreamPtr stream, unsigned int num_frames) {
 // performance metrics for the specified stream.
 void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
             std::vector<std::string> fields, const std::string& output_dir,
-            const unsigned int num_frames, bool display = false) {
+            bool log_memory, bool display = false) {
   cv::Mat current_image;
   cv::Mat last_match = cv::Mat::zeros(640, 480, CV_32F);
   if (display) {
@@ -104,13 +126,13 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         double fps = reader->GetHistoricalFps();
 
         long latency_micros =
-            (current_time -
-             frame->GetValue<boost::posix_time::ptime>("capture_time_micros"))
+            (current_time - frame->GetValue<boost::posix_time::ptime>(
+                                Camera::kCaptureTimeMicrosKey))
                 .total_microseconds();
 
         // Assemble log message;
         std::ostringstream msg;
-        if (frame->GetValue<std::vector<int>>("imagematch.matches").size() >=
+        if (frame->GetValue<std::vector<int>>("ImageMatch.matches").size() >=
             1) {
           if (display) {
             last_match = frame->GetValue<cv::Mat>("original_image");
@@ -119,70 +141,48 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
         } else {
           net_bw_bps = 0;
         }
-        msg << net_bw_bps << "," << fps << "," << latency_micros << std::endl;
+
+        long it_micros = frame
+                             ->GetValue<boost::posix_time::time_duration>(
+                                 "ImageTransformer.total_micros")
+                             .total_microseconds();
+        long nne_micros = frame
+                              ->GetValue<boost::posix_time::time_duration>(
+                                  "NeuralNetEvaluator.total_micros")
+                              .total_microseconds();
+        long fvg_micros = frame
+                              ->GetValue<boost::posix_time::time_duration>(
+                                  "FvGen.total_micros")
+                              .total_microseconds();
+        long im_micros = frame
+                             ->GetValue<boost::posix_time::time_duration>(
+                                 "ImageMatch.total_micros")
+                             .total_microseconds();
+
+        int physical_kb = 0;
+        int virtual_kb = 0;
+        if (log_memory) {
+          physical_kb = GetPhysicalKB();
+          virtual_kb = GetVirtualKB();
+        }
+
+        msg << net_bw_bps << "," << fps << "," << latency_micros << ","
+            << it_micros << "," << nne_micros << "," << fvg_micros << ","
+            << im_micros << "," << physical_kb << "," << virtual_kb;
         if (display) {
           cv::imshow("current_image", current_image);
           cv::imshow("last_match", last_match);
           cv::waitKey(1);
         }
 
-        if ((current_time - previous_time).total_seconds() >= 2) {
+        if ((current_time - previous_time).total_seconds() >= 1) {
           // Every two seconds, log a frame's metrics to the console so that the
           // user can verify that the program is making progress.
           previous_time = current_time;
 
-          // State variables for progress bar
-          const int progress_bar_len = 50;
-          int string_pos = 0;
-
-          // Calculate current progress
-          unsigned int current_frame_id =
-              frame->GetValue<unsigned long>("frame_id");
-          std::string progress_percent;
-          float progress_fraction = 0;
-          if (num_frames != 0) {
-            progress_fraction = current_frame_id / (float)num_frames;
-            progress_percent = std::to_string(progress_fraction * 100);
-          } else {
-            progress_percent = "???????";
-            string_pos = progress_bar_len;
-          }
-
-          // Progress bar
-          std::stringstream progress_ss;
-          // Pad the left with 0s
-          // Probably should use C++'s version of snprintf for this
-          for (unsigned long i = 0;
-               i < 30 - msg.str().substr(0, msg.str().size() - 1).size(); ++i)
-            progress_ss << " ";
-          progress_ss << "Progress: [";
-          progress_ss << progress_percent.substr(0, 4) << "%";
-          string_pos += 5;
-          for (; string_pos < progress_bar_len * progress_fraction;
-               ++string_pos) {
-            progress_ss << "|";
-          }
-          for (; string_pos < progress_bar_len; ++string_pos) {
-            progress_ss << " ";
-          }
-          progress_ss << "] (" << current_frame_id << " / ";
-          if (num_frames != 0) {
-            progress_ss << num_frames << ")";
-          } else {
-            progress_ss << "Unknown"
-                        << ")";
-          }
-
-          // Strip newline and print
-          std::cout << msg.str().substr(0, msg.str().size() - 1);
-
-          if (idx == 0) {
-            std::cout << progress_ss.str();
-          }
-          std::cout << std::endl;
+          std::cout << msg.str() << std::endl;
+          log << msg.str() << std::endl;
         }
-
-        log << msg.str();
       }
     }
   }
@@ -192,18 +192,76 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_filepath << output_dir << "/ff_" << idx << "_"
                << boost::posix_time::to_iso_extended_string(log_time) << ".csv";
   std::ofstream log_file(log_filepath.str());
-  log_file << "# network bandwidth (bps), fps, e2e latency (micros)"
+  log_file << "# network bandwidth (bps),fps,e2e latency (micros),"
+              "Transformer micros,NNE micros,FV crop micros,"
+              "imagematch micros,physical kb,virtual kb,"
+              "caffe setup,caffe inference,caffe blob"
            << std::endl
            << log.str();
   log_file.close();
 }
 
+void Slack(StreamPtr stream, const std::string& slack_url) {
+  CURL* curl;
+  CURLcode res;
+
+  curl_global_init(CURL_GLOBAL_ALL);
+
+  StreamReader* reader = stream->Subscribe();
+  while (!stopped) {
+    std::unique_ptr<Frame> frame = reader->PopFrame();
+    if (frame == nullptr) {
+      continue;
+    } else if (frame->IsStopFrame()) {
+      // We still need to check for stop frames, even though the stopper thread
+      // is watching for stop frames at the highest level.
+      break;
+    } else {
+      if (frame->Count("ImageMatch.matches") &&
+          frame->GetValue<std::vector<int>>("ImageMatch.matches").size()) {
+        std::string msg =
+            "{\"text\":\"This is a test of the new *train webhook*.\nThe "
+            "image: <http://imgs.xkcd.com/comics/regex_golf.png|frame>\"}";
+        curl = curl_easy_init();
+        if (curl) {
+          curl_easy_setopt(curl, CURLOPT_URL, slack_url.c_str());
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg.c_str());
+          res = curl_easy_perform(curl);
+          if (res != CURLE_OK) {
+            LOG(INFO) << "Curl failed: " << curl_easy_strerror(res);
+          }
+        }
+      }
+    }
+  }
+
+  curl_global_cleanup();
+  reader->UnSubscribe();
+}
+
+// Submit the provided queries to ImageMatch, and add the required layers to the
+// NNE and crops to the FvGen.
+void AddQueries(std::vector<query_spec_t> queries,
+                std::shared_ptr<NeuralNetEvaluator> nne,
+                std::shared_ptr<FvGen> fvgen, std::shared_ptr<ImageMatch> im) {
+  for (const auto& query : queries) {
+    for (int k = 0; k < query.num; ++k) {
+      nne->PublishLayer(query.layer);
+      fvgen->AddFv(query.layer, query.xmin, query.ymin, query.xmax, query.ymax,
+                   query.flat);
+      im->AddQuery(query.path, query.layer, query.threshold, query.xmin,
+                   query.ymin, query.xmax, query.ymax, query.flat);
+    }
+  }
+}
+
 void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
-         size_t queue_size, const std::string& camera_name,
-         unsigned int file_fps, int throttled_fps, unsigned int tokens,
-         const std::string& model, const std::string& layer,
+         size_t queue_size, bool use_camera, const std::string& camera_name,
+         const std::string& publish_url, unsigned int file_fps,
+         int throttled_fps, unsigned int tokens, const std::string& model,
          size_t nne_batch_size, std::vector<std::string> fields,
-         const std::string& output_dir, bool display) {
+         const std::string& output_dir, bool save_matches, bool log_memory,
+         bool display, bool slack, const std::string& slack_url) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -212,9 +270,9 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
   // Parse the ff_conf file.
   bool on_first_line = true;
-  int first_im_num_queries = 0;
+  std::vector<std::string> kd_fv_keys;
   std::vector<std::pair<float, size_t>> buf_params;
-  std::vector<int> nums_queries;
+  std::unordered_map<int, std::vector<query_spec_t>> level_to_queries;
   std::ifstream ff_conf_file(ff_conf);
   std::string line;
   unsigned int level_counter = 0;
@@ -224,25 +282,37 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
       // Ignore comment lines.
       continue;
     }
-    CHECK(args.size() == 3)
-        << "Each line of the ff_conf file must contain three items: "
+    CHECK(args.size() >= 3)
+        << "Each line of the ff_conf file must contain at least three items: "
         << "Selectivity,BufferLength,NumQueries";
 
     float sel = std::stof(args.at(0));
     unsigned long buf_len = std::stoul(args.at(1));
-    int num_queries = std::stoi(args.at(2));
+    std::string kd_fv_key = args.at(2);
+    for (decltype(args.size()) i = 3; i < args.size();) {
+      CHECK(i + 8 < args.size()) << "Malformed configuration file";
+      query_spec_t cur_query_spec;
+      cur_query_spec.num = std::atoi(args.at(i++).c_str());
+      cur_query_spec.layer = args.at(i++);
+      cur_query_spec.xmin = std::atoi(args.at(i++).c_str());
+      cur_query_spec.ymin = std::atoi(args.at(i++).c_str());
+      cur_query_spec.xmax = std::atoi(args.at(i++).c_str());
+      cur_query_spec.ymax = std::atoi(args.at(i++).c_str());
+      cur_query_spec.flat = args.at(i++) == "true";
+      cur_query_spec.path = args.at(i++);
+      cur_query_spec.threshold = std::stof(args.at(i++));
+      level_to_queries[level_counter].push_back(cur_query_spec);
+    }
 
     std::ostringstream msg;
     msg << "Level " << level_counter << " - ";
     if (on_first_line) {
-      first_im_num_queries = num_queries;
       on_first_line = false;
     } else {
+      kd_fv_keys.push_back(kd_fv_key);
       buf_params.push_back({sel, (size_t)buf_len});
-      nums_queries.push_back(num_queries);
       msg << "selectivity: " << sel << ", buffer length: " << buf_len << ", ";
     }
-    msg << "number of queries: " << num_queries;
     LOG(INFO) << msg.str();
     ++level_counter;
   }
@@ -250,26 +320,38 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   std::vector<std::shared_ptr<Processor>> procs;
   std::vector<std::thread> logger_threads;
 
-  // Create a Camera.
+  StreamPtr input_stream;
+  if (use_camera) {
+    // Create Camera.
+    std::shared_ptr<Camera> camera =
+        CameraManager::GetInstance().GetCamera(camera_name);
 
-  auto camera = CameraManager::GetInstance().GetCamera(camera_name);
-  if (camera->GetCameraType() != CameraType::CAMERA_TYPE_GST) {
-    throw(std::invalid_argument("Must use GST camera"));
+    if (camera->GetCameraType() != CameraType::CAMERA_TYPE_GST) {
+      throw(std::invalid_argument("Must use a GStreamer camera"));
+    }
+    std::shared_ptr<GSTCamera> gst_camera =
+        std::dynamic_pointer_cast<GSTCamera>(camera);
+    // Why is this false?
+    gst_camera->SetBlockOnPush(false);
+    gst_camera->SetOutputFilepath(output_dir + "/" + camera_name + ".mp4");
+    gst_camera->SetFileFramerate(file_fps);
+    procs.push_back(gst_camera);
+    input_stream = gst_camera->GetStream();
+  } else {
+    // Create FrameSubscriber.
+    auto subscriber = std::make_shared<FrameSubscriber>(publish_url);
+    // This is false because the "use_camera" case is false.
+    subscriber->SetBlockOnPush(false);
+    procs.push_back(subscriber);
+    input_stream = subscriber->GetSink();
   }
-  std::shared_ptr<GSTCamera> gst_camera =
-      std::dynamic_pointer_cast<GSTCamera>(camera);
-  gst_camera->SetBlockOnPush(false);
-  gst_camera->SetOutputFilepath(output_dir + "/" + camera_name + ".mp4");
-  gst_camera->SetFileFramerate(file_fps);
-  procs.push_back(gst_camera);
-  StreamPtr camera_stream = gst_camera->GetStream();
 
-  StreamPtr correct_fps_stream = camera_stream;
+  StreamPtr correct_fps_stream = input_stream;
   if (throttled_fps > 0) {
     // If we are supposed to throttler the stream in software, then create a
     // Throttler.
     auto throttler = std::make_shared<Throttler>(throttled_fps);
-    throttler->SetSource(camera_stream);
+    throttler->SetSource(input_stream);
     throttler->SetBlockOnPush(block);
     procs.push_back(throttler);
     correct_fps_stream = throttler->GetSink();
@@ -284,32 +366,34 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create an ImageTransformer.
   ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource(fc_entrance->GetSink());
   transformer->SetBlockOnPush(block);
   procs.push_back(transformer);
 
   // Create a NeuralNetEvaluator.
-  std::vector<std::string> output_layer_names = {layer};
-  auto nne = std::make_shared<NeuralNetEvaluator>(
-      model_desc, input_shape, nne_batch_size, output_layer_names);
+  auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+                                                  nne_batch_size);
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
-  StreamPtr nne_stream = nne->GetSink(layer);
+
+  // Create an FvGen.
+  auto fvgen = std::make_shared<FvGen>();
+  fvgen->SetSource(nne->GetSink());
+  fvgen->SetBlockOnPush(block);
+  procs.push_back(fvgen);
+  StreamPtr fvgen_stream = fvgen->GetSink();
 
   // Create ImageMatch level 0. Use the same batch size as the
   // NeuralNetEvaluator.
-  auto im_0 = std::make_shared<ImageMatch>(1024, nne_batch_size);
-  im_0->SetSource(nne_stream);
+  auto im_0 = std::make_shared<ImageMatch>(nne_batch_size);
+  im_0->SetSource(fvgen_stream);
   im_0->SetBlockOnPush(block);
-  // im_0->SetQueryMatrix(first_im_num_queries);
-  for (int i = 0; i < first_im_num_queries; ++i) {
-    im_0->AddQuery("/home/tskim/models/simple_classifier.prototxt",
-                   "/home/tskim/models/_iter_1000.caffemodel");
-  }
   procs.push_back(im_0);
+
+  // Add the level 0 queries.
+  AddQueries(level_to_queries[0], nne, fvgen, im_0);
 
   // Create a FlowControlExit.
   auto fc_exit = std::make_shared<FlowControlExit>();
@@ -318,20 +402,44 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   procs.push_back(fc_exit);
 
   // Create a logger thread to calculate statistics about the first ImageMatch
-  // level's output stream.
+  // level's output stream. This Logger also might display the frames.
   StreamPtr fc_exit_sink = fc_exit->GetSink();
   logger_threads.push_back(std::thread([fc_exit_sink, log_time, fields,
-                                        output_dir, num_frames, display] {
-    Logger(0, fc_exit_sink, log_time, fields, output_dir, num_frames, display);
+                                        output_dir, log_memory, display] {
+    Logger(0, fc_exit_sink, log_time, fields, output_dir, log_memory, display);
   }));
 
+  if (save_matches) {
+    // Create JpegWriter.
+    auto jpeg_writer =
+        std::make_shared<JpegWriter>(JPEG_WRITER_FIELD, output_dir, true);
+    jpeg_writer->SetSource(fc_exit_sink);
+    procs.push_back(jpeg_writer);
+
+    // Create FrameWriter.
+    auto frame_writer = std::make_shared<FrameWriter>(
+        FRAME_WRITER_FIELDS, output_dir, FrameWriter::FileFormat::JSON, false,
+        true);
+    frame_writer->SetSource(fc_exit_sink);
+    procs.push_back(frame_writer);
+  }
+
   // Create additional keyframe detector + ImageMatch levels in the hierarchy.
-  StreamPtr kd_input_stream = nne_stream;
-  for (decltype(nums_queries.size()) i = 0; i < nums_queries.size(); ++i) {
+  StreamPtr kd_input_stream = fvgen_stream;
+  int count = 0;
+  for (auto& param : buf_params) {
+    LOG(INFO) << "Creating KeyframeDetector level " << count++
+              << " with parameters: " << param.first << " " << param.second;
+  }
+  for (decltype(level_to_queries.size()) i = 1; i < level_to_queries.size();
+       ++i) {
     // Create a keyframe detector.
-    std::pair<float, size_t> kd_buf_params = buf_params.at(i);
+    std::string kd_fv_key = kd_fv_keys.at(i - 1);
+    std::pair<float, size_t> kd_buf_params = buf_params.at(i - 1);
     std::vector<std::pair<float, size_t>> kd_buf_params_vec = {kd_buf_params};
-    auto kd = std::make_shared<KeyframeDetector>(kd_buf_params_vec);
+    fvgen->AddFv(kd_fv_key);
+    nne->PublishLayer(kd_fv_key);
+    auto kd = std::make_shared<KeyframeDetector>(kd_fv_key, kd_buf_params_vec);
     kd->SetSource(kd_input_stream);
     kd->SetBlockOnPush(block);
     procs.push_back(kd);
@@ -340,22 +448,21 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     // Create an ImageMatch.
     unsigned int kd_batch_size =
         ceil(kd_buf_params.first * kd_buf_params.second);
-    auto additional_im = std::make_shared<ImageMatch>(1024, kd_batch_size);
+    auto additional_im = std::make_shared<ImageMatch>(kd_batch_size);
     additional_im->SetSource(kd->GetSink(kd->GetSinkName(0)));
     additional_im->SetBlockOnPush(block);
-    for (int j = 0; j < nums_queries.at(i); ++j) {
-      additional_im->AddQuery("/home/tskim/models/simple_classifier.prototxt",
-                              "/home/tskim/models/_iter_1000.caffemodel");
-    }
     procs.push_back(additional_im);
+
+    // Add the level i queries.
+    AddQueries(level_to_queries[i], nne, fvgen, additional_im);
 
     // Create a logger thread to calculate statistics about ImageMatch's output
     // stream.
     StreamPtr additional_im_sink = additional_im->GetSink();
     logger_threads.push_back(std::thread(
-        [i, additional_im_sink, log_time, fields, output_dir, num_frames] {
+        [i, additional_im_sink, log_time, fields, output_dir, log_memory] {
           Logger(i + 1, additional_im_sink, log_time, fields, output_dir,
-                 num_frames);
+                 log_memory);
         }));
   }
 
@@ -363,13 +470,26 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   std::thread stopper_thread(
       [fc_exit_sink, num_frames] { Stopper(fc_exit_sink, num_frames); });
 
+  // Launch Slack thread
+  std::thread slack_thread;
+  if (slack) {
+    slack_thread = std::thread(
+        [fc_exit_sink, slack_url] { Slack(fc_exit_sink, slack_url); });
+  }
+
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start(queue_size);
   }
 
-  while (!stopped) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  if (num_frames > 0) {
+    while (!stopped) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  } else {
+    std::cout << "Press \"Enter\" to stop." << std::endl;
+    getchar();
+    stopped = true;
   }
 
   // Stop the processors in forward order.
@@ -378,9 +498,12 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   }
 
   // Join all of our helper threads.
-  stopper_thread.join();
   for (auto& t : logger_threads) {
     t.join();
+  }
+  stopper_thread.join();
+  if (slack_thread.joinable()) {
+    slack_thread.join();
   }
 }
 
@@ -400,9 +523,13 @@ int main(int argc, char* argv[]) {
                      "Whether processors should block when pushing frames.");
   desc.add_options()("queue-size,q", po::value<size_t>()->default_value(16),
                      "The size of the queues between processors.");
-  desc.add_options()("camera,c", po::value<std::string>()->required(),
-                     "The name of the camera to use.");
-  desc.add_options()("file-fps", po::value<unsigned int>()->default_value(30),
+  desc.add_options()("camera,c", po::value<std::string>(),
+                     "The name of the camera to use. Overrides "
+                     "\"--publish-url\".");
+  desc.add_options()("publish-url,u", po::value<std::string>(),
+                     "The URL (host:port) on which the frame stream is being "
+                     "published.");
+  desc.add_options()("file-fps", po::value<unsigned int>()->default_value(0),
                      "Rate at which to read a file source (no effect if not "
                      "file source).");
   desc.add_options()("throttled-fps,i", po::value<int>()->default_value(0),
@@ -412,9 +539,6 @@ int main(int argc, char* argv[]) {
                      "The number of flow control tokens to issue.");
   desc.add_options()("model,m", po::value<std::string>()->required(),
                      "The name of the model to evaluate.");
-  desc.add_options()("layer,l", po::value<std::string>()->required(),
-                     "The layer to extract and use as the basis for keyframe "
-                     "detection and ImageMatch.");
   desc.add_options()("nne-batch-size,s", po::value<size_t>()->default_value(1),
                      "nne batch size");
   desc.add_options()("fields",
@@ -422,10 +546,18 @@ int main(int argc, char* argv[]) {
                          ->multitoken()
                          ->composing()
                          ->required(),
-                     "The fields to send over the network");
+                     "The fields to send over the network when calculating "
+                     "theoretical network bandwidth usage.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
+  desc.add_options()(
+      "save-matches",
+      "Save JPEGs of frames matched by the first level of the hierarchy.");
+  desc.add_options()("memory-usage", "Log memory usage.");
   desc.add_options()("display,d", "Enable display.");
+  desc.add_options()("slack", po::value<std::string>(),
+                     "Enable Slack notifications for matched frames, and send "
+                     "notifications to the provided hook url.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -459,18 +591,36 @@ int main(int argc, char* argv[]) {
   unsigned int num_frames = args["num-frames"].as<unsigned int>();
   bool block = args.count("block");
   size_t queue_size = args["queue-size"].as<size_t>();
-  std::string camera = args["camera"].as<std::string>();
+  std::string camera;
+  bool use_camera = args.count("camera");
+  if (use_camera) {
+    camera = args["camera"].as<std::string>();
+  }
+  std::string publish_url;
+  if (args.count("publish-url")) {
+    publish_url = args["publish-url"].as<std::string>();
+  } else if (!use_camera) {
+    throw std::runtime_error(
+        "Must specify either \"--camera\" or \"--publish-url\".");
+  }
   unsigned int file_fps = args["file-fps"].as<unsigned int>();
   int throttled_fps = args["throttled-fps"].as<int>();
   unsigned int tokens = args["tokens"].as<unsigned int>();
-  std::string layer = args["layer"].as<std::string>();
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
   std::vector<std::string> fields =
       args["fields"].as<std::vector<std::string>>();
   std::string output_dir = args["output-dir"].as<std::string>();
+  bool save_matches = args.count("save-matches");
+  bool log_memory = args.count("memory-usage");
   bool display = args.count("display");
-  Run(ff_conf, num_frames, block, queue_size, camera, file_fps, throttled_fps,
-      tokens, model, layer, nne_batch_size, fields, output_dir, display);
+  bool slack = args.count("slack");
+  std::string slack_url;
+  if (slack) {
+    slack_url = args["slack"].as<std::string>();
+  }
+  Run(ff_conf, num_frames, block, queue_size, use_camera, camera, publish_url,
+      file_fps, throttled_fps, tokens, model, nne_batch_size, fields,
+      output_dir, save_matches, log_memory, display, slack, slack_url);
   return 0;
 }

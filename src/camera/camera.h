@@ -70,6 +70,8 @@ class Camera : public Processor {
   std::string GetCameraInfo();
   unsigned long CreateFrameID();
 
+  static const char* kCaptureTimeMicrosKey;
+
  protected:
   virtual bool Init() override = 0;
   virtual bool OnStop() override = 0;

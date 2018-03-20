@@ -1,6 +1,3 @@
-//
-// Created by Ran Xian on 7/22/16.
-//
 
 #include "video/gst_video_capture.h"
 

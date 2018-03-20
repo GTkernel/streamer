@@ -58,6 +58,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_BINARY_FILE_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_BINARY_FILE_WRITER)));
+  EXPECT_EQ(PROCESSOR_TYPE_BUFFER,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_BUFFER)));
   EXPECT_EQ(PROCESSOR_TYPE_CAMERA,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_CAMERA)));
@@ -70,6 +73,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_DB_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_DB_WRITER)));
+  EXPECT_EQ(PROCESSOR_TYPE_DIFF_DETECTOR,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_DIFF_DETECTOR)));
   EXPECT_EQ(PROCESSOR_TYPE_DISPLAY,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_DISPLAY)));
@@ -83,17 +89,18 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_FACENET,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FACENET)));
+#endif  // USE_CAFFE
+#ifdef USE_TENSORFLOW
   EXPECT_EQ(PROCESSOR_TYPE_IMAGEMATCH,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGEMATCH)));
-#endif  // USE_CAFFE
+#endif  // USE_TENSORFLOW
   EXPECT_EQ(PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
             GetProcessorTypeByString(GetStringForProcessorType(
                 PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE)));
   EXPECT_EQ(PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FLOW_CONTROL_EXIT)));
-
 #ifdef USE_RPC
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_RECEIVER,
             GetProcessorTypeByString(
@@ -111,6 +118,9 @@ TEST(TestTypes, TestProcessorTypesStringConversion) {
   EXPECT_EQ(PROCESSOR_TYPE_FRAME_WRITER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_FRAME_WRITER)));
+  EXPECT_EQ(PROCESSOR_TYPE_FV_GEN,
+            GetProcessorTypeByString(
+                GetStringForProcessorType(PROCESSOR_TYPE_FV_GEN)));
   EXPECT_EQ(PROCESSOR_TYPE_IMAGE_CLASSIFIER,
             GetProcessorTypeByString(
                 GetStringForProcessorType(PROCESSOR_TYPE_IMAGE_CLASSIFIER)));

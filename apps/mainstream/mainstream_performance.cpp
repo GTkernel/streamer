@@ -125,7 +125,7 @@ void MeasurePerformance(const std::string split_layer, int num_apps,
 
   // Make transformer
   std::shared_ptr<ImageTransformer> transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true);
+      std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource("input", entrance->GetSink());
   procs.push_back(transformer);
 

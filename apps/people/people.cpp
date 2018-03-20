@@ -32,9 +32,14 @@ int main(int argc, char* argv[]) {
   auto camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
 
+  // This transformer is here purely as an adaptor between the camera and the
+  // people detector. The 200x200 size is arbitrary.
+  auto transformer = std::make_shared<ImageTransformer>(Shape(200, 200), false);
+  transformer->SetSource(camera_stream);
+
   OpenCVPeopleDetector people_detector;
 
-  people_detector.SetSource("input", camera_stream);
+  people_detector.SetSource("input", transformer->GetSink());
   camera->Start();
   people_detector.Start();
 

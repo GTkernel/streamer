@@ -1,4 +1,7 @@
-#include "image_classifier.h"
+
+#include "processor/image_classifier.h"
+
+#include <stdexcept>
 
 #include "model/model_manager.h"
 #include "utils/math_utils.h"
@@ -10,10 +13,10 @@ ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
                                  const Shape& input_shape, size_t num_labels)
     : NeuralNetConsumer(PROCESSOR_TYPE_IMAGE_CLASSIFIER, model_desc,
                         input_shape, {}, {SOURCE_NAME}, {SINK_NAME}),
+      layer_(model_desc.GetDefaultOutputLayer()),
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {
-  std::string nne_sink_name = model_desc.GetDefaultOutputLayer();
-  StreamPtr stream = nne_->GetSink(nne_sink_name);
+  StreamPtr stream = nne_->GetSink("output");
   // Call Processor::SetSource() because NeuralNetConsumer::SetSource() would
   // set the NeuralNetEvaluator's source (because the NeuralNetEvaluator is
   // private).
@@ -23,6 +26,7 @@ ImageClassifier::ImageClassifier(const ModelDesc& model_desc,
 ImageClassifier::ImageClassifier(const ModelDesc& model_desc, size_t num_labels)
     : NeuralNetConsumer(PROCESSOR_TYPE_IMAGE_CLASSIFIER, {SOURCE_NAME},
                         {SINK_NAME}),
+      layer_(model_desc.GetDefaultOutputLayer()),
       num_labels_(num_labels),
       labels_(LoadLabels(model_desc)) {}
 
@@ -53,9 +57,14 @@ bool ImageClassifier::Init() { return NeuralNetConsumer::Init(); }
 void ImageClassifier::Process() {
   auto frame = GetFrame(SOURCE_NAME);
 
+  if (!frame->Count(layer_)) {
+    throw std::runtime_error(
+        "ImageClassifiers only operate on a model's default output layer!");
+  }
+  const cv::Mat& output = frame->GetValue<cv::Mat>(layer_);
+
   // Assign labels.
   std::vector<Prediction> predictions;
-  const cv::Mat& output = frame->GetValue<cv::Mat>("activations");
   float* scores;
   // Currently we only support contiguously allocated cv::Mat. Considering this
   // cv::Mat should be small (e.g. 1x1000), it is most likely contiguous.
@@ -74,7 +83,7 @@ void ImageClassifier::Process() {
         std::make_pair(labels_.at(label_idx), scores[label_idx]));
   }
 
-  // Create and push a MetadataFrame.
+  // Add the metadata to the frame.
   std::vector<std::string> tags;
   std::vector<double> probabilities;
   for (const auto& pred : predictions) {

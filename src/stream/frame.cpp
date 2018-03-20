@@ -112,13 +112,13 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << "cv::Mat";
     int dims = v.dims;
     if (dims <= 2) {
-      cv::Mat tmp;
-      v(cv::Rect(0, 0, 3, 1)).copyTo(tmp);
-
       std::ostringstream mout;
-      mout << tmp;
-      output << "(size = " << v.cols << "x" << v.rows
-             << ") = " << mout.str().substr(0, 20) << "...]";
+      for (int i = 0; i < 4 && i < v.cols * v.rows * v.channels(); ++i) {
+        mout << "0x" << std::hex << (int)(v.ptr()[i]) << ", ";
+      }
+      output << "(rows: " << v.rows << " cols: " << v.cols
+             << " channels: " << v.channels() << ") = bytes[" << mout.str()
+             << "...]";
     } else {
       output << " = Unable to print because dims (" << dims << ") > 2";
     }
@@ -382,7 +382,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
 
 Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
 
-Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame.get()) {}
+Frame::Frame(const std::unique_ptr<Frame>& frame) : Frame(*frame) {}
 
 Frame::Frame(const Frame& frame) : Frame(frame, {}) {}
 
@@ -409,6 +409,7 @@ Frame::Frame(const Frame& frame, std::unordered_set<std::string> fields) {
   auto field_it = std::find(fields.begin(), fields.end(), "original_bytes");
   if ((inherit_all_fields || (field_it != fields.end())) &&
       (other_it != frame.frame_data_.end())) {
+    CHECK(frame_data_.count("original_bytes") >= 1);
     frame_data_["original_bytes"] =
         boost::get<std::vector<char>>(other_it->second);
   }
@@ -428,12 +429,17 @@ T Frame::GetValue(std::string key) const {
   if (it != frame_data_.end()) {
     return boost::get<T>(it->second);
   } else {
-    throw std::out_of_range(key);
+    std::ostringstream msg;
+    msg << "Key \"" << key << "\" not in frame!";
+    throw std::runtime_error(msg.str());
   }
 }
 
 template <typename T>
 void Frame::SetValue(std::string key, const T& val) {
+  if (frame_data_.count(key) > 0) {
+    LOG(INFO) << "Warning: overwriting " << key << " in Frame";
+  }
   frame_data_[key] = val;
 }
 

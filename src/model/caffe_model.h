@@ -16,12 +16,14 @@
  * @brief BVLC Caffe model. This model is compatible with Caffe V1
  * interfaces. It could be built on both CPU and GPU.
  */
+
 template <typename DType>
 class CaffeModel : public Model {
  public:
   CaffeModel(const ModelDesc& model_desc, Shape input_shape,
              size_t batch_size = 1);
   virtual void Load() override;
+  virtual cv::Mat ConvertAndNormalize(cv::Mat img) override;
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(
       const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
       const std::vector<std::string>& output_layer_names) override;

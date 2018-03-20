@@ -75,6 +75,29 @@ void CaffeModel<DType>::Load() {
 }
 
 template <typename DType>
+cv::Mat CaffeModel<DType>::ConvertAndNormalize(cv::Mat img) {
+  int format;
+  if (input_shape_.channel == 3) {
+    format = CV_32FC3;
+  } else {
+    format = CV_32FC1;
+  }
+
+  // Convert from CV_8UCX to CV_32FCX
+  cv::Mat input;
+  img.convertTo(input, format);
+  cv::Scalar mean_colors = ModelManager::GetInstance().GetMeanColors();
+  cv::Mat mean_image = cv::Mat(
+      cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
+  // Subtract the mean image
+  cv::Mat input_normalized(cv::Size(input_shape_.width, input_shape_.height),
+                           format);
+  cv::subtract(input, mean_image, input_normalized);
+  input_normalized *= model_desc_.GetInputScale();
+  return input_normalized;
+}
+
+template <typename DType>
 std::unordered_map<std::string, std::vector<cv::Mat>>
 CaffeModel<DType>::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
@@ -89,20 +112,8 @@ CaffeModel<DType>::Evaluate(
 
   caffe::Blob<DType>* input_layer = net_->input_blobs().at(0);
   DType* data = input_layer->mutable_cpu_data();
-  int format;
-  if (input_shape_.channel == 3) {
-    format = CV_32FC3;
-  } else {
-    format = CV_32FC1;
-  }
-  cv::Scalar mean_colors = ModelManager::GetInstance().GetMeanColors();
-  cv::Mat mean_image = cv::Mat(
-      cv::Size(input_shape_.width, input_shape_.height), format, mean_colors);
   for (const auto& input : input_map.begin()->second) {
-    // Subtract the mean image
-    cv::Mat input_normalized;
-    cv::subtract(input, mean_image, input_normalized);
-    input_normalized *= model_desc_.GetInputScale();
+    cv::Mat input_normalized = ConvertAndNormalize(input);
 
     // Format the input data in the way that Caffe expects
     // This loop creates a cv::Mat for each channel that is configured to point
@@ -110,6 +121,7 @@ CaffeModel<DType>::Evaluate(
     // until the call to cv::split(). output_channels points to the correct
     // offsets in the Caffe input blob
     std::vector<cv::Mat> output_channels;
+
     for (decltype(input_shape_.channel) j = 0; j < input_shape_.channel; ++j) {
       cv::Mat channel(input_shape_.height, input_shape_.width, CV_32F, data);
       output_channels.push_back(channel);
@@ -165,6 +177,7 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src,
   decltype(batch_size_) batch_size = src->shape(0);
   CHECK(batch_size == batch_size_) << "Incorrect batch size";
 
+  // mat_size holds the axes dimensions of the blob
   std::vector<int> mat_size;
   decltype(src->shape(0)) total_size = 1;
   for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
@@ -181,21 +194,57 @@ cv::Mat CaffeModel<DType>::BlobToMat2d(caffe::Blob<DType>* src,
 template <typename DType>
 cv::Mat CaffeModel<DType>::BlobToMat4d(caffe::Blob<DType>* src,
                                        int batch_idx) const {
-  decltype(batch_size_) batch_size = src->shape(0);
+  size_t batch_size = (size_t)src->shape(0);
   CHECK(batch_size == batch_size_) << "Incorrect batch size";
-
-  // mat_size holds the axes dimensions of the blob
-  // mat_size is used to construct the cv::Mat
-  std::vector<int> mat_size;
-  decltype(src->shape(0)) total_size = 1;
-  for (decltype(src->num_axes()) i = 0; i < src->num_axes(); ++i) {
-    mat_size.push_back(src->shape(i));
-    total_size *= src->shape(i);
+  int num_channel = src->shape(1);
+  int height = src->shape(2);
+  int width = src->shape(3);
+  int total_size = height * width * num_channel;
+  DType* data = src->mutable_cpu_data();
+  if (num_channel > CV_CN_MAX) {
+    LOG(WARNING) << "Caffe output channels exceeds CV_CN_MAX (" << num_channel
+                 << " > " << CV_CN_MAX << ")";
+    CHECK(height == 1 && width == 1)
+        << "NHWC format must be disabled for matrices with more than "
+        << CV_CN_MAX << " channels and height/width != 1.";
+    cv::Mat ret_mat({num_channel, height, width}, CV_32F);
+    memcpy(ret_mat.data, data + total_size * batch_idx,
+           total_size * sizeof(DType));
+    return ret_mat;
   }
-  float* data = src->mutable_cpu_data();
-  cv::Mat ret_mat(mat_size, CV_32F);
-  memcpy(ret_mat.data, data + total_size * batch_idx,
-         total_size * sizeof(float));
+
+  // Convert from CHW to HWC
+  cv::Mat ret_mat({height, width, num_channel}, CV_32F);
+  int per_channel_floats = height * width;
+  int per_channel_bytes = per_channel_floats * sizeof(DType);
+  std::vector<cv::Mat> channels;
+  DType* cur_batch_data = data + (num_channel * per_channel_floats) * batch_idx;
+  for (int i = 0; i < num_channel; ++i) {
+    cv::Mat cur_channel(height, width, CV_32F);
+    memcpy(cur_channel.data, cur_batch_data + per_channel_floats * i,
+           per_channel_bytes);
+    channels.push_back(cur_channel);
+  }
+  cv::merge(channels, ret_mat);
+
+// Element-wise comparison
+#ifdef MODE_VERIFY
+  LOG(INFO) << "Checking output matrix of size: " << height << "x" << width
+            << "x" << num_channel;
+  for (int c = 0; c < num_channel; ++c) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        if (src->shape(1) <= CV_CN_MAX) {
+          DType lhs = ret_mat.ptr<DType>(h)[w * num_channel + c];
+          DType rhs = src->data_at(batch_idx, c, h, w);
+          CHECK(lhs == rhs)
+              << "At index <h: " << h << " w: " << w << " c: " << c
+              << "> found: " << lhs << " expected: " << rhs;
+        }
+      }
+    }
+  }
+#endif  // MODE_VERIFY
   return ret_mat;
 }
 

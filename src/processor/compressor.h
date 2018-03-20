@@ -18,12 +18,16 @@ class Compressor : public Processor {
   Compressor(CompressionType t);
   ~Compressor();
   static std::shared_ptr<Compressor> Create(const FactoryParamsType& params);
+  static std::string CompressionTypeToString(CompressionType type);
 
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
 
   StreamPtr GetSink();
   using Processor::GetSink;
+
+  static const char* kDataKey;
+  static const char* kTypeKey;
 
  protected:
   virtual bool Init() override;

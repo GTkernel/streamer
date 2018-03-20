@@ -34,8 +34,7 @@ void Run(const std::string& camera_name, const std::string& net,
   // Transformer
   auto model_desc = ModelManager::GetInstance().GetModelDesc(net);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource("input", camera->GetStream());
   procs.push_back(transformer);
 
@@ -43,14 +42,14 @@ void Run(const std::string& camera_name, const std::string& net,
   std::vector<std::string> split_layers = {split_layer};
   auto nne1 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                    split_layers);
-  nne1->SetSource(transformer->GetSink("output"), input_layer);
+  nne1->SetSource(transformer->GetSink(), input_layer);
   procs.push_back(nne1);
 
   // NNE2
   std::vector<std::string> output_layers = {output_layer};
   auto nne2 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                    output_layers);
-  nne2->SetSource(nne1->GetSink(split_layer), split_layer);
+  nne2->SetSource(nne1->GetSink(), split_layer);
   procs.push_back(nne2);
 
   // Start the processors in reverse order.

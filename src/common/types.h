@@ -200,17 +200,21 @@ std::string GetCameraPixelFormatString(CameraPixelFormatType pfmt);
 //// Processor types
 enum ProcessorType {
   PROCESSOR_TYPE_BINARY_FILE_WRITER = 0,
+  PROCESSOR_TYPE_BUFFER,
   PROCESSOR_TYPE_CAMERA,
   PROCESSOR_TYPE_COMPRESSOR,
   PROCESSOR_TYPE_CUSTOM,
   PROCESSOR_TYPE_DB_WRITER,
+  PROCESSOR_TYPE_DIFF_DETECTOR,
   PROCESSOR_TYPE_DISPLAY,
   PROCESSOR_TYPE_ENCODER,
   PROCESSOR_TYPE_FACE_TRACKER,
 #ifdef USE_CAFFE
   PROCESSOR_TYPE_FACENET,
-  PROCESSOR_TYPE_IMAGEMATCH,
 #endif  // USE_CAFFE
+#ifdef USE_TENSORFLOW
+  PROCESSOR_TYPE_IMAGEMATCH,
+#endif  // USE_TENSORFLOW
   PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE,
   PROCESSOR_TYPE_FLOW_CONTROL_EXIT,
 #ifdef USE_RPC
@@ -220,6 +224,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_FRAME_PUBLISHER,
   PROCESSOR_TYPE_FRAME_SUBSCRIBER,
   PROCESSOR_TYPE_FRAME_WRITER,
+  PROCESSOR_TYPE_FV_GEN,
   PROCESSOR_TYPE_IMAGE_CLASSIFIER,
   PROCESSOR_TYPE_IMAGE_SEGMENTER,
   PROCESSOR_TYPE_IMAGE_TRANSFORMER,
@@ -239,6 +244,8 @@ enum ProcessorType {
 inline ProcessorType GetProcessorTypeByString(const std::string& type) {
   if (type == "BinaryFileWriter") {
     return PROCESSOR_TYPE_BINARY_FILE_WRITER;
+  } else if (type == "Buffer") {
+    return PROCESSOR_TYPE_BUFFER;
   } else if (type == "Camera") {
     return PROCESSOR_TYPE_CAMERA;
   } else if (type == "Compressor") {
@@ -247,6 +254,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_CUSTOM;
   } else if (type == "DbWriter") {
     return PROCESSOR_TYPE_DB_WRITER;
+  } else if (type == "DiffDetector") {
+    return PROCESSOR_TYPE_DIFF_DETECTOR;
   } else if (type == "Display") {
     return PROCESSOR_TYPE_DISPLAY;
   } else if (type == "GstVideoEncoder") {
@@ -256,9 +265,11 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
 #ifdef USE_CAFFE
   } else if (type == "Facenet") {
     return PROCESSOR_TYPE_FACENET;
+#endif  // USE_CAFFE
+#ifdef USE_TENSORFLOW
   } else if (type == "ImageMatch") {
     return PROCESSOR_TYPE_IMAGEMATCH;
-#endif  // USE_CAFFE
+#endif  // USE_TENSORFLOW
   } else if (type == "FlowControlEntrance") {
     return PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE;
   } else if (type == "FlowControlExit") {
@@ -275,6 +286,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
     return PROCESSOR_TYPE_FRAME_SUBSCRIBER;
   } else if (type == "FrameWriter") {
     return PROCESSOR_TYPE_FRAME_WRITER;
+  } else if (type == "FvGen") {
+    return PROCESSOR_TYPE_FV_GEN;
   } else if (type == "ImageClassifier") {
     return PROCESSOR_TYPE_IMAGE_CLASSIFIER;
   } else if (type == "ImageSegmenter") {
@@ -311,6 +324,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
   switch (type) {
     case PROCESSOR_TYPE_BINARY_FILE_WRITER:
       return "BinaryFileWriter";
+    case PROCESSOR_TYPE_BUFFER:
+      return "Buffer";
     case PROCESSOR_TYPE_CAMERA:
       return "Camera";
     case PROCESSOR_TYPE_COMPRESSOR:
@@ -319,6 +334,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "Custom";
     case PROCESSOR_TYPE_DB_WRITER:
       return "DbWriter";
+    case PROCESSOR_TYPE_DIFF_DETECTOR:
+      return "DiffDetector";
     case PROCESSOR_TYPE_DISPLAY:
       return "Display";
     case PROCESSOR_TYPE_ENCODER:
@@ -328,9 +345,11 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return "Facenet";
+#endif  // USE_CAFFE
+#ifdef USE_TENSORFLOW
     case PROCESSOR_TYPE_IMAGEMATCH:
       return "ImageMatch";
-#endif  // USE_CAFFE
+#endif  // USE_TENSORFLOW
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return "FlowControlEntrance";
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
@@ -347,6 +366,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
       return "FrameSubscriber";
     case PROCESSOR_TYPE_FRAME_WRITER:
       return "FrameWriter";
+    case PROCESSOR_TYPE_FV_GEN:
+      return "FvGen";
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return "ImageClassifier";
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:

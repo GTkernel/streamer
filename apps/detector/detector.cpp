@@ -91,7 +91,7 @@ void Run(const std::vector<std::string>& camera_names,
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(
-        new ImageTransformer(input_shape, false, false));
+        new ImageTransformer(input_shape, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -123,9 +123,9 @@ void Run(const std::vector<std::string>& camera_names,
   for (int i = 0; i < batch_size; i++) {
     std::string output_filename = camera_names[i] + ".mp4";
 
-    std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-        cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
-    encoder->SetSource("input", detectors[i]->GetSink("output"));
+    std::shared_ptr<GstVideoEncoder> encoder(
+        new GstVideoEncoder("original_image", output_filename));
+    encoder->SetSource(detectors[i]->GetSink("output"));
     encoders.push_back(encoder);
   }
 

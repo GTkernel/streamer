@@ -4,8 +4,10 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/date_time.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
+
+#include "utils/file_utils.h"
 
 OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
                              unsigned long frames_per_dir)
@@ -29,18 +31,7 @@ OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
 std::string OutputTracker::GetAndCreateOutputDir(
     boost::posix_time::ptime micros) {
   if (organize_by_time_) {
-    // Add subdirectories for date and time.
-    std::string date_s =
-        boost::gregorian::to_iso_extended_string(micros.date());
-    long hours = micros.time_of_day().hours();
-
-    std::ostringstream dirpath;
-    dirpath << root_dir_ << "/" << date_s << "/" << hours << "/";
-
-    // Create the output directory, since it might not exist yet.
-    boost::filesystem::create_directories(
-        boost::filesystem::path{dirpath.str()});
-    return dirpath.str();
+    return GetAndCreateDateTimeDir(root_dir_, micros);
   } else {
     std::string dir = current_dirpath_;
     ++frames_in_current_dir_;
@@ -59,6 +50,5 @@ void OutputTracker::ChangeSubdir(unsigned long subdir_idx) {
   std::ostringstream current_dirpath;
   current_dirpath << root_dir_ << "/" << current_dir_idx_ << "/";
   current_dirpath_ = current_dirpath.str();
-  boost::filesystem::create_directory(
-      boost::filesystem::path{current_dirpath_});
+  CreateDirs(current_dirpath_);
 }

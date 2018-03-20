@@ -31,6 +31,8 @@ class ImageClassifier : public NeuralNetConsumer {
   // Loads the specified model's labels from disk and returns them in a vector.
   static std::vector<std::string> LoadLabels(const ModelDesc& model_desc);
 
+  // Layer to extract from the DNN.
+  std::string layer_;
   // The number of labels that will be assigned to each frame.
   size_t num_labels_;
   // A list of all labels, from which num_labels_ entries will be assigned to

@@ -40,6 +40,9 @@ class NeuralNetEvaluator : public Processor {
   void SetSource(StreamPtr stream, const std::string& layername = "");
   using Processor::SetSource;
 
+  StreamPtr GetSink();
+  using Processor::GetSink;
+
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;
@@ -53,6 +56,7 @@ class NeuralNetEvaluator : public Processor {
   Shape input_shape_;
   std::string input_layer_name_;
   std::unique_ptr<Model> model_;
+  std::vector<std::string> output_layer_names_;
   std::vector<std::unique_ptr<Frame>> cur_batch_frames_;
   size_t batch_size_;
 };
