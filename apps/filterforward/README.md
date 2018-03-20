@@ -41,7 +41,7 @@ defined by the following column format:
 2. Keyframe detector buffer length
 3. Keyframe detector feature vector layer name
 4. Number of copies of the microclassifier to run
-5. Layer to extract for the microclassifier
+5. Layer to extract and use as input to the microclassifiers
 6. Microclassifier feature vector crop window xmin
 7. Microclassifier feature vector crop window ymin
 8. Microclassifier feature vector crop window xmax
