@@ -108,25 +108,21 @@ bool DiffDetector::OnStop() { return true; }
 void DiffDetector::Process() {
   std::unique_ptr<Frame> frame = GetFrame(SOURCE_NAME);
   auto img = frame->GetValue<cv::Mat>("image");
-  auto frame_id = frame->GetValue<unsigned long>("frame_id");
 
-  unsigned long ref_id;
   cv::Mat ref_img;
   if (dynamic_ref_) {
     if (!buffer_.size()) {
       // If the buffer is empty, then this is the first frame. It should not be
       // dropped, since we do not have a baseline yet.
-      buffer_.push_back(std::make_pair(frame_id, img.clone()));
+      buffer_.push_back(img.clone());
       PushFrame(SINK_NAME, std::move(frame));
       return;
     } else {
       // If this is not the first frame, then the head of the buffer is our
       // reference image. This code works even if the buffer has not filled up
       // yet, in which case the reference image will be the first frame.
-      std::pair<unsigned long, cv::Mat> ref_pair = buffer_.front();
-      ref_id = ref_pair.first;
-      ref_img = ref_pair.second;
-      buffer_.push_back(std::make_pair(frame_id, img.clone()));
+      ref_img = buffer_.front();
+      buffer_.push_back(img.clone());
     }
   } else {
     ref_img = ref_img_;

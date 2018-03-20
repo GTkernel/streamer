@@ -62,7 +62,7 @@ class DiffDetector : public Processor {
   unsigned long t_diff_frames_;
   // The first element in each pair is the frame id, and the second element is
   // the image data. The frame id is included simply for debugging purposes.
-  boost::circular_buffer<std::pair<unsigned long, cv::Mat>> buffer_;
+  boost::circular_buffer<cv::Mat> buffer_;
   // Used when reading a static reference image from disk.
   cv::Mat ref_img_;
 
