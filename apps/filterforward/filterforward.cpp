@@ -259,10 +259,9 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          size_t queue_size, bool use_camera, const std::string& camera_name,
          const std::string& publish_url, unsigned int file_fps,
          int throttled_fps, unsigned int tokens, const std::string& model,
-         std::vector<std::string> layers, size_t nne_batch_size,
-         std::vector<std::string> fields, const std::string& output_dir,
-         bool save_matches, bool log_memory, bool display, bool slack,
-         const std::string& slack_url) {
+         size_t nne_batch_size, std::vector<std::string> fields,
+         const std::string& output_dir, bool save_matches, bool log_memory,
+         bool display, bool slack, const std::string& slack_url) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -373,9 +372,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   procs.push_back(transformer);
 
   // Create a NeuralNetEvaluator.
-  std::vector<std::string> output_layer_names = layers;
-  auto nne = std::make_shared<NeuralNetEvaluator>(
-      model_desc, input_shape, nne_batch_size, output_layer_names);
+  auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape,
+                                                  nne_batch_size);
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
@@ -541,9 +539,6 @@ int main(int argc, char* argv[]) {
                      "The number of flow control tokens to issue.");
   desc.add_options()("model,m", po::value<std::string>()->required(),
                      "The name of the model to evaluate.");
-  desc.add_options()("layer,l", po::value<std::string>()->required(),
-                     "The layer to extract and use as the basis for keyframe "
-                     "detection and ImageMatch.");
   desc.add_options()("nne-batch-size,s", po::value<size_t>()->default_value(1),
                      "nne batch size");
   desc.add_options()("fields",
@@ -551,7 +546,8 @@ int main(int argc, char* argv[]) {
                          ->multitoken()
                          ->composing()
                          ->required(),
-                     "The fields to send over the network");
+                     "The fields to send over the network when calculating "
+                     "theoretical network bandwidth usage.");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to write output files.");
   desc.add_options()(
@@ -610,7 +606,6 @@ int main(int argc, char* argv[]) {
   unsigned int file_fps = args["file-fps"].as<unsigned int>();
   int throttled_fps = args["throttled-fps"].as<int>();
   unsigned int tokens = args["tokens"].as<unsigned int>();
-  std::string layer = args["layer"].as<std::string>();
   std::string model = args["model"].as<std::string>();
   size_t nne_batch_size = args["nne-batch-size"].as<size_t>();
   std::vector<std::string> fields =
@@ -625,7 +620,7 @@ int main(int argc, char* argv[]) {
     slack_url = args["slack"].as<std::string>();
   }
   Run(ff_conf, num_frames, block, queue_size, use_camera, camera, publish_url,
-      file_fps, throttled_fps, tokens, model, {layer}, nne_batch_size, fields,
+      file_fps, throttled_fps, tokens, model, nne_batch_size, fields,
       output_dir, save_matches, log_memory, display, slack, slack_url);
   return 0;
 }
