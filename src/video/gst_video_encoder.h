@@ -19,10 +19,12 @@
 // saved to disk, published using RTSP, or both.
 class GstVideoEncoder : public Processor {
  public:
-  GstVideoEncoder(const std::string& field, const std::string& filepath);
-  GstVideoEncoder(const std::string& field, int port, bool use_tcp = true);
-  GstVideoEncoder(const std::string& field, const std::string& filepath,
-                  int port, bool use_tcp = true);
+  GstVideoEncoder(const std::string& field, int fps,
+                  const std::string& filepath);
+  GstVideoEncoder(const std::string& field, int fps, int port,
+                  bool use_tcp = true);
+  GstVideoEncoder(const std::string& field, int fps,
+                  const std::string& filepath, int port, bool use_tcp = true);
 
   static std::shared_ptr<GstVideoEncoder> Create(
       const FactoryParamsType& params);
@@ -46,7 +48,7 @@ class GstVideoEncoder : public Processor {
   virtual void Process() override;
 
  private:
-  void Setup();
+  void Setup(int fps);
   bool CreatePipeline(int height, int width);
   std::string BuildPipelineString();
   std::string BuildCapsString(int height, int width);
@@ -57,6 +59,8 @@ class GstVideoEncoder : public Processor {
 
   // The frame field to encode.
   std::string field_;
+  // The framerate at which to encode. Does not change the playback rate.
+  int fps_;
   // The filepath at which to store the encoded video. The empty string disables
   // writing mode.
   std::string filepath_;

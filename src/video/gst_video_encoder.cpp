@@ -1,6 +1,7 @@
 
 #include "video/gst_video_encoder.h"
 
+#include <cstdlib>
 #include <sstream>
 #include <stdexcept>
 
@@ -15,7 +16,7 @@ constexpr auto SINK_NAME = "output";
 const char* GstVideoEncoder::kPathKey = "GstVideoEncoder.path";
 const char* GstVideoEncoder::kFieldKey = "GstVideoEncoder.field";
 
-GstVideoEncoder::GstVideoEncoder(const std::string& field,
+GstVideoEncoder::GstVideoEncoder(const std::string& field, int fps,
                                  const std::string& filepath)
     : Processor(PROCESSOR_TYPE_ENCODER, {SOURCE_NAME}, {SINK_NAME}),
       field_(field),
@@ -25,10 +26,10 @@ GstVideoEncoder::GstVideoEncoder(const std::string& field,
       pipeline_created_(false),
       need_data_(false),
       timestamp_(0) {
-  Setup();
+  Setup(fps);
 }
 
-GstVideoEncoder::GstVideoEncoder(const std::string& field, int port,
+GstVideoEncoder::GstVideoEncoder(const std::string& field, int fps, int port,
                                  bool use_tcp)
     : Processor(PROCESSOR_TYPE_ENCODER, {SOURCE_NAME}, {SINK_NAME}),
       field_(field),
@@ -38,10 +39,10 @@ GstVideoEncoder::GstVideoEncoder(const std::string& field, int port,
       pipeline_created_(false),
       need_data_(false),
       timestamp_(0) {
-  Setup();
+  Setup(fps);
 }
 
-GstVideoEncoder::GstVideoEncoder(const std::string& field,
+GstVideoEncoder::GstVideoEncoder(const std::string& field, int fps,
                                  const std::string& filepath, int port,
                                  bool use_tcp)
     : Processor(PROCESSOR_TYPE_ENCODER, {SOURCE_NAME}, {SINK_NAME}),
@@ -52,7 +53,7 @@ GstVideoEncoder::GstVideoEncoder(const std::string& field,
       pipeline_created_(false),
       need_data_(false),
       timestamp_(0) {
-  Setup();
+  Setup(fps);
 }
 
 std::shared_ptr<GstVideoEncoder> GstVideoEncoder::Create(
@@ -61,6 +62,10 @@ std::shared_ptr<GstVideoEncoder> GstVideoEncoder::Create(
     throw std::runtime_error("GstVideoEncoder requires \"field\" parameter!");
   }
   std::string field = params.at("field");
+  if (!params.count("fps")) {
+    throw std::runtime_error("GstVideoEncoder requires \"fps\" parameter!");
+  }
+  int fps = std::atoi(params.at("fps").c_str());
 
   int port = -1;
   std::string filepath;
@@ -79,7 +84,7 @@ std::shared_ptr<GstVideoEncoder> GstVideoEncoder::Create(
   }
 
   // TODO: Add support for "use_tcp".
-  return std::make_shared<GstVideoEncoder>(field, filepath, port, false);
+  return std::make_shared<GstVideoEncoder>(field, fps, filepath, port, false);
 }
 
 void GstVideoEncoder::SetEncoderElement(const std::string& encoder) {
@@ -160,7 +165,7 @@ void GstVideoEncoder::Process() {
     GST_BUFFER_PTS(buffer) = timestamp_;
 
     // TODO: FPS is fixed right now
-    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 30);
+    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, fps_);
     timestamp_ += GST_BUFFER_DURATION(buffer);
 
     GstFlowReturn ret;
@@ -245,7 +250,14 @@ void GstVideoEncoder::Process() {
   PushFrame(SINK_NAME, std::move(frame));
 }
 
-void GstVideoEncoder::Setup() {
+void GstVideoEncoder::Setup(int fps) {
+  if (fps <= 0) {
+    std::ostringstream msg;
+    msg << "Fps must be greater than 0, but is: " << fps;
+    throw std::invalid_argument(msg.str());
+  }
+  fps_ = fps;
+
   // Validate configuration.
   if (filepath_ != "") {
     std::string enclosing_dir = GetDir(filepath_);
@@ -371,7 +383,7 @@ std::string GstVideoEncoder::BuildPipelineString() {
 std::string GstVideoEncoder::BuildCapsString(int height, int width) {
   std::ostringstream ss;
   ss << "video/x-raw,format=(string)BGR,width=" << width << ",height=" << height
-     << ",framerate=(fraction)30/1";
+     << ",framerate=(fraction)" << fps_ << "/1";
   return ss.str();
 }
 

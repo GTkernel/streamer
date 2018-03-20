@@ -11,7 +11,7 @@
 TEST(TestGstVideoEncoder, TestFile) {
   auto camera = CameraManager::GetInstance().GetCamera("GST_TEST");
   auto encoder =
-      std::make_shared<GstVideoEncoder>("original_image", "/tmp/test.mp4");
+      std::make_shared<GstVideoEncoder>("original_image", 30, "/tmp/test.mp4");
   encoder->SetSource(camera->GetStream());
 
   auto encoder_reader = encoder->GetSink()->Subscribe();
@@ -29,7 +29,7 @@ TEST(TestGstVideoEncoder, TestFile) {
 
 TEST(TestGstVideoEncoder, TestStream) {
   auto camera = CameraManager::GetInstance().GetCamera("GST_TEST");
-  auto encoder = std::make_shared<GstVideoEncoder>("original_image", 12345);
+  auto encoder = std::make_shared<GstVideoEncoder>("original_image", 30, 12345);
   encoder->SetSource(camera->GetStream());
 
   camera->Start();
