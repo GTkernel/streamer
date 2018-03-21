@@ -30,16 +30,12 @@ constexpr auto NETWORK_FILEPATH = "data/mobilenet/mobilenet_deploy.prototxt";
 constexpr auto WEIGHTS_FILEPATH = "/tmp/mobilenet.caffemodel";
 
 const std::vector<std::string> OUTPUTS = {
-    "conv1",       "conv2_1/dw",  "conv2_1/sep",
-    "conv2_2/dw",  "conv2_2/sep", "conv3_1/dw",
-    "conv3_1/sep", "conv3_2/dw",  "conv3_2/sep",
-    "conv4_1/dw",  "conv4_1/sep", "conv4_2/dw",
-    "conv4_2/sep", "conv5_1/dw",  "conv5_1/sep",
-    "conv5_2/dw",  "conv5_2/sep", "conv5_3/dw",
-    "conv5_3/sep", "conv5_4/dw",  "conv5_4/sep",
-    "conv5_5/dw",  "conv5_5/sep", "conv5_6/dw",
-    "conv5_6/sep", "conv6/dw",    "conv6/sep",
-    "pool6",       "fc7",         "prob"};
+    "conv1",       "conv2_1/dw",  "conv2_1/sep", "conv2_2/dw",  "conv2_2/sep",
+    "conv3_1/dw",  "conv3_1/sep", "conv3_2/dw",  "conv3_2/sep", "conv4_1/dw",
+    "conv4_1/sep", "conv4_2/dw",  "conv4_2/sep", "conv5_1/dw",  "conv5_1/sep",
+    "conv5_2/dw",  "conv5_2/sep", "conv5_3/dw",  "conv5_3/sep", "conv5_4/dw",
+    "conv5_4/sep", "conv5_5/dw",  "conv5_5/sep", "conv5_6/dw",  "conv5_6/sep",
+    "conv6/dw",    "conv6/sep",   "pool6",       "fc7",         "prob"};
 
 bool FloatEqual(float lhs, float rhs) {
   if (lhs < 0) {
