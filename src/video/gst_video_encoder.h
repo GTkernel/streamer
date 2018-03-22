@@ -19,12 +19,8 @@
 // saved to disk, published using RTSP, or both.
 class GstVideoEncoder : public Processor {
  public:
-  GstVideoEncoder(const std::string& field, int fps,
-                  const std::string& filepath);
-  GstVideoEncoder(const std::string& field, int fps, int port,
-                  bool use_tcp = true);
-  GstVideoEncoder(const std::string& field, int fps,
-                  const std::string& filepath, int port, bool use_tcp = true);
+  GstVideoEncoder(const std::string& field, const std::string& filepath = "",
+                  int port = -1, bool use_tcp = true, int fps = 30);
 
   static std::shared_ptr<GstVideoEncoder> Create(
       const FactoryParamsType& params);

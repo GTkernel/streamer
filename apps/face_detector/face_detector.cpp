@@ -148,7 +148,7 @@ void Run(const std::vector<std::string>& camera_names,
     std::string output_filename = camera_names[i] + ".mp4";
 
     std::shared_ptr<GstVideoEncoder> encoder(
-        new GstVideoEncoder("original_image", 30, output_filename));
+        new GstVideoEncoder("original_image", output_filename));
     encoder->SetSource("input", tracker->GetSink("output"));
     encoders.push_back(encoder);
   }

@@ -16,35 +16,9 @@ constexpr auto SINK_NAME = "output";
 const char* GstVideoEncoder::kPathKey = "GstVideoEncoder.path";
 const char* GstVideoEncoder::kFieldKey = "GstVideoEncoder.field";
 
-GstVideoEncoder::GstVideoEncoder(const std::string& field, int fps,
-                                 const std::string& filepath)
-    : Processor(PROCESSOR_TYPE_ENCODER, {SOURCE_NAME}, {SINK_NAME}),
-      field_(field),
-      filepath_(filepath),
-      port_(-1),
-      use_tcp_(false),
-      pipeline_created_(false),
-      need_data_(false),
-      timestamp_(0) {
-  Setup(fps);
-}
-
-GstVideoEncoder::GstVideoEncoder(const std::string& field, int fps, int port,
-                                 bool use_tcp)
-    : Processor(PROCESSOR_TYPE_ENCODER, {SOURCE_NAME}, {SINK_NAME}),
-      field_(field),
-      filepath_(""),
-      port_(port),
-      use_tcp_(use_tcp),
-      pipeline_created_(false),
-      need_data_(false),
-      timestamp_(0) {
-  Setup(fps);
-}
-
-GstVideoEncoder::GstVideoEncoder(const std::string& field, int fps,
+GstVideoEncoder::GstVideoEncoder(const std::string& field,
                                  const std::string& filepath, int port,
-                                 bool use_tcp)
+                                 bool use_tcp, int fps)
     : Processor(PROCESSOR_TYPE_ENCODER, {SOURCE_NAME}, {SINK_NAME}),
       field_(field),
       filepath_(filepath),
@@ -84,7 +58,7 @@ std::shared_ptr<GstVideoEncoder> GstVideoEncoder::Create(
   }
 
   // TODO: Add support for "use_tcp".
-  return std::make_shared<GstVideoEncoder>(field, fps, filepath, port, false);
+  return std::make_shared<GstVideoEncoder>(field, filepath, port, false, fps);
 }
 
 void GstVideoEncoder::SetEncoderElement(const std::string& encoder) {

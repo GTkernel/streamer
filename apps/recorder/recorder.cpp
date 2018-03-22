@@ -40,7 +40,7 @@ void Stopper() {
 void EncodeForever(StreamPtr stream, const std::string& field, int fps,
                    const std::string& filepath) {
   // Create GstVideoEncoder.
-  auto encoder = std::make_shared<GstVideoEncoder>(field, fps, filepath);
+  auto encoder = std::make_shared<GstVideoEncoder>(field, filepath, fps);
   encoder->SetSource(stream);
   encoder->Start();
 
@@ -68,8 +68,8 @@ void EncodeInterval(StreamPtr stream, const std::string& field, int fps,
                  << filepath_ext;
 
     // Create GstVideoEncoder.
-    auto encoder =
-        std::make_shared<GstVideoEncoder>(field, fps, new_filepath.str());
+    auto encoder = std::make_shared<GstVideoEncoder>(field, new_filepath.str(),
+                                                     -1, false, fps);
     encoder->SetSource(stream);
     encoder->Start();
 
