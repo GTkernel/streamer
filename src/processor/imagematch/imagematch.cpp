@@ -84,7 +84,7 @@ void ImageMatch::Process() {
       for(int i = 0; i < height; ++i) {
         for(int j = 0; j < width; ++j) {
           for(int k = 0; k < channel; ++k) {
-            input_tensor_mapped(cur_batch_idx, i, j, k) = feature_continuous.ptr<float>()[i * width * channel + j * channel + k];
+            input_tensor_mapped(cur_batch_idx, i, j, k) = fv.ptr<float>()[i * width * channel + j * channel + k];
           }
         }
       }
@@ -112,6 +112,14 @@ void ImageMatch::Process() {
     int cur_dim = (*output_tensor.shape().begin()).size;
     for (int i = 1; i < cur_dim * 2; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
+      std::stringstream match_msg;
+      if(prob_match > query.second.threshold)
+          match_msg << "Match: ";
+      else
+          match_msg << "No match: ";
+      match_msg << "(batch idx) " << i / 2 << ": " << prob_match << std::endl;
+      LOG(INFO) << match_msg.str();
+      frames_batch_.at(i/2)->SetValue("imagematch.match_prob", prob_match);
       if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
       } else {
