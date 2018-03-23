@@ -37,10 +37,10 @@ void Stopper() {
 }
 
 // Encodes the provided stream as a single H264 video.
-void EncodeForever(StreamPtr stream, const std::string& field,
+void EncodeForever(StreamPtr stream, const std::string& field, int fps,
                    const std::string& filepath) {
   // Create GstVideoEncoder.
-  auto encoder = std::make_shared<GstVideoEncoder>(field, filepath);
+  auto encoder = std::make_shared<GstVideoEncoder>(field, filepath, fps);
   encoder->SetSource(stream);
   encoder->Start();
 
@@ -52,7 +52,7 @@ void EncodeForever(StreamPtr stream, const std::string& field,
 }
 
 // Encodes the provided stream as a series of H264 videos.
-void EncodeInterval(StreamPtr stream, const std::string& field,
+void EncodeInterval(StreamPtr stream, const std::string& field, int fps,
                     const std::string& filepath,
                     boost::posix_time::time_duration reset_interval_s) {
   // Extract filepath components.
@@ -68,7 +68,8 @@ void EncodeInterval(StreamPtr stream, const std::string& field,
                  << filepath_ext;
 
     // Create GstVideoEncoder.
-    auto encoder = std::make_shared<GstVideoEncoder>(field, new_filepath.str());
+    auto encoder = std::make_shared<GstVideoEncoder>(field, new_filepath.str(),
+                                                     -1, false, fps);
     encoder->SetSource(stream);
     encoder->Start();
 
@@ -86,19 +87,19 @@ void EncodeInterval(StreamPtr stream, const std::string& field,
 }
 
 // Designed to be run by a searate thread. Encodes the provided stream.
-void Encoder(StreamPtr stream, const std::string& field,
+void Encoder(StreamPtr stream, const std::string& field, int fps,
              const std::string& filepath,
              boost::posix_time::time_duration reset_interval_s) {
   if (reset_interval_s == boost::posix_time::seconds(-1)) {
-    EncodeForever(stream, field, filepath);
+    EncodeForever(stream, field, fps, filepath);
   } else {
-    EncodeInterval(stream, field, filepath, reset_interval_s);
+    EncodeInterval(stream, field, fps, filepath, reset_interval_s);
   }
 }
 
 void Run(bool use_camera, const std::string& camera_name,
-         const std::string& publish_url, unsigned int angle, bool resize,
-         int x_dim, int y_dim,
+         const std::string& publish_url, int fps, unsigned int angle,
+         bool resize, int x_dim, int y_dim,
          boost::posix_time::time_duration reset_interval_s,
          const std::string& filepath) {
   std::vector<std::shared_ptr<Processor>> procs;
@@ -137,8 +138,8 @@ void Run(bool use_camera, const std::string& camera_name,
   std::thread stopper_thread([] { Stopper(); });
 
   // Launch the encoder thread. This is where the important logic resides.
-  std::thread encoder_thread([stream, field, filepath, reset_interval_s] {
-    Encoder(stream, field, filepath, reset_interval_s);
+  std::thread encoder_thread([stream, field, fps, filepath, reset_interval_s] {
+    Encoder(stream, field, fps, filepath, reset_interval_s);
   });
 
   // Start the processors in reverse order.
@@ -167,6 +168,9 @@ int main(int argc, char* argv[]) {
   desc.add_options()("publish-url,u", po::value<std::string>(),
                      "The URL (host:port) on which the frame stream is being "
                      "published.");
+  desc.add_options()(
+      "fps,f", po::value<int>(),
+      "The framerate at which to encode. Does not impact playback rate.");
   desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
                      "The angle to rotate frames; must be 0, 90, 180, or 270.");
   desc.add_options()("x-dim,x", po::value<int>(),
@@ -220,6 +224,7 @@ int main(int argc, char* argv[]) {
     throw std::runtime_error(
         "Must specify either \"--camera\" or \"--publish-url\".");
   }
+  auto fps = args["fps"].as<int>();
   auto angles = std::set<unsigned int>{0, 90, 180, 270};
   auto angle = args["rotate"].as<unsigned int>();
   if (!angles.count(angle)) {
@@ -269,7 +274,7 @@ int main(int argc, char* argv[]) {
     }
   }
   auto filepath = args["output-file"].as<std::string>();
-  Run(use_camera, camera, publish_url, angle, resize, x_dim, y_dim,
+  Run(use_camera, camera, publish_url, fps, angle, resize, x_dim, y_dim,
       reset_interval_s, filepath);
   return 0;
 }
