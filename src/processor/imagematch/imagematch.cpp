@@ -80,12 +80,20 @@ void ImageMatch::Process() {
     for (const auto& frame : frames_batch_) {
       cv::Mat fv =
           frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
-      for (int row = 0; row < height; ++row) {
+      auto input_tensor_mapped = input_tensor.tensor<float, 4>();
+      for(int i = 0; i < height; ++i) {
+        for(int j = 0; j < width; ++j) {
+          for(int k = 0; k < channel; ++k) {
+            input_tensor_mapped(cur_batch_idx, i, j, k) = feature_continuous.ptr<float>()[i * width * channel + j * channel + k];
+          }
+        }
+      }
+      /*for (int row = 0; row < height; ++row) {
         std::copy_n(fv.ptr<float>(row), width * channel,
                     input_tensor.flat<float>().data() +
                         cur_batch_idx * height * width * channel +
                         row * channel * width);
-      }
+      }*/
       cur_batch_idx += 1;
     }
     std::vector<tensorflow::Tensor> outputs;
