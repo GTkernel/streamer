@@ -1,4 +1,7 @@
 /*
+All modifications made by the Streamer Authors:
+Copyright (c) 2016, The Streamer Authors. All rights reserved.
+
 All modification made by Intel Corporation: © 2016 Intel Corporation
 
 All contributions by the University of California:
