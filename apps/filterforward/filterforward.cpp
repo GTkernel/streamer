@@ -568,7 +568,7 @@ int main(int argc, char* argv[]) {
   desc.add_options()("slack", po::value<std::string>(),
                      "Enable Slack notifications for matched frames, and send "
                      "notifications to the provided hook url.");
-  desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
+  desc.add_options()("rotate,r", po::value<int>()->default_value(0),
                      "The angle to rotate frames; must be 0, 90, 180, or 270.");
 
   // Parse the command line arguments.
