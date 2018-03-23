@@ -366,7 +366,8 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create an ImageTransformer.
   ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer = std::make_shared<ImageTransformer>(input_shape, true, rotate);
+  auto transformer =
+      std::make_shared<ImageTransformer>(input_shape, true, rotate);
   transformer->SetSource(fc_entrance->GetSink());
   transformer->SetBlockOnPush(block);
   procs.push_back(transformer);
