@@ -11,6 +11,7 @@ class OutputTracker {
   OutputTracker(const std::string& root_dir, bool organize_by_time,
                 unsigned long frames_per_dir);
   std::string GetAndCreateOutputDir(boost::posix_time::ptime micros);
+  std::string GetRootDir();
 
  private:
   void ChangeSubdir(unsigned long subdir_idx);

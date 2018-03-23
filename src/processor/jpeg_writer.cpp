@@ -16,6 +16,8 @@
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
+const char* JpegWriter::kRelativePathKey = "JpegWriter.relative_path";
+
 const char* JpegWriter::kPathKey = "JpegWriter.path";
 const char* JpegWriter::kFieldKey = "JpegWriter.field";
 
@@ -58,10 +60,13 @@ void JpegWriter::Process() {
 
   auto capture_time_micros =
       frame->GetValue<boost::posix_time::ptime>(Camera::kCaptureTimeMicrosKey);
+  std::string root_dir = tracker_.GetRootDir();
   std::ostringstream filepath;
   filepath << tracker_.GetAndCreateOutputDir(capture_time_micros)
            << GetDateTimeString(capture_time_micros) << "_" << field_ << ".jpg";
   std::string filepath_s = filepath.str();
+  std::string relative_filepath_s = filepath_s.substr(
+      root_dir.size() + 1, filepath_s.size() - (root_dir.size() + 1));
   try {
     cv::imwrite(filepath_s, img);
   } catch (cv::Exception& e) {
@@ -70,6 +75,7 @@ void JpegWriter::Process() {
   }
 
   frame->SetValue(kPathKey, filepath_s);
+  frame->SetValue(kRelativePathKey, relative_filepath_s);
   frame->SetValue(kFieldKey, field_);
   PushFrame(SINK_NAME, std::move(frame));
 };

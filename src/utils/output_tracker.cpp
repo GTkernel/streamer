@@ -28,6 +28,12 @@ OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
   }
 }
 
+std::string OutputTracker::GetRootDir() {
+  std::cout << "Hello, the root directory is " << root_dir_ << "\n";
+  return root_dir_;
+}
+
+
 std::string OutputTracker::GetAndCreateOutputDir(
     boost::posix_time::ptime micros) {
   if (organize_by_time_) {
