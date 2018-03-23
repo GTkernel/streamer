@@ -261,7 +261,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
          int throttled_fps, unsigned int tokens, const std::string& model,
          size_t nne_batch_size, std::vector<std::string> fields,
          const std::string& output_dir, bool save_matches, bool log_memory,
-         bool display, bool slack, const std::string& slack_url) {
+         bool display, bool slack, const std::string& slack_url, int rotate) {
   boost::posix_time::ptime log_time =
       boost::posix_time::microsec_clock::local_time();
 
@@ -366,7 +366,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   // Create an ImageTransformer.
   ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true, rotate);
   transformer->SetSource(fc_entrance->GetSink());
   transformer->SetBlockOnPush(block);
   procs.push_back(transformer);
@@ -558,6 +558,8 @@ int main(int argc, char* argv[]) {
   desc.add_options()("slack", po::value<std::string>(),
                      "Enable Slack notifications for matched frames, and send "
                      "notifications to the provided hook url.");
+  desc.add_options()("rotate,r", po::value<unsigned int>()->default_value(0),
+                     "The angle to rotate frames; must be 0, 90, 180, or 270.");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -615,12 +617,13 @@ int main(int argc, char* argv[]) {
   bool log_memory = args.count("memory-usage");
   bool display = args.count("display");
   bool slack = args.count("slack");
+  int rotate = args.count("rotate") ? args["rotate"].as<int>() : 0;
   std::string slack_url;
   if (slack) {
     slack_url = args["slack"].as<std::string>();
   }
   Run(ff_conf, num_frames, block, queue_size, use_camera, camera, publish_url,
       file_fps, throttled_fps, tokens, model, nne_batch_size, fields,
-      output_dir, save_matches, log_memory, display, slack, slack_url);
+      output_dir, save_matches, log_memory, display, slack, slack_url, rotate);
   return 0;
 }

@@ -102,7 +102,7 @@ void ImageMatch::Process() {
     ;
     const auto& output_tensor = outputs.at(0);
     int cur_dim = (*output_tensor.shape().begin()).size;
-    for (int i = 0; i < cur_dim * 2; i += 2) {
+    for (int i = 1; i < cur_dim * 2; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
       if (prob_match > query.second.threshold) {
         query.second.matches.push_back(1);
