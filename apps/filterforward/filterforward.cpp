@@ -44,7 +44,8 @@ namespace po = boost::program_options;
 constexpr auto JPEG_WRITER_FIELD = "original_image";
 std::unordered_set<std::string> FRAME_WRITER_FIELDS({"frame_id",
                                                      "capture_time_micros",
-                                                     "imagematch.match_prob"});
+                                                     "imagematch.match_prob",
+                                                     "NeuralNetEvaluator.image.normalized"});
 
 // Used to signal all threads that the pipeline should stop.
 std::atomic<bool> stopped(false);
