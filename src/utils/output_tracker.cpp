@@ -29,7 +29,6 @@ OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
 }
 
 std::string OutputTracker::GetRootDir() {
-  std::cout << "Hello, the root directory is " << root_dir_ << "\n";
   return root_dir_;
 }
 
