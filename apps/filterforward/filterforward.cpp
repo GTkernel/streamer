@@ -432,7 +432,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
 
     // Create FrameWriter.
     auto frame_writer = std::make_shared<FrameWriter>(
-        FRAME_WRITER_FIELDS, output_dir, FrameWriter::FileFormat::JSON, true,
+        FRAME_WRITER_FIELDS, output_dir, FrameWriter::FileFormat::JSON, false,
         true);
     frame_writer->SetSource(fc_exit_sink);
     procs.push_back(frame_writer);
