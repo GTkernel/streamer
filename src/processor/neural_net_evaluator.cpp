@@ -110,10 +110,10 @@ void NeuralNetEvaluator::Process() {
   cv::Mat input_mat;
   if (input_frame->Count(input_layer_name_) > 0) {
     input_mat = input_frame->GetValue<cv::Mat>(input_layer_name_);
-    input_frame->SetValue(GetName() + input_layer_name_ + ".normalized", model_->ConvertAndNormalize(input_mat));
+    input_frame->SetValue(GetName() + "." + input_layer_name_ + ".normalized", model_->ConvertAndNormalize(input_mat));
   } else {
     input_mat = input_frame->GetValue<cv::Mat>("image");
-    input_frame->SetValue(GetName() + "image" + ".normalized", model_->ConvertAndNormalize(input_mat));
+    input_frame->SetValue(GetName() + ".image" + ".normalized", model_->ConvertAndNormalize(input_mat));
   }
   cur_batch_frames_.push_back(std::move(input_frame));
   if (cur_batch_frames_.size() < batch_size_) {
