@@ -42,10 +42,9 @@
 namespace po = boost::program_options;
 
 constexpr auto JPEG_WRITER_FIELD = "original_image";
-std::unordered_set<std::string> FRAME_WRITER_FIELDS({"frame_id",
-                                                     "capture_time_micros",
-                                                     "imagematch.match_prob",
-                                                     "NeuralNetEvaluator.image.normalized"});
+std::unordered_set<std::string> FRAME_WRITER_FIELDS(
+    {"frame_id", "capture_time_micros", "imagematch.match_prob",
+     "NeuralNetEvaluator.image.normalized"});
 
 // Used to signal all threads that the pipeline should stop.
 std::atomic<bool> stopped(false);
@@ -225,13 +224,15 @@ void Slack(StreamPtr stream, const std::string& slack_url) {
         std::string frame_path =
             frame->GetValue<std::string>(JpegWriter::kRelativePathKey);
         std::string frame_link =
-           "http://istc-vcs.pc.cc.cmu.edu:8000/" + frame_path;
+            "http://istc-vcs.pc.cc.cmu.edu:8000/" + frame_path;
 
-        std::string msg =
-           "{\"text\":\"Match confidence (" + std::to_string(match_prob) +
-           "): <" + frame_link + "2|frame>\n"
-           "Path to full image: <" + frame_link + "|" + 
-           frame_link.substr(7, frame_link.size() - 7) + ">\"\n}";
+        std::string msg = "{\"text\":\"Match confidence (" +
+                          std::to_string(match_prob) + "): <" + frame_link +
+                          "2|frame>\n"
+                          "Path to full image: <" +
+                          frame_link + "|" +
+                          frame_link.substr(7, frame_link.size() - 7) +
+                          ">\"\n}";
         curl = curl_easy_init();
         if (curl) {
           curl_easy_setopt(curl, CURLOPT_URL, slack_url.c_str());
