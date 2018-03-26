@@ -421,7 +421,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     Logger(0, fc_exit_sink, log_time, fields, output_dir, log_memory, display);
   }));
 
-  Streamptr jpeg_stream = nullptr;
+  StreamPtr jpeg_stream = nullptr;
   if (save_matches) {
     // Create JpegWriter.
     auto jpeg_writer =
