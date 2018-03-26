@@ -111,6 +111,7 @@ void ImageMatch::Process() {
     ;
     const auto& output_tensor = outputs.at(0);
     int cur_dim = (*output_tensor.shape().begin()).size;
+    query.second.matches.clear();
     for (int i = 1; i < cur_dim * 2; i += 2) {
       float prob_match = output_tensor.flat<float>().data()[i];
       std::stringstream match_msg;

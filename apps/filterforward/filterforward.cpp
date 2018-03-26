@@ -421,12 +421,14 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
     Logger(0, fc_exit_sink, log_time, fields, output_dir, log_memory, display);
   }));
 
+  Streamptr jpeg_stream = nullptr;
   if (save_matches) {
     // Create JpegWriter.
     auto jpeg_writer =
         std::make_shared<JpegWriter>(JPEG_WRITER_FIELD, output_dir, true);
     jpeg_writer->SetSource(fc_exit_sink);
     procs.push_back(jpeg_writer);
+    jpeg_stream = jpeg_writer->GetSink();
 
     // Create FrameWriter.
     auto frame_writer = std::make_shared<FrameWriter>(
@@ -486,7 +488,7 @@ void Run(const std::string& ff_conf, unsigned int num_frames, bool block,
   std::thread slack_thread;
   if (slack) {
     slack_thread = std::thread(
-        [fc_exit_sink, slack_url] { Slack(fc_exit_sink, slack_url); });
+        [jpeg_stream, slack_url] { Slack(jpeg_stream, slack_url); });
   }
 
   // Start the processors in reverse order.
