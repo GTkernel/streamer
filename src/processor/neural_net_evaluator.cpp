@@ -108,6 +108,13 @@ StreamPtr NeuralNetEvaluator::GetSink() {
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
   cv::Mat input_mat;
+  if (input_frame->Count(input_layer_name_) > 0) {
+    input_mat = input_frame->GetValue<cv::Mat>(input_layer_name_);
+    input_frame->SetValue(GetName() + input_layer_name_ + ".normalized", model_->ConvertAndNormalize(input_mat));
+  } else {
+    input_mat = input_frame->GetValue<cv::Mat>("image");
+    input_frame->SetValue(GetName() + "image" + ".normalized", model_->ConvertAndNormalize(input_mat));
+  }
   cur_batch_frames_.push_back(std::move(input_frame));
   if (cur_batch_frames_.size() < batch_size_) {
     return;
@@ -115,9 +122,10 @@ void NeuralNetEvaluator::Process() {
   std::vector<cv::Mat> cur_batch_;
   for (auto& frame : cur_batch_frames_) {
     if (frame->Count(input_layer_name_) > 0) {
-      cur_batch_.push_back(frame->GetValue<cv::Mat>(input_layer_name_));
+      cur_batch_.push_back(
+            frame->GetValue<cv::Mat>(GetName() + input_layer_name_ + ".normalized"));
     } else {
-      cur_batch_.push_back(frame->GetValue<cv::Mat>("image"));
+      cur_batch_.push_back(frame->GetValue<cv::Mat>(GetName() + "image" + ".normalized"));
     }
   }
 

@@ -62,14 +62,6 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     std::string input_layer_name = input_pair.first;
     std::vector<cv::Mat> input_vec = input_pair.second;
 
-    // This is a patch to make tensorflow classification work properly with the
-    // current model.
-    for (decltype(input_vec.size()) i = 0; i < input_vec.size(); ++i) {
-      cv::Mat input = input_vec.at(i);
-      cv::Mat input_normalized = ConvertAndNormalize(input);
-      input_vec.at(i) = input_normalized;
-    }
-
     cv::Mat input = input_vec.at(0);
     int channel = input.channels();
     int height = input.rows;

@@ -113,8 +113,6 @@ CaffeModel<DType>::Evaluate(
   caffe::Blob<DType>* input_layer = net_->input_blobs().at(0);
   DType* data = input_layer->mutable_cpu_data();
   for (const auto& input : input_map.begin()->second) {
-    cv::Mat input_normalized = ConvertAndNormalize(input);
-
     // Format the input data in the way that Caffe expects
     // This loop creates a cv::Mat for each channel that is configured to point
     // to a particular location in "data", but the data itself is not populated
@@ -127,7 +125,7 @@ CaffeModel<DType>::Evaluate(
       output_channels.push_back(channel);
       data += input_shape_.width * input_shape_.height;
     }
-    cv::split(input_normalized, output_channels);
+    cv::split(input, output_channels);
   }
 
   // Evaluate model on input
