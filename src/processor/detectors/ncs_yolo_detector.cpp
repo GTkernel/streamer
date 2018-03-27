@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * Multi-target detection using fathom stick
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// Multi-target detection using fathom stick
 
 #include "processor/detectors/ncs_yolo_detector.h"
 

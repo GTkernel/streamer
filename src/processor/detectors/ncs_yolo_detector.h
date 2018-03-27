@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * Multi-target detection using fathom stick
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// Multi-target detection using fathom stick
 
 #ifndef STREAMER_PROCESSOR_DETECTORS_NCS_YOLO_DETECTOR_H_
 #define STREAMER_PROCESSOR_DETECTORS_NCS_YOLO_DETECTOR_H_

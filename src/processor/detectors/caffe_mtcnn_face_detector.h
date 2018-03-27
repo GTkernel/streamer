@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * Multi-target detection using MTCNN
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// Multi-target detection using MTCNN
 
 #ifndef STREAMER_PROCESSOR_DETECTORS_CAFFE_MTCNN_FACE_DETECTOR_H_
 #define STREAMER_PROCESSOR_DETECTORS_CAFFE_MTCNN_FACE_DETECTOR_H_

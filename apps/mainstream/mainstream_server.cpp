@@ -11,10 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * @brief mainstream_server - Server to run and update pipelines
- * deployed by Mainstream
- */
+
+// Server to run and update pipelines
 
 #include <csignal>
 #include <cstdio>

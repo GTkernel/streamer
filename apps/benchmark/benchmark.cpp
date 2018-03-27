@@ -11,9 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * @brief benchmark.cpp - Used to run various benchmark of the system.
- */
+
+// Used to run various benchmark of the system.
 
 #include <stdexcept>
 

@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * Face feature extractor using facenet
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// Face feature extractor using facenet
 
 #ifndef STREAMER_PROCESSOR_CAFFE_FACENET_H_
 #define STREAMER_PROCESSOR_CAFFE_FACENET_H_

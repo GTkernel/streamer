@@ -11,11 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * @brief runner.cpp - The long running process on the device. This process
- * manages the cameras and streams, run DNN on realtime camera frames, push
- * stats and video frames to local storage.
- */
+
+// The long running process on the device. This process manages the cameras and
+// streams, run DNN on realtime camera frames, push stats and video frames to
+// local storage.
 
 #include <boost/program_options.hpp>
 #include <csignal>

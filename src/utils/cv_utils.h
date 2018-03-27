@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * CV utils
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// CV utils
 
 #ifndef STREAMER_UTILS_CV_UTILS_H_
 #define STREAMER_UTILS_CV_UTILS_H_

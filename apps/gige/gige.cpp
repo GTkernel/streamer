@@ -11,9 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * @brief A demo showing how to stream, control and record from a GigE camera.
- */
+
+// A demo showing how to stream, control and record from a GigE camera.
 
 #include <cstdio>
 

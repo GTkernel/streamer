@@ -11,13 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * An interface to Neural Compute Stick
- *  DO NOT compile with -ffast-math.
- *
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- *
- */
+
+// An interface to Neural Compute Stick
+//   DO NOT compile with -ffast-math.
 
 #include "ncs_manager.h"
 

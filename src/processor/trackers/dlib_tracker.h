@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * Multi-target tracking using dlib.
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// Multi-target tracking using dlib.
 
 #ifndef STREAMER_PROCESSOR_TRACKERS_DLIB_TRACKER_H_
 #define STREAMER_PROCESSOR_TRACKERS_DLIB_TRACKER_H_

@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * Multi-target detection using YOLO
- *
- * @author Wendy Chin <wendy.chin@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// Multi-target detection using YOLO
 
 #ifndef STREAMER_PROCESSOR_DETECTORS_CAFFE_YOLO_DETECTOR_H_
 #define STREAMER_PROCESSOR_DETECTORS_CAFFE_YOLO_DETECTOR_H_

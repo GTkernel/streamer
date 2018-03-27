@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/**
- * Send metadata to the database
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+
+// Send metadata to the database
 
 #ifndef STREAMER_PROCESSOR_DB_WRITER_H_
 #define STREAMER_PROCESSOR_DB_WRITER_H_
