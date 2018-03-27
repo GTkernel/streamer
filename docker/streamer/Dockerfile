@@ -1,10 +1,24 @@
+# Copyright 2016 The Streamer Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Dockerfile for building Streamer
-#   
+#
 #   Usage: sudo docker build -f Dockerfile . -t streamer \
 #                            --build-arg USE_CAFFE=ON \
 #                            --build-arg USE_SSD=ON \
 #                            --build-arg USE_DLIB=ON
-#   
+#
 #   To run, use `docker run -it streamer`
 #
 #   Author: Vui Seng Chua <vui.seng.chua@intel.com>
@@ -51,7 +65,7 @@ RUN apt-get update && apt-get install -y \
 	libgstreamer-plugins-base1.0-dev=1.8.3-1ubuntu0.2 \
 	libgstreamer-plugins-good1.0-dev=1.8.3-1ubuntu0.4 \
 	libgstreamer-plugins-bad1.0-dev=1.8.3-1ubuntu0.2 \
-	python3-dev=3.5.1-3 \	
+	python3-dev=3.5.1-3 \
 	libleveldb-dev:amd64=1.18-5 \
 	libsnappy-dev:amd64=1.1.3-2 \
 	libhdf5-serial-dev=1.8.16+docs-4ubuntu1 \
@@ -61,7 +75,7 @@ RUN apt-get update && apt-get install -y \
 	liblmdb-dev:amd64=0.9.17-3 \
 	python-scipy=0.17.0-1 \
 	gstreamer1.0:amd64 \
-	libjemalloc-dev=3.6.0-9ubuntu1 \	
+	libjemalloc-dev=3.6.0-9ubuntu1 \
 	libzmq3-dev:amd64=4.1.4-7 \
 	libeigen3-dev=3.3~beta1-2 \
 	libblas-dev=3.6.0-2ubuntu2 \
