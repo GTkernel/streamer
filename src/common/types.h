@@ -11,9 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Created by Ran Xian on 7/26/16.
-//
 
 #ifndef STREAMER_COMMON_TYPES_H_
 #define STREAMER_COMMON_TYPES_H_

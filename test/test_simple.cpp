@@ -11,9 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Created by Ran Xian (xranthoar@gmail.com) on 9/19/16.
-//
+
 #include <gtest/gtest.h>
 
 TEST(SIMPLE_TEST, TEST_TRUE) { EXPECT_EQ(true, true); }
