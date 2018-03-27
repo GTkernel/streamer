@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 // The binary_file_writer is a simple app that reads frames from a single camera
 // and immediately saves their raw pixel data to disk.
 
