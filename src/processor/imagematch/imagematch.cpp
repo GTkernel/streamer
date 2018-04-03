@@ -93,12 +93,13 @@ void ImageMatch::Process() {
     for (const auto& frame : frames_batch_) {
       cv::Mat fv =
           frame->GetValue<cv::Mat>(FvSpec::GetUniqueID(query.second.fv_spec));
+      cv::Mat fv_cont = fv.clone();
       auto input_tensor_mapped = input_tensor.tensor<float, 4>();
       for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
           for (int k = 0; k < channel; ++k) {
             input_tensor_mapped(cur_batch_idx, i, j, k) =
-                fv.ptr<float>()[i * width * channel + j * channel + k];
+                fv_cont.ptr<float>()[i * width * channel + j * channel + k];
           }
         }
       }

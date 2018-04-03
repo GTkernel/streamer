@@ -56,8 +56,7 @@ namespace po = boost::program_options;
 
 constexpr auto JPEG_WRITER_FIELD = "original_image";
 std::unordered_set<std::string> FRAME_WRITER_FIELDS(
-    {"frame_id", "capture_time_micros", "imagematch.match_prob",
-     "NeuralNetEvaluator.image.normalized"});
+    {"frame_id", "capture_time_micros", "imagematch.match_prob"});
 
 // Used to signal all threads that the pipeline should stop.
 std::atomic<bool> stopped(false);
@@ -215,6 +214,9 @@ void Logger(size_t idx, StreamPtr stream, boost::posix_time::ptime log_time,
   log_file.close();
 }
 
+volatile int frames_processed = 0;
+volatile int last_match = 0;
+
 void Slack(StreamPtr stream, const std::string& slack_url) {
   CURL* curl;
   CURLcode res;
@@ -224,6 +226,7 @@ void Slack(StreamPtr stream, const std::string& slack_url) {
   StreamReader* reader = stream->Subscribe();
   while (!stopped) {
     std::unique_ptr<Frame> frame = reader->PopFrame();
+    frames_processed += 1;
     if (frame == nullptr) {
       continue;
     } else if (frame->IsStopFrame()) {
@@ -233,13 +236,15 @@ void Slack(StreamPtr stream, const std::string& slack_url) {
     } else {
       if (frame->Count("ImageMatch.matches") &&
           frame->GetValue<std::vector<int>>("ImageMatch.matches").size()) {
+	int skipped_frames = frames_processed - last_match;
+	last_match = frames_processed;
         float match_prob = frame->GetValue<float>("imagematch.match_prob");
         std::string frame_path =
             frame->GetValue<std::string>(JpegWriter::kRelativePathKey);
         std::string frame_link =
             "http://istc-vcs.pc.cc.cmu.edu:8000/" + frame_path;
 
-        std::string msg = "{\"text\":\"Match confidence (" +
+        std::string msg = "{\"text\":\"Skipped " + std::to_string(skipped_frames) + " Match confidence (" +
                           std::to_string(match_prob) + "): <" + frame_link +
                           "2|frame>\n"
                           "Path to full image: <" +
