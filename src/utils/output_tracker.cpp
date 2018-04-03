@@ -41,9 +41,7 @@ OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
   }
 }
 
-std::string OutputTracker::GetRootDir() {
-  return root_dir_;
-}
+std::string OutputTracker::GetRootDir() { return root_dir_; }
 
 std::string OutputTracker::GetAndCreateOutputDir(
     boost::posix_time::ptime micros) {
