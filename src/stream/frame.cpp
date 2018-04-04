@@ -128,7 +128,8 @@ class FramePrinter : public boost::static_visitor<std::string> {
   std::string operator()(const tensorflow::Tensor& v) const {
     // TODO Add Tensor print info
     std::ostringstream output;
-    output << "tensor";
+    output << "tensorflow::Tensor";
+    
     return output.str();
   }
 
@@ -356,8 +357,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
   }
 
   unsigned long operator()(const tensorflow::Tensor& v) const {
-    // TODO: count Tensor data size
-    return sizeof(tensorflow::Tensor);
+    return static_cast<unsigned long>(v.AllocatedBytes());
   }
 
   unsigned long operator()(const std::vector<float>& v) const {

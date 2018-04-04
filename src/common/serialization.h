@@ -11,10 +11,6 @@
 namespace boost {
 namespace serialization {
 
-/** TODO Serialization support for Tensor */
-template <class Archive>
-void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {}
-
 /** Serialization support for cv::Mat */
 // http://stackoverflow.com/a/21444792/1072039
 template <class Archive>
@@ -43,6 +39,38 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
     }
   }
 }
+
+/** TODO Serialization support for Tensor */
+template <class Archive>
+void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {
+	//assume tensor is always continuous
+	int vec_size, height, width, channels;
+	tensorflow::DataType type;
+
+	if (Archive::is_saving::value){
+		type = tensor.dtype();
+		vec_size = tensor.dim_size(0);
+		height = tensor.dim_size(1);
+		width = tensor.dim_size(2);
+		channels = tensor.dim_size(3);
+	}
+	ar& type& vec_size& height& width& channels;
+
+	const unsigned int data_size = vec_size * height * width * channels;
+
+	if (Archive::is_loading::value) {
+		tensorflow::Tensor reshape_tensor(
+					type, \ 
+					tensorflow::TensorShape({static_cast<long long>(vec_size), \
+										     height, width, channels}));
+		reshape_tensor.CopyFrom(tensor, tensorflow::TensorShape({static_cast<long long>(vec_size),height, width, channels}));
+		ar& boost::serialization::make_array(reshape_tensor.flat<float>().data(), data_size);
+		tensor = reshape_tensor;
+		return;
+	}
+	ar& boost::serialization::make_array(tensor.flat<float>().data(), data_size);
+}
+
 
 }  // namespace serialization
 }  // namespace boost

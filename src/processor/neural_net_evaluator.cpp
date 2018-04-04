@@ -148,6 +148,8 @@ void NeuralNetEvaluator::Process() {
   auto is_last_layer_ = false;
 
   for (auto& frame : cur_batch_frames_) {
+	//have been evaluated, so stored as activations
+	//Maybe storing tensor one in another name
     if (frame->Count("activations") > 0) {
       if (tf_model_ != NULL) {
         tensor_batch_.push_back(std::pair<std::string, tensorflow::Tensor>(
@@ -158,6 +160,7 @@ void NeuralNetEvaluator::Process() {
         cv_batch_.push_back(frame->GetValue<cv::Mat>("activations"));
       }
     } else {
+	  //never start evaluating, just before going into a model
       cv_batch_.push_back(frame->GetValue<cv::Mat>("image"));
     }
   }
