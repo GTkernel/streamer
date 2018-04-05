@@ -59,15 +59,14 @@ void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {
 	const unsigned int data_size = vec_size * height * width * channels;
 
 	if (Archive::is_loading::value) {
-		tensorflow::Tensor reshape_tensor(
-					type, \ 
-					tensorflow::TensorShape({static_cast<long long>(vec_size), \
-										     height, width, channels}));
+		tensorflow::Tensor reshape_tensor(type,\
+										  tensorflow::TensorShape({static_cast<long long>(vec_size),\
+										                           height, width, channels}\
+                                          ));
 		reshape_tensor.CopyFrom(tensor, tensorflow::TensorShape({static_cast<long long>(vec_size),height, width, channels}));
-		ar& boost::serialization::make_array(reshape_tensor.flat<float>().data(), data_size);
 		tensor = reshape_tensor;
-		return;
 	}
+
 	ar& boost::serialization::make_array(tensor.flat<float>().data(), data_size);
 }
 
