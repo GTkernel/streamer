@@ -57,8 +57,16 @@ void TFModel::Load() {
 }
 
 cv::Mat TFModel::ConvertAndNormalize(cv::Mat img) {
+
+  cv::Mat input;
+  if (input_shape_.channel == 3) {
+    img.convertTo(input, CV_32FC3);
+  } else {
+    img.convertTo(input, CV_32FC1);
+  }
+
   cv::Mat normalized;
-  cv::normalize(img, normalized, -0.5, 0.5, cv::NORM_MINMAX);
+  cv::normalize(input, normalized, -0.5, 0.5, cv::NORM_MINMAX);
   return normalized;
 }
 
