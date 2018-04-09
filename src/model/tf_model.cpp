@@ -57,7 +57,6 @@ void TFModel::Load() {
 }
 
 cv::Mat TFModel::ConvertAndNormalize(cv::Mat img) {
-
   cv::Mat converted;
   if (input_shape_.channel == 3) {
     img.convertTo(converted, CV_32FC3);
