@@ -1,3 +1,4 @@
+# This code is provided as-is, and no improvements will be made ever.
 import sys
 
 import numpy as np
