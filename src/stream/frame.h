@@ -29,10 +29,11 @@
 #include <boost/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <json/src/json.hpp>
+#ifdef USE_TENSORFLOW
+#include "tensorflow/core/framework/tensor.h"
+#endif  // USE_TENSORFLOW
 
 #include "common/context.h"
-
-#include "tensorflow/core/framework/tensor.h"
 
 // Forward declaration to break the cycle:
 //   frame.h -> flow_control_entrance.h -> processor.h -> stream.h -> frame.h
@@ -62,10 +63,13 @@ class Frame {
   nlohmann::json ToJson() const;
   nlohmann::json GetFieldJson(const std::string& field) const;
   using field_types = boost::variant<
+#ifdef USE_TENSORFLOW
+      tensorflow::Tensor,
+#endif  // USE_TENSORFLOW
       int, std::string, float, double, long, unsigned long, bool,
       boost::posix_time::ptime, boost::posix_time::time_duration, cv::Mat,
-      tensorflow::Tensor, std::vector<char>, std::vector<std::string>,
-      std::vector<double>, std::vector<Rect>, std::vector<FaceLandmark>,
+      std::vector<char>, std::vector<std::string>, std::vector<double>,
+      std::vector<Rect>, std::vector<FaceLandmark>,
       std::vector<std::vector<float>>, std::vector<float>,
       std::vector<std::vector<double>>, std::vector<Frame>, std::vector<int>>;
   size_t Count(std::string key) const;

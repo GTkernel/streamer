@@ -139,6 +139,7 @@ void NeuralNetEvaluator::PassFrame(
       auto activations = activation_vector.at(i);
       ret_frame->SetValue(layer_name, activations);
     }
+    LOG(INFO) << "\n" << ret_frame->ToString();
     PushFrame(SINK_NAME, std::move(ret_frame));
   }
 }
