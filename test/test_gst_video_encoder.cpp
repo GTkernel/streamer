@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <memory>
 
@@ -10,11 +23,11 @@
 
 TEST(TestGstVideoEncoder, TestFile) {
   auto camera = CameraManager::GetInstance().GetCamera("GST_TEST");
-  auto encoder = std::make_shared<GstVideoEncoder>(
-      camera->GetWidth(), camera->GetHeight(), "test.mp4");
-  encoder->SetSource("input", camera->GetStream());
+  auto encoder =
+      std::make_shared<GstVideoEncoder>("original_image", "/tmp/test.mp4");
+  encoder->SetSource(camera->GetStream());
 
-  auto encoder_reader = encoder->GetSink("output")->Subscribe();
+  auto encoder_reader = encoder->GetSink()->Subscribe();
   camera->Start();
   encoder->Start();
 
@@ -29,9 +42,8 @@ TEST(TestGstVideoEncoder, TestFile) {
 
 TEST(TestGstVideoEncoder, TestStream) {
   auto camera = CameraManager::GetInstance().GetCamera("GST_TEST");
-  auto encoder = std::make_shared<GstVideoEncoder>(camera->GetWidth(),
-                                                   camera->GetHeight(), 12345);
-  encoder->SetSource("input", camera->GetStream());
+  auto encoder = std::make_shared<GstVideoEncoder>("original_image", "", 12345);
+  encoder->SetSource(camera->GetStream());
 
   camera->Start();
   encoder->Start();

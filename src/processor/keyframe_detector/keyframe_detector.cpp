@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "processor/keyframe_detector/keyframe_detector.h"
 
@@ -10,19 +23,18 @@ constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME_PREFIX = "output_";
 
 KeyframeDetector::KeyframeDetector(
-    const ModelDesc& model_desc, const Shape& shape, std::string layer,
+    const ModelDesc& model_desc, const Shape& shape, const std::string& fv_key,
     std::vector<std::pair<float, size_t>> buf_params)
     : NeuralNetConsumer(PROCESSOR_TYPE_KEYFRAME_DETECTOR, model_desc, shape,
-                        {layer}, {SOURCE_NAME}, {}) {
-  std::string nne_sink_name = nne_->GetSinkNames().at(0);
-  Processor::SetSource(SOURCE_NAME, nne_->GetSink(nne_sink_name));
-  Setup(buf_params);
+                        {fv_key}, {SOURCE_NAME}, {}) {
+  Processor::SetSource(SOURCE_NAME, nne_->GetSink());
+  Setup(fv_key, buf_params);
 }
 
 KeyframeDetector::KeyframeDetector(
-    std::vector<std::pair<float, size_t>> buf_params)
+    const std::string& fv_key, std::vector<std::pair<float, size_t>> buf_params)
     : NeuralNetConsumer(PROCESSOR_TYPE_KEYFRAME_DETECTOR, {SOURCE_NAME}, {}) {
-  Setup(buf_params);
+  Setup(fv_key, buf_params);
 }
 
 std::shared_ptr<KeyframeDetector> KeyframeDetector::Create(
@@ -69,8 +81,7 @@ void KeyframeDetector::Process() {
       auto start_time_micros = boost::posix_time::microsec_clock::local_time();
       auto new_keyframes = bufs_.at(i)->Push(std::move(frame));
       auto kd_micros =
-          (boost::posix_time::microsec_clock::local_time() - start_time_micros)
-              .total_microseconds();
+          boost::posix_time::microsec_clock::local_time() - start_time_micros;
 
       bool recorded_time = false;
       // Accumulate the keyframes created by adding this frame to the level.
@@ -99,14 +110,15 @@ void KeyframeDetector::Process() {
   }
 }
 
-void KeyframeDetector::Setup(std::vector<std::pair<float, size_t>> buf_params) {
+void KeyframeDetector::Setup(const std::string& fv_key,
+                             std::vector<std::pair<float, size_t>> buf_params) {
   CHECK(buf_params.size() > 0)
       << "Unable to create a KeyframeDetector with a 0-level hierarchy.";
   for (decltype(buf_params.size()) i = 0; i < buf_params.size(); ++i) {
     std::pair<float, size_t> params = buf_params.at(i);
     float sel = params.first;
     size_t buf_len = params.second;
-    bufs_.push_back(std::make_unique<KeyframeBuffer>(sel, buf_len, i));
+    bufs_.push_back(std::make_unique<KeyframeBuffer>(fv_key, sel, buf_len, i));
     sinks_.insert({GetSinkName(i), StreamPtr(new Stream())});
   }
 }

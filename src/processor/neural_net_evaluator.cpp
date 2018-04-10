@@ -1,15 +1,31 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#include "neural_net_evaluator.h"
+#include "processor/neural_net_evaluator.h"
 
 #include "model/model_manager.h"
 #include "utils/string_utils.h"
+#include "utils/utils.h"
 
 constexpr auto SOURCE_NAME = "input";
+constexpr auto SINK_NAME = "output";
 
 NeuralNetEvaluator::NeuralNetEvaluator(
     const ModelDesc& model_desc, const Shape& input_shape, size_t batch_size,
     const std::vector<std::string>& output_layer_names)
-    : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME}, {}),
+    : Processor(PROCESSOR_TYPE_NEURAL_NET_EVALUATOR, {SOURCE_NAME},
+                {SINK_NAME}),
       input_shape_(input_shape),
       batch_size_(batch_size) {
   // Load model.
@@ -54,8 +70,9 @@ NeuralNetEvaluator::~NeuralNetEvaluator() {
 }
 
 void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
-  if (sinks_.find(layer_name) == sinks_.end()) {
-    sinks_.insert({layer_name, std::make_shared<Stream>(layer_name)});
+  if (std::find(output_layer_names_.begin(), output_layer_names_.end(),
+                layer_name) == output_layer_names_.end()) {
+    output_layer_names_.push_back(layer_name);
     LOG(INFO) << "Layer \"" << layer_name << "\" will be published.";
   } else {
     LOG(INFO) << "Layer \"" << layer_name << "\" is already published.";
@@ -63,11 +80,8 @@ void NeuralNetEvaluator::PublishLayer(std::string layer_name) {
 }
 
 const std::vector<std::string> NeuralNetEvaluator::GetSinkNames() const {
-  std::vector<std::string> sink_names;
-  for (const auto& sink_pair : sinks_) {
-    sink_names.push_back(sink_pair.first);
-  }
-  return sink_names;
+  STREAMER_NOT_IMPLEMENTED;
+  return {};
 }
 
 std::shared_ptr<NeuralNetEvaluator> NeuralNetEvaluator::Create(
@@ -112,100 +126,105 @@ void NeuralNetEvaluator::SetSource(StreamPtr stream,
   SetSource(SOURCE_NAME, stream, layername);
 }
 
-template <typename T> void NeuralNetEvaluator::PassFrame(std::unordered_map<std::string, std::vector<T>> outputs,
-                                                         long time_elapsed) {
-	// Push the activations for each published layer to their respective sink.
-    for (const auto& layer_pair : outputs) {
-      int batch_idx = 0;
-      auto activation_vector = layer_pair.second;
-      auto layer_name = layer_pair.first;
-      for (const auto& activations : activation_vector) {
-        std::unique_ptr<Frame> frame_copy;
-        if (outputs.size() == 1) {
-          frame_copy = std::move(cur_batch_frames_.at(batch_idx++));
-        } else {
-          frame_copy = std::make_unique<Frame>(cur_batch_frames_.at(batch_idx++));
-        }
-        frame_copy->SetValue("activations", activations);
-        frame_copy->SetValue("activations_layer_name", layer_name);
-        frame_copy->SetValue("neural_net_evaluator.inference_time_micros",
-                             time_elapsed);
-        PushFrame(layer_name, std::move(frame_copy));
+template <typename T> void NeuralNetEvaluator::PassFrame(std::unordered_map<std::string, std::vector<T>> outputs) {
+
+    // Push the activations for each published layer to their respective sink.
+    for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size();
+         ++i) {
+      std::unique_ptr<Frame> ret_frame = std::move(cur_batch_frames_.at(i));
+      for (const auto& layer_pair : outputs) {
+        auto activation_vector = layer_pair.second;
+        auto layer_name = layer_pair.first;
+        auto activations = activation_vector.at(i);
+        ret_frame->SetValue(layer_name, activations);
       }
+      PushFrame(SINK_NAME, std::move(ret_frame));
     }
+
 }
 
 
+StreamPtr NeuralNetEvaluator::GetSink() {
+  return Processor::GetSink(SINK_NAME);
+}
+
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
-  cv::Mat input_mat;
+  cv::Mat input_mat; 
+  std::string frame_name;
+  if (input_frame->Count(input_layer_name_) > 0) {
+    frame_name = input_layer_name_;
+  } else {
+	frame_name = "image";
+  }
+    
+  if (tf_model_ != NULL) {
+     // for tensorflow model, only the first layer of model get OpenCV frame at beginning
+     // so need to call ConvertAndNormalize
+	 if (input_layer_name_ == tf_model_->GetModelDesc().GetDefaultInputLayer()) {
+         input_mat = input_frame->GetValue<cv::Mat>(frame_name);
+         input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
+                               tf_model_->ConvertAndNormalize(input_mat));
+     }
+  } else {
+     input_mat = input_frame->GetValue<cv::Mat>(frame_name);
+     input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
+                           model_->ConvertAndNormalize(input_mat));
+  }
+
   cur_batch_frames_.push_back(std::move(input_frame));
   if (cur_batch_frames_.size() < batch_size_) {
     return;
   }
+
   std::vector<cv::Mat> cv_batch_;
   std::vector<std::pair<std::string, tensorflow::Tensor>> tensor_batch_;
-  auto is_last_layer_ = false;
 
   for (auto& frame : cur_batch_frames_) {
-	//have been evaluated, so stored as activations
-	//Maybe storing tensor one in another name
-    if (frame->Count("activations") > 0) {
-      if (tf_model_ != NULL) {
-        tensor_batch_.push_back(std::pair<std::string, tensorflow::Tensor>(
-                                input_layer_name_,
-                                frame->GetValue<tensorflow::Tensor>("activations")
-        ));
-      } else {
-        cv_batch_.push_back(frame->GetValue<cv::Mat>("activations"));
-      }
-    } else {
-	  //never start evaluating, just before going into a model
-      cv_batch_.push_back(frame->GetValue<cv::Mat>("image"));
-    }
+    if (tf_model_ != NULL) { 
+       if (input_layer_name_ != tf_model_->GetModelDesc().GetDefaultInputLayer()) {
+          tensor_batch_.push_back(std::pair<std::string, tensorflow::Tensor>(
+                                  frame_name,
+		                          frame->GetValue<tensorflow::Tensor>(frame_name)));
+          continue;
+       }
+    } 
+    cv_batch_.push_back(frame->GetValue<cv::Mat>(GetName() + "." + frame_name + ".normalized"));
   }
 
-  std::vector<std::string> output_layer_names;
-  for (const auto& sink_pair : sinks_) {
-    output_layer_names.push_back(sink_pair.first);
-    if (tf_model_ != NULL) {
-      if (sink_pair.first == tf_model_->GetModelDesc().GetDefaultOutputLayer()){
-        is_last_layer_ = true;
-      }
-    }
-  }
   if (tf_model_ == NULL) {
-    auto start_time = boost::posix_time::microsec_clock::local_time();
-    auto layer_outputs = model_->Evaluate({{input_layer_name_, cv_batch_}}, output_layer_names);
-    long time_elapsed =
-        (boost::posix_time::microsec_clock::local_time() - start_time)
-            .total_microseconds();
-  
-    // Push the activations for each published layer to their respective sink.
-    PassFrame(layer_outputs, time_elapsed);
+    auto layer_outputs =
+         model_->Evaluate({{input_layer_name_, cv_batch_}}, output_layer_names_);
 
-  } else { // TF model
+    PassFrame(layer_outputs);
 
+  } else {
+    // run Tensor Model evaluation
+    // check if output_layer_names_ contains last layer
+    // if so, need to do Tensor-to-CV transformation
+    auto is_last_layer = false;
+    if (std::find(output_layer_names_.begin(), output_layer_names_.end(),
+                  tf_model_->GetModelDesc().GetDefaultOutputLayer()) != 
+        output_layer_names_.end()) is_last_layer = true;
+    
     std::unordered_map<std::string, std::vector<tensorflow::Tensor>> layer_outputs;
-    auto start_time = boost::posix_time::microsec_clock::local_time();
-	
-    if (tensor_batch_.size() > 0) {
-      layer_outputs = tf_model_->TensorEvaluate(tensor_batch_, output_layer_names);
-    } else {
-       // get OpenCV input  
-      auto tensor_vec_ = tf_model_->CV2Tensor({{input_layer_name_, cv_batch_}});
-      layer_outputs = tf_model_->TensorEvaluate(tensor_vec_, output_layer_names);      
-    }
-    long time_elapsed =
-        (boost::posix_time::microsec_clock::local_time() - start_time)
-            .total_microseconds();
 
-    if(is_last_layer_){
-      auto cv_outputs = tf_model_->Tensor2CV(layer_outputs);
-      PassFrame(cv_outputs, time_elapsed);
+    if (tensor_batch_.size()>0) {
+       //with in the model, pass by Tensor
+       layer_outputs = tf_model_->TensorEvaluate(tensor_batch_, output_layer_names_);
     } else {
-      PassFrame(layer_outputs, time_elapsed);
+	   // at beginning of model, transfer first
+       auto tensor_vec_ = tf_model_->CV2Tensor({{input_layer_name_, cv_batch_}});
+       layer_outputs = tf_model_->TensorEvaluate(tensor_vec_, output_layer_names_);
     }
+
+    if (is_last_layer) {
+      auto cv_outputs = tf_model_->Tensor2CV(layer_outputs);
+      PassFrame(cv_outputs);      
+    } else {
+      PassFrame(layer_outputs);
+    }
+
   }
 
   cur_batch_frames_.clear();

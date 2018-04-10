@@ -1,20 +1,31 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
 //
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#include "image_transformer.h"
+#include "processor/image_transformer.h"
 
 #include "model/model_manager.h"
+#include "utils/image_utils.h"
 
 constexpr auto SOURCE_NAME = "input";
 constexpr auto SINK_NAME = "output";
 
 ImageTransformer::ImageTransformer(const Shape& target_shape, bool crop,
-                                   bool convert)
+                                   unsigned int angle)
     : Processor(PROCESSOR_TYPE_IMAGE_TRANSFORMER, {SOURCE_NAME}, {SINK_NAME}),
       target_shape_(target_shape),
       crop_(crop),
-      convert_(convert) {}
+      angle_(angle) {}
 
 std::shared_ptr<ImageTransformer> ImageTransformer::Create(
     const FactoryParamsType& params) {
@@ -32,7 +43,7 @@ std::shared_ptr<ImageTransformer> ImageTransformer::Create(
       << ") must not be negative.";
 
   return std::make_shared<ImageTransformer>(Shape(num_channels, width, height),
-                                            true, true);
+                                            true);
 }
 
 void ImageTransformer::SetSource(StreamPtr stream) {
@@ -42,10 +53,8 @@ void ImageTransformer::SetSource(StreamPtr stream) {
 StreamPtr ImageTransformer::GetSink() { return Processor::GetSink(SINK_NAME); }
 
 void ImageTransformer::Process() {
-  Timer timer;
   auto frame = GetFrame(SOURCE_NAME);
   const cv::Mat& img = frame->GetValue<cv::Mat>("original_image");
-  timer.Start();
 
   int num_channel = target_shape_.channel;
   int width = target_shape_.width;
@@ -92,18 +101,12 @@ void ImageTransformer::Process() {
     sample_resized = sample_cropped;
   }
 
-  // Convert to float
-  cv::Mat sample_float;
-  if (convert_) {
-    if (num_channel == 3)
-      sample_resized.convertTo(sample_float, CV_32FC3);
-    else
-      sample_resized.convertTo(sample_float, CV_32FC1);
-  } else {
-    sample_float = sample_resized;
+  // Rotate
+  if (angle_ != 0) {
+    RotateImage(sample_resized, angle_);
   }
 
-  frame->SetValue("image", sample_float);
+  frame->SetValue("image", sample_resized);
   PushFrame(SINK_NAME, std::move(frame));
 }
 

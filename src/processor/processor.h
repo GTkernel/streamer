@@ -1,6 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
 //
-// Created by Ran Xian (xranthoar@gmail.com) on 10/2/16.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef STREAMER_PROCESSOR_PROCESSOR_H_
 #define STREAMER_PROCESSOR_PROCESSOR_H_
@@ -10,6 +20,7 @@
 #include <thread>
 #include <unordered_map>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <zmq.hpp>
 
 #include "stream/stream.h"
@@ -28,7 +39,7 @@ class VimbaCameraFrameObserver;
 class Processor {
   friend class Pipeline;
 #ifdef USE_VIMBA
-  friend class VimbaCameeraFrameObserver;
+  friend class VimbaCameraFrameObserver;
 #endif  // USE_VIMBA
  public:
   Processor(ProcessorType type, const std::vector<std::string>& source_names,
@@ -102,6 +113,11 @@ class Processor {
    */
   ProcessorType GetType() const;
 
+  /**
+   * @brief Get the name of the processor
+   */
+  std::string GetName() const;
+
   zmq::socket_t* GetControlSocket();
 
   // Configure whether this processor should block when pushing frames to its
@@ -160,6 +176,7 @@ class Processor {
   Timer processor_timer_;
   // Whether to block when pushing frames if any output streams are full.
   std::atomic<bool> block_on_push_;
+  boost::posix_time::ptime processing_start_micros_;
 };
 
 #endif  // STREAMER_PROCESSOR_PROCESSOR_H_

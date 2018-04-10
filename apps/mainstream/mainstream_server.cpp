@@ -1,7 +1,18 @@
-/**
- * @brief mainstream_server - Server to run and update pipelines
- * deployed by Mainstream
- */
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Server to run and update pipelines
 
 #include <csignal>
 #include <cstdio>
@@ -53,7 +64,7 @@ void Run(const std::string& camera_name, const std::string& net_name,
 
   // Transformer
   Shape input_shape(3, 299, 299);
-  transformer = std::make_shared<ImageTransformer>(input_shape, true, true);
+  transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource("input", camera->GetSink("output"));
   transformer->SetBlockOnPush(true);
 

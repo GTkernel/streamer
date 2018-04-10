@@ -1,9 +1,18 @@
-/**
- * An example application showing the usage of facenet tracker.
- *
- * @author Tony Chen <xiaolongx.chen@intel.com>
- * @author Shao-Wen Yang <shao-wen.yang@intel.com>
- */
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// An example application showing the usage of facenet tracker.
 
 #include <csignal>
 
@@ -108,7 +117,7 @@ void Run(const std::vector<std::string>& camera_names,
   // Transformers
   for (auto camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(
-        new ImageTransformer(input_shape, false, false));
+        new ImageTransformer(input_shape, false));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -147,8 +156,8 @@ void Run(const std::vector<std::string>& camera_names,
     // encoders, encode each camera stream
     std::string output_filename = camera_names[i] + ".mp4";
 
-    std::shared_ptr<GstVideoEncoder> encoder(new GstVideoEncoder(
-        cameras[i]->GetWidth(), cameras[i]->GetHeight(), output_filename));
+    std::shared_ptr<GstVideoEncoder> encoder(
+        new GstVideoEncoder("original_image", output_filename));
     encoder->SetSource("input", tracker->GetSink("output"));
     encoders.push_back(encoder);
   }

@@ -1,18 +1,37 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "processor_factory.h"
 
 #include "camera/camera_manager.h"
 #include "processor/binary_file_writer.h"
+#include "processor/buffer.h"
 #ifdef USE_CAFFE
 #include "processor/caffe_facenet.h"
-#include "processor/imagematch/imagematch.h"
 #endif  // USE_CAFFE
+#ifdef USE_TENSORFLOW
+#include "processor/imagematch/imagematch.h"
+#endif  // USE_TENSORFLOW
 #include "processor/compressor.h"
 #include "processor/db_writer.h"
+#include "processor/diff_detector.h"
 #include "processor/display.h"
+#include "processor/face_tracker.h"
 #include "processor/flow_control/flow_control_entrance.h"
 #include "processor/flow_control/flow_control_exit.h"
 #include "processor/frame_writer.h"
+#include "processor/fv_gen.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"
 #include "processor/image_transformer.h"
@@ -22,7 +41,6 @@
 #endif  // USE_NCS
 #include "processor/detectors/object_detector.h"
 #include "processor/detectors/opencv_people_detector.h"
-#include "processor/face_tracker.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_motion_detector.h"
@@ -43,6 +61,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
   switch (type) {
     case PROCESSOR_TYPE_BINARY_FILE_WRITER:
       return BinaryFileWriter::Create(params);
+    case PROCESSOR_TYPE_BUFFER:
+      return Buffer::Create(params);
     case PROCESSOR_TYPE_CAMERA:
       return CameraManager::GetInstance().GetCamera(params.at("camera_name"));
     case PROCESSOR_TYPE_COMPRESSOR:
@@ -52,6 +72,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return nullptr;
     case PROCESSOR_TYPE_DB_WRITER:
       return DbWriter::Create(params);
+    case PROCESSOR_TYPE_DIFF_DETECTOR:
+      return DiffDetector::Create(params);
     case PROCESSOR_TYPE_DISPLAY:
       return Display::Create(params);
     case PROCESSOR_TYPE_ENCODER:
@@ -59,9 +81,11 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
 #ifdef USE_CAFFE
     case PROCESSOR_TYPE_FACENET:
       return Facenet::Create(params);
+#endif  // USE_CAFFE
+#ifdef USE_TENSORFLOW
     case PROCESSOR_TYPE_IMAGEMATCH:
       return ImageMatch::Create(params);
-#endif  // USE_CAFFE
+#endif  // USE_TENSORFLOW
     case PROCESSOR_TYPE_FLOW_CONTROL_ENTRANCE:
       return FlowControlEntrance::Create(params);
     case PROCESSOR_TYPE_FLOW_CONTROL_EXIT:
@@ -78,6 +102,8 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return FrameSubscriber::Create(params);
     case PROCESSOR_TYPE_FRAME_WRITER:
       return FrameWriter::Create(params);
+    case PROCESSOR_TYPE_FV_GEN:
+      return FvGen::Create(params);
     case PROCESSOR_TYPE_IMAGE_CLASSIFIER:
       return ImageClassifier::Create(params);
     case PROCESSOR_TYPE_IMAGE_SEGMENTER:

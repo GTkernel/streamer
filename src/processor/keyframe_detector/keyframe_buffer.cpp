@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "processor/keyframe_detector/keyframe_buffer.h"
 
@@ -7,9 +20,14 @@
 
 #include <opencv2/opencv.hpp>
 
-KeyframeBuffer::KeyframeBuffer(float sel, size_t buf_len, size_t level)
-    : level_(level), on_first_buf_(true), last_frame_processed_(0) {
-  CHECK(buf_len > 0) << "Buffer length must be greater than 0!";
+KeyframeBuffer::KeyframeBuffer(const std::string& fv_key, float sel,
+                               size_t buf_len, size_t level)
+    : fv_key_(fv_key),
+      level_(level),
+      on_first_buf_(true),
+      last_frame_processed_(0) {
+  CHECK(buf_len > 0) << "Buffer length must be greater than 0, but is: "
+                     << buf_len;
   target_buf_len_ = buf_len;
 
   SetSelectivity(sel);
@@ -87,27 +105,30 @@ std::vector<std::unique_ptr<Frame>> KeyframeBuffer::Push(
     buf_.clear();
     buf_.push_back(std::make_unique<Frame>(keyframes.back()));
 
+    // Print a message listing the detected keyframes.
     auto num_keyframes = keyframes.size();
+    std::ostringstream msg;
+    msg << "Keyframe detector level " << level_ << " found " << num_keyframes
+        << " keyframes";
     if (num_keyframes) {
-      // Print a message listing the detected keyframes.
-      std::ostringstream msg;
-      msg << "Keyframe detector level " << level_ << " found " << num_keyframes
-          << " keyframes: { ";
+      // If we found any keyframes, then print their frame IDs.
+      msg << ": { ";
       for (auto& keyframe : keyframes) {
         msg << keyframe->GetValue<unsigned long>("frame_id") << " ";
       }
       msg << "}";
-      LOG(INFO) << msg.str();
+    }
+    LOG(INFO) << msg.str();
 
-      // Check whether the correct number of keyframes were found.
-      auto expected_num_keyframes = ceil(sel_ * target_buf_len_);
-      if (num_keyframes != expected_num_keyframes) {
-        std::ostringstream msg;
-        msg << "KeyframeBuffer found " << num_keyframes
-            << " keyframes when it should have found " << expected_num_keyframes
-            << "!";
-        throw std::runtime_error(msg.str());
-      }
+    // Check whether the correct number of keyframes were found. Do this last
+    // so that the other log statements are still printed.
+    auto expected_num_keyframes = ceil(sel_ * target_buf_len_);
+    if (num_keyframes != expected_num_keyframes) {
+      std::ostringstream msg;
+      msg << "KeyframeBuffer found " << num_keyframes
+          << " keyframes when it should have found " << expected_num_keyframes
+          << "!";
+      throw std::runtime_error(msg.str());
     }
   }
   return keyframes;
@@ -164,6 +185,16 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
     ++num_frames_in_path;
   }
 
+  if (num_frames_in_path == buf_.size()) {
+    // We are trying to find as many keyframes as there are frames in our
+    // frame buffer, so we'll return all of the frames' indices.
+    std::vector<idx_t> keyframe_idxs;
+    for (idx_t i = 0; i < buf_.size(); ++i) {
+      keyframe_idxs.push_back(i);
+    }
+    return keyframe_idxs;
+  }
+
   // The number of graph edges that must be traversed by our path is one less
   // than the number of nodes in the path.
   idx_t num_steps = num_frames_in_path - 1;
@@ -174,20 +205,21 @@ std::vector<KeyframeBuffer::idx_t> KeyframeBuffer::GetKeyframeIdxs() const {
   std::vector<std::vector<double>> direct_lens(num_frames,
                                                std::vector<double>(num_frames));
 
-  // auto start_id = buf_.front()->GetValue<unsigned long>("frame_id");
-  // auto end_id = buf_.back()->GetValue<unsigned long>("frame_id");
-  // auto span = (end_id - start_id) / 4;
-
-  // TODO: This should be optimized.
   for (idx_t i = 0; i < num_frames; ++i) {
-    const cv::Mat& src_f = buf_.at(i)->GetValue<cv::Mat>("activations");
-    // auto i_id = buf_.at(i)->GetValue<unsigned long>("frame_id");
-
+    const cv::Mat& src_f = buf_.at(i)->GetValue<cv::Mat>(fv_key_);
     for (idx_t j = i + 1; j < num_frames; ++j) {
-      const cv::Mat& dst_f = buf_.at(j)->GetValue<cv::Mat>("activations");
-      // auto j_id = buf_.at(j)->GetValue<unsigned long>("frame_id");
-
-      direct_lens[i][j] = cv::norm(dst_f - src_f);  // / (span + j_id - i_id);
+      const cv::Mat& dst_f = buf_.at(j)->GetValue<cv::Mat>(fv_key_);
+      double dist = cv::norm(dst_f - src_f);
+      if (!dist) {
+        // If "dist" is zero, then these two frames are the same. The odds of
+        // that happening during normal operation are very small.
+        std::ostringstream msg;
+        msg << "Frames " << buf_.at(i)->GetValue<unsigned long>("frame_id")
+            << " and " << buf_.at(j)->GetValue<unsigned long>("frame_id")
+            << " are the same!";
+        LOG(WARNING) << msg.str();
+      }
+      direct_lens[i][j] = dist;
     }
   }
 

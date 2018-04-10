@@ -1,3 +1,17 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // The JpegWriter is a simple app that reads frames from a single camera and
 // immediately saves them as JPEG images.
 
@@ -14,14 +28,16 @@
 #include "camera/camera.h"
 #include "camera/camera_manager.h"
 #include "common/context.h"
+#include "common/types.h"
+#include "processor/image_transformer.h"
 #include "processor/jpeg_writer.h"
 #include "processor/processor.h"
 
 namespace po = boost::program_options;
 
-void Run(const std::string& camera_name, const std::string& field,
-         const std::string& output_dir, bool organize_by_time,
-         unsigned long frames_per_dir) {
+void Run(const std::string& camera_name, bool resize, int x_dim, int y_dim,
+         const std::string& field, const std::string& output_dir,
+         bool organize_by_time, unsigned long frames_per_dir) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Create Camera.
@@ -29,10 +45,27 @@ void Run(const std::string& camera_name, const std::string& field,
       CameraManager::GetInstance().GetCamera(camera_name);
   procs.push_back(camera);
 
+  StreamPtr stream = camera->GetStream();
+  std::string field_to_save;
+  if (resize) {
+    // Create ImageTransformer.
+    auto transformer =
+        std::make_shared<ImageTransformer>(Shape(3, x_dim, y_dim), true);
+    transformer->SetSource(camera->GetStream());
+    procs.push_back(transformer);
+    stream = transformer->GetSink();
+
+    // The ImageTransformer is hardcorded to store the resized image at the key
+    // "image".
+    field_to_save = "image";
+  } else {
+    field_to_save = field;
+  }
+
   // Create JpegWriter.
-  auto writer = std::make_shared<JpegWriter>(field, output_dir,
+  auto writer = std::make_shared<JpegWriter>(field_to_save, output_dir,
                                              organize_by_time, frames_per_dir);
-  writer->SetSource(camera->GetStream());
+  writer->SetSource(stream);
   procs.push_back(writer);
 
   // Start the processors in reverse order.
@@ -52,14 +85,20 @@ void Run(const std::string& camera_name, const std::string& field,
 int main(int argc, char* argv[]) {
   po::options_description desc("Stores frames as JPEG images");
   desc.add_options()("help,h", "Print the help message.");
-  desc.add_options()(
-      "config-dir,C", po::value<std::string>(),
-      "The directory containing streamer's configuration files.");
+  desc.add_options()("config-dir,C", po::value<std::string>(),
+                     "The directory containing streamer's config files.");
   desc.add_options()("camera,c", po::value<std::string>()->required(),
                      "The name of the camera to use.");
+  desc.add_options()("x-dim,x", po::value<int>(),
+                     "The width to which to resize the frames. Forces "
+                     "\"--field\" to be \"original_image\".");
+  desc.add_options()("y-dim,y", po::value<int>(),
+                     "The height to which to resize the frames. Forces "
+                     "\"--field\" to be \"original_image\".");
   desc.add_options()("field,f",
                      po::value<std::string>()->default_value("original_image"),
-                     "The field to save as a JPEG.");
+                     "The field to save as a JPEG. Assumed to be "
+                     "\"original_image\" when using \"--resize\".");
   desc.add_options()("output-dir,o", po::value<std::string>()->required(),
                      "The directory in which to store the frame JPEGs.");
   desc.add_options()("organize-by-time,t",
@@ -99,10 +138,39 @@ int main(int argc, char* argv[]) {
   Context::GetContext().Init();
 
   auto camera = args["camera"].as<std::string>();
+  bool resize = false;
+  int x_dim = 0;
+  if (args.count("x-dim")) {
+    resize = true;
+    x_dim = args["x-dim"].as<int>();
+    if (x_dim < 1) {
+      std::ostringstream msg;
+      msg << "Value for \"--x-dim\" must be greater than 0, but is: " << x_dim;
+      throw std::invalid_argument(msg.str());
+    }
+  }
+  int y_dim = 0;
+  if (args.count("y-dim")) {
+    y_dim = args["y-dim"].as<int>();
+    if (y_dim < 1) {
+      std::ostringstream msg;
+      msg << "Value for \"--y-dim\" must be greater than 0, but is: " << y_dim;
+      throw std::invalid_argument(msg.str());
+    }
+    if (!resize) {
+      throw std::invalid_argument(
+          "\"--x-dim\" and \"--y-dim\" must be used together.");
+    }
+    resize = true;
+  } else if (resize) {
+    throw std::invalid_argument(
+        "\"--x-dim\" and \"--y-dim\" must be used together.");
+  }
   auto field = args["field"].as<std::string>();
   auto output_dir = args["output-dir"].as<std::string>();
   bool organize_by_time = args.count("organize-by-time");
   auto frames_per_dir = args["frames-per-dir"].as<unsigned long>();
-  Run(camera, field, output_dir, organize_by_time, frames_per_dir);
+  Run(camera, resize, x_dim, y_dim, field, output_dir, organize_by_time,
+      frames_per_dir);
   return 0;
 }

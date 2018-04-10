@@ -1,6 +1,18 @@
-/**
- * @brief benchmark.cpp - Used to run various benchmark of the system.
- */
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Used to run various benchmark of the system.
 
 #include <stdexcept>
 
@@ -80,7 +92,7 @@ void RunEndToEndExperiment() {
   // transformers
   for (const auto& camera_stream : camera_streams) {
     std::shared_ptr<Processor> transform_processor(
-        new ImageTransformer(input_shape, true, true));
+        new ImageTransformer(input_shape, true));
     transform_processor->SetSource("input", camera_stream);
     transformers.push_back(transform_processor);
     input_streams.push_back(transform_processor->GetSink("output"));
@@ -103,10 +115,8 @@ void RunEndToEndExperiment() {
       std::string output_filename = CONFIG.camera_names.at(i) + ".mp4";
 
       std::shared_ptr<GstVideoEncoder> encoder(
-          new GstVideoEncoder(cameras.at(i)->GetWidth(),
-                              cameras.at(i)->GetHeight(), output_filename));
-      encoder->SetSource("input",
-                         classifier->GetSink("output" + std::to_string(0)));
+          new GstVideoEncoder("original_image", output_filename));
+      encoder->SetSource(classifier->GetSink("output" + std::to_string(0)));
       encoders.push_back(encoder);
     }
   }

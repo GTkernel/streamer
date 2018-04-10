@@ -1,13 +1,25 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
 //
-// Created by Ran Xian (xranthoar@gmail.com) on 9/23/16.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#include "camera.h"
+#include "camera/camera.h"
+
 #include <stdexcept>
 
 #include "common/types.h"
 #include "utils/time_utils.h"
-#include "utils/utils.h"
+
+const char* Camera::kCaptureTimeMicrosKey = "capture_time_micros";
 
 Camera::Camera(const std::string& name, const std::string& video_uri, int width,
                int height)
@@ -68,7 +80,7 @@ bool Camera::Capture(cv::Mat& image) {
 std::string Camera::GetCameraInfo() {
   std::ostringstream ss;
   ss << "name: " << GetName() << "\n";
-  ss << "record time: " << GetCurrentTimeString("%Y%m%d-%H%M%S") << "\n";
+  ss << "record time: " << GetCurrentDateTimeString() << "\n";
   ss << "image size: " << GetImageSize().width << "x" << GetImageSize().height
      << "\n";
   ss << "pixel format: " << GetCameraPixelFormatString(GetPixelFormat())
@@ -80,7 +92,7 @@ std::string Camera::GetCameraInfo() {
 
 void Camera::MetadataToFrame(std::unique_ptr<Frame>& frame) {
   frame->SetValue("frame_id", CreateFrameID());
-  frame->SetValue("capture_time_micros",
+  frame->SetValue(kCaptureTimeMicrosKey,
                   boost::posix_time::microsec_clock::local_time());
   frame->SetValue("CameraSettings.Exposure", GetExposure());
   frame->SetValue("CameraSettings.Sharpness", GetSharpness());

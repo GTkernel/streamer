@@ -1,6 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
 //
-// Created by Abhinav Garlapati (abhinav2710@gmail.com) on 1/21/16.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <iostream>
 #include "streamer.h"
@@ -32,9 +42,14 @@ int main(int argc, char* argv[]) {
   auto camera = camera_manager.GetCamera(camera_name);
   auto camera_stream = camera->GetStream();
 
+  // This transformer is here purely as an adaptor between the camera and the
+  // people detector. The 200x200 size is arbitrary.
+  auto transformer = std::make_shared<ImageTransformer>(Shape(200, 200), false);
+  transformer->SetSource(camera_stream);
+
   OpenCVPeopleDetector people_detector;
 
-  people_detector.SetSource("input", camera_stream);
+  people_detector.SetSource("input", transformer->GetSink());
   camera->Start();
   people_detector.Start();
 

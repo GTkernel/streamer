@@ -1,11 +1,26 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "utils/output_tracker.h"
 
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/date_time.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
+
+#include "utils/file_utils.h"
 
 OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
                              unsigned long frames_per_dir)
@@ -26,21 +41,12 @@ OutputTracker::OutputTracker(const std::string& root_dir, bool organize_by_time,
   }
 }
 
+std::string OutputTracker::GetRootDir() { return root_dir_; }
+
 std::string OutputTracker::GetAndCreateOutputDir(
     boost::posix_time::ptime micros) {
   if (organize_by_time_) {
-    // Add subdirectories for date and time.
-    std::string date_s =
-        boost::gregorian::to_iso_extended_string(micros.date());
-    long hours = micros.time_of_day().hours();
-
-    std::ostringstream dirpath;
-    dirpath << root_dir_ << "/" << date_s << "/" << hours << "/";
-
-    // Create the output directory, since it might not exist yet.
-    boost::filesystem::create_directories(
-        boost::filesystem::path{dirpath.str()});
-    return dirpath.str();
+    return GetAndCreateDateTimeDir(root_dir_, micros);
   } else {
     std::string dir = current_dirpath_;
     ++frames_in_current_dir_;
@@ -59,6 +65,5 @@ void OutputTracker::ChangeSubdir(unsigned long subdir_idx) {
   std::ostringstream current_dirpath;
   current_dirpath << root_dir_ << "/" << current_dir_idx_ << "/";
   current_dirpath_ = current_dirpath.str();
-  boost::filesystem::create_directory(
-      boost::filesystem::path{current_dirpath_});
+  CreateDirs(current_dirpath_);
 }

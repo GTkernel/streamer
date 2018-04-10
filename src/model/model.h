@@ -1,6 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
 //
-// Created by Ran Xian (xranthoar@gmail.com) on 9/24/16.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef STREAMER_MODEL_MODEL_H_
 #define STREAMER_MODEL_MODEL_H_
@@ -81,9 +91,7 @@ class Model {
   virtual ~Model();
   ModelDesc GetModelDesc() const;
   virtual void Load() = 0;
-  // Convenience function to automatically use the default input and output
-  // layers.
-  std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(cv::Mat input);
+  virtual cv::Mat ConvertAndNormalize(cv::Mat img);
   // Feed the input to the network, run forward, then copy the output from the
   // network
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Evaluate(

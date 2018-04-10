@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <atomic>
 #include <iostream>
@@ -67,8 +80,7 @@ void Run(bool block, const std::string& camera_name,
   // Create ImageTransformer.
   ModelDesc model_desc = ModelManager::GetInstance().GetModelDesc(model_name);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource(camera_stream);
   transformer->SetBlockOnPush(block);
   procs.push_back(transformer);
@@ -79,17 +91,17 @@ void Run(bool block, const std::string& camera_name,
   nne->SetSource(transformer->GetSink());
   nne->SetBlockOnPush(block);
   procs.push_back(nne);
-  StreamPtr nne_stream = nne->GetSink(layer);
+  StreamPtr nne_stream = nne->GetSink();
 
   // Create FrameWriter.
   auto frame_writer = std::make_shared<FrameWriter>(
-      std::unordered_set<std::string>{"frame_id", "activations"}, output_dir,
+      std::unordered_set<std::string>{"frame_id", layer}, output_dir,
       FrameWriter::FileFormat::JSON, false, false, frames_per_dir);
   frame_writer->SetSource(nne_stream);
   frame_writer->SetBlockOnPush(block);
   procs.push_back(frame_writer);
 
-  auto reader = nne->GetSink(layer)->Subscribe();
+  auto reader = nne->GetSink()->Subscribe();
 
   std::thread progress_thread =
       std::thread([nne_stream] { ProgressTracker(nne_stream); });

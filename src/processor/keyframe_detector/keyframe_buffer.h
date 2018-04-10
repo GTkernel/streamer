@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef STREAMER_PROCESSOR_KEYFRAME_DETECTOR_KEYFRAME_BUFFER_H_
 #define STREAMER_PROCESSOR_KEYFRAME_DETECTOR_KEYFRAME_BUFFER_H_
@@ -20,9 +33,12 @@
 // any time using "SetSelectivity()", but the buffer length is fixed.
 class KeyframeBuffer {
  public:
+  // "fv_key" is the key at which incoming frames' feature vectors are stored.
   // "sel" is a selectivity in the range (0, 1] and "buf_len" is the buffer
-  // length at which keyframe detection will be triggered.
-  KeyframeBuffer(float sel, size_t buf_len, size_t level);
+  // length at which keyframe detection will be triggered. "level" is this
+  // KeyframeBuffer's place in a keyframe detector hierarchy.
+  KeyframeBuffer(const std::string& fv_key, float sel, size_t buf_len,
+                 size_t level);
   // A KeyframeBuffer object contains unique pointers to Frames, so it cannot be
   // copied.
   KeyframeBuffer(const KeyframeBuffer&) = delete;
@@ -52,6 +68,8 @@ class KeyframeBuffer {
   // modify the frame buffer.
   std::vector<idx_t> GetKeyframeIdxs() const;
 
+  // The key at which the incoming frames' feature vectors are stored.
+  std::string fv_key_;
   float sel_;
   size_t target_buf_len_;
   size_t level_;

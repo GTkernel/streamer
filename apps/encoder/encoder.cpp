@@ -1,6 +1,18 @@
-/**
- * @brief encoder.cpp - An example application showing the usage of encoder.
- */
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// An example application showing the usage of encoder.
 
 #include <cstdio>
 
@@ -30,21 +42,19 @@ void Run(const std::string& camera_name, std::string& dst_file, int port) {
             << camera->GetHeight();
 
   // Encoder
-  std::shared_ptr<Processor> encoder;
+  std::shared_ptr<Processor> encoder = std::make_shared<GstVideoEncoder>(
+      "original_image", dst_file, port, false);
+  encoder->SetSource("input", camera_stream);
+
   if (dst_file != "") {
     cout << "Store video to: " << dst_file << endl;
-    encoder = std::shared_ptr<Processor>(
-        new GstVideoEncoder(camera->GetWidth(), camera->GetHeight(), dst_file));
-    encoder->SetSource("input", camera_stream);
-  } else if (port != -1) {
+  }
+  if (port != -1) {
     cout << "Stream video on port: " << port << endl;
-    encoder = std::shared_ptr<Processor>(new GstVideoEncoder(
-        camera->GetWidth(), camera->GetHeight(), port, false));
-    encoder->SetSource("input", camera_stream);
-    // Receive pipeline
-    // gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp ! rtph264depay !
-    // avdec_h264 ! videoconvert ! autovideosink sync=false
-    //
+    // Receive pipeline:
+    // >>> gst-launch-1.0 -v udpsrc port=5000 ! application/x-rtp !     \
+    //       rtph264depay ! avdec_h264 ! videoconvert ! autovideosink
+    //       sync=false
   }
 
   camera->Start();

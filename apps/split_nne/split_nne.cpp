@@ -1,3 +1,17 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // The split_nne app is an example of splitting the computation of a TensorFlow
 // model so that it runs with two NNEs.
 // The pipeline is:
@@ -34,8 +48,7 @@ void Run(const std::string& camera_name, const std::string& net,
   // Transformer
   auto model_desc = ModelManager::GetInstance().GetModelDesc(net);
   Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
-  auto transformer =
-      std::make_shared<ImageTransformer>(input_shape, true, true);
+  auto transformer = std::make_shared<ImageTransformer>(input_shape, true);
   transformer->SetSource("input", camera->GetStream());
   procs.push_back(transformer);
 
@@ -43,14 +56,14 @@ void Run(const std::string& camera_name, const std::string& net,
   std::vector<std::string> split_layers = {split_layer};
   auto nne1 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                    split_layers);
-  nne1->SetSource(transformer->GetSink("output"), input_layer);
+  nne1->SetSource(transformer->GetSink(), input_layer);
   procs.push_back(nne1);
 
   // NNE2
   std::vector<std::string> output_layers = {output_layer};
   auto nne2 = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1,
                                                    output_layers);
-  nne2->SetSource(nne1->GetSink(split_layer), split_layer);
+  nne2->SetSource(nne1->GetSink(), split_layer);
   procs.push_back(nne2);
 
   // Start the processors in reverse order.

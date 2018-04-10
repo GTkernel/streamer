@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <gtest/gtest.h>
 #include <boost/algorithm/string/replace.hpp>
@@ -18,170 +31,24 @@
 #include "stream/frame.h"
 #include "stream/stream.h"
 
-constexpr auto ALPHA = 0.01f;
+constexpr auto ALPHA = 0.001f;
 
 constexpr auto CHANNELS = 3;
-constexpr auto WIDTH = 229;
-constexpr auto HEIGHT = 229;
+constexpr auto WIDTH = 224;
+constexpr auto HEIGHT = 224;
 const auto SHAPE = cv::Size(WIDTH, HEIGHT);
 
-constexpr auto MEAN_IMAGE_FILEPATH = "data/inception/imagenet_mean.binaryproto";
 constexpr auto INPUT_IMAGE_FILEPATH = "data/input.jpg";
-constexpr auto NETWORK_FILEPATH = "data/inception/deploy.prototxt";
-constexpr auto WEIGHTS_FILEPATH = "/tmp/bvlc_googlenet.caffemodel";
+constexpr auto NETWORK_FILEPATH = "data/mobilenet/mobilenet_deploy.prototxt";
+constexpr auto WEIGHTS_FILEPATH = "/tmp/mobilenet.caffemodel";
 
 const std::vector<std::string> OUTPUTS = {
-    "conv1/7x7_s2",
-    "conv1/relu_7x7",
-    "conv2/3x3",
-    "conv2/3x3_reduce",
-    "conv2/norm2",
-    "conv2/relu_3x3",
-    "conv2/relu_3x3_reduce",
-    "inception_3a/1x1",
-    "inception_3a/3x3",
-    "inception_3a/3x3_reduce",
-    "inception_3a/5x5",
-    "inception_3a/5x5_reduce",
-    "inception_3a/output",
-    "inception_3a/output_inception_3a/output_0_split",
-    "inception_3a/pool",
-    "inception_3a/pool_proj",
-    "inception_3a/relu_1x1",
-    "inception_3a/relu_3x3",
-    "inception_3a/relu_3x3_reduce",
-    "inception_3a/relu_5x5",
-    "inception_3a/relu_5x5_reduce",
-    "inception_3a/relu_pool_proj",
-    "inception_3b/1x1",
-    "inception_3b/3x3",
-    "inception_3b/3x3_reduce",
-    "inception_3b/5x5",
-    "inception_3b/5x5_reduce",
-    "inception_3b/output",
-    "inception_3b/pool",
-    "inception_3b/pool_proj",
-    "inception_3b/relu_1x1",
-    "inception_3b/relu_3x3",
-    "inception_3b/relu_3x3_reduce",
-    "inception_3b/relu_5x5",
-    "inception_3b/relu_5x5_reduce",
-    "inception_3b/relu_pool_proj",
-    "inception_4a/1x1",
-    "inception_4a/3x3",
-    "inception_4a/3x3_reduce",
-    "inception_4a/5x5",
-    "inception_4a/5x5_reduce",
-    "inception_4a/output",
-    "inception_4a/output_inception_4a/output_0_split",
-    "inception_4a/pool",
-    "inception_4a/pool_proj",
-    "inception_4a/relu_1x1",
-    "inception_4a/relu_3x3",
-    "inception_4a/relu_3x3_reduce",
-    "inception_4a/relu_5x5",
-    "inception_4a/relu_5x5_reduce",
-    "inception_4a/relu_pool_proj",
-    "inception_4b/1x1",
-    "inception_4b/3x3",
-    "inception_4b/3x3_reduce",
-    "inception_4b/5x5",
-    "inception_4b/5x5_reduce",
-    "inception_4b/output",
-    "inception_4b/output_inception_4b/output_0_split",
-    "inception_4b/pool",
-    "inception_4b/pool_proj",
-    "inception_4b/relu_1x1",
-    "inception_4b/relu_3x3",
-    "inception_4b/relu_3x3_reduce",
-    "inception_4b/relu_5x5",
-    "inception_4b/relu_5x5_reduce",
-    "inception_4b/relu_pool_proj",
-    "inception_4c/1x1",
-    "inception_4c/3x3",
-    "inception_4c/3x3_reduce",
-    "inception_4c/5x5",
-    "inception_4c/5x5_reduce",
-    "inception_4c/output",
-    "inception_4c/output_inception_4c/output_0_split",
-    "inception_4c/pool",
-    "inception_4c/pool_proj",
-    "inception_4c/relu_1x1",
-    "inception_4c/relu_3x3",
-    "inception_4c/relu_3x3_reduce",
-    "inception_4c/relu_5x5",
-    "inception_4c/relu_5x5_reduce",
-    "inception_4c/relu_pool_proj",
-    "inception_4d/1x1",
-    "inception_4d/3x3",
-    "inception_4d/3x3_reduce",
-    "inception_4d/5x5",
-    "inception_4d/5x5_reduce",
-    "inception_4d/output",
-    "inception_4d/output_inception_4d/output_0_split",
-    "inception_4d/pool",
-    "inception_4d/pool_proj",
-    "inception_4d/relu_1x1",
-    "inception_4d/relu_3x3",
-    "inception_4d/relu_3x3_reduce",
-    "inception_4d/relu_5x5",
-    "inception_4d/relu_5x5_reduce",
-    "inception_4d/relu_pool_proj",
-    "inception_4e/1x1",
-    "inception_4e/3x3",
-    "inception_4e/3x3_reduce",
-    "inception_4e/5x5",
-    "inception_4e/5x5_reduce",
-    "inception_4e/output",
-    "inception_4e/pool",
-    "inception_4e/pool_proj",
-    "inception_4e/relu_1x1",
-    "inception_4e/relu_3x3",
-    "inception_4e/relu_3x3_reduce",
-    "inception_4e/relu_5x5",
-    "inception_4e/relu_5x5_reduce",
-    "inception_4e/relu_pool_proj",
-    "inception_5a/1x1",
-    "inception_5a/3x3",
-    "inception_5a/3x3_reduce",
-    "inception_5a/5x5",
-    "inception_5a/5x5_reduce",
-    "inception_5a/output",
-    "inception_5a/output_inception_5a/output_0_split",
-    "inception_5a/pool",
-    "inception_5a/pool_proj",
-    "inception_5a/relu_1x1",
-    "inception_5a/relu_3x3",
-    "inception_5a/relu_3x3_reduce",
-    "inception_5a/relu_5x5",
-    "inception_5a/relu_5x5_reduce",
-    "inception_5a/relu_pool_proj",
-    "inception_5b/1x1",
-    "inception_5b/3x3",
-    "inception_5b/3x3_reduce",
-    "inception_5b/5x5",
-    "inception_5b/5x5_reduce",
-    "inception_5b/output",
-    "inception_5b/pool",
-    "inception_5b/pool_proj",
-    "inception_5b/relu_1x1",
-    "inception_5b/relu_3x3",
-    "inception_5b/relu_3x3_reduce",
-    "inception_5b/relu_5x5",
-    "inception_5b/relu_5x5_reduce",
-    "inception_5b/relu_pool_proj",
-    "loss3/classifier",
-    "pool1/3x3_s2",
-    "pool1/norm1",
-    "pool2/3x3_s2",
-    "pool2/3x3_s2_pool2/3x3_s2_0_split",
-    "pool3/3x3_s2",
-    "pool3/3x3_s2_pool3/3x3_s2_0_split",
-    "pool4/3x3_s2",
-    "pool4/3x3_s2_pool4/3x3_s2_0_split",
-    "pool5/7x7_s1",
-    "pool5/drop_7x7_s1",
-    "prob"};
+    "conv1",       "conv2_1/dw",  "conv2_1/sep", "conv2_2/dw",  "conv2_2/sep",
+    "conv3_1/dw",  "conv3_1/sep", "conv3_2/dw",  "conv3_2/sep", "conv4_1/dw",
+    "conv4_1/sep", "conv4_2/dw",  "conv4_2/sep", "conv5_1/dw",  "conv5_1/sep",
+    "conv5_2/dw",  "conv5_2/sep", "conv5_3/dw",  "conv5_3/sep", "conv5_4/dw",
+    "conv5_4/sep", "conv5_5/dw",  "conv5_5/sep", "conv5_6/dw",  "conv5_6/sep",
+    "conv6/dw",    "conv6/sep",   "pool6",       "fc7",         "prob"};
 
 bool FloatEqual(float lhs, float rhs) {
   if (lhs < 0) {
@@ -210,57 +77,26 @@ void CvMatEqual(cv::Mat lhs, cv::Mat rhs) {
   }
 }
 
-cv::Scalar GetMean() {
-  caffe::BlobProto blob_proto;
-  ReadProtoFromBinaryFileOrDie(MEAN_IMAGE_FILEPATH, &blob_proto);
-
-  // Convert from BlobProto to Blob<float>
-  caffe::Blob<float> mean_blob;
-  mean_blob.FromProto(blob_proto);
-
-  // The format of the mean file is planar 32-bit float BGR or grayscale.
-  std::vector<cv::Mat> channels;
-  float* data = mean_blob.mutable_cpu_data();
-  for (unsigned int i = 0; i < 3; ++i) {
-    // Extract an individual channel.
-    cv::Mat channel(mean_blob.height(), mean_blob.width(), CV_32FC1, data);
-    channels.push_back(channel);
-    data += mean_blob.height() * mean_blob.width();
-  }
-
-  // Merge the separate channels into a single image.
-  cv::Mat mean;
-  cv::merge(channels, mean);
-
-  // Compute the global mean pixel value and create a mean image
-  // filled with this value.
-  return cv::mean(mean);
-}
-
-cv::Mat Preprocess(const cv::Mat& image) {
+cv::Mat Preprocess(const cv::Mat& img) {
+  cv::Size input_geometry_ = cv::Size(WIDTH, HEIGHT);
   // Convert the input image to the input image format of the network.
-  cv::Mat sample;
-  sample = image;
+  cv::Mat sample = img;
 
   cv::Mat sample_resized;
-  cv::resize(sample, sample_resized, SHAPE);
-
-  cv::Mat sample_float;
-  sample_resized.convertTo(sample_float, CV_32FC3);
-
-  // This operation will write the separate BGR planes directly to the
-  // input layer of the network because it is wrapped by the cv::Mat
-  // objects in input_channels.
-  return sample_float;
+  if (sample.size() != input_geometry_)
+    cv::resize(sample, sample_resized, input_geometry_);
+  else
+    sample_resized = sample;
+  return sample_resized;
 }
 
 TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   std::ifstream f(WEIGHTS_FILEPATH);
-  ASSERT_TRUE(f.good())
-      << "The Caffe model file \"" << WEIGHTS_FILEPATH
-      << "\" was not found. Download it by executing: "
-      << "curl -o " << WEIGHTS_FILEPATH
-      << " http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel";
+  ASSERT_TRUE(f.good()) << "The Caffe model file \"" << WEIGHTS_FILEPATH
+                        << "\" was not found. Download it by executing: "
+                        << "curl -o " << WEIGHTS_FILEPATH
+                        << " https://raw.githubusercontent.com/cdwat/"
+                           "MobileNet-Caffe/master/mobilenet.caffemodel";
   f.close();
 
   // Construct model
@@ -268,14 +104,15 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   ModelDesc desc("TestExtractIntermediateActivationsCaffe", MODEL_TYPE_CAFFE,
                  NETWORK_FILEPATH, WEIGHTS_FILEPATH, WIDTH, HEIGHT, "", "prob");
   NeuralNetEvaluator nne(desc, input_shape, 1, OUTPUTS);
-  ASSERT_EQ(nne.GetSinkNames().size(), OUTPUTS.size());
 
   // Configure the mean image
-  ModelManager::GetInstance().SetMeanColors(GetMean());
+  ModelManager::GetInstance().SetMeanColors(cv::Scalar(104.0, 117.0, 123.0));
 
   // Read the input
   cv::Mat original_image = cv::imread(INPUT_IMAGE_FILEPATH);
-  ASSERT_FALSE(original_image.empty());
+  ASSERT_FALSE(original_image.empty()) << "Image empty. Is a library (i.e. "
+                                          "libtensorflow) clobbering libjpeg "
+                                          "symbols?";
   cv::Mat preprocessed_image = Preprocess(original_image);
 
   // Construct frame with input image in it
@@ -289,21 +126,16 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
   nne.SetSource("input", stream, "");
 
   // We need to set up the StreamReaders before calling Start().
-  std::unordered_map<std::string, StreamReader*> readers;
-  for (const auto& sink_name : nne.GetSinkNames()) {
-    readers[sink_name] = nne.GetSink(sink_name)->Subscribe();
-  }
+  StreamReader* reader = nne.GetSink()->Subscribe();
 
   nne.Start();
   stream->PushFrame(std::move(input_frame));
-
-  for (const auto& sink_name : nne.GetSinkNames()) {
-    auto output_frame = readers[sink_name]->PopFrame();
-    ASSERT_FALSE(output_frame == nullptr) << "Unable to get frame";
-
-    std::string filename = sink_name;
+  auto output_frame = reader->PopFrame();
+  ASSERT_FALSE(output_frame == nullptr) << "Unable to get frame";
+  for (decltype(OUTPUTS.size()) i = 0; i < OUTPUTS.size(); ++i) {
+    std::string filename = OUTPUTS.at(i);
     boost::replace_all(filename, "/", ".");
-    filename = "data/inception/caffe_ground_truth/" + filename + ".expect";
+    filename = "data/mobilenet/caffe_ground_truth/" + filename + ".bin";
     // contains the activations of the output layer
     std::ifstream gt_file;
     gt_file.open(filename);
@@ -318,8 +150,23 @@ TEST(TestNneCaffe, TestExtractIntermediateActivationsCaffe) {
     }
 
     gt_file.close();
-    CvMatEqual(expected_output, output_frame->GetValue<cv::Mat>("activations"));
-  }
 
+    cv::Mat actual_output = output_frame->GetValue<cv::Mat>(OUTPUTS.at(i));
+    int num_channel = actual_output.channels();
+    int height = actual_output.rows;
+    int width = actual_output.cols;
+    float* gt_data_ptr = (float*)expected_output.ptr();
+    int per_channel_floats = height * width;
+    std::vector<cv::Mat> gt_channels;
+    for (int i = 0; i < num_channel; ++i) {
+      cv::Mat cur_channel(HEIGHT, WIDTH, CV_32F);
+      memcpy(cur_channel.data, gt_data_ptr + per_channel_floats * i,
+             per_channel_floats * sizeof(float));
+      gt_channels.push_back(cur_channel);
+    }
+    cv::Mat expected_output_transposed;
+    cv::merge(gt_channels, expected_output_transposed);
+    CvMatEqual(expected_output_transposed, actual_output);
+  }
   nne.Stop();
 }

@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "model/tf_model.h"
 
@@ -154,6 +167,20 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Tensor2CV(
   return ret;
 }
 
+cv::Mat TFModel::ConvertAndNormalize(cv::Mat img) {
+
+  cv::Mat input;
+  if (input_shape_.channel == 3) {
+    img.convertTo(input, CV_32FC3);
+  } else {
+    img.convertTo(input, CV_32FC1);
+  }
+
+  cv::Mat normalized;
+  cv::normalize(input, normalized, -0.5, 0.5, cv::NORM_MINMAX);
+  return normalized;
+}
+
 std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
@@ -167,19 +194,10 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     std::string input_layer_name = input_pair.first;
     std::vector<cv::Mat> input_vec = input_pair.second;
 
-    // This is a patch to make tensorflow classification work properly with the
-    // current model.
-    for (decltype(input_vec.size()) i = 0; i < input_vec.size(); ++i) {
-      cv::Mat input = input_vec.at(i);
-      cv::Mat input_normalized;
-      cv::normalize(input, input_normalized, -0.5, 0.5, cv::NORM_MINMAX);
-      input_vec.at(i) = input_normalized;
-    }
-
     cv::Mat input = input_vec.at(0);
     int channel = input.channels();
-    int height = input.size[0];
-    int width = input.size[1];
+    int height = input.rows;
+    int width = input.cols;
     if (input.dims == 4) {
       channel = input.size[3];
       height = input.size[1];
@@ -228,8 +246,11 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
     std::vector<int> mat_size;
     size_t vishash_size = 1;
     for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
-      mat_size.push_back((*it).size);
-      vishash_size *= (*it).size;
+      int cur_dim = (*it).size;
+      CHECK(cur_dim > 0)
+          << "Error: Tensor of size 0 returned from Session::Run()";
+      mat_size.push_back(cur_dim);
+      vishash_size *= cur_dim;
     }
     for (decltype(batch_size) i = 0; i < batch_size; ++i) {
       cv::Mat temp(mat_size, CV_32F);

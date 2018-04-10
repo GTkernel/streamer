@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_
 #define STREAMER_PROCESSOR_IMAGE_CLASSIFIER_H_
@@ -31,6 +44,8 @@ class ImageClassifier : public NeuralNetConsumer {
   // Loads the specified model's labels from disk and returns them in a vector.
   static std::vector<std::string> LoadLabels(const ModelDesc& model_desc);
 
+  // Layer to extract from the DNN.
+  std::string layer_;
   // The number of labels that will be assigned to each frame.
   size_t num_labels_;
   // A list of all labels, from which num_labels_ entries will be assigned to

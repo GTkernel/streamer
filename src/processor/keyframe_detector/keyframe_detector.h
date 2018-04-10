@@ -1,3 +1,16 @@
+// Copyright 2016 The Streamer Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef STREAMER_PROCESSOR_KEYFRAME_DETECTOR_KEYFRAME_DETECTOR_H_
 #define STREAMER_PROCESSOR_KEYFRAME_DETECTOR_KEYFRAME_DETECTOR_H_
@@ -24,11 +37,12 @@ class KeyframeDetector : public NeuralNetConsumer {
   // "buf_params" is a vector of pairs where the first element is a selectivity
   // in the range (0, 1], and the second element is a buffer length.
   KeyframeDetector(const ModelDesc& model_desc, const Shape& shape,
-                   std::string layer,
+                   const std::string& fv_key,
                    std::vector<std::pair<float, size_t>> buf_params);
   // This constructor relies on the calling code to connece this
   // KeyframeDetector's source to a preexisting NeuralNetworkEvaluator's sink.
-  KeyframeDetector(std::vector<std::pair<float, size_t>> buf_params);
+  KeyframeDetector(const std::string& fv_key,
+                   std::vector<std::pair<float, size_t>> buf_params);
 
   static std::shared_ptr<KeyframeDetector> Create(
       const FactoryParamsType& params);
@@ -47,7 +61,8 @@ class KeyframeDetector : public NeuralNetConsumer {
   virtual void Process() override;
 
  private:
-  void Setup(std::vector<std::pair<float, size_t>> buf_params);
+  void Setup(const std::string& fv_key,
+             std::vector<std::pair<float, size_t>> buf_params);
 
   // The entries detect keyframes at progressively coarser granularities.
   std::vector<std::unique_ptr<KeyframeBuffer>> bufs_;
