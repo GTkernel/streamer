@@ -65,7 +65,8 @@ class NeuralNetEvaluator : public Processor {
  private:
   // Executes the neural network and returns a mapping from the name of a layer
   // to that layer's activations.
-  template <typename T> void PassFrame(std::unordered_map<std::string, std::vector<T>> outputs); 
+  template <typename T>
+  void PassFrame(std::unordered_map<std::string, std::vector<T>> outputs);
   std::unordered_map<std::string, cv::Mat> Evaluate();
 
   Shape input_shape_;

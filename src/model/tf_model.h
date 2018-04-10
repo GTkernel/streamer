@@ -37,20 +37,20 @@ class TFModel : public Model {
       const std::vector<std::string>& output_layer_names) override;
 
   // do tensorflow model evaluation directly
-  virtual std::unordered_map<std::string, std::vector<tensorflow::Tensor>> TensorEvaluate(
-    const std::vector<std::pair<std::string, tensorflow::Tensor>> inputs,
-    const std::vector<std::string>& output_layer_names
-  );
+  virtual std::unordered_map<std::string, std::vector<tensorflow::Tensor>>
+  TensorEvaluate(
+      const std::vector<std::pair<std::string, tensorflow::Tensor>> inputs,
+      const std::vector<std::string>& output_layer_names);
 
-  // start the first layer of model, turn image OpenCV format to Tensor, before evaluation
+  // start the first layer of model, turn image OpenCV format to Tensor, before
+  // evaluation
   virtual std::vector<std::pair<std::string, tensorflow::Tensor>> CV2Tensor(
-    const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map
-  );
+      const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map);
 
   // end the last layer of model, back to CV format
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Tensor2CV(
-    const std::unordered_map<std::string, std::vector<tensorflow::Tensor>>& input_map
-  );
+      const std::unordered_map<std::string, std::vector<tensorflow::Tensor>>&
+          input_map);
 
  private:
   std::unique_ptr<tensorflow::Session> session_;

@@ -61,16 +61,15 @@ class Frame {
   std::string ToString() const;
   nlohmann::json ToJson() const;
   nlohmann::json GetFieldJson(const std::string& field) const;
-  using field_types =
-      boost::variant<std::string, float, double, long, unsigned long, bool,
-					 //int, std::string, float, double, long, unsigned long, bool,
-                     boost::posix_time::ptime, boost::posix_time::time_duration,
-                     cv::Mat, tensorflow::Tensor, std::vector<char>, std::vector<std::string>,
-                     //cv::Mat, std::vector<char>, std::vector<std::string>,
-                     std::vector<double>, std::vector<Rect>,
-                     std::vector<FaceLandmark>, std::vector<std::vector<float>>,
-                     std::vector<float>, std::vector<std::vector<double>>,
-                     std::vector<Frame>, std::vector<int>>;
+  using field_types = boost::variant<
+      std::string, float, double, long, unsigned long, bool,
+      // int, std::string, float, double, long, unsigned long, bool,
+      boost::posix_time::ptime, boost::posix_time::time_duration, cv::Mat,
+      tensorflow::Tensor, std::vector<char>, std::vector<std::string>,
+      // cv::Mat, std::vector<char>, std::vector<std::string>,
+      std::vector<double>, std::vector<Rect>, std::vector<FaceLandmark>,
+      std::vector<std::vector<float>>, std::vector<float>,
+      std::vector<std::vector<double>>, std::vector<Frame>, std::vector<int>>;
   size_t Count(std::string key) const;
   std::unordered_map<std::string, field_types> GetFields();
   void SetStopFrame(bool stop_frame);

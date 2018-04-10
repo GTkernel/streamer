@@ -79,33 +79,46 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
 /** TODO Serialization support for Tensor */
 template <class Archive>
 void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {
-	//assume tensor is always continuous
-	int vec_size, height, width, channels;
-	tensorflow::DataType type;
+  // assume tensor is always continuous
+  int vec_size, height, width, channels;
+  tensorflow::DataType type;
 
-	if (Archive::is_saving::value){
-		type = tensor.dtype();
-		vec_size = tensor.dim_size(0);
-		height = tensor.dim_size(1);
-		width = tensor.dim_size(2);
-		channels = tensor.dim_size(3);
-	}
-	ar& type& vec_size& height& width& channels;
+  if (Archive::is_saving::value) {
+    type = tensor.dtype();
+    vec_size = tensor.dim_size(0);
+    height = tensor.dim_size(1);
+    width = tensor.dim_size(2);
+    channels = tensor.dim_size(3);
+  }
+  ar& type& vec_size& height& width& channels;
 
-	const unsigned int data_size = vec_size * height * width * channels;
+  const unsigned int data_size = vec_size * height * width * channels;
 
-	if (Archive::is_loading::value) {
-		tensorflow::Tensor reshape_tensor(type,\
-										  tensorflow::TensorShape({static_cast<long long>(vec_size),\
-										                           height, width, channels}\
-                                          ));
-		reshape_tensor.CopyFrom(tensor, tensorflow::TensorShape({static_cast<long long>(vec_size),height, width, channels}));
-		tensor = reshape_tensor;
-	}
+  if (Archive::is_loading::value) {
+    tensorflow::Tensor reshape_tensor(
+        type, tensorflow::TensorShape(
+                  {static_cast<long long>(vec_size), height, width, channels}));
+    bool success = reshape_tensor.CopyFrom(
+        tensor, tensorflow::TensorShape({static_cast<long long>(vec_size),
+                                         height, width, channels}));
+    if (!success) {
+      std::ostringstream msg;
+      msg << "Problem copying Tensor, shapes do not agree! Source: [ ";
+      for (auto d : tensor.shape().dim_sizes()) {
+        msg << d << " ";
+      }
+      msg << "],  Destination: ";
+      for (auto d : reshape_tensor.shape().dim_sizes()) {
+        msg << d << " ";
+      }
+      msg << "]";
+      throw std::runtime_error(msg.str());
+    }
+    tensor = reshape_tensor;
+  }
 
-	ar& boost::serialization::make_array(tensor.flat<float>().data(), data_size);
+  ar& boost::serialization::make_array(tensor.flat<float>().data(), data_size);
 }
-
 
 }  // namespace serialization
 }  // namespace boost

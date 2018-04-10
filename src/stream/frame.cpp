@@ -36,13 +36,13 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << v;
     return output.str();
   }
-/*  
-  std::string operator()(const int& v) const {
-    std::ostringstream output;
-    output << v;
-    return output.str();
-  }
-*/
+  /*
+    std::string operator()(const int& v) const {
+      std::ostringstream output;
+      output << v;
+      return output.str();
+    }
+  */
   std::string operator()(const long& v) const {
     std::ostringstream output;
     output << v;
@@ -139,7 +139,7 @@ class FramePrinter : public boost::static_visitor<std::string> {
     // TODO Add Tensor print info
     std::ostringstream output;
     output << "tensorflow::Tensor";
-    
+
     return output.str();
   }
 
@@ -224,7 +224,7 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
 
   nlohmann::json operator()(const float& v) const { return v; }
 
-//  nlohmann::json operator()(const int& v) const { return v; }
+  //  nlohmann::json operator()(const int& v) const { return v; }
 
   nlohmann::json operator()(const long& v) const { return v; }
 
@@ -320,7 +320,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
 
   unsigned long operator()(const float&) const { return sizeof(float); }
 
-//  unsigned long operator()(const int&) const { return sizeof(int); }
+  //  unsigned long operator()(const int&) const { return sizeof(int); }
 
   unsigned long operator()(const long&) const { return sizeof(long); }
 
@@ -534,7 +534,7 @@ unsigned long Frame::GetRawSizeBytes(
 // Types declared in Field
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
-//template void Frame::SetValue(std::string, const int&);
+// template void Frame::SetValue(std::string, const int&);
 template void Frame::SetValue(std::string, const long&);
 template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const bool&);
@@ -559,7 +559,7 @@ template void Frame::SetValue(std::string, const std::vector<int>&);
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
-//template int Frame::GetValue(std::string) const;
+// template int Frame::GetValue(std::string) const;
 template long Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
 template bool Frame::GetValue(std::string) const;

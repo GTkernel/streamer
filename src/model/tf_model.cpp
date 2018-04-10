@@ -56,32 +56,32 @@ void TFModel::Load() {
   }
 }
 
-std::unordered_map<std::string, std::vector<tensorflow::Tensor>> TFModel::TensorEvaluate(
+std::unordered_map<std::string, std::vector<tensorflow::Tensor>>
+TFModel::TensorEvaluate(
     const std::vector<std::pair<std::string, tensorflow::Tensor>> inputs,
     const std::vector<std::string>& output_layer_names) {
-
   std::vector<tensorflow::Tensor> outputs;
   tensorflow::Status status =
       session_->Run(inputs, {output_layer_names}, {}, &outputs);
 
   std::unordered_map<std::string, std::vector<tensorflow::Tensor>> ret;
   int count = 0;
-  for (auto output_tensor : outputs){
+  for (auto output_tensor : outputs) {
     ret[output_layer_names[count++]].push_back(output_tensor);
   }
 
   return ret;
 }
 
-//OpenCV to tensor, used at the beginning image transforming, would continue with evaluating process
+// OpenCV to tensor, used at the beginning image transforming, would continue
+// with evaluating process
 std::vector<std::pair<std::string, tensorflow::Tensor>> TFModel::CV2Tensor(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map) {
-
   CHECK_EQ(input_map.size(), 1)
       << "Specifying multiple input layers is not supported.";
 
   std::vector<std::pair<std::string, tensorflow::Tensor>> inputs;
-  
+
   // in this case, only one input mapping
   for (const auto& input_pair : input_map) {
     std::string input_layer_name = input_pair.first;
@@ -134,36 +134,36 @@ std::vector<std::pair<std::string, tensorflow::Tensor>> TFModel::CV2Tensor(
 }
 // the output format transformation for final layer
 std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Tensor2CV(
-    const std::unordered_map<std::string, std::vector<tensorflow::Tensor>>& input_map) {
+    const std::unordered_map<std::string, std::vector<tensorflow::Tensor>>&
+        input_map) {
+  std::unordered_map<std::string, std::vector<cv::Mat>> ret;
 
-  std::unordered_map<std::string, std::vector<cv::Mat>> ret;  
-  
-  //only handle single iteration currently
+  // only handle single iteration currently
   for (const auto& input_pair : input_map) {
     std::string input_layer_name = input_pair.first;
     std::vector<tensorflow::Tensor> input_vec = input_pair.second;
- 
+
     std::vector<cv::Mat> return_vector;
     for (const auto& output_tensor : input_vec) {
-        tensorflow::TensorShape tensor_shape = output_tensor.shape();
-        auto batch_size = (*tensor_shape.begin()).size;
-        std::vector<int> mat_size;
-        size_t vishash_size = 1;
-        for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
-          mat_size.push_back((*it).size);
-          vishash_size *= (*it).size;
-        }
-        for (decltype(batch_size) i = 0; i < batch_size; ++i) {
-          cv::Mat temp(mat_size, CV_32F);
-          std::copy_n(output_tensor.flat<float>().data() + (i * vishash_size),
-                      vishash_size, (float*)temp.data);
-  		return_vector.push_back(temp);
-        }
-  
-        ret[input_layer_name] = return_vector;
-     }
+      tensorflow::TensorShape tensor_shape = output_tensor.shape();
+      auto batch_size = (*tensor_shape.begin()).size;
+      std::vector<int> mat_size;
+      size_t vishash_size = 1;
+      for (auto it = tensor_shape.begin(); it != tensor_shape.end(); ++it) {
+        mat_size.push_back((*it).size);
+        vishash_size *= (*it).size;
+      }
+      for (decltype(batch_size) i = 0; i < batch_size; ++i) {
+        cv::Mat temp(mat_size, CV_32F);
+        std::copy_n(output_tensor.flat<float>().data() + (i * vishash_size),
+                    vishash_size, (float*)temp.data);
+        return_vector.push_back(temp);
+      }
+
+      ret[input_layer_name] = return_vector;
+    }
   }
- 
+
   return ret;
 }
 

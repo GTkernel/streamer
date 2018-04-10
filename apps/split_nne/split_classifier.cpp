@@ -10,10 +10,10 @@
 #include "camera/camera_manager.h"
 #include "common/context.h"
 #include "model/model_manager.h"
+#include "processor/image_classifier.h"
 #include "processor/image_transformer.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
-#include "processor/image_classifier.h"
 
 namespace po = boost::program_options;
 
@@ -59,7 +59,7 @@ void Run(const std::string& camera_name, const std::string& net,
 
   auto reader = classifier->GetSink("output")->Subscribe();
   std::cout << "Press \"Control-C\" to stop." << std::endl;
-  
+
   while (true) {
     auto frame = reader->PopFrame();
     // Extract match percentage.
@@ -80,13 +80,12 @@ void Run(const std::string& camera_name, const std::string& net,
 
     // Get Frame Rate
     double rate = reader->GetPushFps();
-  
+
     std::ostringstream label;
     label.precision(2);
     label << rate << " FPS - " << prob_percent << "% - " << tag_name;
     auto label_string = label.str();
     std::cout << label_string << std::endl;
-
   }
 
   // Stop the processors in forward order.

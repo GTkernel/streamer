@@ -30,10 +30,10 @@ NeuralNetEvaluator::NeuralNetEvaluator(
       batch_size_(batch_size) {
   // Load model.
   auto& manager = ModelManager::GetInstance();
-  if (model_desc.GetModelType() == MODEL_TYPE_TENSORFLOW){
+  if (model_desc.GetModelType() == MODEL_TYPE_TENSORFLOW) {
     tf_model_ = std::make_unique<TFModel>(model_desc, input_shape_);
     tf_model_->Load();
-  }else{
+  } else {
     model_ = manager.CreateModel(model_desc, input_shape_, batch_size_);
     model_->Load();
   }
@@ -108,11 +108,11 @@ bool NeuralNetEvaluator::OnStop() { return true; }
 void NeuralNetEvaluator::SetSource(const std::string& name, StreamPtr stream,
                                    const std::string& layername) {
   if (layername == "") {
-    if (tf_model_ != NULL){ // using a tensorflow model
-    	input_layer_name_ = tf_model_->GetModelDesc().GetDefaultInputLayer();
-    }else{
-    	input_layer_name_ = model_->GetModelDesc().GetDefaultInputLayer();
-	}
+    if (tf_model_ != NULL) {  // using a tensorflow model
+      input_layer_name_ = tf_model_->GetModelDesc().GetDefaultInputLayer();
+    } else {
+      input_layer_name_ = model_->GetModelDesc().GetDefaultInputLayer();
+    }
   } else {
     input_layer_name_ = layername;
   }
@@ -126,23 +126,22 @@ void NeuralNetEvaluator::SetSource(StreamPtr stream,
   SetSource(SOURCE_NAME, stream, layername);
 }
 
-template <typename T> void NeuralNetEvaluator::PassFrame(std::unordered_map<std::string, std::vector<T>> outputs) {
-
-    // Push the activations for each published layer to their respective sink.
-    for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size();
-         ++i) {
-      std::unique_ptr<Frame> ret_frame = std::move(cur_batch_frames_.at(i));
-      for (const auto& layer_pair : outputs) {
-        auto activation_vector = layer_pair.second;
-        auto layer_name = layer_pair.first;
-        auto activations = activation_vector.at(i);
-        ret_frame->SetValue(layer_name, activations);
-      }
-      PushFrame(SINK_NAME, std::move(ret_frame));
+template <typename T>
+void NeuralNetEvaluator::PassFrame(
+    std::unordered_map<std::string, std::vector<T>> outputs) {
+  // Push the activations for each published layer to their respective sink.
+  for (decltype(cur_batch_frames_.size()) i = 0; i < cur_batch_frames_.size();
+       ++i) {
+    std::unique_ptr<Frame> ret_frame = std::move(cur_batch_frames_.at(i));
+    for (const auto& layer_pair : outputs) {
+      auto activation_vector = layer_pair.second;
+      auto layer_name = layer_pair.first;
+      auto activations = activation_vector.at(i);
+      ret_frame->SetValue(layer_name, activations);
     }
-
+    PushFrame(SINK_NAME, std::move(ret_frame));
+  }
 }
-
 
 StreamPtr NeuralNetEvaluator::GetSink() {
   return Processor::GetSink(SINK_NAME);
@@ -150,26 +149,26 @@ StreamPtr NeuralNetEvaluator::GetSink() {
 
 void NeuralNetEvaluator::Process() {
   auto input_frame = GetFrame(SOURCE_NAME);
-  cv::Mat input_mat; 
+  cv::Mat input_mat;
   std::string frame_name;
   if (input_frame->Count(input_layer_name_) > 0) {
     frame_name = input_layer_name_;
   } else {
-	frame_name = "image";
+    frame_name = "image";
   }
-    
+
   if (tf_model_ != NULL) {
-     // for tensorflow model, only the first layer of model get OpenCV frame at beginning
-     // so need to call ConvertAndNormalize
-	 if (input_layer_name_ == tf_model_->GetModelDesc().GetDefaultInputLayer()) {
-         input_mat = input_frame->GetValue<cv::Mat>(frame_name);
-         input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
-                               tf_model_->ConvertAndNormalize(input_mat));
-     }
+    // for tensorflow model, only the first layer of model get OpenCV frame at
+    // beginning so need to call ConvertAndNormalize
+    if (input_layer_name_ == tf_model_->GetModelDesc().GetDefaultInputLayer()) {
+      input_mat = input_frame->GetValue<cv::Mat>(frame_name);
+      input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
+                            tf_model_->ConvertAndNormalize(input_mat));
+    }
   } else {
-     input_mat = input_frame->GetValue<cv::Mat>(frame_name);
-     input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
-                           model_->ConvertAndNormalize(input_mat));
+    input_mat = input_frame->GetValue<cv::Mat>(frame_name);
+    input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
+                          model_->ConvertAndNormalize(input_mat));
   }
 
   cur_batch_frames_.push_back(std::move(input_frame));
@@ -181,20 +180,21 @@ void NeuralNetEvaluator::Process() {
   std::vector<std::pair<std::string, tensorflow::Tensor>> tensor_batch_;
 
   for (auto& frame : cur_batch_frames_) {
-    if (tf_model_ != NULL) { 
-       if (input_layer_name_ != tf_model_->GetModelDesc().GetDefaultInputLayer()) {
-          tensor_batch_.push_back(std::pair<std::string, tensorflow::Tensor>(
-                                  frame_name,
-		                          frame->GetValue<tensorflow::Tensor>(frame_name)));
-          continue;
-       }
-    } 
-    cv_batch_.push_back(frame->GetValue<cv::Mat>(GetName() + "." + frame_name + ".normalized"));
+    if (tf_model_ != NULL) {
+      if (input_layer_name_ !=
+          tf_model_->GetModelDesc().GetDefaultInputLayer()) {
+        tensor_batch_.push_back(std::pair<std::string, tensorflow::Tensor>(
+            frame_name, frame->GetValue<tensorflow::Tensor>(frame_name)));
+        continue;
+      }
+    }
+    cv_batch_.push_back(
+        frame->GetValue<cv::Mat>(GetName() + "." + frame_name + ".normalized"));
   }
 
   if (tf_model_ == NULL) {
     auto layer_outputs =
-         model_->Evaluate({{input_layer_name_, cv_batch_}}, output_layer_names_);
+        model_->Evaluate({{input_layer_name_, cv_batch_}}, output_layer_names_);
 
     PassFrame(layer_outputs);
 
@@ -204,27 +204,30 @@ void NeuralNetEvaluator::Process() {
     // if so, need to do Tensor-to-CV transformation
     auto is_last_layer = false;
     if (std::find(output_layer_names_.begin(), output_layer_names_.end(),
-                  tf_model_->GetModelDesc().GetDefaultOutputLayer()) != 
-        output_layer_names_.end()) is_last_layer = true;
-    
-    std::unordered_map<std::string, std::vector<tensorflow::Tensor>> layer_outputs;
+                  tf_model_->GetModelDesc().GetDefaultOutputLayer()) !=
+        output_layer_names_.end())
+      is_last_layer = true;
 
-    if (tensor_batch_.size()>0) {
-       //with in the model, pass by Tensor
-       layer_outputs = tf_model_->TensorEvaluate(tensor_batch_, output_layer_names_);
+    std::unordered_map<std::string, std::vector<tensorflow::Tensor>>
+        layer_outputs;
+
+    if (tensor_batch_.size() > 0) {
+      // with in the model, pass by Tensor
+      layer_outputs =
+          tf_model_->TensorEvaluate(tensor_batch_, output_layer_names_);
     } else {
-	   // at beginning of model, transfer first
-       auto tensor_vec_ = tf_model_->CV2Tensor({{input_layer_name_, cv_batch_}});
-       layer_outputs = tf_model_->TensorEvaluate(tensor_vec_, output_layer_names_);
+      // at beginning of model, transfer first
+      auto tensor_vec_ = tf_model_->CV2Tensor({{input_layer_name_, cv_batch_}});
+      layer_outputs =
+          tf_model_->TensorEvaluate(tensor_vec_, output_layer_names_);
     }
 
     if (is_last_layer) {
       auto cv_outputs = tf_model_->Tensor2CV(layer_outputs);
-      PassFrame(cv_outputs);      
+      PassFrame(cv_outputs);
     } else {
       PassFrame(layer_outputs);
     }
-
   }
 
   cur_batch_frames_.clear();
