@@ -15,6 +15,8 @@
 #include "processor/neural_net_evaluator.h"
 #include "processor/processor.h"
 
+#include "tensorflow/core/framework/tensor.h"
+
 namespace po = boost::program_options;
 
 void Run(const std::string& camera_name, const std::string& net,
@@ -52,46 +54,66 @@ void Run(const std::string& camera_name, const std::string& net,
   classifier->SetSource("input", nne2->GetSink());
   procs.push_back(classifier);
 
+  boost::posix_time::time_duration total_nne1_micros;
+  boost::posix_time::time_duration total_nne2_micros;
+  int frame_count = 0;
+
   // Start the processors in reverse order.
   for (auto procs_it = procs.rbegin(); procs_it != procs.rend(); ++procs_it) {
     (*procs_it)->Start();
   }
 
   auto reader = classifier->GetSink("output")->Subscribe();
-  std::cout << "Press \"Control-C\" to stop." << std::endl;
+  tensorflow::Tensor split_tensor;
 
   while (true) {
     auto frame = reader->PopFrame();
     // Extract match percentage.
-    auto probs = frame->GetValue<std::vector<double>>("probabilities");
-    auto prob_percent = probs.front() * 100;
+ //   auto probs = frame->GetValue<std::vector<double>>("probabilities");
+ //   auto prob_percent = probs.front() * 100;
 
-    // Extract tag.
-    auto tags = frame->GetValue<std::vector<std::string>>("tags");
-    auto tag = tags.front();
-    std::regex re(".+? (.+)");
-    std::smatch results;
-    std::string tag_name;
-    if (!std::regex_match(tag, results, re)) {
-      tag_name = tag;
-    } else {
-      tag_name = results[1];
-    }
-
+ //   // Extract tag.
+ //   auto tags = frame->GetValue<std::vector<std::string>>("tags");
+ //   auto tag = tags.front();
+ //   std::regex re(".+? (.+)");
+ //   std::smatch results;
+ //   std::string tag_name;
+ //   if (!std::regex_match(tag, results, re)) {
+ //     tag_name = tag;
+ //   } else {
+ //     tag_name = results[1];
+ //   }
+    
+    // Get NNE excution time
+    auto nne1_time = frame->GetValue<boost::posix_time::time_duration>("NeuralNetEvaluator.total_micros");
+    total_nne1_micros += nne1_time;
+    auto nne2_time = frame->GetValue<boost::posix_time::time_duration>("NeuralNetEvaluator2.total_micros");
+    total_nne2_micros += nne2_time;
+    frame_count += 1;
+    auto last_id = frame->GetValue<unsigned long>("frame_id");
+    split_tensor = frame->GetValue<tensorflow::Tensor>(split_layer);
     // Get Frame Rate
-    double rate = reader->GetPushFps();
+ //   double rate = reader->GetPushFps();
 
-    std::ostringstream label;
-    label.precision(2);
-    label << rate << " FPS - " << prob_percent << "% - " << tag_name;
-    auto label_string = label.str();
-    std::cout << label_string << std::endl;
+ //   std::ostringstream label;
+ //   label.precision(2);
+ //   label << rate << " FPS - " << prob_percent << "% - " << tag_name;
+ //   auto label_string = label.str();
+ //   std::cout << label_string << std::endl;
+ //   std::cout << "NNE1 time = "<< nne1_time << std::endl;
+ //   std::cout << "NNE2 time = "<< nne2_time << std::endl;
+    if (last_id > 2500) break;
   }
 
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
     proc->Stop();
   }
+  std::cout << "======" << std::endl;
+  std::cout << "Frame count = " << frame_count << std::endl;
+  std::cout << "Average NNE1 time = " << total_nne1_micros.total_microseconds() / frame_count << std::endl;
+  std::cout << "Average NNE2 time = " << total_nne2_micros.total_microseconds() / frame_count << std::endl;
+  std::cout << split_tensor.dim_size(0)<< ","<<split_tensor.dim_size(1) << ","<< split_tensor.dim_size(2) << "," <<split_tensor.dim_size(3) << std::endl;
 }
 
 int main(int argc, char* argv[]) {
