@@ -31,3 +31,8 @@ if (CCACHE_PROGRAM)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
   set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_PROGRAM}")
 endif()
+
+# Increase the number of types allowed in a boost::variant. See
+# https://stackoverflow.com/questions/34702612/how-to-increase-the-number-of-types-that-can-handled-by-boostvariant
+add_definitions("-D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS")
+add_definitions("-D BOOST_MPL_LIMIT_LIST_SIZE=30")

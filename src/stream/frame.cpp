@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "frame.h"
+#include "stream/frame.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -36,13 +36,13 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << v;
     return output.str();
   }
-  /*
-    std::string operator()(const int& v) const {
-      std::ostringstream output;
-      output << v;
-      return output.str();
-    }
-  */
+
+  std::string operator()(const int& v) const {
+    std::ostringstream output;
+    output << v;
+    return output.str();
+  }
+
   std::string operator()(const long& v) const {
     std::ostringstream output;
     output << v;
@@ -135,14 +135,6 @@ class FramePrinter : public boost::static_visitor<std::string> {
     return output.str();
   }
 
-  std::string operator()(const tensorflow::Tensor& v) const {
-    // TODO Add Tensor print info
-    std::ostringstream output;
-    output << "tensorflow::Tensor";
-
-    return output.str();
-  }
-
   std::string operator()(const std::vector<FaceLandmark>& v) const {
     std::ostringstream output;
     output << "std::vector<FaceLandmark> = [" << std::endl;
@@ -216,6 +208,40 @@ class FramePrinter : public boost::static_visitor<std::string> {
     output << "]";
     return output.str();
   }
+
+#ifdef USE_TENSORFLOW
+  std::string operator()(const tensorflow::Tensor& v) const {
+    std::ostringstream output;
+    output << "Tensor(";
+
+    // Write the Tensor dimensions.
+    auto dims = v.shape().dim_sizes();
+    auto num_dims = dims.size();
+    for (decltype(num_dims) i = 0; i < num_dims; ++i) {
+      output << dims[i];
+      if (i != num_dims - 1) {
+        // If this is not the last dimension...
+        output << " x ";
+      }
+    }
+    output << ") = [";
+
+    // Write the first 4 elements.
+    auto num_elems = v.NumElements();
+    for (decltype(num_elems) i = 0; i < 4 && i < num_elems; ++i) {
+      output << *(v.flat<float>().data() + i);
+      if (i != num_elems - 1) {
+        // If this is not the last element...
+        output << ", ";
+      }
+    }
+    if (num_elems > 4) {
+      output << " ...";
+    }
+    output << "]";
+    return output.str();
+  }
+#endif  // USE_TENSORFLOW
 };
 
 class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
@@ -224,7 +250,7 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
 
   nlohmann::json operator()(const float& v) const { return v; }
 
-  //  nlohmann::json operator()(const int& v) const { return v; }
+  nlohmann::json operator()(const int& v) const { return v; }
 
   nlohmann::json operator()(const long& v) const { return v; }
 
@@ -274,11 +300,6 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     return nlohmann::json::parse(str);
   }
 
-  nlohmann::json operator()(const tensorflow::Tensor& v) const {
-    // TODO: Add Tensor to json
-    return nlohmann::json::parse("");
-  }
-
   nlohmann::json operator()(const std::vector<float>& v) const { return v; }
 
   nlohmann::json operator()(const std::vector<FaceLandmark>& v) const {
@@ -312,6 +333,13 @@ class FrameJsonPrinter : public boost::static_visitor<nlohmann::json> {
     }
     return j;
   }
+
+#ifdef USE_TENSORFLOW
+  nlohmann::json operator()(const tensorflow::Tensor&) const {
+    STREAMER_NOT_IMPLEMENTED;
+    return nlohmann::json();
+  }
+#endif  // USE_TENSORFLOW
 };
 
 class FrameSize : public boost::static_visitor<unsigned long> {
@@ -320,7 +348,7 @@ class FrameSize : public boost::static_visitor<unsigned long> {
 
   unsigned long operator()(const float&) const { return sizeof(float); }
 
-  //  unsigned long operator()(const int&) const { return sizeof(int); }
+  unsigned long operator()(const int&) const { return sizeof(int); }
 
   unsigned long operator()(const long&) const { return sizeof(long); }
 
@@ -366,10 +394,6 @@ class FrameSize : public boost::static_visitor<unsigned long> {
     return v.total() * sizeof(float);
   }
 
-  unsigned long operator()(const tensorflow::Tensor& v) const {
-    return static_cast<unsigned long>(v.AllocatedBytes());
-  }
-
   unsigned long operator()(const std::vector<float>& v) const {
     return v.size() * sizeof(float);
   }
@@ -405,6 +429,12 @@ class FrameSize : public boost::static_visitor<unsigned long> {
   unsigned long operator()(const std::vector<int>& v) const {
     return v.size() * sizeof(int);
   }
+
+#ifdef USE_TENSORFLOW
+  unsigned long operator()(const tensorflow::Tensor& v) const {
+    return static_cast<unsigned long>(v.TotalBytes());
+  }
+#endif  // USE_TENSORFLOW
 };
 
 Frame::Frame(double start_time) { frame_data_["start_time_ms"] = start_time; }
@@ -534,7 +564,7 @@ unsigned long Frame::GetRawSizeBytes(
 // Types declared in Field
 template void Frame::SetValue(std::string, const double&);
 template void Frame::SetValue(std::string, const float&);
-// template void Frame::SetValue(std::string, const int&);
+template void Frame::SetValue(std::string, const int&);
 template void Frame::SetValue(std::string, const long&);
 template void Frame::SetValue(std::string, const unsigned long&);
 template void Frame::SetValue(std::string, const bool&);
@@ -547,7 +577,6 @@ template void Frame::SetValue(std::string, const std::vector<double>&);
 template void Frame::SetValue(std::string, const std::vector<Rect>&);
 template void Frame::SetValue(std::string, const std::vector<char>&);
 template void Frame::SetValue(std::string, const cv::Mat&);
-template void Frame::SetValue(std::string, const tensorflow::Tensor&);
 template void Frame::SetValue(std::string, const std::vector<FaceLandmark>&);
 template void Frame::SetValue(std::string,
                               const std::vector<std::vector<float>>&);
@@ -556,10 +585,13 @@ template void Frame::SetValue(std::string,
                               const std::vector<std::vector<double>>&);
 template void Frame::SetValue(std::string, const std::vector<Frame>&);
 template void Frame::SetValue(std::string, const std::vector<int>&);
+#ifdef USE_TENSORFLOW
+template void Frame::SetValue(std::string, const tensorflow::Tensor&);
+#endif  // USE_TENSORFLOW
 
 template double Frame::GetValue(std::string) const;
 template float Frame::GetValue(std::string) const;
-// template int Frame::GetValue(std::string) const;
+template int Frame::GetValue(std::string) const;
 template long Frame::GetValue(std::string) const;
 template unsigned long Frame::GetValue(std::string) const;
 template bool Frame::GetValue(std::string) const;
@@ -570,7 +602,6 @@ template std::vector<std::string> Frame::GetValue(std::string) const;
 template std::vector<double> Frame::GetValue(std::string) const;
 template std::vector<Rect> Frame::GetValue(std::string) const;
 template cv::Mat Frame::GetValue(std::string) const;
-template tensorflow::Tensor Frame::GetValue(std::string) const;
 template std::vector<char> Frame::GetValue(std::string) const;
 template std::vector<FaceLandmark> Frame::GetValue(std::string) const;
 template std::vector<std::vector<float>> Frame::GetValue(std::string) const;
@@ -578,3 +609,6 @@ template std::vector<float> Frame::GetValue(std::string) const;
 template std::vector<std::vector<double>> Frame::GetValue(std::string) const;
 template std::vector<Frame> Frame::GetValue(std::string) const;
 template std::vector<int> Frame::GetValue(std::string) const;
+#ifdef USE_TENSORFLOW
+template tensorflow::Tensor Frame::GetValue(std::string) const;
+#endif  // USE_TENSORFLOW

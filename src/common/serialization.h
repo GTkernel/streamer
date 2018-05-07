@@ -18,8 +18,9 @@
 #include <boost/date_time/posix_time/time_serialize.hpp>
 #include <boost/serialization/array.hpp>
 #include <opencv2/opencv.hpp>
-
+#ifdef USE_TENSORFLOW
 #include "tensorflow/core/framework/tensor.h"
+#endif  // USE_TENSORFLOW
 
 namespace boost {
 namespace serialization {
@@ -76,7 +77,8 @@ void serialize(Archive& ar, cv::Mat& mat, const unsigned int) {
   }
 }
 
-/** TODO Serialization support for Tensor */
+#ifdef USE_TENSORFLOW
+/** Serialization support for Tensor */
 template <class Archive>
 void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {
   // assume tensor is always continuous
@@ -119,6 +121,7 @@ void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {
 
   ar& boost::serialization::make_array(tensor.flat<float>().data(), data_size);
 }
+#endif  // USE_TENSORFLOW
 
 }  // namespace serialization
 }  // namespace boost
