@@ -73,6 +73,7 @@ class Frame {
       std::vector<std::vector<float>>, std::vector<float>,
       std::vector<std::vector<double>>, std::vector<Frame>, std::vector<int>>;
   size_t Count(std::string key) const;
+  size_t CountPrefix(std::string key_prefix) const;
   std::unordered_map<std::string, field_types> GetFields();
   void SetStopFrame(bool stop_frame);
   bool IsStopFrame() const;

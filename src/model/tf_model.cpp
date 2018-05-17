@@ -16,6 +16,7 @@
 
 #include <fstream>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <tensorflow/core/protobuf/meta_graph.pb.h>
 
 #include "common/context.h"
@@ -61,8 +62,11 @@ TFModel::TensorEvaluate(
     const std::vector<std::pair<std::string, tensorflow::Tensor>> inputs,
     const std::vector<std::string>& output_layer_names) {
   std::vector<tensorflow::Tensor> outputs;
+
+  auto processing_start_micros_ = boost::posix_time::microsec_clock::local_time(); 
   tensorflow::Status status =
       session_->Run(inputs, {output_layer_names}, {}, &outputs);
+  eval_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;  
 
   std::unordered_map<std::string, std::vector<tensorflow::Tensor>> ret;
   int count = 0;
@@ -180,7 +184,8 @@ cv::Mat TFModel::ConvertAndNormalize(cv::Mat img) {
   return normalized;
 }
 
-std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
+std::unordered_map<std::string, std::vector<cv::Mat>>
+ TFModel::Evaluate(
     const std::unordered_map<std::string, std::vector<cv::Mat>>& input_map,
     const std::vector<std::string>& output_layer_names) {
   CHECK_EQ(input_map.size(), 1)
@@ -229,8 +234,11 @@ std::unordered_map<std::string, std::vector<cv::Mat>> TFModel::Evaluate(
 
   // Run inference.
   std::vector<tensorflow::Tensor> outputs;
+
+  auto processing_start_micros_ = boost::posix_time::microsec_clock::local_time(); 
   tensorflow::Status status =
       session_->Run(inputs, {output_layer_names}, {}, &outputs);
+  eval_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;  
 
   if (!status.ok()) {
     LOG(FATAL) << "Session::Run() completed with errors: "

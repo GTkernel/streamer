@@ -23,6 +23,7 @@
 #include <tensorflow/core/public/session.h>
 #include <opencv2/opencv.hpp>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "common/types.h"
 #include "model/model.h"
 
@@ -38,7 +39,7 @@ class TFModel : public Model {
 
   // do tensorflow model evaluation directly
   virtual std::unordered_map<std::string, std::vector<tensorflow::Tensor>>
-  TensorEvaluate(
+          TensorEvaluate(
       const std::vector<std::pair<std::string, tensorflow::Tensor>> inputs,
       const std::vector<std::string>& output_layer_names);
 
@@ -51,6 +52,9 @@ class TFModel : public Model {
   virtual std::unordered_map<std::string, std::vector<cv::Mat>> Tensor2CV(
       const std::unordered_map<std::string, std::vector<tensorflow::Tensor>>&
           input_map);
+
+  boost::posix_time::time_duration eval_time;
+  boost::posix_time::time_duration preproc_time;
 
  private:
   std::unique_ptr<tensorflow::Session> session_;

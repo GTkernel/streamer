@@ -523,6 +523,15 @@ nlohmann::json Frame::ToJson() const {
 
 size_t Frame::Count(std::string key) const { return frame_data_.count(key); }
 
+size_t Frame::CountPrefix(std::string key_prefix) const { 
+    int count = 0;
+    for(auto it = frame_data_.begin(); it != frame_data_.end(); ++it) {
+       auto res = std::mismatch(key_prefix.begin(), key_prefix.end(), it->first.begin());
+       if (res.first == key_prefix.end()) count++;
+    }
+    return count; 
+}
+
 nlohmann::json Frame::GetFieldJson(const std::string& field) const {
   nlohmann::json j;
   j[field] = boost::apply_visitor(FrameJsonPrinter{}, frame_data_.at(field));

@@ -14,6 +14,8 @@
 
 #include "processor/neural_net_evaluator.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "model/model_manager.h"
 #include "utils/string_utils.h"
 #include "utils/utils.h"
@@ -139,7 +141,13 @@ void NeuralNetEvaluator::PassFrame(
       auto activations = activation_vector.at(i);
       ret_frame->SetValue(layer_name, activations);
     }
-    LOG(INFO) << "\n" << ret_frame->ToString();
+    //LOG(INFO) << "\n" << ret_frame->ToString();
+    auto eval_num = ret_frame->CountPrefix("eval_micros_");
+    ret_frame->SetValue("eval_micros_"+std::to_string(eval_num+1), tf_model_->eval_time);
+    
+    auto preproc_num = ret_frame->CountPrefix("preproc_micros_");
+    ret_frame->SetValue("preproc_micros_"+std::to_string(preproc_num+1), tf_model_->preproc_time);
+
     PushFrame(SINK_NAME, std::move(ret_frame));
   }
 }
@@ -161,11 +169,15 @@ void NeuralNetEvaluator::Process() {
   if (tf_model_ != NULL) {
     // for tensorflow model, only the first layer of model get OpenCV frame at
     // beginning so need to call ConvertAndNormalize
+    
+    auto processing_start_micros_ = boost::posix_time::microsec_clock::local_time();
     if (input_layer_name_ == tf_model_->GetModelDesc().GetDefaultInputLayer()) {
       input_mat = input_frame->GetValue<cv::Mat>(frame_name);
       input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
                             tf_model_->ConvertAndNormalize(input_mat));
     }
+    tf_model_->preproc_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;
+
   } else {
     input_mat = input_frame->GetValue<cv::Mat>(frame_name);
     input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
@@ -176,6 +188,7 @@ void NeuralNetEvaluator::Process() {
   if (cur_batch_frames_.size() < batch_size_) {
     return;
   }
+
 
   std::vector<cv::Mat> cv_batch_;
   std::vector<std::pair<std::string, tensorflow::Tensor>> tensor_batch_;
@@ -209,8 +222,7 @@ void NeuralNetEvaluator::Process() {
         output_layer_names_.end())
       is_last_layer = true;
 
-    std::unordered_map<std::string, std::vector<tensorflow::Tensor>>
-        layer_outputs;
+    std::unordered_map<std::string, std::vector<tensorflow::Tensor>> layer_outputs;
 
     if (tensor_batch_.size() > 0) {
       // with in the model, pass by Tensor
@@ -223,12 +235,14 @@ void NeuralNetEvaluator::Process() {
           tf_model_->TensorEvaluate(tensor_vec_, output_layer_names_);
     }
 
+
     if (is_last_layer) {
       auto cv_outputs = tf_model_->Tensor2CV(layer_outputs);
       PassFrame(cv_outputs);
     } else {
       PassFrame(layer_outputs);
     }
+
   }
 
   cur_batch_frames_.clear();

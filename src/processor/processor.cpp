@@ -248,14 +248,9 @@ void Processor::PushFrame(const std::string& sink_name,
       << GetStringForProcessorType(GetType())
       << " does not have a sink named \"" << sink_name << "\"!";
   if (!processing_start_micros_.is_not_a_date_time()) {
-    if (frame->Count(GetName() + ".total_micros") > 0){
-        frame->SetValue(GetName() + "2.total_micros",
-                        boost::posix_time::microsec_clock::local_time() - processing_start_micros_);
-    }
-    else{    
-        frame->SetValue(GetName() + ".total_micros",
-                        boost::posix_time::microsec_clock::local_time() - processing_start_micros_);
-    }
+    auto timing_num = frame->CountPrefix(GetName()+".total_micros_");    
+    frame->SetValue(GetName() + ".total_micros_"+std::to_string(timing_num+1),
+                    boost::posix_time::microsec_clock::local_time() - processing_start_micros_);
   }
   if (frame->IsStopFrame()) {
     found_last_frame_ = true;

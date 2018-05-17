@@ -76,6 +76,7 @@ void FrameSubscriber::Process() {
   } catch (const boost::archive::archive_exception& e) {
     LOG(INFO) << "Boost serialization error: " << e.what();
   }
-
+  
+  std::cout << frame->GetValue<unsigned long>("frame_id") << std::endl;
   PushFrame(SINK, std::move(frame));
 }

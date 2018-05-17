@@ -42,6 +42,7 @@ class FramePublisher : public Processor {
   static std::shared_ptr<FramePublisher> Create(
       const FactoryParamsType& params);
 
+  bool readyToBreak;
  protected:
   virtual bool Init() override;
   virtual bool OnStop() override;

@@ -95,7 +95,6 @@ void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {
   ar& type& vec_size& height& width& channels;
 
   const unsigned int data_size = vec_size * height * width * channels;
-
   if (Archive::is_loading::value) {
     tensorflow::Tensor reshape_tensor(
         type, tensorflow::TensorShape(
@@ -114,7 +113,7 @@ void serialize(Archive& ar, tensorflow::Tensor& tensor, const unsigned int) {
         msg << d << " ";
       }
       msg << "]";
-      throw std::runtime_error(msg.str());
+  //    throw std::runtime_error(msg.str());
     }
     tensor = reshape_tensor;
   }

@@ -18,10 +18,11 @@
 #include <zguide/examples/C++/zhelpers.hpp>
 
 constexpr auto SOURCE = "input";
+constexpr auto SINK_NAME = "output";
 
 FramePublisher::FramePublisher(const std::string& url,
                                std::unordered_set<std::string> fields_to_send)
-    : Processor(PROCESSOR_TYPE_FRAME_PUBLISHER, {SOURCE}, {}),
+    : Processor(PROCESSOR_TYPE_FRAME_PUBLISHER, {SOURCE}, {SINK_NAME}),
       zmq_context_{1},
       zmq_publisher_{zmq_context_, ZMQ_PUB},
       zmq_publisher_addr_("tcp://" + url),
@@ -33,6 +34,7 @@ FramePublisher::FramePublisher(const std::string& url,
   } catch (const zmq::error_t& e) {
     LOG(FATAL) << "ZMQ bind error: " << e.what();
   }
+  readyToBreak = false;
 }
 
 FramePublisher::~FramePublisher() {

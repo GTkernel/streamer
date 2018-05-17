@@ -30,3 +30,12 @@ BUILD_ONE(split_nne)
 
 add_executable(split_classifier EXCLUDE_FROM_ALL split_classifier.cpp)
 BUILD_ONE(split_classifier)
+
+add_executable(classifier EXCLUDE_FROM_ALL classifier.cpp)
+BUILD_ONE(classifier)
+
+add_executable(nne EXCLUDE_FROM_ALL nne.cpp)
+BUILD_ONE(nne)
+
+add_executable(camera EXCLUDE_FROM_ALL camera.cpp)
+BUILD_ONE(camera)
