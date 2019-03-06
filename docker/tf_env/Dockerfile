@@ -2,12 +2,16 @@
 #   
 #   Author: Ke-Jou Hsu <nosus_hsu@gatech.edu>
 
-FROM ubuntu:16.04
+#FROM ubuntu:16.04
+FROM tensorflow/tensorflow:1.5.1-devel-gpu
 
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 ARG DEFAULT_WORKDIR=/vcs
 # Prepare toolchain
 RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
-RUN apt-get --no-install-recommends install -y \
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+RUN apt-get --no-install-recommends install -y -q \
 	ssh \
 	sudo \
 	rsync \
@@ -23,17 +27,17 @@ RUN apt-get --no-install-recommends install -y \
 	unzip=6.0-20ubuntu1 \
 	build-essential=12.1ubuntu2 \
 	ocl-icd-opencl-dev:amd64=2.2.8-1 \
-	libavcodec-dev:amd64=7:2.8.11-0ubuntu0.16.04.1 \
-	libavformat-dev:amd64=7:2.8.11-0ubuntu0.16.04.1 \
-	libswscale-dev:amd64=7:2.8.11-0ubuntu0.16.04.1 \
-	python-dev=2.7.11-1 \
-	python-numpy=1:1.11.0-1ubuntu1 \
-	libtbb2:amd64=4.4~20151115-0ubuntu3 \
-	libtbb-dev:amd64=4.4~20151115-0ubuntu3 \
-	libjpeg-dev:amd64=8c-2ubuntu8 \
-	libpng12-dev:amd64=1.2.54-1ubuntu1 \
+	libavcodec-dev \
+	libavformat-dev \
+	libswscale-dev \
+	python-dev \
+	python-numpy \
+	libtbb2:amd64 \
+	libtbb-dev:amd64 \
+	libjpeg-dev:amd64 \
+	libpng12-dev:amd64 \
 	libtiff-dev \
-	libjasper-dev=1.900.1-debian1-2.4ubuntu1.1 \
+	libjasper-dev \
 	libdc1394-22-dev:amd64=2.2.4-1 \
 	libopenexr-dev=2.2.0-10ubuntu2 \
 	libeigen3-dev=3.3~beta1-2 \
@@ -41,7 +45,7 @@ RUN apt-get --no-install-recommends install -y \
 	libgstreamer-plugins-base1.0-dev=1.8.3-1ubuntu0.2 \
 	libgstreamer-plugins-good1.0-dev=1.8.3-1ubuntu0.4 \
 	libgstreamer-plugins-bad1.0-dev=1.8.3-1ubuntu0.2 \
-	python3-dev=3.5.1-3 \	
+	python3-dev=3.5.1-3 \
 	libleveldb-dev:amd64=1.18-5 \
 	libsnappy-dev:amd64=1.1.3-2 \
 	libhdf5-serial-dev=1.8.16+docs-4ubuntu1 \
@@ -58,21 +62,30 @@ RUN apt-get --no-install-recommends install -y \
 	libgtk2.0-dev=2.24.30-1ubuntu1.16.04.2 \
 	python-pip=8.1.1-2ubuntu0.4 \
 	openjdk-8-jdk 
+
 RUN rm -rf /var/lib/apt/lists/*
-RUN pip install --upgrade pip && pip install setuptools && pip install pyyaml && pip install wheel
+#RUN pip install --upgrade pip && pip install setuptools && pip install pyyaml && pip install wheel
+RUN pip install setuptools && pip install pyyaml && pip install wheel
 
 # Prepare the environment
 RUN mkdir -p $DEFAULT_WORKDIR
 ENV PATH ${PATH}:/usr/local/bin
 ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/local/lib
 
-WORKDIR $DEFAULT_WORKDIR
-COPY ./script/libs_setup.sh ./
-RUN sh ./libs_setup.sh
-
-# Resolve ProtoBuf version conflict
-RUN apt-get update && \
-    apt-get -f install -y && \
-    apt-get install -y --allow-downgrades libmirprotobuf3:amd64=0.21.0+16.04.20160330-0ubuntu1 && \
-	apt-get install -y gstreamer1.0-plugins-bad
-
+#Install CUDA toolkit
+RUN wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.0.176-1_amd64.deb && \
+    dpkg -i cuda-repo-ubuntu1604_9.0.176-1_amd64.deb && \
+    apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub && \
+    apt-get update && \
+    apt-get install -y cuda 
+#WORKDIR $DEFAULT_WORKDIR
+#COPY ./script/*.sh ./
+#RUN sh ./libs_setup.sh
+#RUN sh ./tensorflow_setup.sh
+#
+## Resolve ProtoBuf version conflict
+#RUN apt-get update && \
+#    apt-get -f install -y && \
+#    apt-get install -y --allow-downgrades libmirprotobuf3:amd64=0.21.0+16.04.20160330-0ubuntu1 && \
+#	apt-get install -y gstreamer1.0-plugins-bad
+#
