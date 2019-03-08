@@ -24,8 +24,8 @@
 #include "processor/caffe_facenet.h"
 #endif  // USE_CAFFE
 #include "processor/db_writer.h"
-#include "processor/detectors/object_detector.h"
-#include "processor/detectors/opencv_people_detector.h"
+//#include "processor/detectors/object_detector.h"
+//#include "processor/detectors/opencv_people_detector.h"
 #include "processor/face_tracker.h"
 #include "processor/image_classifier.h"
 #include "processor/image_segmenter.h"

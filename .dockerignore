@@ -2,3 +2,8 @@ script
 python
 build*
 docker
+apps
+Dockerfile
+src/processor/detectors
+!apps/CMakeLists.txt
+!apps/split_nne_rpc

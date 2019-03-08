@@ -39,8 +39,8 @@
 #ifdef USE_NCS
 #include "processor/detectors/ncs_yolo_detector.h"
 #endif  // USE_NCS
-#include "processor/detectors/object_detector.h"
-#include "processor/detectors/opencv_people_detector.h"
+//#include "processor/detectors/object_detector.h"
+//#include "processor/detectors/opencv_people_detector.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
 #include "processor/opencv_motion_detector.h"
@@ -118,14 +118,14 @@ std::shared_ptr<Processor> ProcessorFactory::Create(ProcessorType type,
       return NeuralNetEvaluator::Create(params);
     case PROCESSOR_TYPE_OBJECT_TRACKER:
       return ObjectTracker::Create(params);
-    case PROCESSOR_TYPE_OBJECT_DETECTOR:
-      return ObjectDetector::Create(params);
+//    case PROCESSOR_TYPE_OBJECT_DETECTOR:
+//      return ObjectDetector::Create(params);
     case PROCESSOR_TYPE_FACE_TRACKER:
       return FaceTracker::Create(params);
-    case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
-      return OpenCVMotionDetector::Create(params);
-    case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
-      return OpenCVPeopleDetector::Create(params);
+//    case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
+//      return OpenCVMotionDetector::Create(params);
+//    case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
+//      return OpenCVPeopleDetector::Create(params);
     case PROCESSOR_TYPE_STRIDER:
       return Strider::Create(params);
     case PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR:

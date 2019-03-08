@@ -3,7 +3,9 @@
 #   Author: Ke-Jou Hsu <nosus_hsu@gatech.edu>
 
 #FROM ubuntu:16.04
-FROM tensorflow/tensorflow:1.5.1-devel-gpu
+#FROM tensorflow/tensorflow:1.5.1-devel-gpu
+
+FROM nvidia/cuda:9.2-cudnn7-devel-ubuntu16.04
 
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
@@ -61,31 +63,26 @@ RUN apt-get --no-install-recommends install -y -q \
 	libblas-dev=3.6.0-2ubuntu2 \
 	libgtk2.0-dev=2.24.30-1ubuntu1.16.04.2 \
 	python-pip=8.1.1-2ubuntu0.4 \
-	openjdk-8-jdk 
+	openjdk-8-jdk && \
+	rm -rf /var/lib/apt/lists/*
 
-RUN rm -rf /var/lib/apt/lists/*
-#RUN pip install --upgrade pip && pip install setuptools && pip install pyyaml && pip install wheel
-RUN pip install setuptools && pip install pyyaml && pip install wheel
+RUN python -m pip install --upgrade pip && \
+    python -m pip install setuptools && \
+    python -m pip install pyyaml && \
+    python -m pip install wheel
 
 # Prepare the environment
 RUN mkdir -p $DEFAULT_WORKDIR
 ENV PATH ${PATH}:/usr/local/bin
 ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/local/lib
 
-#Install CUDA toolkit
-RUN wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.0.176-1_amd64.deb && \
-    dpkg -i cuda-repo-ubuntu1604_9.0.176-1_amd64.deb && \
-    apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub && \
-    apt-get update && \
-    apt-get install -y cuda 
-#WORKDIR $DEFAULT_WORKDIR
-#COPY ./script/*.sh ./
-#RUN sh ./libs_setup.sh
-#RUN sh ./tensorflow_setup.sh
-#
-## Resolve ProtoBuf version conflict
-#RUN apt-get update && \
-#    apt-get -f install -y && \
-#    apt-get install -y --allow-downgrades libmirprotobuf3:amd64=0.21.0+16.04.20160330-0ubuntu1 && \
-#	apt-get install -y gstreamer1.0-plugins-bad
-#
+WORKDIR $DEFAULT_WORKDIR
+COPY ./script/libs_setup_grpc.sh ./
+RUN sh ./libs_setup_grpc.sh
+
+# Resolve ProtoBuf version conflict
+RUN apt-get update && \
+    apt-get -f install -y && \
+    apt-get install -y --allow-downgrades libmirprotobuf3:amd64=0.21.0+16.04.20160330-0ubuntu1 && \
+	apt-get install -y gstreamer1.0-plugins-bad
+
