@@ -16,17 +16,25 @@
 
 #include <boost/archive/binary_iarchive.hpp>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 constexpr auto SINK = "output";
 
 FrameReceiver::FrameReceiver(const std::string listen_url)
     : Processor(PROCESSOR_TYPE_FRAME_RECEIVER, {}, {SINK}),
-      listen_url_(listen_url) {}
+      listen_url_(listen_url) {
+    deserialize_latency_ms_sum_ = 0;
+    received_frame_byte_ = 0;
+}
+
+double FrameReceiver::GetMsgByte(){ return received_frame_byte_; }
+double FrameReceiver::GetTotalDeserialLatencyMs(){ return deserialize_latency_ms_sum_; }
 
 void FrameReceiver::RunServer(const std::string listen_url) {
   grpc::ServerBuilder builder;
 
   // Increase maximum message size to 10 MiB
-  builder.SetMaxMessageSize(10 * 1024 * 1024);
+  builder.SetMaxMessageSize(200 * 1024 * 1024);
 
   // TODO:  Use secure credentials (e.g., SslCredentials)
   builder.AddListeningPort(listen_url, grpc::InsecureServerCredentials());
@@ -42,6 +50,10 @@ StreamPtr FrameReceiver::GetSink() { return Processor::GetSink(SINK); }
 grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
                                       const SingleFrame* frame_message,
                                       google::protobuf::Empty*) {
+  boost::posix_time::ptime start_deserial_time_ = boost::posix_time::microsec_clock::local_time();
+
+  if(received_frame_byte_ == 0){ received_frame_byte_ = frame_message->ByteSize(); }
+
   std::stringstream frame_string;
   frame_string << frame_message->frame();
 
@@ -61,6 +73,8 @@ grpc::Status FrameReceiver::SendFrame(grpc::ServerContext*,
   }
 
   PushFrame(SINK, std::move(frame));
+
+  deserialize_latency_ms_sum_ += (double)(boost::posix_time::microsec_clock::local_time() - start_deserial_time_).total_microseconds();
 
   return grpc::Status::OK;
 }

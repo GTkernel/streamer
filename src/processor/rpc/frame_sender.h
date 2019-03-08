@@ -23,12 +23,18 @@
 
 class FrameSender : public Processor {
  public:
-  FrameSender(const std::string server_url);
+  FrameSender(const std::string server_url, std::unordered_set<std::string> fields_to_send = {});
 
   void SetSource(StreamPtr stream);
   using Processor::SetSource;
 
   static std::shared_ptr<FrameSender> Create(const FactoryParamsType& params);
+
+  double serialize_latency_ms_sum;
+  double send_latency_ms_sum;
+
+  StreamPtr GetSink();
+  using Processor::GetSink;
 
  protected:
   bool Init() override;
@@ -38,6 +44,9 @@ class FrameSender : public Processor {
  private:
   std::string server_url_;
   std::unique_ptr<Messenger::Stub> stub_;
+  // The frame fields to send. The empty set implies all fields.
+  std::unordered_set<std::string> fields_to_send_;
+
 };
 
 #endif  // STREAMER_PROCESSOR_RPC_FRAME_SENDER_H_

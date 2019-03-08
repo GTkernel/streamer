@@ -243,7 +243,7 @@ enum ProcessorType {
   PROCESSOR_TYPE_NEURAL_NET_EVALUATOR,
 //  PROCESSOR_TYPE_OBJECT_DETECTOR,
   PROCESSOR_TYPE_OBJECT_TRACKER,
-  PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
+//  PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR,
 //  PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR,
   PROCESSOR_TYPE_STRIDER,
   PROCESSOR_TYPE_TEMPORAL_REGION_SELECTOR,
@@ -314,8 +314,8 @@ inline ProcessorType GetProcessorTypeByString(const std::string& type) {
 //    return PROCESSOR_TYPE_OBJECT_DETECTOR;
   } else if (type == "ObjectTracker") {
     return PROCESSOR_TYPE_OBJECT_TRACKER;
-  } else if (type == "OpenCVMotionDetector") {
-    return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
+//  } else if (type == "OpenCVMotionDetector") {
+//    return PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR;
 //  } else if (type == "OpenCVPeopleDetector") {
 //    return PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR;
   } else if (type == "Strider") {
@@ -394,8 +394,8 @@ inline std::string GetStringForProcessorType(ProcessorType type) {
 //      return "ObjectDetector";
     case PROCESSOR_TYPE_OBJECT_TRACKER:
       return "ObjectTracker";
-    case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
-      return "OpenCVMotionDetector";
+//    case PROCESSOR_TYPE_OPENCV_MOTION_DETECTOR:
+//      return "OpenCVMotionDetector";
 //    case PROCESSOR_TYPE_OPENCV_PEOPLE_DETECTOR:
 //      return "OpenCVPeopleDetector";
     case PROCESSOR_TYPE_STRIDER:

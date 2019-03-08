@@ -17,7 +17,7 @@ RUN mkdir build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DBACKEND=cuda -DUSE_TENSORFLOW=yes -DTENSORFLOW_HOME=/usr/local/include/tensorflow/ -DUSE_RPC=yes .. && \
     make -j8 && make apps -j8
 
-RUN apt-get -y autoremove && apt-get autoclean && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/*
+#RUN apt-get -y autoremove && apt-get autoclean && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/*
 
 WORKDIR $DEFAULT_WORKDIR/streamer/build
 

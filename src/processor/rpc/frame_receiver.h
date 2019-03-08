@@ -32,6 +32,8 @@ class FrameReceiver final : public Processor, public Messenger::Service {
   grpc::Status SendFrame(grpc::ServerContext* context,
                          const SingleFrame* frame_message,
                          google::protobuf::Empty* ignored) override;
+  double GetMsgByte();
+  double GetTotalDeserialLatencyMs();
 
   static std::shared_ptr<FrameReceiver> Create(const FactoryParamsType& params);
 
@@ -43,6 +45,9 @@ class FrameReceiver final : public Processor, public Messenger::Service {
  private:
   std::string listen_url_;
   std::unique_ptr<grpc::Server> server_;
+  double deserialize_latency_ms_sum_;
+  double received_frame_byte_;
+
 };
 
 #endif  // STREAMER_PROCESSOR_RPC_FRAME_RECEIVER_H_

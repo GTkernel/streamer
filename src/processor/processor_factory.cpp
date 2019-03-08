@@ -43,7 +43,7 @@
 //#include "processor/detectors/opencv_people_detector.h"
 #include "processor/keyframe_detector/keyframe_detector.h"
 #include "processor/neural_net_evaluator.h"
-#include "processor/opencv_motion_detector.h"
+//#include "processor/opencv_motion_detector.h"
 #include "processor/pubsub/frame_publisher.h"
 #include "processor/pubsub/frame_subscriber.h"
 #include "processor/trackers/object_tracker.h"
