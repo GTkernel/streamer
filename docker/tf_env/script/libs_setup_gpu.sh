@@ -26,6 +26,7 @@ curl -LO "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}
 dpkg -i bazel_*.deb
 rm bazel_*.deb
 
+cd /vcs
 # new protobuf installation
 #based on tensorflow r1.12 requirement
 wget https://github.com/google/protobuf/archive/v3.6.0.tar.gz
@@ -35,8 +36,6 @@ cd protobuf-3.6.0/
 ./autogen.sh
 ./configure
 make -j`nproc` && make install
-cd ..
-rm -rf protobuf-3.6.0/
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/include
 export PATH=${PATH}:/usr/local/bin
@@ -66,17 +65,19 @@ cp -r tensorflow/cc /usr/local/include/tensorflow/
 cp bazel-genfiles/tensorflow/cc/ops/*.h /usr/local/include/tensorflow/cc/ops/
 cp bazel-bin/tensorflow/libtensorflow_cc.so /usr/local/lib/
 #
-cd /vcs
 rm -rf /tmp/tensorflow_pkg
-rm -rf ./tensorflow  #save for building model
+rm -rf /vcs/tensorflow-1.12.0
 #
 #install grpc
+cd /vcs
 git clone https://github.com/grpc/grpc.git
-cd grpc
-sed -i 10d .gitmodules
-sed -i 10d .gitmodules
-sed -i "10i \\\turl = /vcs/protobuf-3.6.0" .gitmodules
+#cd grpc
+#sed -i 10d .gitmodules
+#sed -i 10d .gitmodules
+#sed -i "10i \\\turl = /vcs/protobuf-3.6.0" .gitmodules
 git submodule update --init
 sed -i "s/ldconfig/ldconfig -r \/usr\/local\/bin\//g" Makefile
 make -j8 && make install
-
+#
+rm -rf /vcs/grpc
+rm -rf /vcs/protobuf-3.6.0

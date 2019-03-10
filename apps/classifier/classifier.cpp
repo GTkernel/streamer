@@ -69,61 +69,79 @@ void Run(const std::string& camera_name, const std::string& model_name,
   }
 
   auto reader = classifier->GetSink("output")->Subscribe();
+  int frame_count = 0;
+  int frame_id = 0;
+  boost::posix_time::time_duration total_nne_eval;
+  double classifier_eval_time;
+
+  auto processing_start_micros_ = boost::posix_time::microsec_clock::local_time();
+
   while (true) {
-    auto frame = reader->PopFrame();
-
-    // Extract match percentage.
-    auto probs = frame->GetValue<std::vector<double>>("probabilities");
-    auto prob_percent = probs.front() * 100;
-
-    // Extract tag.
-    auto tags = frame->GetValue<std::vector<std::string>>("tags");
-    auto tag = tags.front();
-    std::regex re(".+? (.+)");
-    std::smatch results;
-    std::string tag_name;
-    if (!std::regex_match(tag, results, re)) {
-      tag_name = tag;
-    } else {
-      tag_name = results[1];
+//    auto frame = reader->PopFrame();
+//
+//    // Extract match percentage.
+//    auto probs = frame->GetValue<std::vector<double>>("probabilities");
+//    auto prob_percent = probs.front() * 100;
+//
+//    // Extract tag.
+//    auto tags = frame->GetValue<std::vector<std::string>>("tags");
+//    auto tag = tags.front();
+//    std::regex re(".+? (.+)");
+//    std::smatch results;
+//    std::string tag_name;
+//    if (!std::regex_match(tag, results, re)) {
+//      tag_name = tag;
+//    } else {
+//      tag_name = results[1];
+//    }
+//
+//    // Get Frame Rate
+//    double rate = reader->GetPushFps();
+//
+//    std::ostringstream label;
+//    label.precision(2);
+//    label << rate << " FPS - " << prob_percent << "% - " << tag_name;
+//    auto label_string = label.str();
+//    std::cout << label_string << std::endl;
+//
+//    // For debugging purposes only...
+//    std::ostringstream fps_msg;
+//    fps_msg.precision(3);
+//    fps_msg << "  GetPushFps: " << reader->GetPushFps() << std::endl
+//            << "  GetPopFps: " << reader->GetPopFps() << std::endl
+//            << "  GetHistoricalFps: " << reader->GetHistoricalFps() << std::endl
+//            << "  GetAvgProcessingLatencyMs->FPS: "
+//            << (1000 / classifier->GetAvgProcessingLatencyMs()) << std::endl
+//            << "  GetTrailingAvgProcessingLatencyMs->FPS: "
+//            << (1000 / classifier->GetTrailingAvgProcessingLatencyMs());
+//    std::cout << fps_msg.str() << std::endl;
+//
+//    if (display) {
+//      // Overlay classification label and probability
+//      auto font_scale = 2.0;
+//      cv::Point label_point(25, 50);
+//      cv::Scalar label_color(200, 200, 250);
+//      cv::Scalar outline_color(0, 0, 0);
+//
+//      auto img = frame->GetValue<cv::Mat>("original_image");
+//      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
+//                  font_scale, outline_color, 8, CV_AA);
+//      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
+//                  font_scale, label_color, 2, CV_AA);
+//      cv::imshow(camera_name, img);
+//
+//      if (cv::waitKey(10) == 'q') break;
+//    }
+    auto frame = reader->PopFrame(20);
+    if (frame != NULL) {
+        frame_id = frame->GetValue<unsigned long>("frame_id");
+        total_nne_eval += frame->GetValue<boost::posix_time::time_duration>("eval_micros");
+        frame_count++;
     }
-
-    // Get Frame Rate
-    double rate = reader->GetPushFps();
-
-    std::ostringstream label;
-    label.precision(2);
-    label << rate << " FPS - " << prob_percent << "% - " << tag_name;
-    auto label_string = label.str();
-    std::cout << label_string << std::endl;
-
-    // For debugging purposes only...
-    std::ostringstream fps_msg;
-    fps_msg.precision(3);
-    fps_msg << "  GetPushFps: " << reader->GetPushFps() << std::endl
-            << "  GetPopFps: " << reader->GetPopFps() << std::endl
-            << "  GetHistoricalFps: " << reader->GetHistoricalFps() << std::endl
-            << "  GetAvgProcessingLatencyMs->FPS: "
-            << (1000 / classifier->GetAvgProcessingLatencyMs()) << std::endl
-            << "  GetTrailingAvgProcessingLatencyMs->FPS: "
-            << (1000 / classifier->GetTrailingAvgProcessingLatencyMs());
-    std::cout << fps_msg.str() << std::endl;
-
-    if (display) {
-      // Overlay classification label and probability
-      auto font_scale = 2.0;
-      cv::Point label_point(25, 50);
-      cv::Scalar label_color(200, 200, 250);
-      cv::Scalar outline_color(0, 0, 0);
-
-      auto img = frame->GetValue<cv::Mat>("original_image");
-      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
-                  font_scale, outline_color, 8, CV_AA);
-      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
-                  font_scale, label_color, 2, CV_AA);
-      cv::imshow(camera_name, img);
-
-      if (cv::waitKey(10) == 'q') break;
+    auto passing_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;
+    if (frame_id >= 2500 || passing_time.total_seconds() > 1800) {
+        classifier_eval_time = classifier->GetAvgProcessingLatencyMs();
+        break;
     }
   }
 
@@ -131,6 +149,14 @@ void Run(const std::string& camera_name, const std::string& model_name,
   for (const auto& proc : procs) {
     proc->Stop();
   }
+  
+  std::cout << "======" << std::endl;
+  std::cout << "Frame count = " << frame_count << std::endl;
+  std::cout << "camera = " << camera->GetAvgProcessingLatencyMs() << std::endl;
+  std::cout << "transformer = " << transformer->GetAvgProcessingLatencyMs() << std::endl;
+  std::cout << "nne = " << total_nne_eval.total_microseconds() / frame_count << std::endl;
+  std::cout << "classifier = " << classifier_eval_time << std::endl;
+
 }
 
 int main(int argc, char* argv[]) {

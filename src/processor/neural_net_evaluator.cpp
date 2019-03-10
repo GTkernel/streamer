@@ -142,11 +142,7 @@ void NeuralNetEvaluator::PassFrame(
       ret_frame->SetValue(layer_name, activations);
     }
     //LOG(INFO) << "\n" << ret_frame->ToString();
-    auto eval_num = ret_frame->CountPrefix("eval_micros_");
-    ret_frame->SetValue("eval_micros_"+std::to_string(eval_num+1), tf_model_->eval_time);
-    
-    auto preproc_num = ret_frame->CountPrefix("preproc_micros_");
-    ret_frame->SetValue("preproc_micros_"+std::to_string(preproc_num+1), tf_model_->preproc_time);
+    ret_frame->SetValue("eval_micros", tf_model_->eval_time);
 
     PushFrame(SINK_NAME, std::move(ret_frame));
   }
@@ -169,14 +165,11 @@ void NeuralNetEvaluator::Process() {
   if (tf_model_ != NULL) {
     // for tensorflow model, only the first layer of model get OpenCV frame at
     // beginning so need to call ConvertAndNormalize
-    
-    auto processing_start_micros_ = boost::posix_time::microsec_clock::local_time();
     if (input_layer_name_ == tf_model_->GetModelDesc().GetDefaultInputLayer()) {
       input_mat = input_frame->GetValue<cv::Mat>(frame_name);
       input_frame->SetValue(GetName() + "." + frame_name + ".normalized",
                             tf_model_->ConvertAndNormalize(input_mat));
     }
-    tf_model_->preproc_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;
 
   } else {
     input_mat = input_frame->GetValue<cv::Mat>(frame_name);
@@ -188,7 +181,6 @@ void NeuralNetEvaluator::Process() {
   if (cur_batch_frames_.size() < batch_size_) {
     return;
   }
-
 
   std::vector<cv::Mat> cv_batch_;
   std::vector<std::pair<std::string, tensorflow::Tensor>> tensor_batch_;

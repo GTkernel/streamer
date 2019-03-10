@@ -2,11 +2,8 @@
 #   
 #   Author: Ke-Jou Hsu <nosus_hsu@gatech.edu>
 
+FROM ubuntu:16.04
 
-FROM nvidia/cuda:9.2-cudnn7-devel-ubuntu16.04
-
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 ARG DEFAULT_WORKDIR=/vcs
 # Prepare toolchain
 RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
@@ -75,8 +72,8 @@ ENV PATH ${PATH}:/usr/local/bin
 ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/local/lib
 
 WORKDIR $DEFAULT_WORKDIR
-COPY ./script/libs_setup_gpu.sh ./
-RUN sh ./libs_setup_gpu.sh
+COPY ./script/libs_setup.sh ./
+RUN sh ./libs_setup.sh
 
 # Resolve ProtoBuf version conflict
 RUN apt-get update && \

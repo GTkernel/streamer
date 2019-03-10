@@ -8,4 +8,4 @@ src/processor/opencv_motion_detector.cpp
 src/processor/opencv_motion_detector.h
 src/processor/detectors
 !apps/CMakeLists.txt
-!apps/split_nne_rpc
+!apps/classifier
