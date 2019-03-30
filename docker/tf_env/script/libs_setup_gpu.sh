@@ -71,7 +71,7 @@ rm -rf /vcs/tensorflow-1.12.0
 #install grpc
 cd /vcs
 git clone https://github.com/grpc/grpc.git
-#cd grpc
+cd grpc
 #sed -i 10d .gitmodules
 #sed -i 10d .gitmodules
 #sed -i "10i \\\turl = /vcs/protobuf-3.6.0" .gitmodules
