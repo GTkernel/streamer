@@ -83,4 +83,5 @@ void FrameSender::Process() {
   if (!status.ok()) {
     LOG(INFO) << "gRPC error(SendFrame): " << status.error_message();
   }
+  PushFrame(SINK_NAME, std::move(frame));
 }
