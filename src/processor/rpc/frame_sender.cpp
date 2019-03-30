@@ -77,11 +77,12 @@ void FrameSender::Process() {
   boost::posix_time::ptime start_send_time_ = boost::posix_time::microsec_clock::local_time();
 
   grpc::Status status = stub_->SendFrame(&context, frame_message, &ignored);
-  send_latency_ms_sum +=
-        (double)(boost::posix_time::microsec_clock::local_time() - start_send_time_).total_microseconds();
 
   if (!status.ok()) {
     LOG(INFO) << "gRPC error(SendFrame): " << status.error_message();
+  }else{
+    PushFrame(SINK_NAME, std::move(frame));
+    send_latency_ms_sum +=
+        (double)(boost::posix_time::microsec_clock::local_time() - start_send_time_).total_microseconds();
   }
-  PushFrame(SINK_NAME, std::move(frame));
 }
