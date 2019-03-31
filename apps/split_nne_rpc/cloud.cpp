@@ -53,13 +53,10 @@ void Run(const std::string& subscribe_endpoint, const std::string& net, const in
          std::cout << "frame count = " << frame_count << std::endl;
          std::cout << "transformer fps = " << transformer->GetHistoricalProcessFps() << std::endl;
          std::cout << "transformer latency = " << transformer->GetAvgProcessingLatencyMs() << std::endl;
-         std::cout << "transformer queue = " << transformer->GetAvgQueueLatencyMs() << std::endl;
          std::cout << "classifier fps = " << classifier->GetHistoricalProcessFps() << std::endl;
          std::cout << "classifier latency = " << classifier->GetAvgProcessingLatencyMs() << std::endl;
-         std::cout << "classifier queue = " << classifier->GetAvgQueueLatencyMs() << std::endl;
          std::cout << "data size = " << receiver->GetMsgByte() << std::endl;
-         std::cout << "deserialize latency = " << receiver->GetTotalDeserialLatencyMs() / frame_count << std::endl;
-         std::cout << "receiver queue = " << receiver->GetAvgQueueLatencyMs() << std::endl;
+         std::cout << "receiver latency = " << receiver->GetAvgProcessingLatencyMs() << std::endl;
          break;
     }
   }

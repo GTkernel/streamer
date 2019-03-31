@@ -55,9 +55,8 @@ void Run(const std::string& publish_endpoint, const std::string& camera_name,
   std::cout << "camera latency = " << camera->GetAvgProcessingLatencyMs() << std::endl;
   std::cout << "sender fps = " << sender->GetHistoricalProcessFps() << std::endl;
   std::cout << "sender latency = " << sender->GetAvgProcessingLatencyMs() << std::endl;
-  std::cout << "serialize latency = " << sender->serialize_latency_ms_sum / frame_count << std::endl;
+//  std::cout << "serialize latency = " << sender->serialize_latency_ms_sum / frame_count << std::endl;
   std::cout << "sender queue = " << sender->GetAvgQueueLatencyMs() << std::endl;
-  std::cout << "real sending latency = " << sender->send_latency_ms_sum / frame_count << std::endl;
 }
 
 int main(int argc, char* argv[]) {
