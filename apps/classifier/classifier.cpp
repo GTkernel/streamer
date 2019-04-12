@@ -37,7 +37,7 @@
 namespace po = boost::program_options;
 
 void Run(const std::string& camera_name, const std::string& model_name,
-         bool display) {
+         bool display, const int exec_sec ) {
   std::vector<std::shared_ptr<Processor>> procs;
 
   // Camera
@@ -77,61 +77,6 @@ void Run(const std::string& camera_name, const std::string& model_name,
   auto processing_start_micros_ = boost::posix_time::microsec_clock::local_time();
 
   while (true) {
-//    auto frame = reader->PopFrame();
-//
-//    // Extract match percentage.
-//    auto probs = frame->GetValue<std::vector<double>>("probabilities");
-//    auto prob_percent = probs.front() * 100;
-//
-//    // Extract tag.
-//    auto tags = frame->GetValue<std::vector<std::string>>("tags");
-//    auto tag = tags.front();
-//    std::regex re(".+? (.+)");
-//    std::smatch results;
-//    std::string tag_name;
-//    if (!std::regex_match(tag, results, re)) {
-//      tag_name = tag;
-//    } else {
-//      tag_name = results[1];
-//    }
-//
-//    // Get Frame Rate
-//    double rate = reader->GetPushFps();
-//
-//    std::ostringstream label;
-//    label.precision(2);
-//    label << rate << " FPS - " << prob_percent << "% - " << tag_name;
-//    auto label_string = label.str();
-//    std::cout << label_string << std::endl;
-//
-//    // For debugging purposes only...
-//    std::ostringstream fps_msg;
-//    fps_msg.precision(3);
-//    fps_msg << "  GetPushFps: " << reader->GetPushFps() << std::endl
-//            << "  GetPopFps: " << reader->GetPopFps() << std::endl
-//            << "  GetHistoricalFps: " << reader->GetHistoricalFps() << std::endl
-//            << "  GetAvgProcessingLatencyMs->FPS: "
-//            << (1000 / classifier->GetAvgProcessingLatencyMs()) << std::endl
-//            << "  GetTrailingAvgProcessingLatencyMs->FPS: "
-//            << (1000 / classifier->GetTrailingAvgProcessingLatencyMs());
-//    std::cout << fps_msg.str() << std::endl;
-//
-//    if (display) {
-//      // Overlay classification label and probability
-//      auto font_scale = 2.0;
-//      cv::Point label_point(25, 50);
-//      cv::Scalar label_color(200, 200, 250);
-//      cv::Scalar outline_color(0, 0, 0);
-//
-//      auto img = frame->GetValue<cv::Mat>("original_image");
-//      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
-//                  font_scale, outline_color, 8, CV_AA);
-//      cv::putText(img, label_string, label_point, CV_FONT_HERSHEY_PLAIN,
-//                  font_scale, label_color, 2, CV_AA);
-//      cv::imshow(camera_name, img);
-//
-//      if (cv::waitKey(10) == 'q') break;
-//    }
     auto frame = reader->PopFrame(20);
     if (frame != NULL) {
         frame_id = frame->GetValue<unsigned long>("frame_id");
@@ -139,7 +84,7 @@ void Run(const std::string& camera_name, const std::string& model_name,
         frame_count++;
     }
     auto passing_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;
-    if (frame_id >= 2500 || passing_time.total_seconds() > 1800) {
+    if ( passing_time.total_seconds() > exec_sec ){
         classifier_eval_time = classifier->GetAvgProcessingLatencyMs();
         break;
     }
@@ -170,6 +115,8 @@ int main(int argc, char* argv[]) {
   desc.add_options()("model,m", po::value<std::string>()->required(),
                      "The name of the model to evaluate.");
   desc.add_options()("display,d", "Enable display or not");
+  desc.add_options()("execution_time,t",po::value<int>()->default_value(120),
+                     "the time for running the application(seconds)");
 
   // Parse the command line arguments.
   po::variables_map args;
@@ -201,7 +148,8 @@ int main(int argc, char* argv[]) {
   }
   auto camera_name = args["camera"].as<std::string>();
   auto model = args["model"].as<std::string>();
+  int exec_sec = args["execution_time"].as<int>();
   bool display = args.count("display");
-  Run(camera_name, model, display);
+  Run(camera_name, model, display, exec_sec);
   return 0;
 }

@@ -45,6 +45,11 @@ tar xvf v1.12.0.tar.gz
 rm v1.12.0.tar.gz
 cd tensorflow-1.12.0
 
+pip install enum34 mock
+pip install keras_applications==1.0.4 --no-deps
+pip install keras_preprocessing==1.0.2 --no-deps
+pip install h5py==2.8.0
+
 echo -ne '\n\n\n\n\n\n\n\n\n\n\n' | ./configure
 bazel build --config=monolithic //tensorflow:libtensorflow_cc.so
 bazel build //tensorflow/tools/pip_package:build_pip_package
@@ -62,11 +67,8 @@ rm -rf /vcs/tensorflow-1.12.0
 
 #install grpc
 cd /vcs
-git clone https://github.com/grpc/grpc.git
+git clone -b v1.19.0 https://github.com/grpc/grpc.git
 cd grpc
-#sed -i 10d .gitmodules
-#sed -i 10d .gitmodules
-#sed -i "10i \\\turl = /vcs/protobuf-3.6.0" .gitmodules
 git submodule update --init
 sed -i "s/ldconfig/ldconfig -r \/usr\/local\/bin\//g" Makefile
 make -j8 && make install
