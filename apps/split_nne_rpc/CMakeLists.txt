@@ -37,7 +37,7 @@ BUILD_ONE(camera_rpc)
 add_executable(cloud_rpc EXCLUDE_FROM_ALL cloud.cpp)
 BUILD_ONE(cloud_rpc)
 
-add_executable(nne1 EXCLUDE_FROM_ALL nne1_nocam.cpp)
+add_executable(nne1_nocam EXCLUDE_FROM_ALL nne1_nocam.cpp)
 BUILD_ONE(nne1_nocam)
 
 add_executable(nne1 EXCLUDE_FROM_ALL nne1.cpp)

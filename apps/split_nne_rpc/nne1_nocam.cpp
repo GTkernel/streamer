@@ -20,7 +20,7 @@
 namespace po = boost::program_options;
 
 void Run(const std::string& subscribe_endpoint,
-         const std::string& publish_endpoint, const std::string& camera_name,
+         const std::string& publish_endpoint,
          const std::string& net, const std::string& input_layer,
          const std::string& output_layer,
          const int exec_sec ) {
