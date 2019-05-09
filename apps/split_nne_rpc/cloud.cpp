@@ -49,8 +49,12 @@ void Run(const std::string& subscribe_endpoint, const std::string& net, const in
     }
     auto passing_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;
     if (passing_time.total_seconds() > exec_sec){
+         unsigned long last_id = frame->GetValue<unsigned long>("frame_id");
+         float drop_rate = (last_id - frame_count) / frame_count;
          std::cout << "======" << std::endl;
          std::cout << "frame count = " << frame_count << std::endl;
+         std::cout << "last id = " << last_id << std::endl;
+         std::cout << "drop rate = " << drop_rate << std::endl;
          std::cout << "transformer fps = " << transformer->GetHistoricalProcessFps() << std::endl;
          std::cout << "transformer latency = " << transformer->GetAvgProcessingLatencyMs() << std::endl;
          std::cout << "classifier fps = " << classifier->GetHistoricalProcessFps() << std::endl;
