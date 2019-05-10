@@ -89,14 +89,15 @@ void Run(const std::string& camera_name, const std::string& model_name,
         break;
     }
   }
-
   // Stop the processors in forward order.
   for (const auto& proc : procs) {
     proc->Stop();
   }
-  
+  auto drop_rate = (float) (frame_id - frame_count) / frame_id;
   std::cout << "======" << std::endl;
-  std::cout << "Frame count = " << frame_count << std::endl;
+  std::cout << "frame count = " << frame_count << std::endl;
+  std::cout << "last id = " << frame_id << std::endl;
+  std::cout << "drop rate = " << drop_rate << std::endl; 
   std::cout << "camera = " << camera->GetAvgProcessingLatencyMs() << std::endl;
   std::cout << "transformer = " << transformer->GetAvgProcessingLatencyMs() << std::endl;
   std::cout << "nne = " << total_nne_eval.total_microseconds() / frame_count << std::endl;
