@@ -40,6 +40,9 @@ BUILD_ONE(cloud_rpc)
 add_executable(nne1_nocam EXCLUDE_FROM_ALL nne1_nocam.cpp)
 BUILD_ONE(nne1_nocam)
 
+add_executable(passer EXCLUDE_FROM_ALL passer.cpp)
+BUILD_ONE(passer)
+
 add_executable(nne1 EXCLUDE_FROM_ALL nne1.cpp)
 BUILD_ONE(nne1)
 
