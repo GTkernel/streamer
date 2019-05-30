@@ -124,6 +124,8 @@ class Processor {
   // outputs streams if any of its output streams is full.
   virtual void SetBlockOnPush(bool block);
 
+  virtual unsigned int GetProcessedFrames() const;
+
  protected:
   /**
    * @brief Initialize the processor.

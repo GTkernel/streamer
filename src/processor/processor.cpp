@@ -232,6 +232,10 @@ double Processor::GetAvgQueueLatencyMs() const {
   return queue_latency_sum_ms_ / num_frames_processed_;
 }
 
+unsigned int Processor::GetProcessedFrames() const{
+  return num_frames_processed_;
+}
+
 ProcessorType Processor::GetType() const { return type_; }
 
 std::string Processor::GetName() const {
