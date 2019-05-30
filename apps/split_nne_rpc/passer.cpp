@@ -9,63 +9,48 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "common/context.h"
-#include "model/model_manager.h"
-#include "processor/neural_net_evaluator.h"
+#include "processor/rpc/frame_sender.h"
 #include "processor/rpc/frame_receiver.h"
 #include "processor/processor.h"
 
 namespace po = boost::program_options;
 
-void Run(const std::string& subscribe_endpoint, 
-         const std::string& net,
-         const std::string& input_layer, const std::string& output_layer,
+void Run(const std::string& subscribe_endpoint,
+         const std::string& publish_endpoint,
          const int exec_sec ) {
+
 
   auto receiver = new FrameReceiver(subscribe_endpoint);
 
-  auto model_desc = ModelManager::GetInstance().GetModelDesc(net);
-  Shape input_shape(3, model_desc.GetInputWidth(), model_desc.GetInputHeight());
+  auto sender = new FrameSender(publish_endpoint);
+  sender->SetSource(receiver->GetSink());
 
-  // NNE
-  std::vector<std::string> output_layers = {output_layer};
-  auto nne = std::make_shared<NeuralNetEvaluator>(model_desc, input_shape, 1, output_layers);
-  nne->SetSource(receiver->GetSink(), input_layer);
-
-  auto reader = nne->GetSink()->Subscribe();
+  auto reader = sender->GetSink()->Subscribe();
   int frame_count = 0;
-  int frame_id = 0;
+  
   auto processing_start_micros_ = boost::posix_time::microsec_clock::local_time();
 
-  nne->Start();
   receiver->Start();
-  //move it to a function?
+  sender->Start();
 
   while (true) {
     auto frame = reader->PopFrame(20);
     if(frame != NULL) {
         frame_count ++;
-	frame_id = frame->GetValue<unsigned long>("frame_id");
     }
     auto passing_time = boost::posix_time::microsec_clock::local_time() - processing_start_micros_;
-    if (passing_time.total_seconds() > exec_sec){
-        auto drop_rate = (float) (frame_id - frame_count) / frame_id;
-        std::cout << "======" << std::endl;
-        std::cout << "frame count = " << frame_count << std::endl;
-        std::cout << "last id = " << frame_id << std::endl;
-        std::cout << "drop rate = " << drop_rate << std::endl;
-        std::cout << "nne fps = " << nne->GetHistoricalProcessFps() << std::endl;
-        std::cout << "nne latency = " << nne->GetAvgProcessingLatencyMs() << std::endl;
-        std::cout << "nne queue = " << nne->GetAvgQueueLatencyMs() << std::endl;
-        std::cout << "data size = " << receiver->GetMsgByte() << std::endl;
-        std::cout << "deserialize latency = " << receiver->GetTotalDeserialLatencyMs() / frame_count << std::endl;
+    if ( passing_time.total_seconds() > exec_sec){
         break;
     }
-    
   }
 
-  // Stop the processors in forward order.
   receiver->Stop();
-  nne->Stop();
+  sender->Stop();
+  // Stop the processors in forward order.
+
+  std::cout << "======" << std::endl;
+  std::cout << "frame count = " << frame_count << std::endl;
+  std::cout << "sender latency = " << sender->GetAvgProcessingLatencyMs() << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -75,12 +60,9 @@ int main(int argc, char* argv[]) {
   desc.add_options()(
       "config-dir,C", po::value<std::string>(),
       "The directory containing streamer's configuration files.");
-  desc.add_options()("net,n", po::value<std::string>()->required(),
-                     "The name of the neural net to run.");
-  desc.add_options()("input,i", po::value<std::string>()->required(),
-                     "The name of the input layer of the neural net.");
-  desc.add_options()("output,o", po::value<std::string>()->required(),
-                     "The name of the output layer of the neural net.");
+  desc.add_options()("publish_url,p",
+                     po::value<std::string>()->default_value("127.0.0.1:5536"),
+                     "host:port to publish (e.g., example.com:4444)"); 
   desc.add_options()("subscribe_url,s",
                      po::value<std::string>()->default_value("127.0.0.1:5536"),
                      "host:port to connect (e.g., example.com:4444)");
@@ -116,12 +98,10 @@ int main(int argc, char* argv[]) {
     Context::GetContext().SetConfigDir(args["config-dir"].as<std::string>());
   }
     std::string subscribe_endpoint = args["subscribe_url"].as<std::string>();
-    std::string net = args["net"].as<std::string>();
-    std::string input = args["input"].as<std::string>();
-    std::string output = args["output"].as<std::string>();
+    std::string publish_endpoint = args["publish_url"].as<std::string>();
     int exec_sec = args["execution_time"].as<int>();
 
-    Run(subscribe_endpoint, net, input, output, exec_sec);
+    Run(subscribe_endpoint, publish_endpoint, exec_sec);
     return 0;
 }
 

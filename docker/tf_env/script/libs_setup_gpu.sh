@@ -70,7 +70,7 @@ rm -rf /vcs/tensorflow-1.12.0
 #
 #install grpc
 cd /vcs
-git clone https://github.com/grpc/grpc.git
+git clone -b v1.19.0 https://github.com/grpc/grpc.git
 cd grpc
 #sed -i 10d .gitmodules
 #sed -i 10d .gitmodules

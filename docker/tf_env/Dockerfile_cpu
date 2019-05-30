@@ -39,9 +39,9 @@ RUN apt-get --no-install-recommends install -y -q \
 	libopenexr-dev=2.2.0-10ubuntu2 \
 	libeigen3-dev=3.3~beta1-2 \
 	libgstreamer1.0-dev=1.8.3-1~ubuntu0.1 \
-	libgstreamer-plugins-base1.0-dev=1.8.3-1ubuntu0.2 \
-	libgstreamer-plugins-good1.0-dev=1.8.3-1ubuntu0.4 \
-	libgstreamer-plugins-bad1.0-dev=1.8.3-1ubuntu0.2 \
+	libgstreamer-plugins-base1.0-dev \
+	libgstreamer-plugins-good1.0-dev \
+	libgstreamer-plugins-bad1.0-dev \
 	python3-dev=3.5.1-3 \
 	libleveldb-dev:amd64=1.18-5 \
 	libsnappy-dev:amd64=1.1.3-2 \
