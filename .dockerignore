@@ -1,3 +1,4 @@
+*.mp4
 script
 python
 build*
@@ -9,3 +10,4 @@ src/processor/opencv_motion_detector.h
 src/processor/detectors
 !apps/CMakeLists.txt
 !apps/split_nne_rpc
+!apps/split_nne
