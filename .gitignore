@@ -160,3 +160,6 @@ sftp-config.json
 # customized setting
 models/
 test/
+
+# video file
+*.mp4
